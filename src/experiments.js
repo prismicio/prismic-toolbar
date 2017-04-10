@@ -30,7 +30,8 @@ function start(googleId) {
       if (!previewToken) {
         const inCookie = (coookies.getExperimentToken() || '').split(' ');
         const googleVariation = cxApi.chooseVariation();
-        if (googleVariation === cxApi.NOT_PARTICIPATING) { // remove cookie here?
+        if (googleVariation === cxApi.NOT_PARTICIPATING) {
+          coookies.removeExperimentToken();
           return;
         }
         if (inCookie[0] !== googleId || inCookie[1] !== googleVariation.toString()) {

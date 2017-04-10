@@ -62,6 +62,9 @@ export default {
   getExperimentToken() {
     return getItem(EXPERIMENT_COOKIE_KEY);
   },
+  removeExperimentToken() {
+    removeItem(EXPERIMENT_COOKIE_KEY);
+  },
   setExperimentToken(expId, variation) {
     const token = [expId, variation].join(' ');
     const expire = 60 * 60 * 24 * 30;
