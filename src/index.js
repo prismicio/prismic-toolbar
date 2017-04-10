@@ -10,8 +10,10 @@ function setupToolbar(endpoint) {
   }
 }
 
-export const setup = Utils.throttle(setupToolbar, 500, { trailing: false });
+export default {
+  setup: Utils.throttle(setupToolbar, 500, { trailing: false }),
 
-export function startExperiment(expId) {
-  Experiments.start(expId);
-}
+  startExperiment(expId) {
+    Experiments.start(expId);
+  },
+};

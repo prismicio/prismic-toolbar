@@ -10,7 +10,7 @@ module.exports = {
   devtool: 'source-map',
   output: {
     filename: './dist/[name]-prismic-toolbar.js',
-    libraryTarget: 'commonjs',
+    libraryTarget: 'umd',
   },
   resolve: {
     extensions: ['.js'],
