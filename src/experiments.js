@@ -5,32 +5,35 @@ function loadGoogleExperimentScript(googleId, callback) {
   const alreadyExists = document.querySelector(`[src="${src}"]`);
 
   if (alreadyExists) {
-    callback(window.cxApi);
+    callback();
   } else {
     const head = document.querySelector('head');
     const script = document.createElement('script');
     let loaded = false;
-    script.onload = script.onreadystatechange = function onLoaded() {
+    const onLoaded = function onLoaded() {
       if (!loaded && (!this.readyState || this.readyState === 'loaded' || this.readyState === 'complete')) {
         loaded = true;
-        callback(window.cxApi);
-        script.onload = script.onreadystatechange = undefined;
+        callback();
+        script.onload = undefined;
+        script.onreadystatechange = undefined;
       }
     };
+    script.onload = onLoaded;
+    script.onreadystatechange = onLoaded;
     script.src = src;
     head.appendChild(script);
   }
 }
 
 function start(googleId) {
-  loadGoogleExperimentScript(googleId, (cxApi) => {
+  loadGoogleExperimentScript(googleId, () => {
     try {
       if (!coookies.supportCookies()) return;
       const previewToken = coookies.getPreviewToken();
       if (!previewToken) {
         const inCookie = (coookies.getExperimentToken() || '').split(' ');
-        const googleVariation = cxApi.chooseVariation();
-        if (googleVariation === cxApi.NOT_PARTICIPATING) {
+        const googleVariation = window.cxApi.chooseVariation();
+        if (googleVariation === window.cxApi.NOT_PARTICIPATING) {
           coookies.removeExperimentToken();
           return;
         }
