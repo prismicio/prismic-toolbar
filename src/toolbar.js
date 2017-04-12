@@ -116,8 +116,7 @@ function setup() {
       }
     });
   } catch (e) {
-    console.log(e);
-    // ???
+    // TODO ignore error or let user handle it
   }
 }
 
