@@ -9,6 +9,6 @@ The prismic toolbar is integrated to your website for:
 ## How to use it?
 There are two ways to use it:
 - As a standalone, if rendering is done server side just include the CDN file:
-`https://unpkg.com/prismic-toolbar/dist/script-prismic-toolbar.min.js`
+```https://unpkg.com/prismic-toolbar/dist/prismic-toolbar.min.js```
 - Integrated in a client-side application: 
-`npm install prismic-toolbar --save`
+```npm install prismic-toolbar --save```
