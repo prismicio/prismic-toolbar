@@ -4,8 +4,8 @@ const webpack = require('webpack');
 
 module.exports = {
   entry: {
-    npm: ['whatwg-fetch', 'babel-polyfill', './src/index.js'],
-    script: ['whatwg-fetch', 'babel-polyfill', './src/browser.js'],
+    npm: ['whatwg-fetch', './src/index.js'],
+    script: ['whatwg-fetch', './src/browser.js'],
   },
   devtool: 'source-map',
   output: {
@@ -29,6 +29,7 @@ module.exports = {
           loader: 'babel-loader',
           options: {
             presets: ['env'],
+            plugins: ['transform-runtime'],
           },
         },
       },
