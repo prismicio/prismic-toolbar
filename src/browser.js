@@ -1,5 +1,7 @@
 import PrismicToolbar from './index';
 
 document.addEventListener('DOMContentLoaded', () => {
-  PrismicToolbar.setup(window.prismic.endpoint);
+  if (window.prismic && window.prismic.endpoint) {
+    PrismicToolbar.setup(window.prismic.endpoint);
+  }
 });
