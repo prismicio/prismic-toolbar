@@ -5,3 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     PrismicToolbar.setup(window.prismic.endpoint);
   }
 });
+
+exports.setup = PrismicToolbar.setup;
+exports.startExperiment = PrismicToolbar.startExperiment;
