@@ -11,44 +11,51 @@ function setup(endpoint) {
   const baseURL = matches[1].replace(/\.cdn\.prismic\.io/, '.prismic.io');
   const target = matches[2].replace(/\.cdn\.prismic\.io/, '.prismic.io');
 
-  fetch(`${baseURL}/app/authenticated`, {
+  fetch(`${baseURL}/app/authenticated/v2`, {
     credentials: 'include',
-  }).then(() => {
-    document.querySelectorAll('.wio-link').forEach((el) => {
-      el.parentNode.removeChild(el);
-    });
+  }).then((response) => {
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.indexOf('application/json') !== -1) {
+      response.json().then((json) => {
+        if (json.userId) {
+          document.querySelectorAll('.wio-link').forEach((el) => {
+            el.parentNode.removeChild(el);
+          });
 
-    document.querySelectorAll('[data-wio-id]').forEach((el) => {
-      const documentId = el.dataset.wioId;
-      const url = (() => {
-        if (previewToken) {
-          return `${baseURL}/app/documents/${documentId}/preview/${encodeURIComponent(previewToken)}`;
-        } else if (experimentToken) {
-          const value = experimentToken.split(' ');
-          const experimentId = value[0];
-          const variationId = value[1];
-          return `${baseURL}/app/documents/${documentId}/experiments/${encodeURIComponent(experimentId)}/variations/${encodeURIComponent(variationId)}`;
+          document.querySelectorAll('[data-wio-id]').forEach((el) => {
+            const documentId = el.dataset.wioId;
+            const url = (() => {
+              if (previewToken) {
+                return `${baseURL}/app/documents/${documentId}/preview/${encodeURIComponent(previewToken)}`;
+              } else if (experimentToken) {
+                const value = experimentToken.split(' ');
+                const experimentId = value[0];
+                const variationId = value[1];
+                return `${baseURL}/app/documents/${documentId}/experiments/${encodeURIComponent(experimentId)}/variations/${encodeURIComponent(variationId)}`;
+              }
+              return `${baseURL}/app/documents/${documentId}/ref`;
+            })();
+
+            const button = (() => {
+              const btn = document.createElement('a');
+              btn.className = 'wio-link';
+              btn.setAttribute('target', target);
+              btn.setAttribute('href', url);
+
+              const img = document.createElement('img');
+              img.setAttribute('style', 'width: 16px; background: none;');
+              img.setAttribute('src', icon);
+
+              btn.appendChild(img);
+              return btn;
+            })();
+
+            el.insertBefore(button, el.firstChild);
+          });
         }
-        return `${baseURL}/app/documents/${documentId}/ref`;
-      })();
-
-      const button = (() => {
-        const btn = document.createElement('a');
-        btn.className = 'wio-link';
-        btn.setAttribute('target', target);
-        btn.setAttribute('href', url);
-
-        const img = document.createElement('img');
-        img.setAttribute('style', 'width: 16px; background: none;');
-        img.setAttribute('src', icon);
-
-        btn.appendChild(img);
-        return btn;
-      })();
-
-      el.insertBefore(button, el.firstChild);
-    });
-  });
+      });
+    }
+  }).catch(() => {});
 }
 
 export default {
