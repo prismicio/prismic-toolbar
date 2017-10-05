@@ -11,7 +11,7 @@ function setupToolbar(endpoint) {
 }
 
 export default {
-  setup: Utils.throttle(setupToolbar, 500, { trailing: false }),
+  setup: Utils.debounce(setupToolbar, 500),
 
   startExperiment(expId) {
     Experiments.start(expId);

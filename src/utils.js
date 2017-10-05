@@ -1,50 +1,18 @@
 export default {
 
-  throttle(func, wait, options) {
-    let timeout; let context; let args; let result; let previous = 0;
-    if (!options) options = {};
+  debounce(func, wait, immediate) {
+    let timeout;
+    return (...args) => {
+      const context = this;
 
-    function later() {
-      previous = options.leading === false ? 0 : Date.now();
-      timeout = null;
-      result = func.apply(context, args);
-      if (!timeout) {
-        context = null;
-        args = null;
-      }
-    }
-
-    function throttled(...throttledArgs) {
-      const now = Date.now();
-      if (!previous && options.leading === false) previous = now;
-      const remaining = wait - (now - previous);
-      context = this;
-      args = throttledArgs;
-      if (remaining <= 0 || remaining > wait) {
-        if (timeout) {
-          clearTimeout(timeout);
-          timeout = null;
-        }
-        previous = now;
-        result = func.apply(context, args);
-        if (!timeout) {
-          context = null;
-          args = null;
-        }
-      } else if (!timeout && options.trailing !== false) {
-        timeout = setTimeout(later, remaining);
-      }
-      return result;
-    }
-
-    throttled.cancel = () => {
+      const later = () => {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      const callNow = immediate && !timeout;
       clearTimeout(timeout);
-      previous = 0;
-      timeout = null;
-      args = null;
-      context = null;
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
     };
-
-    return throttled;
   },
 };
