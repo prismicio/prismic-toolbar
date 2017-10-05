@@ -11,6 +11,8 @@ module.exports = {
   output: {
     filename: './dist/[name]-prismic-toolbar.js',
     libraryTarget: 'umd',
+    library: 'PrismicToolbar',
+    umdNamedDefine: true,
   },
   resolve: {
     extensions: ['.js'],
