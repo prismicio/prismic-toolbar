@@ -95,6 +95,9 @@ function setup() {
     window.addEventListener('message', (e) => {
       const message = e.data;
       switch (message.type) {
+        case 'io.prismic.init':
+          console.log('init', message.data);
+
         case 'io.prismic.display':
           display(iframe, message.data);
           break;
