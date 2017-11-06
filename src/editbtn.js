@@ -11,7 +11,7 @@ function setup(endpoint) {
   const baseURL = matches[1].replace(/\.cdn\.prismic\.io/, '.prismic.io');
   const target = matches[2].replace(/\.cdn\.prismic\.io/, '.prismic.io');
 
-  fetch(`${baseURL}/app/authenticated/v2`, {
+  fetch(`${baseURL}/app/authenticated`, {
     credentials: 'include',
   }).then((response) => {
     const contentType = response.headers.get('content-type');
