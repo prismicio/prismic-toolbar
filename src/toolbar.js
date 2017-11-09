@@ -22,12 +22,14 @@ function closeSession() {
   const pathParts = document.location.pathname.split('/');
 
   let domain; let path;
-  domainParts.forEach((d) => {
-    domain = domainParts.slice(d).join('.');
-    pathParts.forEach((p) => {
-      path = pathParts.slice(0, pathParts.length - p).join('/');
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, domain.indexOf('.') > -1 ? domain : '');
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, path, domain.indexOf('.') > -1 ? domain : '');
+  let sizeWithoutLastPathPart;
+  domainParts.forEach((domainPart, domainPartIndex) => {
+    domain = domainParts.slice(domainPartIndex).join('.');
+    pathParts.forEach((pathPart, pathPartIndex) => {
+      sizeWithoutLastPathPart = pathParts.length - 1;
+      path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, domain);
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, '.' + domain);
     });
   });
 }
