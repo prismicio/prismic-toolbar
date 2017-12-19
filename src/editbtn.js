@@ -41,6 +41,9 @@ function setup(endpoint) {
               btn.className = 'wio-link';
               btn.setAttribute('target', target);
               btn.setAttribute('href', url);
+              if (el.dataset.wioTitle) {
+                btn.setAttribute('title', el.dataset.wioTitle);
+              }
 
               const img = document.createElement('img');
               img.setAttribute('style', 'width: 16px; background: none;');
