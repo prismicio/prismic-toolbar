@@ -1,7 +1,32 @@
+/**
+ * The following licence and copyright applies to the SVG icon contained in this
+ * source file, which is from https://github.com/danklammer/bytesize-icons
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016 Dan Klammer
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 import 'whatwg-fetch';
 import coookies from './coookies';
-
-const icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA2hpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYxIDY0LjE0MDk0OSwgMjAxMC8xMi8wNy0xMDo1NzowMSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDpERjQ5QUU2RjNEMjA2ODExODhDNkNCNjMxRDc2RjgxMiIgeG1wTU06RG9jdW1lbnRJRD0ieG1wLmRpZDpDNEVBRjk1MDJGRjIxMUUyOEMwOTk5MjNGNzE3MTFBNCIgeG1wTU06SW5zdGFuY2VJRD0ieG1wLmlpZDpDNEVBRjk0RjJGRjIxMUUyOEMwOTk5MjNGNzE3MTFBNCIgeG1wOkNyZWF0b3JUb29sPSJBZG9iZSBQaG90b3Nob3AgQ1M1LjEgTWFjaW50b3NoIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MTQ5NzEzQkEyNzIwNjgxMThGNjJCODhCQkREMUY0RkYiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6REY0OUFFNkYzRDIwNjgxMTg4QzZDQjYzMUQ3NkY4MTIiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz5adgfzAAABo0lEQVR42uybz2YDURSHb/8oXfUBSrddlW7zBqWrvkEppWQbSrahDF2FMISsssq2tFSqpEofoJRW32C6LCG053Avd3VNJneRc87vx0fInTHfmTh3bsx1Tl+OiQHxTfwRFTElCv+d2uwQpZdOUfqxqrJHvNaQD8w0FWFZ+cDQsjyzII62hMvfE62Gx29avfMxH5blmV+JBehlkmfmUuf7SaYCfErtAdy8xxkKcCO5EXIRRivI8zR4KKXhnSfGlA0LcCtB/i264MvE2P6S8lP/CxIjH2gnjilqyj8TuxLlA50Vpkjx8nWK0NUuH+gmztXRLh/oJc7ZjhqeSvlAkTj3mXb5QF/qqi6HfPxfn1n5wGjdH3Byr+dFTnWQhzzkIQ95yEMe8pCHPOQhD3nIQx7ykIc85CEPechDfn1yZ1meL3BuVZ5zalmeM7Asz3m3LH9gWZ5zZVmeM7Ysz29VVFblOS3L8pxry/KcmWu232aiQZ4XPwtXf5cVv5h44hTtvEw9/lb+Ll8Q+05htn0B4rwQT8Sj/6w6G76JfREPXvzHGcq/AAMAq1GE9ggQGt8AAAAASUVORK5CYII=';
 
 function setup(endpoint) {
   const previewToken = coookies.getPreviewToken();
@@ -42,11 +67,8 @@ function setup(endpoint) {
               btn.setAttribute('target', target);
               btn.setAttribute('href', url);
 
-              const img = document.createElement('img');
-              img.setAttribute('style', 'width: 16px; background: none;');
-              img.setAttribute('src', icon);
+              btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M30,7L25,2 5,22 3,29 10,27ZM21,6L26,11ZM5,22L10,27Z"/></svg>';
 
-              btn.appendChild(img);
               return btn;
             })();
 
