@@ -16,4 +16,6 @@ export default {
   startExperiment(expId) {
     Experiments.start(expId);
   },
+
+  updateEditButtons: EditBtn.update,
 };
