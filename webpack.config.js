@@ -4,7 +4,7 @@ const webpack = require('webpack');
 
 module.exports = {
   entry: {
-    npm: ['whatwg-fetch', './src/index.js'],
+    npm: ['./src/index.js'],
     script: ['whatwg-fetch', './src/browser.js'],
   },
   devtool: 'source-map',

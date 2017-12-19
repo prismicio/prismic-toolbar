@@ -12,3 +12,6 @@ There are two ways to use it:
 ```https://unpkg.com/prismic-toolbar/dist/prismic-toolbar.min.js```
 - Integrated in a client-side application: 
 ```npm install prismic-toolbar --save```
+
+If you need to support [browsers which don't implement the `fetch` API](https://caniuse.com/#feat=fetch)
+you will probably also want to include a [polyfill](https://github.com/github/fetch).
