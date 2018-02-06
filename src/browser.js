@@ -1,4 +1,5 @@
 import PrismicToolbar from './index';
+import Version from './version';
 
 document.addEventListener('DOMContentLoaded', () => {
   if (window.prismic && window.prismic.endpoint) {
@@ -8,3 +9,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
 exports.setup = PrismicToolbar.setup;
 exports.startExperiment = PrismicToolbar.startExperiment;
+exports.version = Version.value;

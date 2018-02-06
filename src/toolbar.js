@@ -1,4 +1,6 @@
+import 'whatwg-fetch';
 import coookies from './coookies';
+import Share from './share';
 
 // Remember some styles so we can easily restore them back after toggle
 let toolbarStyle;
@@ -62,62 +64,70 @@ function reload(url) {
   }
 }
 
-function setup() {
+function setup(config) {
   try {
     // Search for the preview token cookie
     const previewToken = coookies.getPreviewToken();
 
-    if (!previewToken) return;
+    Share.listen(config).then(() => {
+      if (previewToken) {
+        const existingToolbar = document.querySelector('#io-prismic-toolbar');
+        if (existingToolbar) existingToolbar.remove();
 
-    const existingToolbar = document.querySelector('#io-prismic-toolbar');
-    if (existingToolbar) existingToolbar.remove();
+        // Insert the preview bar
+        const iframe = (() => {
+          const ifr = document.createElement('iframe');
 
-    // Insert the preview bar
-    const iframe = (() => {
-      const ifr = document.createElement('iframe');
+          ifr.setAttribute('id', 'io-prismic-toolbar');
+          ifr.setAttribute('src', previewToken);
 
-      ifr.setAttribute('id', 'io-prismic-toolbar');
-      ifr.setAttribute('src', previewToken);
+          ifr.style.position = 'fixed';
+          ifr.style.bottom = '10px';
+          ifr.style.right = '20px';
+          ifr.style.height = '50px';
+          ifr.style.width = '100%';
+          ifr.style.border = 'none';
+          ifr.style['z-index'] = 2147483000;
+          ifr.style.opacity = 0;
 
-      ifr.style.position = 'fixed';
-      ifr.style.bottom = '10px';
-      ifr.style.right = '20px';
-      ifr.style.height = '50px';
-      ifr.style.width = '100%';
-      ifr.style.border = 'none';
-      ifr.style['z-index'] = 2147483000;
-      ifr.style.opacity = 0;
+          document.body.appendChild(ifr);
 
-      document.body.appendChild(ifr);
+          return ifr;
+        })();
 
-      return ifr;
-    })();
+        // Listen to prismic.io messages
+        window.addEventListener('message', (e) => {
+          const message = e.data;
+          switch (message.type) {
+            case 'io.prismic.init':
+              console.log('init', message.data);
+              break;
 
-    // Listen to prismic.io messages
-    window.addEventListener('message', (e) => {
-      const message = e.data;
-      switch (message.type) {
-        case 'io.prismic.init':
-          console.log('init', message.data);
+            case 'io.prismic.display':
+              display(iframe, message.data);
+              break;
 
-        case 'io.prismic.display':
-          display(iframe, message.data);
-          break;
+            case 'io.prismic.closeSession':
+              closeSession();
+              break;
 
-        case 'io.prismic.closeSession':
-          closeSession();
-          break;
+            case 'io.prismic.reload':
+              reload(message.data);
+              break;
 
-        case 'io.prismic.reload':
-          reload(message.data);
-          break;
+            case 'io.prismic.change':
+              coookies.setPreviewToken(message.data.ref);
+              reload();
+              break;
 
-        case 'io.prismic.toggle':
-          toggle(iframe, message.data);
-          break;
+            case 'io.prismic.toggle':
+              toggle(iframe, message.data);
+              break;
 
-        default:
-          break;
+            default:
+              break;
+          }
+        });
       }
     });
   } catch (e) {

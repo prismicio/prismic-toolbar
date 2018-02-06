@@ -62,6 +62,9 @@ export default {
   getExperimentToken() {
     return getItem(EXPERIMENT_COOKIE_KEY);
   },
+  setPreviewToken(ref) {
+    setItem(PREVIEW_COOKIE_KEY, ref, null, '/');
+  },
   removeExperimentToken() {
     removeItem(EXPERIMENT_COOKIE_KEY);
   },
