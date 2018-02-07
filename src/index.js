@@ -26,7 +26,9 @@ export default {
   setup: Utils.debounce(setupToolbar, 500),
 
   startExperiment(expId) {
-    Experiments.start(expId);
+    if (expId) {
+      Experiments.start(expId);
+    }
   },
 
   version: Version.value,
