@@ -1,4 +1,5 @@
-import coookies from './coookies';
+import Preview from './preview';
+
 const queryString = require('query-string');
 
 const PRISMIC_SESSION_PARAM = 'prismic-session';
@@ -15,7 +16,7 @@ function listen(config, callback) {
     fetch(endpoint).then((response) => {
       response.json().then((json) => {
         if (json.ref) {
-          coookies.setPreviewToken(json.ref);
+          Preview.set(json.ref);
           delete qs[PRISMIC_SESSION_PARAM];
           const maybeHash = queryString.stringify(qs);
           const hash = maybeHash ? `#${maybeHash}` : '';

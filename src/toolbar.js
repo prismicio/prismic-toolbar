@@ -1,6 +1,6 @@
 import 'whatwg-fetch';
-import coookies from './coookies';
 import Share from './share';
+import Preview from './preview';
 
 // Remember some styles so we can easily restore them back after toggle
 let toolbarStyle;
@@ -16,33 +16,6 @@ function display(iframe, dimension) {
   toolbarStyle = iframe.getAttribute('style');
   bodyStyle = document.body.style;
   htmlStyle = document.documentElement.style;
-}
-
-function removePreviewCookieForPaths(pathParts, domain) {
-  let sizeWithoutLastPathPart;
-  pathParts.forEach((pathPart, pathPartIndex) => {
-    sizeWithoutLastPathPart = pathParts.length - 1;
-    const path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
-    if (domain) {
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, domain);
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, `.${domain}`);
-    } else {
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`);
-    }
-  });
-}
-
-// Close the preview session (ie. discard the cookie)
-function closeSession() {
-  const domainParts = document.location.hostname.split('.');
-  const pathParts = document.location.pathname.split('/');
-
-  removePreviewCookieForPaths(pathParts);
-
-  domainParts.forEach((domainPart, domainPartIndex) => {
-    const domain = domainParts.slice(domainPartIndex).join('.');
-    removePreviewCookieForPaths(pathParts, domain);
-  });
 }
 
 // Toggle betweem bar mode and details mode
@@ -74,7 +47,7 @@ function reload(url) {
 }
 
 function setup(config) {
-  const previewToken = coookies.getPreviewToken();
+  const previewToken = Preview.get();
 
   Share.listen(config, () => {
     if (previewToken) {
@@ -115,7 +88,7 @@ function setup(config) {
             break;
 
           case 'io.prismic.closeSession':
-            closeSession();
+            Preview.close();
             break;
 
           case 'io.prismic.reload':
@@ -123,8 +96,7 @@ function setup(config) {
             break;
 
           case 'io.prismic.change':
-            closeSession();
-            coookies.setPreviewToken(message.data.ref);
+            Preview.set(message.data.ref);
             break;
 
           case 'io.prismic.toggle':
