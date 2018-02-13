@@ -96,6 +96,7 @@ function setup(config) {
             break;
 
           case 'io.prismic.change':
+            Preview.close();
             Preview.set(message.data.ref);
             break;
 

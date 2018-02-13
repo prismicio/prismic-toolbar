@@ -16,6 +16,7 @@ function listen(config, callback) {
     fetch(endpoint).then((response) => {
       response.json().then((json) => {
         if (json.ref) {
+          Preview.close();
           Preview.set(json.ref);
           delete qs[PRISMIC_SESSION_PARAM];
           const maybeHash = queryString.stringify(qs);

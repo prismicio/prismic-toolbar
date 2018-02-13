@@ -6,10 +6,10 @@ function removeForPaths(pathParts, domain) {
     sizeWithoutLastPathPart = pathParts.length - 1;
     const path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
     if (domain) {
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, domain);
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, `.${domain}`);
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, { path: `${path}/`, domain });
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, { path: `${path}/`, domain: `.${domain}` });
     } else {
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`);
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, { path: `${path}/` });
     }
   });
 }
