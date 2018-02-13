@@ -53,6 +53,7 @@ describe('closeSession', () => {
 
     expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', '.com');
     expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'com');
+    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/');
   });
 
   it('should remove cookies for each domain part and each path part when path is an uri', () => {
@@ -87,5 +88,8 @@ describe('closeSession', () => {
 
     expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'com');
     expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/', 'com');
+
+    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/');
+    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/');
   });
 });

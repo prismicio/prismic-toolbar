@@ -18,21 +18,30 @@ function display(iframe, dimension) {
   htmlStyle = document.documentElement.style;
 }
 
+function removePreviewCookieForPaths(pathParts, domain) {
+  let sizeWithoutLastPathPart;
+  pathParts.forEach((pathPart, pathPartIndex) => {
+    sizeWithoutLastPathPart = pathParts.length - 1;
+    const path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
+    if (domain) {
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, domain);
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, `.${domain}`);
+    } else {
+      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`);
+    }
+  });
+}
+
 // Close the preview session (ie. discard the cookie)
 function closeSession() {
   const domainParts = document.location.hostname.split('.');
   const pathParts = document.location.pathname.split('/');
 
-  let domain; let path;
-  let sizeWithoutLastPathPart;
+  removePreviewCookieForPaths(pathParts);
+
   domainParts.forEach((domainPart, domainPartIndex) => {
-    domain = domainParts.slice(domainPartIndex).join('.');
-    pathParts.forEach((pathPart, pathPartIndex) => {
-      sizeWithoutLastPathPart = pathParts.length - 1;
-      path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, domain);
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, `${path}/`, '.' + domain);
-    });
+    const domain = domainParts.slice(domainPartIndex).join('.');
+    removePreviewCookieForPaths(pathParts, domain);
   });
 }
 
@@ -114,6 +123,7 @@ function setup(config) {
             break;
 
           case 'io.prismic.change':
+            closeSession();
             coookies.setPreviewToken(message.data.ref);
             break;
 
