@@ -28,7 +28,6 @@ function loadGoogleExperimentScript(googleId, callback) {
 function start(googleId) {
   loadGoogleExperimentScript(googleId, () => {
     try {
-      if (!coookies.supportCookies()) return;
       const previewToken = coookies.getPreviewToken();
       if (!previewToken) {
         const inCookie = (coookies.getExperimentToken() || '').split(' ');
