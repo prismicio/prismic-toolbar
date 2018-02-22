@@ -1,28 +1,30 @@
 import Preview from './preview';
 
-const queryString = require('query-string');
-
-const PRISMIC_SESSION_PARAM = 'prismic-session';
-
 function logError(message) {
   console.error(`[prismic.io] Unable to access to preview session: ${message}`);
 }
 
+const PRISMIC_SESSION_REG = /#(([^~]+)~)?prismic-session=([-_a-zA-Z0-9]{16})/;
+
 function listen(config, callback) {
-  const qs = queryString.parse(window.location.hash);
-  const sessionId = qs[PRISMIC_SESSION_PARAM];
+  const hash = window.location.hash;
+  const matches = hash.match(PRISMIC_SESSION_REG);
+  const sessionId = matches && matches[3];
   if (sessionId) {
-    const endpoint = `${config.baseURL}/previews/shared/${sessionId}`;
+    const endpoint = `${config.baseURL}/previews/token/${sessionId}`;
     fetch(endpoint).then((response) => {
       response.json().then((json) => {
         if (json.ref) {
           Preview.close();
           Preview.set(json.ref);
-          delete qs[PRISMIC_SESSION_PARAM];
-          const maybeHash = queryString.stringify(qs);
-          const hash = maybeHash ? `#${maybeHash}` : '';
-          const url = `${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
-          document.location = url;
+          const updatedHash = hash.replace(PRISMIC_SESSION_REG, '$2');
+          window.location.hash = updatedHash;
+          if (updatedHash) {
+            window.location.reload();
+          } else {
+            const href = `${window.location.origin}${window.location.pathname}${window.location.search}${hash}`;
+            window.location.href = href;
+          }
         } else {
           logError("Session id isn't valid");
           callback();
@@ -35,9 +37,7 @@ function listen(config, callback) {
       logError('Invalid server response');
       callback();
     });
-  } else {
-    callback();
-  }
+  } else callback();
 }
 
 export default {
