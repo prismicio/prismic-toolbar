@@ -1,4 +1,5 @@
 import 'whatwg-fetch';
+import html2canvas from 'html2canvas';
 import Share from './share';
 import Preview from './preview';
 
@@ -46,6 +47,27 @@ function reload(url) {
   }
 }
 
+function resizeCanvas(canvas, maxWidth, maxHeight) {
+  let width;
+  let height;
+
+  if (canvas.width >= canvas.height && canvas.width > maxWidth) {
+    width = maxWidth;
+    height = Math.round((maxWidth * canvas.height) / canvas.width);
+  } else {
+    height = maxHeight;
+    width = Math.round((maxHeight * canvas.width) / canvas.height);
+  }
+
+  const canvasResized = document.createElement('canvas');
+  const ctxResized = canvasResized.getContext('2d');
+  canvasResized.width = width;
+  canvasResized.height = height;
+
+  ctxResized.drawImage(canvas, 0, 0, width, height);
+  return canvasResized;
+}
+
 function setup(config) {
   const previewToken = Preview.get();
 
@@ -79,8 +101,15 @@ function setup(config) {
       window.addEventListener('message', (e) => {
         const message = e.data;
         switch (message.type) {
-          case 'io.prismic.init':
-            console.log('init', message.data);
+          case 'io.prismic.ping':
+            iframe.contentWindow.postMessage({
+              type: 'io.prismic.pong',
+              data: {
+                pageURL: window.location.href,
+                pagePathname: window.location.pathname + window.location.hash,
+                pageTitle: document.title,
+              },
+            }, '*');
             break;
 
           case 'io.prismic.display':
@@ -90,6 +119,27 @@ function setup(config) {
           case 'io.prismic.closeSession':
             Preview.close();
             break;
+
+          case 'io.prismic.screenshot': {
+            const options = message.data.options;
+
+            const html2canvasOptions = {
+              height: window.outerHeight,
+              width: window.outerWidth,
+              scale: options.scale,
+              ignoreElements: element => element.classList.contains('wio-link'),
+            };
+
+            html2canvas(document.body, html2canvasOptions).then((canvas) => {
+              resizeCanvas(canvas, options.maxWidth, options.maxHeight).toBlob((blob) => {
+                iframe.contentWindow.postMessage({
+                  type: 'io.prismic.screenshot',
+                  data: { blob },
+                }, '*');
+              });
+            });
+            break;
+          }
 
           case 'io.prismic.reload':
             reload(message.data);
