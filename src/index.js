@@ -23,7 +23,7 @@ function setupToolbar(endpoint) {
 }
 
 export default {
-  setup: Utils.debounce(setupToolbar, 500),
+  setup: Utils.debounce(setupToolbar, 500, true),
 
   startExperiment(expId) {
     if (expId) {

@@ -105,9 +105,14 @@ function setup(config) {
             iframe.contentWindow.postMessage({
               type: 'io.prismic.pong',
               data: {
-                pageURL: window.location.href,
-                pagePathname: window.location.pathname + window.location.hash,
-                pageTitle: document.title,
+                location: {
+                  href: window.location.href,
+                  hash: window.location.hash,
+                  pathname: window.location.pathname,
+                },
+                document: {
+                  title: document.title,
+                },
               },
             }, '*');
             break;
@@ -121,20 +126,19 @@ function setup(config) {
             break;
 
           case 'io.prismic.screenshot': {
-            const options = message.data.options;
-
+            const { canvasOptions, page } = message.data;
             const html2canvasOptions = {
               height: window.outerHeight,
               width: window.outerWidth,
-              scale: options.scale,
+              scale: canvasOptions.scale,
               ignoreElements: element => element.classList.contains('wio-link'),
             };
 
             html2canvas(document.body, html2canvasOptions).then((canvas) => {
-              resizeCanvas(canvas, options.maxWidth, options.maxHeight).toBlob((blob) => {
+              resizeCanvas(canvas, canvasOptions.maxWidth, canvasOptions.maxHeight).toBlob((blob) => {
                 iframe.contentWindow.postMessage({
                   type: 'io.prismic.screenshot',
-                  data: { blob },
+                  data: { blob, page },
                 }, '*');
               });
             });
