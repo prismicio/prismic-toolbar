@@ -21,7 +21,7 @@ function display(iframe, dimension) {
 
 // Toggle betweem bar mode and details mode
 function toggle(iframe, mode) {
-  if (mode === 'detail') {
+  if (mode === 'details' || mode === 'share') {
     iframe.style.top = 0;
     iframe.style.left = 0;
     iframe.style.right = 0;
@@ -84,9 +84,9 @@ function setup(config) {
         ifr.setAttribute('src', previewToken);
 
         ifr.style.position = 'fixed';
-        ifr.style.bottom = '10px';
-        ifr.style.right = '20px';
-        ifr.style.height = '50px';
+        ifr.style.bottom = '0';
+        ifr.style.left = '0';
+        ifr.style.height = '70px';
         ifr.style.width = '100%';
         ifr.style.border = 'none';
         ifr.style['z-index'] = 2147483000;
