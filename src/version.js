@@ -1,3 +1,3 @@
 export default {
-  value: '1.0.4',
+  value: '1.1.0',
 };
