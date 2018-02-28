@@ -14,6 +14,7 @@
     "babel-runtime": "^6.23.0",
     "html2canvas": "^1.0.0-alpha.10",
     "js-cookie": "^2.2.0",
+    "promise-polyfill": "7.1.0",
     "whatwg-fetch": "~2.0.3"
   },
   "devDependencies": {

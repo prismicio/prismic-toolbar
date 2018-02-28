@@ -1,4 +1,3 @@
-import 'whatwg-fetch';
 import html2canvas from 'html2canvas';
 import Preview from './preview';
 
