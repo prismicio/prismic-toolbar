@@ -1,4 +1,4 @@
-import coookies from './coookies';
+import Cookies from './cookies';
 
 function loadGoogleExperimentScript(googleId, callback) {
   const src = `//www.google-analytics.com/cx/api.js?experiment=${googleId}`;
@@ -28,16 +28,16 @@ function loadGoogleExperimentScript(googleId, callback) {
 function start(googleId) {
   loadGoogleExperimentScript(googleId, () => {
     try {
-      const previewToken = coookies.getPreviewToken();
+      const previewToken = Cookies.getPreviewToken();
       if (!previewToken) {
-        const inCookie = (coookies.getExperimentToken() || '').split(' ');
+        const inCookie = (Cookies.getExperimentToken() || '').split(' ');
         const googleVariation = window.cxApi.chooseVariation();
         if (googleVariation === window.cxApi.NOT_PARTICIPATING) {
-          coookies.removeExperimentToken();
+          Cookies.removeExperimentToken();
           return;
         }
         if (inCookie[0] !== googleId || inCookie[1] !== googleVariation.toString()) {
-          coookies.setExperimentToken(googleId, googleVariation);
+          Cookies.setExperimentToken(googleId, googleVariation);
           window.location.reload();
         }
       }

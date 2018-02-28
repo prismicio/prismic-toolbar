@@ -1,16 +1,13 @@
-import coookies from './coookies';
+import Cookies from './cookies';
 
 function removeForPaths(pathParts, domain) {
   let sizeWithoutLastPathPart;
   pathParts.forEach((pathPart, pathPartIndex) => {
     sizeWithoutLastPathPart = pathParts.length - 1;
     const path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
-    if (domain) {
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, { path: `${path}/`, domain });
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, { path: `${path}/`, domain: `.${domain}` });
-    } else {
-      coookies.removeItem(coookies.PREVIEW_COOKIE_KEY, { path: `${path}/` });
-    }
+    Cookies.removePreviewCookie(`${path}/`, domain);
+    Cookies.removePreviewCookie(`${path}/`, `.${domain}`);
+    Cookies.removePreviewCookie(`${path}/`);
   });
 }
 
@@ -28,11 +25,11 @@ function close() {
 }
 
 function set(previewRef) {
-  coookies.setPreviewToken(previewRef);
+  Cookies.setPreviewToken(previewRef);
 }
 
 function get() {
-  return coookies.getPreviewToken();
+  return Cookies.getPreviewToken();
 }
 
 export default {

@@ -1,8 +1,8 @@
 import toolbar from '../toolbar';
-import coookies from '../coookies';
+import Cookies from '../cookies';
 
-jest.mock('../coookies', () => ({
-  removeItem: jest.fn(),
+jest.mock('../cookies', () => ({
+  removePreviewCookie: jest.fn(),
   getPreviewToken: () => 'previewToken',
   PREVIEW_COOKIE_KEY: 'previewCookieKey',
 }));
@@ -46,14 +46,14 @@ describe('closeSession', () => {
     window.dispatchEvent(closeSessionEvent);
 
     // then
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'www.myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'www.myhostname.com');
 
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', '.myhostname.com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'myhostname.com');
 
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', '.com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/');
   });
 
   it('should remove cookies for each domain part and each path part when path is an uri', () => {
@@ -74,22 +74,22 @@ describe('closeSession', () => {
     window.dispatchEvent(closeSessionEvent);
 
     // then
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'www.myhostname.com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/', 'www.myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'www.myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', 'www.myhostname.com');
 
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', '.myhostname.com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/', '.myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', '.myhostname.com');
 
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'myhostname.com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/', 'myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'myhostname.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', 'myhostname.com');
 
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', '.com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/', '.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', '.com');
 
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/', 'com');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/', 'com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'com');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', 'com');
 
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/');
-    expect(coookies.removeItem).toHaveBeenCalledWith('previewCookieKey', '/a/');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/');
+    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/');
   });
 });

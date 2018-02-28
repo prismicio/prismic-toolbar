@@ -23,5 +23,10 @@ export default {
     const expires = 60 * 60 * 24 * 30;
     Cookies.set(EXPERIMENT_COOKIE_KEY, token, { expires, path: '/' });
   },
-  removeItem: Cookies.remove,
+  removePreviewCookie(path, domain) {
+    const pathOption = path ? { path } : {};
+    const domainOption = domain ? { domain } : {};
+    const options = Object.assign(pathOption, domainOption);
+    Cookies.remove(PREVIEW_COOKIE_KEY, options);
+  },
 };
