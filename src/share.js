@@ -19,7 +19,7 @@ function displayLoading(config, callback) {
   iframe.style.height = '100%';
   iframe.style.border = 'none';
   iframe.style.opacity = 0;
-  iframe.style.transition = '.2s opacity';
+  iframe.style.transition = '.5s opacity';
   document.body.appendChild(iframe);
   window.setTimeout(() => {
     iframe.style.opacity = 1;
