@@ -10,7 +10,19 @@ let htmlStyle;
 function display(iframe, dimension) {
   iframe.style.width = `${dimension.width}px`;
   iframe.style.height = `${dimension.height}px`;
+  iframe.style.bottom = dimension.hasOwnProperty('bottom') ? `${dimension.bottom}px` : '';
+  iframe.style.top = dimension.hasOwnProperty('top') ? `${dimension.top}px` : '';
+  iframe.style.right = dimension.hasOwnProperty('right') ? `${dimension.right}px` : '';
+  iframe.style.left = dimension.hasOwnProperty('left') ? `${dimension.left}px` : '';
   iframe.style.opacity = 1;
+
+  const needLegacyPosition = ['bottom', 'top', 'right', 'left'].every(prop => !dimension.hasOwnProperty(prop));
+  if (needLegacyPosition) {
+    iframe.style.top = '';
+    iframe.style.bottom = 0;
+    iframe.style.left = '';
+    iframe.style.right = 0;
+  }
 
   toolbarStyle = iframe.getAttribute('style');
   bodyStyle = document.body.style;
@@ -19,7 +31,7 @@ function display(iframe, dimension) {
 
 // Toggle betweem bar mode and details mode
 function toggle(iframe, mode) {
-  if (mode === 'details' || mode === 'share') {
+  if (mode === 'detail' /* deprecated */ || mode === 'details' || mode === 'share') {
     iframe.style.top = 0;
     iframe.style.left = 0;
     iframe.style.right = 0;
