@@ -19,9 +19,9 @@ function display(iframe, dimension) {
   const needLegacyPosition = ['bottom', 'top', 'right', 'left'].every(prop => !dimension.hasOwnProperty(prop));
   if (needLegacyPosition) {
     iframe.style.top = '';
-    iframe.style.bottom = 0;
+    iframe.style.bottom = '10px';
     iframe.style.left = '';
-    iframe.style.right = 0;
+    iframe.style.right = '20px';
   }
 
   toolbarStyle = iframe.getAttribute('style');
@@ -78,7 +78,7 @@ function resizeCanvas(canvas, maxWidth, maxHeight) {
   return canvasResized;
 }
 
-function setup(config) {
+function setup() {
   const previewToken = Preview.get();
 
   if (previewToken) {
