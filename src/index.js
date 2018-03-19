@@ -9,7 +9,7 @@ const PRISMIC_ENDPOINT = window.prismic && window.prismic.endpoint;
 let START_EXPERIMENT = () => {};
 
 const config = (() => {
-  const matches = PRISMIC_ENDPOINT.match(new RegExp('(https?://([^/]*))'));
+  const matches = PRISMIC_ENDPOINT && PRISMIC_ENDPOINT.match(new RegExp('(https?://([^/]*))'));
   if (matches) {
     const baseURL = matches[1].replace(/\.cdn\.prismic\.io/, '.prismic.io');
     const editorTab = matches[2].replace(/\.cdn\.prismic\.io/, '.prismic.io');
