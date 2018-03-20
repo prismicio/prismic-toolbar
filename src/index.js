@@ -13,7 +13,13 @@ const config = (() => {
   if (matches) {
     const baseURL = matches[1].replace(/\.cdn\.prismic\.io/, '.prismic.io');
     const editorTab = matches[2].replace(/\.cdn\.prismic\.io/, '.prismic.io');
-    return { baseURL, editorTab };
+    const location = {
+      origin: window.location.origin,
+      hash: window.location.hash,
+      pathname: window.location.pathname,
+      search: window.location.search,
+    };
+    return { baseURL, editorTab, location };
   }
   return {};
 })();

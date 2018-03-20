@@ -28,7 +28,7 @@ function displayLoading(config, callback) {
 }
 
 function listen(config, callback) {
-  const hash = window.location.hash;
+  const hash = config.location.hash;
   const matches = hash.match(PRISMIC_SESSION_REG);
   const sessionId = matches && matches[3];
 
@@ -40,14 +40,11 @@ function listen(config, callback) {
           if (json.ref) {
             Preview.close();
             Preview.set(json.ref);
-            const updatedHash = hash.replace(PRISMIC_SESSION_REG, '$2');
-            if (updatedHash) {
-              window.location.hash = updatedHash;
-              window.location.reload();
-            } else {
-              const href = `${window.location.origin}${window.location.pathname}${window.location.search}${updatedHash}`;
-              window.location.href = href;
-            }
+            let updatedHash = hash.replace(PRISMIC_SESSION_REG, '$2');
+            updatedHash = updatedHash ? `#${updatedHash}` : '';
+            const href = `${config.location.origin}${config.location.pathname}${config.location.search}${updatedHash}`;
+            window.location.href = href;
+            window.location.reload();
           } else {
             logError("Session id isn't valid");
             callback();
