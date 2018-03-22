@@ -7,8 +7,13 @@ The prismic toolbar is integrated to your website for:
  - A/B testing (experiments)
 
 ## How to use it?
-There are two ways to use it:
-- As a standalone, if rendering is done server side just include the CDN file:
-```https://unpkg.com/prismic-toolbar/dist/prismic-toolbar.min.js```
-- Integrated in a client-side application: 
-```npm install prismic-toolbar --save```
+In order to use the toolbar you need to include the following script on every page of your site. You need to make sure to replace `<your-repo-name>` with the url name of your Prismic repository.
+
+```
+<script>
+  window.prismic = {
+    endpoint: 'https://<your-repo-name>.prismic.io/api/v2'
+  };
+</script>
+<script type="text/javascript" src="//static.cdn.prismic.io/prismic.min.js"></script>
+```
