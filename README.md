@@ -17,3 +17,6 @@ In order to use the toolbar you need to include the following script on every pa
 </script>
 <script type="text/javascript" src="//static.cdn.prismic.io/prismic.min.js"></script>
 ```
+
+## Prismic Documentation
+More info for how to setup Previews & Edit buttons can be found in the [Prismic.io documentation](https://prismic.io/docs/javascript/beyond-the-api/in-website-preview). There are resources there for all the main technologies we support.
