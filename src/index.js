@@ -10,7 +10,7 @@ let START_EXPERIMENT = () => {};
 
 const config = (() => {
   const matches = PRISMIC_ENDPOINT && PRISMIC_ENDPOINT.match(new RegExp('(https?://([^/]*))'));
-  if (matches) {
+  if (matches && matches[1] && matches[2]) {
     const baseURL = matches[1].replace(/\.cdn\.prismic\.io/, '.prismic.io');
     const editorTab = matches[2].replace(/\.cdn\.prismic\.io/, '.prismic.io');
     const location = {
@@ -21,13 +21,15 @@ const config = (() => {
     };
     return { baseURL, editorTab, location };
   }
-  return {};
+  return null;
 })();
 
-const setupToolbar = Utils.debounce(() => Toolbar.setup(config), 500, true);
+const setupToolbar = Utils.debounce(() => Toolbar.setup(), 500, true);
 
 function setupEditButton() {
-  EditBtn.setup(config);
+  if (config) {
+    EditBtn.setup(config);
+  }
 }
 
 function startExperiment(expId) {
@@ -37,11 +39,13 @@ function startExperiment(expId) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  Share.listen(config, () => {
-    START_EXPERIMENT();
-    setupToolbar();
-    setupEditButton();
-  });
+  if (config) {
+    Share.listen(config, () => {
+      START_EXPERIMENT();
+      setupToolbar();
+      setupEditButton();
+    });
+  }
 });
 
 exports.setup = setupToolbar;

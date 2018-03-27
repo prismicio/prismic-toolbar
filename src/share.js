@@ -40,11 +40,12 @@ function listen(config, callback) {
           if (json.ref) {
             Preview.close();
             Preview.set(json.ref);
-            let updatedHash = hash.replace(PRISMIC_SESSION_REG, '$2');
-            updatedHash = updatedHash ? `#${updatedHash}` : '';
-            const href = `${config.location.origin}${config.location.pathname}${config.location.search}${updatedHash}`;
+            const updatedHash = hash.replace(PRISMIC_SESSION_REG, '$2');
+            const href = `${config.location.origin}${config.location.pathname}${config.location.search}${updatedHash ? `#${updatedHash}` : ''}`;
             window.location.href = href;
-            window.location.reload();
+            if (updatedHash) {
+              window.location.reload();
+            }
           } else {
             logError("Session id isn't valid");
             callback();

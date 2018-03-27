@@ -5,7 +5,6 @@ const icon = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHe
 function setup(config) {
   const previewToken = Cookies.getPreviewToken();
   const experimentToken = Cookies.getExperimentToken();
-  if (!config.baseURL) return;
 
   fetch(`${config.baseURL}/app/authenticated/v2`, {
     credentials: 'include',
