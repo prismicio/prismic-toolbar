@@ -27,39 +27,27 @@ function displayLoading(config, callback) {
   }, 200);
 }
 
-function listen(config, callback) {
-  const hash = config.location.hash;
-  const matches = hash.match(PRISMIC_SESSION_REG);
-  const sessionId = matches && matches[3];
+function getCookie(name) {
+    var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+    return v ? v[2] : null;
+}
 
-  if (sessionId) {
-    displayLoading(config, () => {
-      const endpoint = `${config.baseURL}/previews/token/${sessionId}`;
-      fetch(endpoint).then((response) => {
-        response.json().then((json) => {
-          if (json.ref) {
-            Preview.close();
-            Preview.set(json.ref);
-            const updatedHash = hash.replace(PRISMIC_SESSION_REG, '$2');
-            const href = `${config.location.origin}${config.location.pathname}${config.location.search}${updatedHash ? `#${updatedHash}` : ''}`;
-            window.location.href = href;
-            if (updatedHash) {
-              window.location.reload();
-            }
-          } else {
-            logError("Session id isn't valid");
-            callback();
-          }
-        }).catch(() => {
-          logError('Invalid server response');
-          callback();
-        });
-      }).catch(() => {
-        logError('Invalid server response');
-        callback();
-      });
+function listen(config, callback) {
+  if (window.prismicSession && !sessionStorage.getItem('sessionHandled')) {
+    sessionStorage.setItem('sessionHandled', true)
+    displayLoading(config, _ => { // show prismic loader
+      fetch(`${config.baseURL}/previews/token/${window.prismicSession}`).then(response => { // see if updated content from wroom
+          response.json().then(json => {
+              if (json.ref) { // if so
+                  Preview.close(); // clear preview cookies?
+                  Preview.set(json.ref); // add new cookie
+                  window.location.reload(); // reload page
+              } else { logError("Session id isn't valid");callback(); }
+          }).catch(_ => { logError('Invalid server response');callback(); });
+      }).catch(_ => { logError('Invalid server response');callback(); });
     });
-  } else callback();
+  }
+  else callback();
 }
 
 export default {

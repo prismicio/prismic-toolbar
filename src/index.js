@@ -38,15 +38,29 @@ function startExperiment(expId) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  if (config) {
-    Share.listen(config, () => {
-      START_EXPERIMENT();
-      setupToolbar();
-      setupEditButton();
-    });
+// listen to session iframe
+window.addEventListener('message', e => {
+  if (e.data.type === 'preview') {
+    window.prismicSession = e.data.data
+    if (config) {
+      Share.listen(config, () => {
+        START_EXPERIMENT();
+        setupToolbar();
+        setupEditButton();
+      });
+    }
   }
-});
+})
+
+// session iframe
+const parser = document.createElement('a');
+parser.href = PRISMIC_ENDPOINT;
+const iframe = document.createElement('iframe');
+iframe.src = `${parser.protocol}//${parser.host}/previews/session/get`;
+iframe.style.display = 'none';
+setTimeout(_ => {
+  document.body.appendChild(iframe);
+}, 0);
 
 exports.setup = setupToolbar;
 exports.setupEditButton = setupEditButton;
