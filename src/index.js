@@ -38,7 +38,7 @@ function startExperiment(expId) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function domReady() {
   if (config) {
     Share.listen(config, () => {
       START_EXPERIMENT();
@@ -46,8 +46,14 @@ document.addEventListener('DOMContentLoaded', () => {
       setupEditButton();
     });
   }
-});
+}
 
+if (document.readyState === 'complete') {
+  domReady();
+else {
+  document.addEventListener('DOMContentLoaded', domReady);
+}
+  
 exports.setup = setupToolbar;
 exports.setupEditButton = setupEditButton;
 exports.startExperiment = startExperiment;
