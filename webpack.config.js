@@ -3,12 +3,9 @@
 const webpack = require('webpack');
 
 module.exports = {
-  entry: {
-    npm: ['whatwg-fetch', './src/index.js'],
-    script: ['whatwg-fetch', './src/browser.js'],
-  },
+  entry: ['whatwg-fetch', 'promise-polyfill/src/polyfill', './src/index.js'],
   output: {
-    filename: './dist/[name]-prismic-toolbar.js',
+    filename: 'prismic-toolbar.js',
     libraryTarget: 'umd',
     library: 'PrismicToolbar',
     umdNamedDefine: true,
