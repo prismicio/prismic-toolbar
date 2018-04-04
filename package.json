@@ -2,10 +2,8 @@
   "name": "prismic-toolbar",
   "version": "0.0.8",
   "description": "Prismic toolbar",
-  "main": "./dist/npm-prismic-toolbar.js",
   "scripts": {
     "build": "./build.sh",
-    "prepublish": "npm run build",
     "lint": "eslint src",
     "test": "jest"
   },
