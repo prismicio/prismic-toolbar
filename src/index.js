@@ -8,16 +8,16 @@ import Share from './share';
 
 // window.prismic setup
 let _startExperiment = null;
-const setup = Utils.debounce(() => Toolbar.setup(), 500, true);
+const setupToolbar = Utils.debounce(() => Toolbar.setup(), 500, true);
 const setupEditButton = _ => config && EditBtn.setup(config);
 const startExperiment = expId => { if (expId) _startExperiment = _ => Experiments.start(expId) };
 const version = Version.value;
 const endpoint = window.prismic && window.prismic.endpoint.replace(/\.cdn\.prismic\.io/, '.prismic.io');
 
-window.prismic = { setup, setupEditButton, startExperiment, version, endpoint };
+window.prismic = { setup:setupToolbar, setupEditButton, startExperiment, version, endpoint };
 
 
-// config
+// Config
 const config = (_ => {
 
   if (!endpoint) return null;
@@ -40,26 +40,25 @@ const config = (_ => {
 })();
 
 
-// session iFrame
+// Session iFrame
 const iframe = document.createElement('iframe');
 iframe.src = `${config.baseURL}/previews/session/get`;
 iframe.style.display = 'none';
-setTimeout(_ => document.body.appendChild(iframe), 0); // script ran before body rendered
+document.head.appendChild(iframe);
 
 
-// listen to session iframe
+// Wait for /previews/session/get iFrame
+// You will always get message, even if there's no session
 window.addEventListener('message', e => {
+  if (!config || e.data.type !== 'preview') return;
 
-  if (e.data.type !== 'preview') return;
+  // Setup shareable session
+  Share.setup(config, e.data.data).then(_ => {
 
-  window.prismicSession = e.data.data;
-
-  if (!config) return;
-
-  Share.listen(config, _ => {
+    // Setup toolbar etc. (not edit button?)
     _startExperiment && _startExperiment();
-    setup();
+    setupToolbar();
     setupEditButton();
-  });
 
+  });
 })

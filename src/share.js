@@ -1,11 +1,7 @@
 import Preview from './preview';
 
-function logError(message) {
-  console.error(`[prismic.io] Unable to access to preview session: ${message}`);
-}
 
-const PRISMIC_SESSION_REG = /#(([^~]+)~)?prismic-session=([-_a-zA-Z0-9]{16})/;
-
+// Show prismic loader
 function displayLoading(config, callback) {
   const iframe = document.createElement('iframe');
   iframe.setAttribute('src', `${config.baseURL}/previews/loading`);
@@ -21,35 +17,46 @@ function displayLoading(config, callback) {
   iframe.style.opacity = 0;
   iframe.style.transition = '.5s opacity';
   document.body.appendChild(iframe);
-  window.setTimeout(() => {
+  setTimeout(_ => {
     iframe.style.opacity = 1;
-    window.setTimeout(() => callback(), 1800);
+    setTimeout(_ => callback(), 1800);
   }, 200);
 }
 
-function getCookie(name) {
-    var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-    return v ? v[2] : null;
-}
 
-function listen(config, callback) {
-  if (window.prismicSession && !sessionStorage.getItem('sessionHandled')) {
-    sessionStorage.setItem('sessionHandled', true)
-    displayLoading(config, _ => { // show prismic loader
-      fetch(`${config.baseURL}/previews/token/${window.prismicSession}`).then(response => { // see if updated content from wroom
-          response.json().then(json => {
-              if (json.ref) { // if so
-                  Preview.close(); // clear preview cookies?
-                  Preview.set(json.ref); // add new cookie
-                  window.location.reload(); // reload page
-              } else { logError("Session id isn't valid");callback(); }
-          }).catch(_ => { logError('Invalid server response');callback(); });
-      }).catch(_ => { logError('Invalid server response');callback(); });
-    });
-  }
-  else callback();
+// Setup shared preview
+// Get ref cookie from session and reload
+function setup(config, SESSION) {
+
+  const validSession = SESSION && typeof SESSION === 'string' && SESSION.length === 16
+  const handledSession = sessionStorage.getItem('prismicPreview')
+  const error = message => console.error(`[prismic.io] Unable to access to preview session: ${message}`);
+
+  if (!validSession || handledSession) return Promise.resolve();
+
+  displayLoading(config, _ => { // Show prismic loader
+
+    // Get ref from session
+    fetch(`${config.baseURL}/previews/token/${SESSION}`).then(response => {
+      response.json().then(json => {
+
+        if (json.ref) { // If current ref for session
+          Preview.close(); // Clear preview cookie
+          Preview.set(json.ref); // Set new preview cookie
+          sessionStorage.setItem('prismicPreview', true) // Session was handled
+          window.location.reload(); // Reload
+        }
+
+        else error('Invalid session');
+
+      }).catch(_ => error('Invalid server response'));
+
+    }).catch(_ => error('Invalid server response'));
+
+  });
+
 }
 
 export default {
-  listen,
+  setup,
 };
