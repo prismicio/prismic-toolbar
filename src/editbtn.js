@@ -1,9 +1,12 @@
+import Config from './config'
 import Cookies from './cookies';
+import { authenticate } from './utils';
+const { config } = Config
 
 export default {
 
   setup(config) {
-    authenticate.then(authorized => {
+    authenticate().then(authorized => {
       if (!authorized) return
       handleLegacyButtons()
       generateEditButtons()
@@ -22,7 +25,7 @@ function handleLegacyButtons() {
 }
 
 // Generate edit buttons
-function generateButtons() {
+function generateEditButtons() {
   const previewToken = Cookies.getPreviewToken();
   const experimentToken = Cookies.getExperimentToken();
 

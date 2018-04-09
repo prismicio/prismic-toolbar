@@ -1,9 +1,7 @@
-/* eslint-env node */
-
 const webpack = require('webpack');
 
 module.exports = {
-  entry: ['whatwg-fetch', 'promise-polyfill/src/polyfill', './src/index.js'],
+  entry: ['./src/index.js'], // TODO whatwg-fetch, promise
   output: {
     filename: 'prismic-toolbar.js',
     libraryTarget: 'umd',
@@ -17,18 +15,14 @@ module.exports = {
     rules: [
       {
         test: /\.js$/,
-        exclude: /(node_modules|bower_components)/,
+        exclude: /node_modules/,
         use: {
           loader: 'babel-loader',
           options: {
-            presets: ['env'],
-            plugins: ['transform-runtime'],
+            presets: ['@babel/preset-env']
           },
         },
       },
     ],
   },
-  plugins: [
-    new webpack.NoEmitOnErrorsPlugin(),
-  ],
 };
