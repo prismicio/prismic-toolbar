@@ -10,7 +10,7 @@ window.prismic = Config;
 (async _ => {
   await Share.setup()
   setTimeout(_ => {
-    Config.startExperiment()
+    Config._startExperiment()
     Config.setup()
     Config.setupEditButton()
   }, 0)

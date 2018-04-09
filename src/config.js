@@ -9,8 +9,8 @@ const setupToolbar = debounce(_ => Toolbar.setup(), 500, true);
 
 const setupEditButton = _ => config && EditBtn.setup(config);
 
-let _startExperiment = _ => _; // TODO doesn't seem right
-const startExperiment = expId => { if (expId) _startExperiment = _ => Experiments.start(expId) };
+let _startExperiment;
+const startExperiment = expId => _startExperiment = expId ? _ => Experiments.start(expId) : _ => _;
 
 const version = Version.value;
 
@@ -33,4 +33,4 @@ const config = (_ => {
 })();
 
 
-export default { setup:setupToolbar, setupEditButton, startExperiment, version, endpoint, config };
+export default { setup:setupToolbar, setupEditButton, startExperiment, _startExperiment, version, endpoint, config };
