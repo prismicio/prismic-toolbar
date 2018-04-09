@@ -1,13 +1,13 @@
 import Toolbar from './toolbar';
 import EditBtn from './editbtn';
 import Experiments from './experiments';
-import { debounce } from './utils';
+import { debounce, removeHash } from './utils';
 import Version from './version';
 import Share from './share';
 
 
 // window.prismic setup
-let _startExperiment = null;
+let _startExperiment = _ => _;
 const setupToolbar = debounce(_ => Toolbar.setup(), 500, true);
 const setupEditButton = _ => config && EditBtn.setup(config);
 const startExperiment = expId => { if (expId) _startExperiment = _ => Experiments.start(expId) };
@@ -40,25 +40,35 @@ const config = (_ => {
 })();
 
 
-// Session iFrame
-const iframe = document.createElement('iframe');
-iframe.src = `${config.baseURL}/previews/session/get`;
-iframe.style.display = 'none';
-document.head.appendChild(iframe);
+// Initialization
+async function init(session) {
+  await Share.setup(config, session);
+  startExperiment();
+  setupToolbar();
+  setupEditButton();
+}
 
 
-// Wait for /previews/session/get iFrame
-// You will always get message, even if there's no session
-window.addEventListener('message', e => {
-  if (!config || e.data.type !== 'preview') return;
+// Legacy session mechanism TODO
+const hash = config.location.hash.match(/prismic-session=([-_a-zA-Z0-9]{16})/);
+if (hash) {
+  removeHash();
+  setTimeout(_ => init(hash[1]), 0);
+}
 
-  // Setup shareable session
-  Share.setup(config, e.data.data).then(_ => {
 
-    // Setup toolbar etc. (not edit button?)
-    _startExperiment && _startExperiment();
-    setupToolbar();
-    setupEditButton();
+// New session mechanism
+else {
 
-  });
-})
+  // Wait for /previews/session/get iFrame (will receive message even if no session)
+  window.addEventListener('message', e => {
+    if (config && e.data.type === 'preview') init(e.data.data);
+  })
+
+  // Session iFrame
+  const iframe = document.createElement('iframe');
+  iframe.src = `${config.baseURL}/previews/session/get`;
+  iframe.style.display = 'none';
+  document.head.appendChild(iframe);
+
+}

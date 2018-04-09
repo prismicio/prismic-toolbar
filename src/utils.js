@@ -16,6 +16,10 @@ export default {
     return await response.json().userId
   }
 
+  removeHash() { 
+    history.pushState("", document.title, window.location.pathname + window.location.search)
+  }
+
   // From underscore.js
   debounce(func, wait, immediate) {
     let timeout;
