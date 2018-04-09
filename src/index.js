@@ -1,17 +1,17 @@
 import Share from './share'
-import Config from './config'
+import { globals, startExperiment, setupToolbar, setupEditButton } from './config'
 
 
-// Set global
-window.prismic = Config;
+// For developers
+window.prismic = globals;
 
 
 // Initialize
 (async _ => {
   await Share.setup()
   setTimeout(_ => {
-    Config._startExperiment()
-    Config.setup()
-    Config.setupEditButton()
+    startExperiment()
+    setupToolbar()
+    setupEditButton()
   }, 0)
 })()

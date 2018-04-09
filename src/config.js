@@ -1,8 +1,8 @@
+import Experiments from './experiments';
 import Toolbar from './toolbar';
 import EditBtn from './editbtn';
-import Experiments from './experiments';
-import { debounce } from './utils';
 import Version from './version';
+import { debounce } from './utils';
 
 
 const setupToolbar = debounce(_ => Toolbar.setup(), 500, true);
@@ -33,4 +33,8 @@ const config = (_ => {
 })();
 
 
-export default { setup:setupToolbar, setupEditButton, startExperiment, _startExperiment, version, endpoint, config };
+// For internal use
+export { config, setupToolbar, setupEditButton, _startExperiment as startExperiment };
+
+// For developers
+export const globals = { setup:setupToolbar, setupEditButton, startExperiment, version, endpoint };

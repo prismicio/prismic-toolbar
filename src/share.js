@@ -1,7 +1,7 @@
-import Config from './config'
 import Preview from './preview'
 import { removeHash } from './utils'
-const { baseURL } = Config.config
+import { config } from './config'
+const { baseURL } = config
 
 
 export default {

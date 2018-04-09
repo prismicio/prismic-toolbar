@@ -1,7 +1,6 @@
-import Config from './config'
 import Cookies from './cookies';
+import { config } from './config'
 import { authenticate } from './utils';
-const { config } = Config
 
 export default {
 

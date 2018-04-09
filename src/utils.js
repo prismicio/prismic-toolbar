@@ -1,8 +1,8 @@
-import Config from './config'
+import { config } from './config'
 
 // Authenticate
 export async function authenticate() {
-  const response = await fetch(`${Config.config.baseURL}/app/authenticated/v2`, {credentials: 'include'})
+  const response = await fetch(`${config.baseURL}/app/authenticated/v2`, {credentials: 'include'})
 
   // Didn't receive JSON
   const contentType = response.headers.get('content-type');
