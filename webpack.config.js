@@ -1,7 +1,7 @@
 const webpack = require('webpack');
 
 module.exports = {
-  entry: ['./src/index.js'], // TODO whatwg-fetch, promise
+  entry: ['babel-regenerator-runtime', './src/index.js'],
   output: {
     filename: 'prismic-toolbar.js',
     libraryTarget: 'umd',
