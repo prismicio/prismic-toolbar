@@ -1,5 +1,41 @@
 import Preview from './preview';
 
+export default {
+
+  // Setup shared preview (ie. get ref cookie from session and reload)
+  setup(config, SESSION) {
+
+    const validSession = SESSION && typeof SESSION === 'string' && SESSION.length === 16
+    const handledSession = sessionStorage.getItem('prismicPreview')
+    const error = message => console.error(`[prismic.io] Unable to access to preview session: ${message}`);
+
+    if (!validSession || handledSession) return Promise.resolve();
+
+    displayLoading(config, _ => { // Show prismic loader
+
+      // Get ref from session
+      fetch(`${config.baseURL}/previews/token/${SESSION}`).then(response => {
+        response.json().then(json => {
+
+          if (json.ref) { // If current ref for session
+            Preview.close(); // Clear preview cookie
+            Preview.set(json.ref); // Set new preview cookie
+            sessionStorage.setItem('prismicPreview', true) // Session was handled
+            window.location.reload(); // Reload
+          }
+
+          else error('Invalid session');
+
+        }).catch(_ => error('Invalid server response'));
+
+      }).catch(_ => error('Invalid server response'));
+
+    });
+
+  }
+
+};
+
 
 // Show prismic loader
 function displayLoading(config, callback) {
@@ -22,41 +58,3 @@ function displayLoading(config, callback) {
     setTimeout(_ => callback(), 1800);
   }, 200);
 }
-
-
-// Setup shared preview
-// Get ref cookie from session and reload
-function setup(config, SESSION) {
-
-  const validSession = SESSION && typeof SESSION === 'string' && SESSION.length === 16
-  const handledSession = sessionStorage.getItem('prismicPreview')
-  const error = message => console.error(`[prismic.io] Unable to access to preview session: ${message}`);
-
-  if (!validSession || handledSession) return Promise.resolve();
-
-  displayLoading(config, _ => { // Show prismic loader
-
-    // Get ref from session
-    fetch(`${config.baseURL}/previews/token/${SESSION}`).then(response => {
-      response.json().then(json => {
-
-        if (json.ref) { // If current ref for session
-          Preview.close(); // Clear preview cookie
-          Preview.set(json.ref); // Set new preview cookie
-          sessionStorage.setItem('prismicPreview', true) // Session was handled
-          window.location.reload(); // Reload
-        }
-
-        else error('Invalid session');
-
-      }).catch(_ => error('Invalid server response'));
-
-    }).catch(_ => error('Invalid server response'));
-
-  });
-
-}
-
-export default {
-  setup,
-};

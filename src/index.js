@@ -1,14 +1,14 @@
 import Toolbar from './toolbar';
 import EditBtn from './editbtn';
 import Experiments from './experiments';
-import Utils from './utils';
+import { debounce } from './utils';
 import Version from './version';
 import Share from './share';
 
 
 // window.prismic setup
 let _startExperiment = null;
-const setupToolbar = Utils.debounce(() => Toolbar.setup(), 500, true);
+const setupToolbar = debounce(_ => Toolbar.setup(), 500, true);
 const setupEditButton = _ => config && EditBtn.setup(config);
 const startExperiment = expId => { if (expId) _startExperiment = _ => Experiments.start(expId) };
 const version = Version.value;
