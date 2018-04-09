@@ -13,9 +13,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "html2canvas": "^1.0.0-alpha.12",
-    "js-cookie": "^2.2.0",
-    "promise-polyfill": "^7.1.2",
-    "whatwg-fetch": "^2.0.4"
+    "js-cookie": "^2.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.44",
