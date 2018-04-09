@@ -9,7 +9,7 @@ const setupToolbar = debounce(_ => Toolbar.setup(), 500, true);
 
 const setupEditButton = _ => config && EditBtn.setup(config);
 
-let _startExperiment;
+let _startExperiment = _ => _;
 const startExperiment = expId => _startExperiment = expId ? _ => Experiments.start(expId) : _ => _;
 
 const version = Version.value;
