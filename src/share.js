@@ -67,13 +67,6 @@ function makeiFrame(src) {
 }
 
 
-// Get cookie
-function getCookie(name) {
-  var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
-  return v ? v[2] : null;
-}
-
-
 // Handle error
 function error(message) {
   console.error(`[prismic.io] Unable to access to preview session: ${message}`)
