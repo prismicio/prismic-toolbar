@@ -9,33 +9,38 @@ export default {
   // Setup shared preview
   async setup() {
 
-    // Legacy
+    // Already setup (got ref, same session)
+    if (sessionStorage.getItem('prismicPreview')) return
+
+    // TODO LEGACY
+    let ref;
     const hash = window.location.hash.match(/prismic-session=([-_a-zA-Z0-9]{16})/)
-    hash && removeHash()
+    if (hash) {
+      removeHash()
+      showPrismicLoader()
+      const SESSION = hash[1]
+      // Validate
+      if (!SESSION || SESSION.length !== 16) return
+      // Get ref
+      const json = await fetch(`${baseURL}/previews/token/${SESSION}`)
+        .then(res => res.json())
+        .catch(err => error(`Invalid server response: ${err}`))
+      ref = json.ref
+    }
+    else {
+      ref = await getRef()
+    }
 
-    // Get session
-    const SESSION = hash ? hash[1] : await getSession()
+    // Already setup (cookie already set)
+    if (ref === Preview.get()) return
 
-    // Validate session
-    const validSession = SESSION && SESSION.length === 16
-    const handledSession = sessionStorage.getItem('prismicPreview')
-    if (!validSession || handledSession) return
-
-    // Show loader
-    await prismicLoader()
-
-    // Get ref from session
-    const json = await fetch(`${baseURL}/previews/token/${SESSION}`)
-      .then(res => res.json())
-      .catch(err => error(`Invalid server response: ${err}`))
-
-    if (json.ref) { // If current ref for session
-      Preview.close()
-      Preview.set(json.ref) // Set the ref
+    if (ref) {
+      await showPrismicLoader() // Show loader for 2 seconds
+      Preview.close() // Delete old ref
+      Preview.set(ref) // Set the ref
       sessionStorage.setItem('prismicPreview', true) // Session now handled
       window.location.reload() // Reload
     }
-    else error('Invalid session')
 
   }
 
@@ -43,19 +48,29 @@ export default {
 
 
 // Get session via iFrame
-function getSession() {
+function getRef() {
   const event = new Promise(resolve => {
     window.addEventListener('message', e => {
       if (e.data.type === 'preview') resolve(e.data.data)
     })
   })
-
-  const iframe = document.createElement('iframe')
-  iframe.src = `${baseURL}/previews/session/get`
-  iframe.style.display = 'none'
-  document.head.appendChild(iframe)
-
+  makeiFrame(`${baseURL}/previews/ref/get`)
   return event
+}
+
+
+// Make hidden iFrame
+function makeiFrame(src) {
+  const iframe = document.createElement('iframe')
+  iframe.src = src
+  document.head.appendChild(iframe)
+}
+
+
+// Get cookie
+function getCookie(name) {
+  var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
 }
 
 
@@ -66,7 +81,7 @@ function error(message) {
 
 
 // Show prismic loader
-function prismicLoader() {
+function showPrismicLoader() {
   const iframe = document.createElement('iframe')
   iframe.setAttribute('src', `${baseURL}/previews/loading`)
   iframe.style.position = 'fixed'
