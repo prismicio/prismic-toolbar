@@ -50,10 +50,10 @@ function domReady() {
 
 if (document.readyState === 'complete') {
   domReady();
-else {
+} else {
   document.addEventListener('DOMContentLoaded', domReady);
 }
-  
+
 exports.setup = setupToolbar;
 exports.setupEditButton = setupEditButton;
 exports.startExperiment = startExperiment;
