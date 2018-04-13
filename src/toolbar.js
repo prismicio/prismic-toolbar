@@ -5,26 +5,33 @@ import { onPrismic, reload } from './utils';
 export default {
 
   setup() {
+
     const previewRef = preview.get()
+
     if (!previewRef) return
 
-    // Legacy toolbar
-    const legacy = document.querySelector('#io-prismic-toolbar')
-    if (legacy) legacy.remove()
-
-    // Create toolbar
-    const iframe = createToolbar(previewRef)
+    legacyToolbar()
+    
+    const toolbar = createToolbar(previewRef)
 
     // Listen to prismic.io messages
-    onPrismic('ping', _ => pong(iframe))
-    onPrismic('display', data => display(iframe, data))
+    onPrismic('ping', _ => pong(toolbar))
+    onPrismic('display', data => display(toolbar, data))
     onPrismic('closeSession', preview.end)
-    onPrismic('screenshot', data => screenshot(iframe, data))
+    onPrismic('screenshot', data => screenshot(toolbar, data))
     onPrismic('reload', reload)
-    onPrismic('toggle', data => toggle(iframe, data))
+    onPrismic('toggle', data => toggle(toolbar, data))
     onPrismic('change', data => preview.start(data.ref))
+
   }
 
+}
+
+
+// Legacy
+function legacyToolbar() {
+  const legacy = document.querySelector('#io-prismic-toolbar')
+  if (legacy) legacy.remove()
 }
 
 
