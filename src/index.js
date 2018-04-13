@@ -1,17 +1,21 @@
-import Share from './share'
-import { globals, startExperiment, setupToolbar, setupEditButton } from './config'
+import Messenger from './messenger'
+import Preview from './preview'
+import { globals, setupExperiment, setupToolbar, setupEditButton } from './config'
+import { readyDOM } from './utils'
+import { config } from './config'
+const { baseURL } = config
 
+// Prismic iFrame
+export const corsLink = new Messenger(`${baseURL}/previews/messenger`)
 
-// For developers
-window.prismic = globals;
+// Setup
+;(async _ => {
 
+  window.prismic = globals
+  await Preview.setup(corsLink)
+  await readyDOM()
+  setupExperiment()
+  setupToolbar()
+  setupEditButton()
 
-// Initialize
-(async _ => {
-  await Share.setup()
-  setTimeout(_ => {
-    startExperiment()
-    setupToolbar()
-    setupEditButton()
-  }, 0)
 })()

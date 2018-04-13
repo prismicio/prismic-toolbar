@@ -34,7 +34,7 @@ const config = (_ => {
 
 
 // For internal use
-export { config, setupToolbar, setupEditButton, _startExperiment as startExperiment };
+export { config, setupToolbar, setupEditButton, _startExperiment as setupExperiment };
 
 // For developers
 export const globals = { setup:setupToolbar, setupEditButton, startExperiment, version, endpoint };

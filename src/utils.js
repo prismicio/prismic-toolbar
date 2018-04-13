@@ -12,9 +12,21 @@ export async function authenticate() {
 }
 
 
+// Wait for DOM to be accessible
+export function readyDOM() {
+  return new Promise(resolve => setTimeout(resolve, 0))
+}
+
+
 // Remove #... in url
 export function removeHash() {
   window.history.pushState("", document.title, window.location.pathname + window.location.search)
+}
+
+
+// Reload
+export function reload() {
+  window.location.reload()
 }
 
 
@@ -39,7 +51,6 @@ export function debounce(func, wait, immediate) {
 export function onPrismic(type, handler) {
   handlers.push({ type, func:handler })
 }
-
 // onPrismic helper
 const handlers = []
 window.addEventListener('message', e => {

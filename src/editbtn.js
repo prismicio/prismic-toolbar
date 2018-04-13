@@ -1,4 +1,4 @@
-import Cookies from './cookies';
+import { preview, experiment } from './cookies'
 import { config } from './config'
 import { authenticate } from './utils';
 
@@ -25,8 +25,8 @@ function handleLegacyButtons() {
 
 // Generate edit buttons
 function generateEditButtons() {
-  const previewToken = Cookies.getPreviewToken();
-  const experimentToken = Cookies.getExperimentToken();
+  const previewToken = preview.get();
+  const experimentToken = experiment.get();
 
   document.querySelectorAll('[data-wio-id]').forEach(el => {
 

@@ -1,31 +1,28 @@
 import html2canvas from 'html2canvas';
-import Preview from './preview';
-import { onPrismic } from './utils';
+import { preview } from './cookies';
+import { onPrismic, reload } from './utils';
 
 export default {
 
   setup() {
-    const previewToken = Preview.get()
-    if (!previewToken) return
+    const previewRef = preview.get()
+    if (!previewRef) return
 
     // Legacy toolbar
-    const existingToolbar = document.querySelector('#io-prismic-toolbar')
-    if (existingToolbar) existingToolbar.remove()
+    const legacy = document.querySelector('#io-prismic-toolbar')
+    if (legacy) legacy.remove()
 
     // Create toolbar
-    const iframe = createToolbar(previewToken)
+    const iframe = createToolbar(previewRef)
 
     // Listen to prismic.io messages
     onPrismic('ping', _ => pong(iframe))
     onPrismic('display', data => display(iframe, data))
-    onPrismic('closeSession', _ => Preview.close())
+    onPrismic('closeSession', preview.end)
     onPrismic('screenshot', data => screenshot(iframe, data))
     onPrismic('reload', reload)
     onPrismic('toggle', data => toggle(iframe, data))
-    onPrismic('change', data => {
-      Preview.close()
-      Preview.set(data.ref)
-    })
+    onPrismic('change', data => preview.start(data.ref))
   }
 
 }
@@ -97,12 +94,6 @@ function toggle(iframe, mode) {
     document.body.style = bodyStyle;
     document.documentElement.style = htmlStyle;
   }
-}
-
-// Reload the browser window (either on the same URL or on the given one)
-function reload(url) {
-  if (url) document.location = url;
-  else document.location.reload();
 }
 
 // ???

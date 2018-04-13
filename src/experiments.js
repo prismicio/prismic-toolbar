@@ -1,45 +1,50 @@
-import Cookies from './cookies';
+import { experiment } from './cookies'
+import { reload } from './utils';
 
 export default {
 
-  start(googleId) {
+  async start(googleId) {
 
-    loadGoogleExperimentScript(googleId, _ => {
+    // Load experiment script
+    await loadGoogleExperimentScript(googleId)
 
-      // Check if cookies are enabled
-      if (!navigator.cookieEnabled) return
+    // If cookies not enabled
+    if (!navigator.cookieEnabled) return
 
-      // Don't experiment in preview mode
-      if (Cookies.getPreviewToken()) return
+    // Get experiment
+    const [id, variation] = (experiment.get() || '').split(' ')
+    const googleVariation = window.cxApi.chooseVariation()
 
-      // Get experiment
-      const inCookie = (Cookies.getExperimentToken() || '').split(' ');
-      const googleVariation = window.cxApi.chooseVariation();
+    // Not participating
+    if (googleVariation === window.cxApi.NOT_PARTICIPATING && id) experiment.end()
 
-      // Not participating
-      if (googleVariation === window.cxApi.NOT_PARTICIPATING) return Cookies.removeExperimentToken();
+    // Check if new experiment
+    const newId = id !== googleId
+    const newVariation = variation !== googleVariation.toString()
 
-      // ???
-      if (inCookie[0] !== googleId || inCookie[1] !== googleVariation.toString()) {
-        Cookies.setExperimentToken(googleId, googleVariation);
-        window.location.reload();
-      }
-
-    });
+    // Initiate experiment
+    if (newId || newVariation) {
+      experiment.start(googleId, googleVariation)
+      reload()
+    }
 
   }
 
-};
+}
 
 
-function loadGoogleExperimentScript(googleId, callback) {
-  const src = `//www.google-analytics.com/cx/api.js?experiment=${googleId}`;
-  const alreadyExists = document.querySelector(`[src="${src}"]`);
+function loadGoogleExperimentScript(googleId) {
+  return new Promise(resolve => {
 
-  if (alreadyExists) return callback();
+    const src = `//www.google-analytics.com/cx/api.js?experiment=${googleId}`
+    const alreadyExists = document.querySelector(`[src="${src}"]`)
 
-  const script = document.createElement('script');
-  script.src = src;
-  script.onload = callback;
-  document.head.appendChild(script);
+    if (alreadyExists) return resolve()
+
+    const script = document.createElement('script')
+    script.src = src
+    script.onload = resolve
+    document.head.appendChild(script)
+
+  })
 }

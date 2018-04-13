@@ -1,32 +1,45 @@
-import Cookies from 'js-cookie';
+import { corsLink } from './index'
+import { reload } from './utils'
 
-const PREVIEW_COOKIE_KEY = 'io.prismic.preview';
-const EXPERIMENT_COOKIE_KEY = 'io.prismic.experiment';
+export const preview = {
+  key: 'io.prismic.preview',
+  get: _ => getCookie(preview.key),
+  start: val => {
+    setCookie(preview.key, val, .1) // prevent bad ref
+    reload()
+  },
+  end: _ => {
+    deleteCookie(preview.key)
+    corsLink.send('close')
+    reload()
+  },
+}
 
-export default {
-  PREVIEW_COOKIE_KEY,
-  EXPERIMENT_COOKIE_KEY,
-  getPreviewToken() {
-    return Cookies.get(PREVIEW_COOKIE_KEY);
+export const experiment = {
+  key: 'io.prismic.experiment',
+  get: _ => getCookie(experiment.key),
+  start: (expId, variation) => {
+    setCookie(experiment.key, [expId, variation].join(' '))
+    reload()
   },
-  getExperimentToken() {
-    return Cookies.get(EXPERIMENT_COOKIE_KEY);
+  end: _ => {
+    deleteCookie(experiment.key)
+    reload()
   },
-  setPreviewToken(ref) {
-    Cookies.set(PREVIEW_COOKIE_KEY, ref, { path: '/' });
-  },
-  removeExperimentToken() {
-    Cookies.remove(EXPERIMENT_COOKIE_KEY);
-  },
-  setExperimentToken(expId, variation) {
-    const token = [expId, variation].join(' ');
-    const expires = 60 * 60 * 24 * 30;
-    Cookies.set(EXPERIMENT_COOKIE_KEY, token, { expires, path: '/' });
-  },
-  removePreviewCookie(path, domain) {
-    const pathOption = path ? { path } : {};
-    const domainOption = domain ? { domain } : {};
-    const options = Object.assign(pathOption, domainOption);
-    Cookies.remove(PREVIEW_COOKIE_KEY, options);
-  },
-};
+}
+
+
+function getCookie(name) {
+  var v = document.cookie.match('(^|;) ?' + name + '=([^;]*)(;|$)');
+  return v ? v[2] : null;
+}
+
+function setCookie(name, value, days) {
+  var d = new Date();
+  d.setTime(d.getTime() + 24*60*60*1000*days);
+  document.cookie = name + "=" + value + ";path=/;expires=" + d.toGMTString();
+}
+
+function deleteCookie(name) {
+  setCookie(name, null, -1)
+}
