@@ -42,4 +42,31 @@ function setCookie(name, value, days) {
 
 function deleteCookie(name) {
   setCookie(name, null, -1)
+  legacyDeleteCookie(name)
+}
+
+// TODO remove
+export function legacyDeleteCookie(name) {
+
+  const subdomains = window.location.hostname.split('.') // ['gosport','com']
+  const DOMAINS = subdomains
+    .map((sub, idx) => '.'+subdomains.slice(idx).join('.')) // .a.b.foo.com
+    .slice(0,-1) // no more .com
+    .concat(subdomains.join('.')) // website.gosport.com
+    .concat(null) // no domain specified
+
+  const subpaths = window.location.pathname.slice(1).split('/') // ['my','path']
+  const PATHS = subpaths
+    .map((path, idx) => '/'+subpaths.slice(idx).join('/')) // /a/b/foo
+    .map((path, idx) => '/'+subpaths.slice(idx).join('/')+'/') // /a/b/foo/
+    .concat('/') // root path
+    .concat(null) // no path specified
+
+  DOMAINS.forEach(d =>
+    PATHS.forEach(p =>
+      const path = p ? `path=${p};` : ''
+      const domain = d ? `domain=${d};` : ''
+      document.cookie = `${name}=;${path}${domain}expires=Thu, 01 Jan 1970 00:00:00 GMT`
+    )
+  )
 }
