@@ -1,5 +1,6 @@
-package-lock.json
-yarn.lock
 node_modules/
-npm-debug.log
 dist/
+
+yarn.lock
+yarn-error.log
+.DS_Store

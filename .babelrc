@@ -1,3 +1,9 @@
 {
-  "presets": ["es2015"]
+  "presets": [
+    ["@babel/env", {
+      "targets": {
+        "browsers": ["> 5%"]
+      }
+    }]
+  ],
 }
