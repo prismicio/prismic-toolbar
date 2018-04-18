@@ -2,7 +2,7 @@
   "presets": [
     ["@babel/env", {
       "targets": {
-        "browsers": ["> 5%"]
+        "browsers": ["> 2%", "not OperaMini all"]
       }
     }]
   ],
