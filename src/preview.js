@@ -1,4 +1,5 @@
 import Cookies from './cookies';
+import { config } from './index';
 
 function removeForPaths(pathParts, domain) {
   let sizeWithoutLastPathPart;
@@ -13,6 +14,11 @@ function removeForPaths(pathParts, domain) {
 
 // Close the preview session (ie. discard the cookie)
 function close() {
+  config.corsLink.contentWindow.postMessage({
+    type: 'close',
+    data: null,
+  }, '*')
+
   const domainParts = document.location.hostname.split('.');
   const pathParts = document.location.pathname.split('/');
 

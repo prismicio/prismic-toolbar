@@ -8,10 +8,11 @@ import Share from './share';
 const PRISMIC_ENDPOINT = window.prismic && window.prismic.endpoint;
 let START_EXPERIMENT = () => {};
 
-const config = (() => {
+export const config = (() => {
   const matches = PRISMIC_ENDPOINT && PRISMIC_ENDPOINT.match(new RegExp('(https?://([^/]*))'));
   if (matches && matches[1] && matches[2]) {
     const baseURL = matches[1].replace(/\.cdn\.prismic\.io/, '.prismic.io');
+    const corsLink = iFrame(`${baseURL}/previews/messenger`)
     const editorTab = matches[2].replace(/\.cdn\.prismic\.io/, '.prismic.io');
     const location = {
       origin: window.location.origin,
@@ -19,12 +20,19 @@ const config = (() => {
       pathname: window.location.pathname,
       search: window.location.search,
     };
-    return { baseURL, editorTab, location };
+    return { baseURL, editorTab, location, corsLink };
   }
   return null;
 })();
 
 const setupToolbar = Utils.debounce(() => Toolbar.setup(), 500, true);
+
+function iFrame(src) {
+  const iframe = document.createElement('iframe')
+  iframe.src = src
+  document.head.appendChild(iframe)
+  return iframe
+}
 
 function setupEditButton() {
   if (config) {
@@ -47,12 +55,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-exports.setup = setupToolbar;
-exports.setupEditButton = setupEditButton;
-exports.startExperiment = startExperiment;
-exports.version = Version.value;
-exports.endpoint = PRISMIC_ENDPOINT;
 
 window.prismic = {
   setup: setupToolbar,
