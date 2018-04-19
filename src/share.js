@@ -40,14 +40,14 @@ function listen(config, callback) {
     displayLoading(config, () => {
       Preview.set(ref);
       window.location.reload();
-    })
+    });
   }
-  window.addEventListener('message', setRef);
+  return window.addEventListener('message', setRef);
 }
 
 // TODO remove
 function legacySetup(config, callback) {
-  const hash = config.location.hash;
+  const { hash } = config.location;
   const matches = hash.match(PRISMIC_SESSION_REG);
   const sessionId = matches && matches[3];
 

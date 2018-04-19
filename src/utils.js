@@ -15,4 +15,21 @@ export default {
       if (callNow) func.apply(context, args);
     };
   },
+
+  iFrame(src) {
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    document.head.appendChild(iframe);
+    return iframe;
+  },
+
+  script(src) {
+    return new Promise((resolve) => {
+      const s = document.createElement('script');
+      document.head.appendChild(s);
+      s.addEventListener('load', resolve);
+      s.src = src;
+    });
+  },
+
 };
