@@ -28,25 +28,25 @@ function displayLoading(config, callback) {
 }
 
 function listen(config, callback) {
-  if (config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup(config, callback)
+  if (config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup(config, callback);
 
   // from corsLink
   function setRef(msg) {
-    if (msg.data.type !== 'previewRef') return
-    window.removeEventListener('message', setRef)
-    const ref = msg.data.data
-    if (!ref) return callback()
-    if (ref === Preview.get()) return callback()
+    if (msg.data.type !== 'previewRef') return;
+    window.removeEventListener('message', setRef);
+    const ref = msg.data.data;
+    if (!ref) return callback();
+    if (ref === Preview.get()) return callback();
     displayLoading(config, () => {
-      Preview.set(ref)
-      window.location.reload()
+      Preview.set(ref);
+      window.location.reload();
     })
   }
-  window.addEventListener('message', setRef)
+  window.addEventListener('message', setRef);
 }
 
 // TODO remove
-function legacySetup() {
+function legacySetup(config, callback) {
   const hash = config.location.hash;
   const matches = hash.match(PRISMIC_SESSION_REG);
   const sessionId = matches && matches[3];
@@ -84,10 +84,3 @@ function legacySetup() {
 export default {
   listen,
 };
-
-function iFrame(src) {
-  const iframe = document.createElement('iframe')
-  iframe.src = src
-  document.head.appendChild(iframe)
-  return iframe
-}

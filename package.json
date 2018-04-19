@@ -5,8 +5,8 @@
   "main": "./dist/npm-prismic-toolbar.js",
   "lock": "false",
   "scripts": {
-    "start": "webpack --mode development --watch",
-    "build": "webpack --mode production",
+    "start": "webpack --mode=development --watch",
+    "build": "webpack --mode=production",
     "lint": "eslint src",
     "test": "jest"
   },
@@ -22,7 +22,6 @@
     "babel-eslint": "^7.2.3",
     "babel-jest": "^22.4.3",
     "babel-loader": "^8.0.0-beta",
-    "babel-regenerator-runtime": "^6.5.0",
     "eslint": "^4.1.1",
     "eslint-config-react-app": "^2.1.0",
     "eslint-plugin-flowtype": "^2.34.1",
