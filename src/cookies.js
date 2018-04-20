@@ -29,4 +29,27 @@ export default {
     const options = Object.assign(pathOption, domainOption);
     Cookies.remove(PREVIEW_COOKIE_KEY, options);
   },
+  removeAllPreviewCookies() {
+    const domainParts = document.location.hostname.split('.');
+    const pathParts = document.location.pathname.split('/');
+
+    removeForPaths(pathParts);
+
+    domainParts.forEach((domainPart, domainPartIndex) => {
+      const domain = domainParts.slice(domainPartIndex).join('.');
+      removeForPaths(pathParts, domain);
+    });
+  },
 };
+
+
+function removeForPaths(pathParts, domain) {
+  let sizeWithoutLastPathPart;
+  pathParts.forEach((pathPart, pathPartIndex) => {
+    sizeWithoutLastPathPart = pathParts.length - 1;
+    const path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
+    Cookies.removePreviewCookie(`${path}/`, domain);
+    Cookies.removePreviewCookie(`${path}/`, `.${domain}`);
+    Cookies.removePreviewCookie(`${path}/`);
+  });
+}

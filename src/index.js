@@ -1,10 +1,11 @@
 import Share from './share';
 import Utils from './utils';
-import { config, globals, START_EXPERIMENT, setupToolbar, setupEditButton } from './config';
+import Config from './config';
+import Globals, { startExp, setupToolbar, setupEditButton } from './globals';
 
 (async () => {
   // Globals
-  window.prismic = globals;
+  window.prismic = Globals;
 
   // Polyfills
   const features = [];
@@ -14,9 +15,9 @@ import { config, globals, START_EXPERIMENT, setupToolbar, setupEditButton } from
 
   // Setup
   setTimeout(0, () => {
-    if (!config) return;
-    Share.listen(config, () => {
-      START_EXPERIMENT();
+    if (!Config) return;
+    Share.listen(Config, () => {
+      startExp(); // TODO not stable
       setupToolbar();
       setupEditButton();
     });

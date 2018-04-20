@@ -1,4 +1,4 @@
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas'; // TODO dom-to-image and dynamic load
 import Preview from './preview';
 
 // Remember some styles so we can easily restore them back after toggle

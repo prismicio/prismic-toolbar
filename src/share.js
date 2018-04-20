@@ -1,7 +1,7 @@
 import Preview from './preview';
 
 function logError(message) {
-  console.error(`[prismic.io] Unable to access to preview session: ${message}`);
+  console.error(`[prismic.io] Unable to access to preview session: ${message}`); // eslint-disable-line
 }
 
 const PRISMIC_SESSION_REG = /#(([^~]+)~)?prismic-session=([-_a-zA-Z0-9]{16})/;
