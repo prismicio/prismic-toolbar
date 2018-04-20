@@ -14,12 +14,12 @@ import Globals, { startExp, setupToolbar, setupEditButton } from './globals';
   if (features.length) await Utils.script(`https://cdn.polyfill.io/v2/polyfill.min.js?features=${features.join(',')}&flags=gated,always`);
 
   // Setup
-  setTimeout(0, () => {
+  setTimeout(() => {
     if (!Config) return;
     Share.listen(Config, () => {
       startExp(); // TODO not stable
       setupToolbar();
       setupEditButton();
     });
-  });
+  }, 0);
 })();

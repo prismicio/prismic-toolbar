@@ -1,10 +1,10 @@
 import Cookies from './cookies';
-import { config } from './config';
+import Config from './config';
 
 // Close the preview session (ie. discard the cookie)
 function close() {
-  config.corsLink.contentWindow.postMessage({ type: 'close', data: null }, '*');
-  Cookies.removeAllPreviewCookies();
+  Config.corsLink.contentWindow.postMessage({ type: 'close' }, '*');
+  Cookies.removePreviewCookie();
 }
 
 function set(previewRef) {

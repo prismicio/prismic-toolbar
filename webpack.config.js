@@ -1,5 +1,5 @@
 module.exports = {
-  entry: ['./src/index.js'],
+  entry: ['regenerator-runtime/runtime', './src/index.js'],
   output: {
     filename: 'prismic-toolbar.js',
     libraryTarget: 'umd',
