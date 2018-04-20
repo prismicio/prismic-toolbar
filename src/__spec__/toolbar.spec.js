@@ -28,7 +28,7 @@ describe('Cookies', () => {
 
     // Remove all preview cookies
     cookie = await page.evaluate(() => {
-    	removePreviewCookie();
+      removePreviewCookie(); // eslint-disable-line
       return cookieExists('io.prismic.preview');
     });
 
