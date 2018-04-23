@@ -3,4 +3,5 @@ dist/
 
 yarn.lock
 yarn-error.log
+npm-debug.log
 .DS_Store

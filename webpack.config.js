@@ -1,5 +1,5 @@
 module.exports = {
-  entry: ['regenerator-runtime/runtime', './src/index.js'],
+  entry: ['whatwg-fetch', 'promise-polyfill/src/polyfill', './src/index.js'],
   output: {
     filename: 'prismic-toolbar.js',
     libraryTarget: 'umd',

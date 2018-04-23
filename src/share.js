@@ -1,4 +1,5 @@
 import Preview from './preview';
+import Config from './config';
 
 function logError(message) {
   console.error(`[prismic.io] Unable to access to preview session: ${message}`); // eslint-disable-line
@@ -6,9 +7,9 @@ function logError(message) {
 
 const PRISMIC_SESSION_REG = /#(([^~]+)~)?prismic-session=([-_a-zA-Z0-9]{16})/;
 
-function displayLoading(config, callback) {
+function displayLoading(callback) {
   const iframe = document.createElement('iframe');
-  iframe.setAttribute('src', `${config.baseURL}/previews/loading`);
+  iframe.setAttribute('src', `${Config.baseURL}/previews/loading`);
   iframe.style.position = 'fixed';
   iframe.style.right = 0;
   iframe.style.left = 0;
@@ -27,8 +28,8 @@ function displayLoading(config, callback) {
   }, 200);
 }
 
-function listen(config, callback) {
-  if (config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup(config, callback);
+function listen(callback) {
+  if (Config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup(callback);
 
   // from corsLink
   function setRef(msg) {
@@ -37,7 +38,7 @@ function listen(config, callback) {
     const ref = msg.data.data;
     if (!ref) return callback();
     if (ref === Preview.get()) return callback();
-    displayLoading(config, () => {
+    displayLoading(() => {
       Preview.set(ref);
       window.location.reload();
     });
@@ -46,21 +47,21 @@ function listen(config, callback) {
 }
 
 // TODO remove
-function legacySetup(config, callback) {
-  const { hash } = config.location;
+function legacySetup(callback) {
+  const { hash } = Config.location;
   const matches = hash.match(PRISMIC_SESSION_REG);
   const sessionId = matches && matches[3];
 
   if (sessionId) {
-    displayLoading(config, () => {
-      const endpoint = `${config.baseURL}/previews/token/${sessionId}`;
-      fetch(endpoint).then((response) => {
-        response.json().then((json) => {
+    displayLoading(() => {
+      const endpoint = `${Config.baseURL}/previews/token/${sessionId}`;
+      fetch(endpoint).then(response => {
+        response.json().then(json => {
           if (json.ref) {
             Preview.close();
             Preview.set(json.ref);
             const updatedHash = hash.replace(PRISMIC_SESSION_REG, '$2');
-            const href = `${config.location.origin}${config.location.pathname}${config.location.search}${updatedHash ? `#${updatedHash}` : ''}`;
+            const href = `${Config.location.origin}${Config.location.pathname}${Config.location.search}${updatedHash ? `#${updatedHash}` : ''}`;
             window.location.href = href;
             if (updatedHash) {
               window.location.reload();

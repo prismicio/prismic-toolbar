@@ -6,7 +6,7 @@ describe('Cookies', () => {
     // Set up puppeteer
     const browser = await Puppeteer.launch();
     const page = await browser.newPage();
-    await page.goto('https://github.com/prismicio/prismic-toolbar');
+    await page.goto('https://www.awwwards.com/websites/');
 
     // Expose functions
     await page.exposeFunction('setCookie', setCookie);
@@ -15,10 +15,10 @@ describe('Cookies', () => {
 
     // Set preview cookies
     let cookie = await page.evaluate(() => {
-      setCookie('io.prismic.preview', 'foo', '.blog.gosport.com', '/post');
-      setCookie('io.prismic.preview', 'foo', 'blog.gosport.com', '/post/some-thing/');
-      setCookie('io.prismic.preview', 'foo', '.gosport.com', '/');
-      setCookie('io.prismic.preview', 'foo', 'gosport.com', null);
+      setCookie('io.prismic.preview', 'foo', '.www.awwwards.com', '/websites');
+      setCookie('io.prismic.preview', 'foo', 'www.awwwards.com', '/websites/');
+      setCookie('io.prismic.preview', 'foo', '.awwwards.com', '/');
+      setCookie('io.prismic.preview', 'foo', 'awwwards.com', null);
       setCookie('io.prismic.preview', 'foo', null, '/');
       return cookieExists('io.prismic.preview');
     });

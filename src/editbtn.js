@@ -8,16 +8,16 @@ function setup(config) {
 
   fetch(`${config.baseURL}/app/authenticated/v2`, {
     credentials: 'include',
-  }).then((response) => {
+  }).then(response => {
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.indexOf('application/json') !== -1) {
-      response.json().then((json) => {
+      response.json().then(json => {
         if (json.userId) {
-          document.querySelectorAll('.wio-link').forEach((el) => {
+          document.querySelectorAll('.wio-link').forEach(el => {
             el.parentNode.removeChild(el);
           });
 
-          document.querySelectorAll('[data-wio-id]').forEach((el) => {
+          document.querySelectorAll('[data-wio-id]').forEach(el => {
             const documentId = el.dataset.wioId;
             const url = (() => {
               if (previewToken) {

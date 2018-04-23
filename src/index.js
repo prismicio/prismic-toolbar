@@ -1,25 +1,23 @@
 import Share from './share';
-import Utils from './utils';
 import Config from './config';
+import { readyDOM } from './utils';
 import Globals, { startExp, setupToolbar, setupEditButton } from './globals';
 
+
 (async () => {
+  // Invalid prismic.endpoint
+  if (!Config.baseURL) return console.warn('Invalid window.prismic.endpoint.\nhttps://github.com/prismicio/prismic-toolbar.');
+
   // Globals
   window.prismic = Globals;
 
-  // Polyfills
-  const features = [];
-  if (!window.Promise) features.push('Promise');
-  if (!window.fetch) features.push('fetch');
-  if (features.length) await Utils.script(`https://cdn.polyfill.io/v2/polyfill.min.js?features=${features.join(',')}&flags=gated,always`);
+  startExp(); // TODO unstable
+
+  await readyDOM();
 
   // Setup
-  setTimeout(() => {
-    if (!Config) return;
-    Share.listen(Config, () => {
-      startExp(); // TODO not stable
-      setupToolbar();
-      setupEditButton();
-    });
-  }, 0);
+  Share.listen(() => {
+    setupToolbar();
+    setupEditButton();
+  });
 })();

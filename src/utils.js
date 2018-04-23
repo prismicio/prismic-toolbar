@@ -23,12 +23,10 @@ export default {
     return iframe;
   },
 
-  script(src) {
-    return new Promise((resolve) => {
-      const s = document.createElement('script');
-      document.head.appendChild(s);
-      s.addEventListener('load', resolve);
-      s.src = src;
+  readyDOM() {
+    return new Promise(resolve => {
+      if (document.readyState === 'complete') resolve();
+      else document.addEventListener('DOMContentLoaded', resolve);
     });
   },
 

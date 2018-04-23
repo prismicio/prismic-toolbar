@@ -1,8 +1,6 @@
 import Utils from './utils';
 
-if (!window.prismic || !window.prismic.endpoint) throw new Error('Prismic.js requires window.prismic.endpoint');
-
-const PRISMIC_ENDPOINT = window.prismic.endpoint.replace(/\.cdn\.prismic\.io/, '.prismic.io');
+const PRISMIC_ENDPOINT = ((window.prismic && window.prismic.endpoint) || '').replace(/\.cdn\.prismic\.io/, '.prismic.io');
 const matches = PRISMIC_ENDPOINT && PRISMIC_ENDPOINT.match(new RegExp('https?://([^/]*)'));
 
 export default matches ? {
@@ -15,4 +13,4 @@ export default matches ? {
     pathname: window.location.pathname,
     search: window.location.search,
   },
-} : null;
+} : {};

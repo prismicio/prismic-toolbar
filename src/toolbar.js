@@ -107,7 +107,7 @@ function setup() {
     })();
 
     // Listen to prismic.io messages
-    window.addEventListener('message', (e) => {
+    window.addEventListener('message', e => {
       const message = e.data;
       switch (message.type) {
         case 'io.prismic.ping':
@@ -143,8 +143,8 @@ function setup() {
             ignoreElements: element => element.classList.contains('wio-link'),
           };
 
-          html2canvas(document.body, html2canvasOptions).then((canvas) => {
-            resizeCanvas(canvas, canvasOptions.maxWidth, canvasOptions.maxHeight).toBlob((blob) => {
+          html2canvas(document.body, html2canvasOptions).then(canvas => {
+            resizeCanvas(canvas, canvasOptions.maxWidth, canvasOptions.maxHeight).toBlob(blob => {
               iframe.contentWindow.postMessage({
                 type: 'io.prismic.screenshot',
                 data: { blob, page },
