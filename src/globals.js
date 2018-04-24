@@ -6,14 +6,7 @@ import Version from './version';
 import Config from './config';
 
 export const setupToolbar = Utils.debounce(() => Toolbar.setup(), 500, true);
-
-
-export function setupEditButton() {
-  if (Config) {
-    EditBtn.setup(Config);
-  }
-}
-
+export const setupEditButton = EditBtn.setup;
 
 let START_EXPERIMENT = () => {};
 function startExperiment(expId) {
@@ -21,13 +14,13 @@ function startExperiment(expId) {
     START_EXPERIMENT = () => Experiments.start(expId);
   }
 }
-export const startExp = () => START_EXPERIMENT();
 
+export const startExp = () => START_EXPERIMENT();
 
 export const globals = {
   startExperiment,
   setupEditButton,
   setup: setupToolbar,
   version: Version.value,
-  endpoint: Config.baseURL,
+  endpoint: Config.endpoint,
 };

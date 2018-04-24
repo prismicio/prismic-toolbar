@@ -1,5 +1,8 @@
 import Preview from './preview';
 import Config from './config';
+import Utils from './utils';
+
+const REF_IFRAME = Utils.iFrame(`${Config.baseURL}/previews/messenger`);
 
 function logError(message) {
   console.error(`[prismic.io] Unable to access to preview session: ${message}`); // eslint-disable-line
@@ -31,7 +34,7 @@ function displayLoading(callback) {
 function listen(callback) {
   if (Config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup(callback);
 
-  // from corsLink
+  // from ref iframe
   function setRef(msg) {
     if (msg.data.type !== 'previewRef') return;
     window.removeEventListener('message', setRef);
@@ -82,6 +85,11 @@ function legacySetup(callback) {
   } else callback();
 }
 
+function close() {
+  REF_IFRAME.contentWindow.postMessage({ type: 'close' }, '*');
+}
+
 export default {
   listen,
+  close,
 };
