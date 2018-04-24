@@ -4,6 +4,7 @@ const PRISMIC_ENDPOINT = ((window.prismic && window.prismic.endpoint) || '').rep
 const matches = PRISMIC_ENDPOINT && PRISMIC_ENDPOINT.match(new RegExp('https?://([^/]*)'));
 
 export default matches ? {
+  endpoint: PRISMIC_ENDPOINT,
   baseURL: matches[0],
   editorTab: matches[1],
   corsLink: Utils.iFrame(`${matches[0]}/previews/messenger`),
