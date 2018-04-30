@@ -1,16 +1,18 @@
 import Preview from './preview';
 import Config from './config';
-import Utils from './utils';
+import { iFrame } from './utils';
 
 // Get preview ref from iframe
-const REF_IFRAME = Utils.iFrame(`${Config.baseURL}/previews/messenger`);
-const REF_PROMISE = new Promise();
-let ref = null;
-window.addEventListener('message', _ => {
-  if (msg.data.type !== 'previewRef') return;
-  ref = msg.data.data;
-  resolve();
+const REF_IFRAME = iFrame(`${Config.baseURL}/previews/messenger`);
+const REF_PROMISE = new Promise(resolve => {
+  window.addEventListener('message', msg => {
+    if (msg.data.type !== 'previewRef') return;
+    ref = msg.data.data;
+    resolve();
+  });
 });
+let ref = null;
+
 
 function logError(message) {
   console.error(`[prismic.io] Unable to access to preview session: ${message}`); // eslint-disable-line
@@ -38,20 +40,23 @@ function displayLoading() {
       iframe.style.opacity = 1;
       window.setTimeout(() => resolve(), 1800);
     }, 200);
-  })
+  });
 }
 
 async function listen() {
-  if (Config.location.hash.match(PRISMIC_SESSION_REG)) return await legacySetup();
+  if (Config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup();
   await REF_PROMISE;
-  if (ref === Preview.get()) return;
-  if (!ref && !Preview.get()) return;
+  if (ref === Preview.get()) return; // same ref
+  if (!ref && Preview.get()) { // need to delete ref
+    Preview.close();
+    window.location.reload();
+  }
   await displayLoading();
   Preview.set(ref);
   window.location.reload();
 }
 
-// TODO remove
+// TODO LEGACY
 function legacySetup() {
   return new Promise(resolve => {
     const { hash } = Config.location;
@@ -86,7 +91,7 @@ function legacySetup() {
         });
       });
     } else resolve();
-  })
+  });
 }
 
 function close() {

@@ -1,11 +1,11 @@
 import Toolbar from './toolbar';
 import EditBtn from './editbtn';
 import Experiments from './experiments';
-import Utils from './utils';
 import Version from './version';
 import Config from './config';
+import { debounce } from './utils';
 
-export const setupToolbar = Utils.debounce(() => Toolbar.setup(), 500, true);
+export const setupToolbar = debounce(() => Toolbar.setup(), 500, true);
 export const setupEditButton = EditBtn.setup;
 
 let START_EXPERIMENT = () => {};

@@ -24,34 +24,41 @@ export default {
     Cookies.set(EXPERIMENT_COOKIE_KEY, token, { expires, path: '/' });
   },
   removePreviewCookie() {
-    demolishCookie(PREVIEW_COOKIE_KEY);
+    close();
   },
 };
 
 
-function demolishCookie(name) {
-  const subdomains = window.location.hostname.split('.'); // ['www','gosport','com']
-  const DOMAINS = subdomains
-    .map((sub, idx) => `.${subdomains.slice(idx).join('.')}`) // .a.b.foo.com
-    .slice(0, -1) // no more .com
-    .concat(subdomains.join('.')) // website.gosport.com
-    .concat(null); // no domain specified
-
-  const subpaths = window.location.pathname.slice(1).split('/'); // ['my','path']
-  const PATHS = subpaths
-    .map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}`) // /a/b/foo
-    .concat(subpaths.map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}/`)) // /a/b/foo/
-    .concat('/') // root path
-    .concat(null); // no path specified
-
-  DOMAINS.forEach(domain =>
-    PATHS.forEach(path =>
-      deleteCookie(name, domain, path)));
+// TODO LEGACY
+function removeForPaths(pathParts, domain) {
+  let sizeWithoutLastPathPart;
+  pathParts.forEach((pathPart, pathPartIndex) => {
+    sizeWithoutLastPathPart = pathParts.length - 1;
+    const path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
+    removePreviewCookie(`${path}/`, domain);
+    removePreviewCookie(`${path}/`, `.${domain}`);
+    removePreviewCookie(`${path}/`);
+  });
 }
 
+// TODO LEGACY
+function close() {
+  const domainParts = document.location.hostname.split('.');
+  const pathParts = document.location.pathname.split('/');
 
-function deleteCookie(name, domain = null, path = '/') {
-  const p = path ? `path=${path};` : '';
-  const d = domain ? `domain=${domain};` : '';
-  document.cookie = `${name}=;${p}${d}expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+  removeForPaths(pathParts);
+
+  domainParts.forEach((domainPart, domainPartIndex) => {
+    const domain = domainParts.slice(domainPartIndex).join('.');
+    removeForPaths(pathParts, domain);
+  });
+}
+
+// TODO LEGACY
+function removePreviewCookie(path, domain) {
+  const pathOption = path ? { path } : {};
+  const domainOption = domain ? { domain } : {};
+  const expiresOption = { expires: -1 };
+  const options = Object.assign(pathOption, domainOption, expiresOption);
+  Cookies.remove(PREVIEW_COOKIE_KEY, options);
 }

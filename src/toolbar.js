@@ -132,6 +132,7 @@ function setup() {
 
         case 'io.prismic.closeSession':
           Preview.close();
+          window.location.reload();
           break;
 
         case 'io.prismic.screenshot': {
@@ -161,6 +162,7 @@ function setup() {
         case 'io.prismic.change':
           Preview.close();
           Preview.set(message.data.ref);
+          window.location.reload();
           break;
 
         case 'io.prismic.toggle':
