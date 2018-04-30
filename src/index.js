@@ -10,12 +10,13 @@ import Globals, { startExp, setupToolbar, setupEditButton } from './globals';
   // Globals
   window.prismic = Globals;
 
+  // Previews
+  await Share.listen();
+  startExp();
+
   await readyDOM();
 
   // Setup
-  Share.listen(() => {
-    startExp();
-    setupToolbar();
-    setupEditButton();
-  });
+  setupToolbar();
+  setupEditButton();
 })();
