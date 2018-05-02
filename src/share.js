@@ -7,11 +7,9 @@ const REF_IFRAME = iFrame(`${Config.baseURL}/previews/messenger`);
 const REF_PROMISE = new Promise(resolve => {
   window.addEventListener('message', msg => {
     if (msg.data.type !== 'previewRef') return;
-    ref = msg.data.data;
-    resolve();
+    resolve(msg.data.data);
   });
 });
-let ref = null;
 
 
 function logError(message) {
@@ -45,7 +43,7 @@ function displayLoading() {
 
 async function listen() {
   if (Config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup();
-  await REF_PROMISE;
+  const ref = await REF_PROMISE;
   if (ref === Preview.get()) return; // same ref
   if (!ref && Preview.get()) { // need to delete ref
     Preview.close();
