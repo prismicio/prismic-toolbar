@@ -1,9 +1,7 @@
 import Cookies from './cookies';
-import Share from './share';
 
 // Close the preview session (ie. discard the cookie)
 function close() {
-  Share.close();
   Cookies.removePreviewCookie();
 }
 

@@ -43,15 +43,23 @@ function displayLoading() {
 
 async function listen() {
   if (Config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup();
-  const ref = await REF_PROMISE;
-  if (ref === Preview.get()) return; // same ref
-  if (!ref && Preview.get()) { // need to delete ref
+
+  const ref = (await REF_PROMISE) || null;
+  const cookie = Preview.get() || null;
+
+  // need to delete cookie
+  if (!ref && cookie) {
+    close();
     Preview.close();
     window.location.reload();
   }
-  await displayLoading();
-  Preview.set(ref);
-  window.location.reload();
+
+  // need to set cookie (missed change or another session)
+  if (ref && ref !== cookie) {
+    await displayLoading();
+    Preview.set(ref);
+    window.location.reload();
+  }
 }
 
 // TODO LEGACY
