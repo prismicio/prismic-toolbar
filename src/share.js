@@ -1,6 +1,6 @@
 import Preview from './preview';
 import Config from './config';
-import { iFrame } from './utils';
+import { iFrame, readyDOM } from './utils';
 
 // Get preview ref from iframe
 const REF_IFRAME = iFrame(`${Config.baseURL}/previews/messenger`);
@@ -42,14 +42,18 @@ function displayLoading() {
 }
 
 async function listen() {
-  if (Config.location.hash.match(PRISMIC_SESSION_REG)) return legacySetup();
+  const isLegacy = !(await fetch(`${Config.baseURL}/previews/messenger`)).ok
+
+  await readyDOM();
+
+  if (isLegacy) return legacySetup(); // TODO handle non-shareable preview setup
 
   const ref = (await REF_PROMISE) || null;
   const cookie = Preview.get() || null;
 
   // need to delete cookie
   if (!ref && cookie) {
-    close();
+    await sessionClose();
     Preview.close();
     window.location.reload();
   }
@@ -100,8 +104,8 @@ function legacySetup() {
   });
 }
 
-function close() {
-  REF_IFRAME.contentWindow.postMessage({ type: 'close' }, '*');
+async function sessionClose() {
+  (await REF_IFRAME).contentWindow.postMessage({ type: 'close' }, '*');
 }
 
 export default {

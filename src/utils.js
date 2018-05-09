@@ -15,10 +15,13 @@ export function debounce(func, wait, immediate) {
 }
 
 export function iFrame(src) {
-  const iframe = document.createElement('iframe');
-  iframe.src = src;
-  document.head.appendChild(iframe);
-  return iframe;
+  return new Promise(resolve => {
+    const iframe = document.createElement('iframe');
+    iframe.src = src;
+    iframe.onload = _ => resolve(iframe);
+    document.head.appendChild(iframe);
+    return iframe;
+  });
 }
 
 export function readyDOM() {
