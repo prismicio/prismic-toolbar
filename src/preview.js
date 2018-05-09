@@ -1,16 +1,16 @@
-import Cookies from './cookies';
+import { preview } from './cookies';
 
 // Close the preview session (ie. discard the cookie)
 function close() {
-  Cookies.removePreviewCookie();
+  preview.remove();
 }
 
 function set(previewRef) {
-  Cookies.setPreviewToken(previewRef);
+  preview.set(previewRef);
 }
 
 function get() {
-  return Cookies.getPreviewToken();
+  return preview.get();
 }
 
 export default {

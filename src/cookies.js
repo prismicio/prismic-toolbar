@@ -1,64 +1,69 @@
 import Cookies from 'js-cookie';
+import { reload } from './utils';
 
-const PREVIEW_COOKIE_KEY = 'io.prismic.preview';
-const EXPERIMENT_COOKIE_KEY = 'io.prismic.experiment';
+export const preview = {
+  key: 'io.prismic.preview',
+  get: () => getCookie(preview.key),
+  set: val => {
+    if (val === getCookie(preview.key)) return; // cookie already exists
+    setCookie(preview.key, val, 0.1); // prevent bad ref
+    reload();
+  },
+  remove: () => {
+    if (!getCookie(preview.key)) return; // cookie already deleted
+    demolishCookie(preview.key); // if /preview set a bad cookie
+    corsLink.send('close'); // end session
+    reload();
+  },
+};
 
-export default {
-  PREVIEW_COOKIE_KEY,
-  EXPERIMENT_COOKIE_KEY,
-  getPreviewToken() {
-    return Cookies.get(PREVIEW_COOKIE_KEY);
+export const experiment = {
+  key: 'io.prismic.experiment',
+  get: () => getCookie(experiment.key),
+  set: (expId, variation) => {
+    const val = [expId, variation].join(' ');
+    if (val === getCookie(experiment.key)) return; // cookie already exists
+    setCookie(experiment.key, val);
+    reload();
   },
-  getExperimentToken() {
-    return Cookies.get(EXPERIMENT_COOKIE_KEY);
-  },
-  setPreviewToken(ref) {
-    Cookies.set(PREVIEW_COOKIE_KEY, ref, { path: '/' });
-  },
-  removeExperimentToken() {
-    Cookies.remove(EXPERIMENT_COOKIE_KEY);
-  },
-  setExperimentToken(expId, variation) {
-    const token = [expId, variation].join(' ');
-    const expires = 60 * 60 * 24 * 30;
-    Cookies.set(EXPERIMENT_COOKIE_KEY, token, { expires, path: '/' });
-  },
-  removePreviewCookie() {
-    close();
+  remove: () => {
+    if (!getCookie(experiment.key)) return; // cookie already deleted
+    deleteCookie(experiment.key);
+    reload();
   },
 };
 
 
-// TODO LEGACY
-function removeForPaths(pathParts, domain) {
-  let sizeWithoutLastPathPart;
-  pathParts.forEach((pathPart, pathPartIndex) => {
-    sizeWithoutLastPathPart = pathParts.length - 1;
-    const path = pathParts.slice(pathPartIndex, sizeWithoutLastPathPart).join('/');
-    removePreviewCookie(`${path}/`, domain);
-    removePreviewCookie(`${path}/`, `.${domain}`);
-    removePreviewCookie(`${path}/`);
-  });
+function getCookie(name) {
+  return Cookies.get(name);
 }
 
-// TODO LEGACY
-function close() {
-  const domainParts = document.location.hostname.split('.');
-  const pathParts = document.location.pathname.split('/');
-
-  removeForPaths(pathParts);
-
-  domainParts.forEach((domainPart, domainPartIndex) => {
-    const domain = domainParts.slice(domainPartIndex).join('.');
-    removeForPaths(pathParts, domain);
-  });
+function setCookie(name, value, expires/* days */) {
+  const path = '/';
+  return Cookies.set(name, value, { path, expires });
 }
 
-// TODO LEGACY
-function removePreviewCookie(path, domain) {
-  const pathOption = path ? { path } : {};
-  const domainOption = domain ? { domain } : {};
-  const expiresOption = { expires: -1 };
-  const options = Object.assign(pathOption, domainOption, expiresOption);
-  Cookies.remove(PREVIEW_COOKIE_KEY, options);
+function deleteCookie(name) {
+  const path = '/';
+  Cookies.remove(name, { path });
+}
+
+function demolishCookie(name) {
+  const subdomains = window.location.hostname.split('.'); // ['www','gosport','com']
+  const subpaths = window.location.pathname.slice(1).split('/'); // ['my','path']
+
+  const DOMAINS = []
+    .concat(subdomains.map((sub, idx) => `${subdomains.slice(idx).join('.')}`)) // www.gosport.com
+    .concat(subdomains.map((sub, idx) => `.${subdomains.slice(idx).join('.')}`)) // .gosport.com
+    .concat(null); // no domain specified
+
+  const PATHS = []
+    .concat(subpaths.map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}`)) // /a/b/foo
+    .concat(subpaths.map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}/`)) // /a/b/foo/
+    .concat('/') // root path
+    .concat(null); // no path specified
+
+  DOMAINS.forEach(domain =>
+    PATHS.forEach(path =>
+      Cookies.remove(name, { domain, path })));
 }

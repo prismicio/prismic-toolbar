@@ -51,11 +51,8 @@ function toggle(iframe, mode) {
 
 // Reload the browser window (either on the same URL or on the given one)
 function reload(url) {
-  if (url) {
-    document.location = url;
-  } else {
-    document.location.reload();
-  }
+  if (url) window.location = url;
+  else window.location.reload();
 }
 
 function resizeCanvas(canvas, maxWidth, maxHeight) {
