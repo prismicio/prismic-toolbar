@@ -5,7 +5,7 @@
   "main": "./dist/npm-prismic-toolbar.js",
   "scripts": {
     "start": "webpack --mode=development --watch",
-    "build": "npm install; webpack --mode=production",
+    "build": "webpack --mode=production",
     "lint": "eslint src; exit 0",
     "test": "jest"
   },

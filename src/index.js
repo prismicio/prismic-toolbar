@@ -1,7 +1,8 @@
 import Share from './share';
 import Config from './config';
 import { readyDOM } from './utils';
-import Globals, { startExp, setupToolbar, setupEditButton } from './globals';
+import Globals, { startExp, setupEditButton } from './globals';
+import Toolbar from './toolbar';
 
 (async () => {
   // Invalid prismic.endpoint
@@ -10,13 +11,18 @@ import Globals, { startExp, setupToolbar, setupEditButton } from './globals';
   // Globals
   window.prismic = Globals;
 
-  // Previews
-  await Share.listen();
-  startExp();
-
+  // Ready DOM
   await readyDOM();
 
-  // Setup
-  setupToolbar();
+  // Previews
+  await Share.listen();
+
+  // Experiments
+  startExp();
+
+  // Toolbar
+  Toolbar.setup();
+
+  // Edit Button
   setupEditButton();
 })();

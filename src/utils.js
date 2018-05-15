@@ -18,7 +18,7 @@ export function iFrame(src) {
   return new Promise(resolve => {
     const iframe = document.createElement('iframe');
     iframe.src = src;
-    iframe.onload = _ => resolve(iframe);
+    iframe.onload = () => resolve(iframe);
     document.head.appendChild(iframe);
     return iframe;
   });
