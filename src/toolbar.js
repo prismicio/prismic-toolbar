@@ -1,7 +1,6 @@
 // TODO: Refactor
 import html2canvas from 'html2canvas'; // TODO dom-to-image and dynamic load
 import Preview from './preview';
-import Share from './share';
 
 // Remember some styles so we can easily restore them back after toggle
 let toolbarStyle;
@@ -130,8 +129,7 @@ function setup() {
           break;
 
         case 'io.prismic.closeSession':
-          Preview.close();
-          Share.close();
+          Preview.close(); // had Share.close too
           window.location.reload();
           break;
 

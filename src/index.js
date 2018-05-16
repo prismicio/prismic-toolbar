@@ -1,4 +1,3 @@
-import Experiments from './experiments';
 import EditButton from './editbtn';
 import Preview from './preview';
 import Toolbar from './toolbar';

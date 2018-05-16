@@ -5,7 +5,7 @@ import Version from './version';
 import { endpoint } from './config';
 import { debounced } from './utils';
 
-export const globals = {
+export default {
   startExperiment: expId => Experiments.setup(expId),
   setupEditButton: EditButton.setup, // TODO EditButton.remove,
   setup: debounced(200)(Toolbar.setup),

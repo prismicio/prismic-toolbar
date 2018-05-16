@@ -1,4 +1,5 @@
 import Messenger from './messenger';
+import { iFrame, wait } from './utils';
 import { preview } from './cookies';
 import { baseURL } from './config';
 
@@ -22,7 +23,7 @@ async function start() {
   }
 }
 
-function loader() {
+async function loader() {
   const iframe = await iFrame(`${baseURL}/previews/loading`);
 
   iframe.style = {
@@ -49,4 +50,4 @@ function loader() {
   await wait(1.7);
 }
 
-export default { listen, close };
+export default { start };

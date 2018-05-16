@@ -5,12 +5,8 @@ async function start(expId) {
   if (disabledCookies) return;
   await script(`//www.google-analytics.com/cx/api.js?experiment=${expId}`);
   const variation = window.cxApi.chooseVariation();
-  if (window.cxApi.NOT_PARTICIPATING) end();
+  if (window.cxApi.NOT_PARTICIPATING) experiment.remove();
   else experiment.set(expId, variation);
 }
 
-function end() {
-  experiment.remove();
-}
-
-export default { start, end };
+export default { start };
