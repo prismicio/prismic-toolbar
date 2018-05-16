@@ -6,13 +6,12 @@ export const preview = {
   get: () => getCookie(preview.key),
   set: val => {
     if (val === getCookie(preview.key)) return; // cookie already exists
-    setCookie(preview.key, val, 0.1); // prevent bad ref
+    setCookie(preview.key, val, 0.1); // 0.1 prevents bad ref
     reload();
   },
   remove: () => {
     if (!getCookie(preview.key)) return; // cookie already deleted
-    demolishCookie(preview.key); // if /preview set a bad cookie
-    corsLink.send('close'); // end session
+    demolishCookie(preview.key); // if /preview set a strange cookie
     reload();
   },
 };
@@ -48,6 +47,7 @@ function deleteCookie(name) {
   Cookies.remove(name, { path });
 }
 
+// TODO: Legacy after we force url prediction
 function demolishCookie(name) {
   const subdomains = window.location.hostname.split('.'); // ['www','gosport','com']
   const subpaths = window.location.pathname.slice(1).split('/'); // ['my','path']

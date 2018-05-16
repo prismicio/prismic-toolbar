@@ -1,3 +1,4 @@
+// TODO: Refactor
 import html2canvas from 'html2canvas'; // TODO dom-to-image and dynamic load
 import Preview from './preview';
 import Share from './share';

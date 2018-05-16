@@ -54,6 +54,4 @@ function setup() {
   }).catch(() => {});
 }
 
-export default {
-  setup,
-};
+export default { setup };
