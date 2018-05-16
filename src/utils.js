@@ -14,16 +14,6 @@ export function debounce(func, wait, immediate) {
   };
 }
 
-export function iFrame(src) {
-  return new Promise(resolve => {
-    const iframe = document.createElement('iframe');
-    iframe.src = src;
-    iframe.onload = () => resolve(iframe);
-    document.head.appendChild(iframe);
-    return iframe;
-  });
-}
-
 export function readyDOM() {
   return new Promise(resolve => {
     if (document.readyState !== 'loading') resolve();

@@ -1,43 +1,37 @@
 import Preview from './preview';
 import Config from './config';
 import Messenger from './messenger';
-import { iFrame } from './utils';
 
-let bootstrap;
-
+const bootstrap = new Messenger(`${Config.baseURL}/toolbar/bootstrap`);
 const PRISMIC_SESSION_REG = /#(([^~]+)~)?prismic-session=([-_a-zA-Z0-9]{16})/;
 
-export default {
+async function listen() {
+  // Legacy
+  const legacy = !(await fetch(`${Config.baseURL}/toolbar/bootstrap`).then(r => r.text()))
+  if (legacy) return legacySetup();
 
-  async listen() {
-    const updated = await fetch(`${Config.baseURL}/toolbar/bootstrap`).catch(e => false);
-    bootstrap = new Messenger(`${Config.baseURL}/toolbar/bootstrap`);
+  // Get ref & cookie
+  const ref = (await bootstrap.post('ref')) || null;
+  const cookie = Preview.get() || null;
 
-    if (!updated) return legacySetup();
+  // Need to delete cookie
+  if (!ref && cookie) {
+    await close();
+    Preview.close();
+    window.location.reload();
+  }
 
-    const ref = (await bootstrap.post('ref')) || null;
-    const cookie = Preview.get() || null;
+  // Need to set cookie
+  if (ref && ref !== cookie) {
+    await displayLoading();
+    Preview.set(ref);
+    window.location.reload();
+  }
+}
 
-    // need to delete cookie
-    if (!ref && cookie) {
-      await sessionClose();
-      Preview.close();
-      window.location.reload();
-    }
-
-    // need to set cookie
-    if (ref && ref !== cookie) {
-      await displayLoading();
-      Preview.set(ref);
-      window.location.reload();
-    }
-  },
-
-  close() {
-    bootstrap.post('close');
-  },
-
-};
+function close() {
+  bootstrap.post('close');
+}
 
 function displayLoading() {
   return new Promise(resolve => {
@@ -85,3 +79,5 @@ async function legacySetup() {
   window.location.href = href;
   if (updatedHash) window.location.reload();
 }
+
+export default { listen, close };
