@@ -3,11 +3,11 @@ import EditButton from './editbtn';
 import Experiments from './experiments';
 import Version from './version';
 import { endpoint } from './config';
-import { debounced } from './utils';
+import { debounced } from '../common';
 
 export default {
   startExperiment: expId => Experiments.setup(expId),
-  setupEditButton: EditButton.setup, // TODO EditButton.remove,
+  setupEditButton: EditButton.setup, // TODOlater EditButton.remove,
   setup: debounced(200)(Toolbar.setup),
   version: Version.value,
   endpoint,

@@ -1,5 +1,5 @@
 import Messenger from './messenger';
-import { iFrame, wait } from './utils';
+import { iFrame, wait } from '../common';
 import { preview } from './cookies';
 import { baseURL } from './config';
 

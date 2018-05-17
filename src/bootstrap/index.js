@@ -1,11 +1,16 @@
+import 'regenerator-runtime/runtime';
+import 'whatwg-fetch';
+import 'promise-polyfill/src/polyfill';
 import EditButton from './editbtn';
 import Preview from './preview';
 import Toolbar from './toolbar';
 import Globals from './globals';
-import { readyDOM } from './utils';
+import { readyDOM } from '../common';
 import { baseURL } from './config';
 
 (async () => {
+  // TODO fetch ref from domain
+
   // Invalid prismic.endpoint
   if (!baseURL) return console.warn('Invalid window.prismic.endpoint.\nhttps://github.com/prismicio/prismic-toolbar.');
 

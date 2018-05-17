@@ -1,5 +1,5 @@
 import { experiment } from './cookies';
-import { script, disabledCookies } from './utils';
+import { script, disabledCookies } from '../common';
 
 async function start(expId) {
   if (disabledCookies) return;

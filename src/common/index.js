@@ -1,3 +1,5 @@
+// Bootstrap
+
 // NOTE: Old debounce didn't work
 export const debounced = delay => func => {
   let timeout;
@@ -50,4 +52,36 @@ async function loadNode(type, src, body) {
     if (body) document.body.appendChild(node);
     else document.head.appendChild(node);
   });
+}
+
+// Toolbar
+
+export function delay(t) {
+  return new Promise(resolve => setTimeout(resolve, t));
+}
+
+export function slugify(str) {
+  return str.normalize('NFD') // TODO IE polyfill
+}
+
+export function copyToClipboard(text) {
+  if (window.clipboardData && window.clipboardData.setData) {
+    // IE specific code path to prevent textarea being shown while dialog is visible.
+    return window.clipboardData.setData("Text", text);
+
+  } else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+    var textarea = document.createElement("textarea");
+    textarea.textContent = text;
+    textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in MS Edge.
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      return document.execCommand("copy");  // Security exception may be thrown by some browsers.
+    } catch (ex) {
+      console.warn("Copy to clipboard failed.", ex);
+      return false;
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  }
 }

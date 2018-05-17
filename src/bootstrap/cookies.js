@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie';
-import { reload } from './utils';
+import { reload } from '../common';
 
 export const preview = {
   key: 'io.prismic.preview',
@@ -47,7 +47,7 @@ function deleteCookie(name) {
   Cookies.remove(name, { path });
 }
 
-// TODO: Legacy after we force url prediction
+// TODOlater after we force url prediction
 function demolishCookie(name) {
   const subdomains = window.location.hostname.split('.'); // ['www','gosport','com']
   const subpaths = window.location.pathname.slice(1).split('/'); // ['my','path']
