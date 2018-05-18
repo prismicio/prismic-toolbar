@@ -8,7 +8,6 @@ class Messenger {
     // Listen for ready
     this.ready = new Promise(resolve => {
       this.iframe.addEventListener('ready', resolve, { once: true });
-      this.iframe.addEventListener('load', resolve, { once: true });
     });
 
     // Dispatch messages to iframe
