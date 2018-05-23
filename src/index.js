@@ -1,7 +1,7 @@
 import Share from './share';
 import Config from './config';
 import { readyDOM } from './utils';
-import Globals, { startExp, setupEditButton } from './globals';
+import { globals, startExp, setupEditButton } from './globals';
 import Toolbar from './toolbar';
 
 (async () => {
@@ -9,7 +9,7 @@ import Toolbar from './toolbar';
   if (!Config.baseURL) return console.warn('Invalid window.prismic.endpoint.\nhttps://github.com/prismicio/prismic-toolbar.');
 
   // Globals
-  window.prismic = Globals;
+  window.prismic = globals;
 
   // Ready DOM
   await readyDOM();
