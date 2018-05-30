@@ -1,3 +1,4 @@
+[![Build Status](https://api.travis-ci.org/prismicio/prismic-toolbar.png)](https://travis-ci.org/prismicio/prismic-toolbar)
 [![Dependency Status](https://david-dm.org/prismicio/prismic-toolbar.svg)](https://david-dm.org/prismicio/prismic-toolbar)
 
 # Prismic toolbar
