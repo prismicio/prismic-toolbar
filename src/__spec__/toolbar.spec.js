@@ -17,29 +17,13 @@ describe('closeSession', () => {
     closeSessionEvent.data = { type: 'io.prismic.closeSession' };
   });
 
-  afterEach(() => {
-    Object.defineProperty(document.location, 'hostname', {
-      value: undefined,
-      writable: true,
-    });
-    Object.defineProperty(document.location, 'pathname', {
-      value: undefined,
-      writable: true,
-    });
-  });
-
   it('should remove cookies for each domain part when path is root', () => {
     // given
     const hostname = 'www.myhostname.com';
     const pathname = '/';
 
-    Object.defineProperty(document.location, 'hostname', {
-      value: hostname,
-      writable: true,
-    });
-    Object.defineProperty(document.location, 'pathname', {
-      value: pathname,
-      writable: true,
+    jsdom.reconfigure({
+      url: `http://${hostname}${pathname}`,
     });
 
     // when
@@ -61,13 +45,8 @@ describe('closeSession', () => {
     const hostname = 'www.myhostname.com';
     const pathname = '/a/path';
 
-    Object.defineProperty(document.location, 'hostname', {
-      value: hostname,
-      writable: true,
-    });
-    Object.defineProperty(document.location, 'pathname', {
-      value: pathname,
-      writable: true,
+    jsdom.reconfigure({
+      url: `http://${hostname}${pathname}`,
     });
 
     // when
