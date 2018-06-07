@@ -1,3 +1,5 @@
+'use strict'
+
 import toolbar from '../toolbar';
 import Cookies from '../cookies';
 
