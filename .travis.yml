@@ -3,3 +3,11 @@ node_js:
 - '6'
 - '7'
 - '8'
+before_install:
+- '[[ $(node -v) =~ ^v9.*$ ]] || npm install -g npm@latest' # skipped when using node 9
+- npm install -g greenkeeper-lockfile
+before_script: greenkeeper-lockfile-update
+after_script: greenkeeper-lockfile-upload
+env:
+  global:
+    secure: u1kbslAk2k8VdChIoVY+N+whjImiNImxD0HXwuxRCBRUqNDxRRmwkv3HP+qCm8A1pQ3lWu5eEyaK9JZApP10EEUQB+fJ+oIHOlaJ8ZkMqkPspi2JM0HWOwtL3JHqiYUJuCbON00CEf9v6gCSJmiKrfwrejwDoYhO2E40yjWaUIo83+skCuiRgkZ61R8YJAtgdiuihZUCf2ASkrwXB2blZbtS4SuHxT4PXaXc69Ylh3XKqZYUkIiaqH/jYcSGD6FHwdqZdUN0f4veZd8DTz1b6fFKw5Nk7I21LcPzVvvymnoDFjqNqrji46fw1mQh13o0W0hIU1kX+NOdha7yMWhdbxl1PI59rPerjTy6LqPzyGPziHlpVZW9EmfUvvi51eewl4U2R+a6lTSKDRw+UHMnCna8AYtTIcI4UVJorV5ZQf5/Lo68Xtow5LPFJuhvOLOjZZ+g7iw7MSyirLD8K9xmBEScybPdOp2JQWYwsMGOzIR1i0BMdUDO3EZx1SqzEvECIFu7lExmVG6xHHELvnDLD/1aMfz3azi1FNMf8FuxtaG6pS1Zxo2uZ30z3JU6CPmZ+RW15ZEyqizK+p/6dp6lb8aPEwB1+EnSAg3Tg9NAZhb03Ll7JdbpnOwYflgaXc3kbI6RgZAl2UQx6mC0xOAFXYcwyfOc438vOjR438et9Zg=
