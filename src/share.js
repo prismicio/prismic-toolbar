@@ -10,11 +10,11 @@ async function listen() {
   bootstrap = new Messenger(`${Config.baseURL}/toolbar/bootstrap`);
 
   // Legacy
-  const legacy = !(await fetch(`${Config.baseURL}/toolbar/bootstrap`).then(r => r.text()))
+  const legacy = !(await fetch(`${Config.baseURL}/toolbar/bootstrap`).then(r => r.text()));
   if (legacy) return legacySetup();
 
   // Get ref & cookie
-  let ref = parseRef(await bootstrap.post('ref'));
+  const ref = parseRef(await bootstrap.post('ref'));
   const cookie = parseRef(Preview.get());
 
   // Need to delete cookie

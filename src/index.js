@@ -10,7 +10,8 @@ import Prediction from './prediction';
   if (!Config.baseURL) return console.warn('Invalid window.prismic.endpoint. Learn how to set it up in the documentation: https://prismic.link/2LQcOWJ.\nhttps://github.com/prismicio/prismic-toolbar');
 
   // Globals
-  window.prismic = window.PrismicToolbar = globals;
+  window.prismic = globals;
+  window.PrismicToolbar = globals;
 
   // Ready DOM
   await readyDOM();
@@ -28,5 +29,5 @@ import Prediction from './prediction';
   setupEditButton();
 
   // Prediction
-  Prediction.setup()
+  Prediction.setup();
 })();
