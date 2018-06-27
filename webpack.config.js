@@ -1,20 +1,20 @@
 module.exports = {
-  entry: ['regenerator-runtime/runtime', 'whatwg-fetch', 'promise-polyfill/src/polyfill', './src/index.js'],
+  entry: [
+    'regenerator-runtime/runtime',
+    'whatwg-fetch',
+    'promise-polyfill/src/polyfill',
+    './src/index.js',
+  ],
   output: {
-    filename: 'prismic-toolbar.js'
+    filename: 'prismic-toolbar.js',
   },
   module: {
     rules: [
       {
         test: /\.js$/,
         exclude: /node_modules/,
-        use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env']
-          }
-        }
-      }
-    ]
+        use: 'babel-loader',
+      },
+    ],
   },
 };
