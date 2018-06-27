@@ -3,6 +3,7 @@ import Config from './config';
 import { readyDOM } from './utils';
 import { globals, startExp, setupEditButton } from './globals';
 import Toolbar from './toolbar';
+import Prediction from './prediction';
 
 (async () => {
   // Invalid prismic.endpoint
@@ -25,4 +26,7 @@ import Toolbar from './toolbar';
 
   // Edit Button
   setupEditButton();
+
+  // Prediction
+  Prediction.setup()
 })();
