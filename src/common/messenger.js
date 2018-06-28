@@ -1,4 +1,4 @@
-class Messenger {
+export class Messenger {
   constructor(src) {
     // Create iframe
     this.iframe = document.createElement('iframe');
@@ -24,10 +24,10 @@ class Messenger {
   async post(type, data) {
     await this.ready;
     return new Promise(resolve => {
-      this.iframe.addEventListener(type, e => resolve(e.detail), { once: true });
+      this.iframe.addEventListener(type, e => resolve(e.detail), {
+        once: true,
+      });
       this.iframe.contentWindow.postMessage({ type, data }, '*');
     });
   }
 }
-
-export default Messenger;

@@ -1,21 +1,37 @@
-const { WebPlugin } = require('web-webpack-plugin');
+const webpack = require('webpack');
 
-module.exports = {
-	output: {
-		filename: '[name].js',
-	},
+const resolve = path => require('path').resolve(__dirname, path);
 
-	entry: {
-		bootstrap: './src/bootstrap/index.js',
-    'bootstrap-iframe': './src/bootstrap-iframe/index.js',
-		toolbar: './src/toolbar/index.js',
-	},
+module.exports = env => ({
+  output: {
+    filename: '[name].js',
+  },
 
-	plugins: [
-		new WebPlugin({
-			filename: 'bootstrap-iframe.html',
-			requires: ['bootstrap-iframe'],
-		}),
-	],
+  entry: {
+    toolbar: resolve('src/toolbar'),
+    bootstrap: resolve('src/bootstrap'),
+    'bootstrap-iframe': resolve('src/bootstrap-iframe'),
+  },
 
-};
+  resolve: {
+    alias: {
+      common: resolve('src/common'),
+    },
+  },
+
+  plugins: [new webpack.EnvironmentPlugin(['npm_package_version'])],
+
+  module: {
+    rules: [
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: 'babel-loader',
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+    ],
+  },
+});

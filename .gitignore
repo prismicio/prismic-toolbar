@@ -1,6 +1,11 @@
+# Project
 node_modules/
 dist/
 
+# Config
+.prettierrc.js
+
+# Auto-generated
 yarn.lock
 yarn-error.log
 npm-debug.log

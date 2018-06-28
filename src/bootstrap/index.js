@@ -1,31 +1,28 @@
+// TODO no more promise/fetch. just babel-polyfill if IE 11
+import 'promise-polyfill/src/polyfill';
 import 'regenerator-runtime/runtime';
 import 'whatwg-fetch';
-import 'promise-polyfill/src/polyfill';
-import EditButton from './editbtn';
-import Preview from './preview';
-import Toolbar from './toolbar';
-import Globals from './globals';
-import { readyDOM } from '../common';
-import { baseURL } from './config';
+
+import { readyDOM, endpointWarning } from 'common';
+import { Ref } from './ref';
+import { Toolbar } from './toolbar';
+import { globals, baseURL, bootstrap } from './config';
+
+// TODO if <IE11, return warning ('not supported')
 
 (async () => {
-  // TODO fetch ref from domain
-
   // Invalid prismic.endpoint
-  if (!baseURL) return console.warn('Invalid window.prismic.endpoint.\nhttps://github.com/prismicio/prismic-toolbar.');
+  if (!baseURL) return endpointWarning();
 
   // Globals
-  window.prismic = Globals;
+  window.prismic = globals;
+  window.PrismicToolbar = globals;
 
   // Ready DOM
   await readyDOM();
 
-  // Previews
-  await Preview.start();
-
-  // Toolbar
-  Toolbar.setup();
-
-  // Edit Button
-  EditButton.setup();
+  // Setup
+  const state = await bootstrap.post('state');
+  const ref = new Ref(state);
+  const toolbar = new Toolbar(state);
 })();

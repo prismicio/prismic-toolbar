@@ -1,9 +1,9 @@
-import { slugify, delay, copyToClipboard } from '../common';
+import {
+  Messenger, slugify, delay, copyToClipboard,
+} from '../common';
 import s3 from './s3';
-import Messenger from './messenger';
 
 function init(sessionId, sessionType, sessionTitle, ref, csrf) {
-
   const DOM = {
     $toolbar: $('.toolbar'),
     $openDetailsPanelBtn: $('.toolbar_others-actions .show-details'),
@@ -13,24 +13,33 @@ function init(sessionId, sessionType, sessionTitle, ref, csrf) {
     $mask: $('.mask'),
     $sharePanel: $('.panel-share'),
     $copyBtn: $('.panel-share .share-link_button'),
-    $shareableLink: $('.panel-share .share-link_text')
+    $shareableLink: $('.panel-share .share-link_text'),
   };
 
   function buildImageName(location) {
-    return slugify(`${location.pathname.slice(1)}${location.hash}$-${sessionId}.png`);
+    return slugify(
+      `${location.pathname.slice(1)}${location.hash}$-${sessionId}.png`,
+    );
   }
 
   function csrfy(url) {
-    return url + (url.indexOf('?') > 0 ? '&' : '?') + '_=' + csrf;
+    return `${url + (url.indexOf('?') > 0 ? '&' : '?')}_=${csrf}`;
   }
 
   function createShareableSession(page) {
     const title = sessionType === 'RELEASE' ? sessionTitle : page.document.title;
-    const url = csrfy(Router.controllers.Previews.share(sessionId, page.location.href, title, buildImageName(page.location)).url);
+    const url = csrfy(
+      Router.controllers.Previews.share(
+        sessionId,
+        page.location.href,
+        title,
+        buildImageName(page.location),
+      ).url,
+    );
     return $.ajax({
       url,
       type: 'POST',
-      xhrFields: { withCredentials: true }
+      xhrFields: { withCredentials: true },
     });
   }
 
@@ -46,9 +55,7 @@ function init(sessionId, sessionType, sessionTitle, ref, csrf) {
     $body.removeClass('fadein');
 
     delay(250).then(() => {
-      $body
-        .removeClass('details-mode')
-        .removeClass('share-mode');
+      $body.removeClass('details-mode').removeClass('share-mode');
 
       DOM.$shareableLink.text('Unable to retrieve shareable link');
 
@@ -61,50 +68,58 @@ function init(sessionId, sessionType, sessionTitle, ref, csrf) {
 
   // Ping
   setInterval(() => {
-    Router.controllers.Previews.ping(sessionId, ref).ajax().then((result) => {
-      if (result.reload) {
-        if (result.ref) {
-          Messenger.change(result.ref);
+    Router.controllers.Previews.ping(sessionId, ref)
+      .ajax()
+      .then(result => {
+        if (result.reload) {
+          if (result.ref) {
+            Messenger.change(result.ref);
+          }
+          Messenger.reload();
+        } else if (result.close) {
+          Messenger.closeSession();
+          Messenger.reload();
         }
-        Messenger.reload();
-      } else if(result.close) {
-        Messenger.closeSession();
-        Messenger.reload();
-      }
-    });
+      });
   }, 3000);
 
   // Navigating changes
-  $('.preview-change > a').each(function () {
+  $('.preview-change > a').each(function() {
     const $change = $(this);
-    $change.click(function (e) {
+    $change.click(e => {
       e.preventDefault();
       Messenger.reload($change.attr('href'));
     });
   });
 
   // Close preview session
-  DOM.$closeSessionBtn.click(function() {
+  DOM.$closeSessionBtn.click(() => {
     Messenger.closeSession();
     Messenger.reload();
   });
 
   // Share preview session
   DOM.$openSharePanelBtn.click(function() {
-    Messenger.on('pong', (page) => {
-      const $button = $(this);
-      $button.prop('disabled', true);
-      createShareableSession(page).then(({ url, hasPreviewImage }) => {
-        if (!hasPreviewImage) {
-          const canvasOptions = { scale: 2, maxWidth: 450, maxHeight: 230 };
-          Messenger.screenshot(canvasOptions, page);
-        }
-        DOM.$copyBtn.data('link', url);
-        DOM.$sharePanel.removeClass('panel--loading');
-        DOM.$shareableLink.text(url);
-      }).then(() => $button.prop('disabled', false))
-        .fail(() => Messenger.reload());
-    }, { once: true });
+    Messenger.on(
+      'pong',
+      page => {
+        const $button = $(this);
+        $button.prop('disabled', true);
+        createShareableSession(page)
+          .then(({ url, hasPreviewImage }) => {
+            if (!hasPreviewImage) {
+              const canvasOptions = { scale: 2, maxWidth: 450, maxHeight: 230 };
+              Messenger.screenshot(canvasOptions, page);
+            }
+            DOM.$copyBtn.data('link', url);
+            DOM.$sharePanel.removeClass('panel--loading');
+            DOM.$shareableLink.text(url);
+          })
+          .then(() => $button.prop('disabled', false))
+          .fail(() => Messenger.reload());
+      },
+      { once: true },
+    );
 
     displayPanel('share');
     Messenger.ping();
@@ -123,7 +138,7 @@ function init(sessionId, sessionType, sessionTitle, ref, csrf) {
   });
 
   // Open details
-  DOM.$openDetailsPanelBtn.click(function() {
+  DOM.$openDetailsPanelBtn.click(() => {
     if (sessionType != 'LIVE') {
       displayPanel('details');
     }
