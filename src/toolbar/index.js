@@ -1,6 +1,4 @@
-import {
-  Messenger, slugify, delay, copyToClipboard,
-} from '../common';
+import { Messenger, slugify, delay, copyToClipboard } from 'common';
 import s3 from './s3';
 
 function init(sessionId, sessionType, sessionTitle, ref, csrf) {
@@ -18,7 +16,7 @@ function init(sessionId, sessionType, sessionTitle, ref, csrf) {
 
   function buildImageName(location) {
     return slugify(
-      `${location.pathname.slice(1)}${location.hash}$-${sessionId}.png`,
+      `${location.pathname.slice(1)}${location.hash}$-${sessionId}.png`
     );
   }
 
@@ -27,14 +25,15 @@ function init(sessionId, sessionType, sessionTitle, ref, csrf) {
   }
 
   function createShareableSession(page) {
-    const title = sessionType === 'RELEASE' ? sessionTitle : page.document.title;
+    const title =
+      sessionType === 'RELEASE' ? sessionTitle : page.document.title;
     const url = csrfy(
       Router.controllers.Previews.share(
         sessionId,
         page.location.href,
         title,
-        buildImageName(page.location),
-      ).url,
+        buildImageName(page.location)
+      ).url
     );
     return $.ajax({
       url,
@@ -118,7 +117,7 @@ function init(sessionId, sessionType, sessionTitle, ref, csrf) {
           .then(() => $button.prop('disabled', false))
           .fail(() => Messenger.reload());
       },
-      { once: true },
+      { once: true }
     );
 
     displayPanel('share');

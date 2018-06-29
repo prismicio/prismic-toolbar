@@ -1,7 +1,6 @@
 import { Toolbar } from './toolbar';
 import { Experiment } from './experiment';
-import { Messenger } from './messenger';
-import { debounced } from '../common';
+import { Messenger, debounced } from 'common';
 
 // Globals
 export const globals = {
@@ -9,17 +8,27 @@ export const globals = {
   ...window.prismic,
   startExperiment: expId => new Experiment(expId),
   setupEditButton: _ => _, // Legacy
-  setup: debounced(200)(async _ => new Toolbar(await bootstrap.post('state'))),
   version: process.env.npm_package_version,
+  setup: debounced(200)(async _ => {
+    const state = bootstrap && (await bootstrap.post('state'));
+    if (state) new Toolbar(state);
+  }),
 };
 
 // Validate prismic.endpoint
-const matches = globals.endpoint
+const matches = (globals.endpoint || '')
   .replace(/\.cdn/, '')
   .match(new RegExp('https?://[^/]*'));
 
 // Set base URL
-export const baseURL = matches[0] || null;
+export const baseURL = matches ? matches[0] : null;
 
 // Start bootstrap (if valid URL)
-export const bootstrap = baseURL && new Messenger(`${baseURL}/toolbar/bootstrap`);
+export const bootstrap =
+  baseURL && new Messenger(`${baseURL}/toolbar/bootstrap`);
+
+// TODO
+// isMember (csrf not empty)
+// authorized (JWT?)
+// preview { ref }
+// master

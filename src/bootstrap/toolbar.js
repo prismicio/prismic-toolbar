@@ -1,27 +1,30 @@
 import html2canvas from 'html2canvas'; // TODO server side screenshot
 import style from './Toolbar.css';
+import { preview } from './cookies';
 
-console.log('stylezz', style);
-
-const { preview } = new Cookie();
+// console.log('stylezz', style); TODO
 
 export class Toolbar {
   constructor(state) {
-    // Legacy remove edit button
+    this.state = state;
+    this.clean();
+    this.setup();
+  }
+
+  clean() {
     document
       .querySelectorAll('.wio-link, [data-wio-id], #io-prismic-toolbar')
       .forEach(el => el.remove());
+  }
 
-    // isMember (csrf not empty)
-    // authorized
-    // preview { ref }
-    //
-    // Make fullscreen iframe (if isMember or preview)
-
-    iframe(preview.ref, { style });
-    // toolbar.setAttribute('id', 'io-prismic-toolbar');
+  async setup() {
+    const { isMember, preview } = this.state;
+    const id = 'io-prismic-toolbar';
+    if (isMember || preview) iframe(await preview.ref, { style, id });
   }
 }
+
+// TODO messages??
 
 /*
 function setup() {

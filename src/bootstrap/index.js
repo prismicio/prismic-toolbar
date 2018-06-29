@@ -23,6 +23,6 @@ import { globals, baseURL, bootstrap } from './config';
 
   // Setup
   const state = await bootstrap.post('state');
-  const ref = new Ref(state);
-  const toolbar = new Toolbar(state);
+  new Ref(state);
+  new Toolbar(state);
 })();

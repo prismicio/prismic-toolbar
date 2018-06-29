@@ -1,10 +1,12 @@
-export { Messenger } from 'common';
+export { Messenger } from './messenger';
+export { Hooks } from './hooks';
 
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
 export const readyDOM = Promise.resolve;
 
 // Wait in seconds
-export const wait = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000));
+export const wait = seconds =>
+  new Promise(resolve => setTimeout(resolve, seconds * 1000));
 
 // Reload
 export const reload = window.location.reload;
@@ -12,24 +14,29 @@ export const reload = window.location.reload;
 // Cookies disabled
 export const disabledCookies = _ => !navigator.cookieEnabled;
 
-// Decode URI Component
-export const decode = decodeURIComponent;
-
 // Load script
 export const script = src => loadNode({ type: 'script', src });
 
+// Random id
+export function random(num) {
+  const chars =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  return [...Array(num)]
+    .map(_ => chars[Math.floor(Math.random() * chars.length)])
+    .join('');
+}
+
 // Load iFrame
-export const iFrame = (src, options) => loadNode({
-  type: 'iframe',
-  src,
-  options,
-  body: true,
-});
+export const iFrame = (src, options) =>
+  loadNode({
+    type: 'iframe',
+    src,
+    options,
+    body: true,
+  });
 
 // Load something
-async function loadNode({
-  type, src, options, body,
-}) {
+async function loadNode({ type, src, options, body }) {
   return new Promise(resolve => {
     // Prevent duplicates
     const duplicate = document.querySelector(`[src="${src}"]`);
@@ -52,21 +59,39 @@ export const normalizeRef = _ref => {
   if (ref) ref = ref.split('?')[0] || null;
   return {
     ref,
+    url: null,
+    track: null,
+    breaker: null,
     ...parseQuery(_ref),
   };
 };
 
+// Build querystring
+export function query(obj) {
+  if (!obj) return '';
+  return Object.entries(obj)
+    .filter(v => v)
+    .map(pair => pair.map(encodeURIComponent).join('='))
+    .join('&');
+}
+
 // Parse querystring
-export const parseQuery = uri => (uri.split('?')[1] || '')
-  .split('&')
-  .filter(v => v)
-  .map(v => v.split('='))
-  .reduce(
-    (acc, curr) => Object.assign(acc, {
-      [decode(curr[0])]: decode(curr[1]),
-    }),
-    {},
-  );
+export const parseQuery = _uri => {
+  if (!_uri) return {};
+  const qs = _uri.split('?')[1];
+  if (!qs) return {};
+  return qs
+    .split('&')
+    .filter(v => v)
+    .map(v => v.split('='))
+    .reduce(
+      (acc, curr) =>
+        Object.assign(acc, {
+          [decodeURIComponent(curr[0])]: curr[1] && decodeURIComponent(curr[1]),
+        }),
+      {}
+    );
+};
 
 // Wait in milliseconds TODO
 export const delay = t => new Promise(resolve => setTimeout(resolve, t));
@@ -75,7 +100,8 @@ export const delay = t => new Promise(resolve => setTimeout(resolve, t));
 export const slugify = str => str.normalize('NFD'); // TODO IE polyfill
 
 // Invalid prismic endpoint
-export const endpointWarning = _ => console.warn(`
+export const endpointWarning = _ =>
+  console.warn(`
 Invalid window.prismic.endpoint.
 Learn how to set it up in the documentation: https://prismic.link/2LQcOWJ.
 https://github.com/prismicio/prismic-toolbar'
