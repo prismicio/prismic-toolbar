@@ -4,7 +4,6 @@ import 'regenerator-runtime/runtime';
 import 'whatwg-fetch';
 
 import { readyDOM, endpointWarning } from 'common';
-import { Ref } from './ref';
 import { Toolbar } from './toolbar';
 import { globals, baseURL, bootstrap } from './config';
 
@@ -23,6 +22,6 @@ import { globals, baseURL, bootstrap } from './config';
 
   // Setup
   const state = await bootstrap.post('state');
-  new Ref(state);
+  console.log(state, 'state');
   new Toolbar(state);
 })();

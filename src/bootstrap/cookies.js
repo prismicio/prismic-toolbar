@@ -1,5 +1,5 @@
 import Cookies from 'js-cookie';
-import { reload, query, parseQuery, random } from 'common';
+import { reload, query, parseQuery, random, normalizeRef } from 'common';
 import { bootstrap } from './config';
 
 // Preview cookie manager
@@ -30,7 +30,7 @@ class PreviewCookie {
     const hooks = new Hooks();
     const url = window.location.pathname;
 
-    // Enable
+    // Enable tracking
     if (this.authorized) {
       this.track = random(8);
       this.breakerTimer = setInterval(_ => (this.breaker = random(8)), 100);
@@ -39,11 +39,11 @@ class PreviewCookie {
       hooks.on('afterRequest', _ => (this.url = null));
     }
 
-    // Permanent auth state
+    // Get permanent auth state
     const state = await bootstrap.post('state');
-    this.authorized = state.authorized;
+    this.authorized = state.auth;
 
-    // Disable
+    // Disable tracking
     if (!this.authorized) {
       clearInterval(this.breakerTimer);
       hooks.off();
@@ -131,11 +131,6 @@ class ExperimentCookie {
   }
 }
 
-// Exports
-
-export const preview = new PreviewCookie();
-export const experiment = new ExperimentCookie();
-
 // Helpers
 
 function getCookie(name) {
@@ -176,3 +171,8 @@ function demolishCookie(name) {
     PATHS.forEach(path => Cookies.remove(name, { domain, path }))
   );
 }
+
+// Exports
+
+export const preview = bootstrap && new PreviewCookie();
+export const experiment = new ExperimentCookie();

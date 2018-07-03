@@ -24,11 +24,12 @@ const matches = (globals.endpoint || '')
 export const baseURL = matches ? matches[0] : null;
 
 // Start bootstrap (if valid URL)
+// NOTE not safe to invoke the bootstrap unless baseURL is verified
 export const bootstrap =
   baseURL && new Messenger(`${baseURL}/toolbar/bootstrap`);
 
 // TODO
-// isMember (csrf not empty)
-// authorized (JWT?)
-// preview { ref }
+// guest (empty csrf)
+// auth (JWT?)
 // master
+// preview { ref }

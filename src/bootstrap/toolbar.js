@@ -1,8 +1,6 @@
 import html2canvas from 'html2canvas'; // TODO server side screenshot
-import style from './Toolbar.css';
-import { preview } from './cookies';
-
-// console.log('stylezz', style); TODO
+// import style from './Toolbar.css';
+// console.log('stylezz', style);
 
 export class Toolbar {
   constructor(state) {
@@ -18,9 +16,9 @@ export class Toolbar {
   }
 
   async setup() {
-    const { isMember, preview } = this.state;
+    const { guest, preview } = this.state;
     const id = 'io-prismic-toolbar';
-    if (isMember || preview) iframe(await preview.ref, { style, id });
+    // if (isMember || preview) iframe(await preview.ref, { style, id });
   }
 }
 

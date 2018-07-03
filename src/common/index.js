@@ -2,7 +2,7 @@ export { Messenger } from './messenger';
 export { Hooks } from './hooks';
 
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
-export const readyDOM = Promise.resolve;
+export const readyDOM = _ => Promise.resolve(true);
 
 // Wait in seconds
 export const wait = seconds =>
