@@ -5,8 +5,8 @@
   "license": "Apache-2.0",
   "main": "build/prismic-toolbar.js",
   "scripts": {
-    "start": "webpack --mode=development --watch",
-    "build": "webpack --mode=production",
+    "start": "webpack --mode development --watch",
+    "build": "webpack --mode production",
     "lint": "eslint src; exit 0",
     "test": "jest"
   },
