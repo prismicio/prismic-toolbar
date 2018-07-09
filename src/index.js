@@ -38,7 +38,10 @@ function startExperiment(expId) {
   }
 }
 
+var isReady = false;
 function domReady() {
+  if (isReady) return;
+  isReady = true;
   if (config) {
     Share.listen(config, () => {
       START_EXPERIMENT();
@@ -48,10 +51,16 @@ function domReady() {
   }
 }
 
-if (document.readyState === 'complete') {
+if (
+  document.readyState === "complete" ||
+  (document.readyState !== "loading" && !document.documentElement.doScroll)
+) {
   domReady();
 } else {
-  document.addEventListener('DOMContentLoaded', domReady);
+  // Use the handy event callback
+	document.addEventListener("DOMContentLoaded", domReady);
+	// A fallback to window.onload, that will always work
+	window.addEventListener("load", domReady);
 }
 
 exports.setup = setupToolbar;
