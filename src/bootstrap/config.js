@@ -1,4 +1,3 @@
-import { Toolbar } from './toolbar';
 import { Experiment } from './experiment';
 import { Messenger, debounced } from 'common';
 
@@ -6,13 +5,10 @@ import { Messenger, debounced } from 'common';
 export const globals = {
   endpoint: null,
   ...window.prismic,
-  startExperiment: expId => new Experiment(expId),
+  startExperiment: expId => new Experiment(expId), // TODO automate
   setupEditButton: _ => _, // Legacy
   version: process.env.npm_package_version,
-  setup: debounced(200)(async _ => {
-    const state = bootstrap && (await bootstrap.post('state'));
-    if (state) new Toolbar(state);
-  }),
+  setup: _ => _, // NOTE do we really need this? (more work for nothing)
 };
 
 // Validate prismic.endpoint
@@ -22,14 +18,3 @@ const matches = (globals.endpoint || '')
 
 // Set base URL
 export const baseURL = matches ? matches[0] : null;
-
-// Start bootstrap (if valid URL)
-// NOTE not safe to invoke the bootstrap unless baseURL is verified
-export const bootstrap =
-  baseURL && new Messenger(`${baseURL}/toolbar/bootstrap`);
-
-// TODO
-// guest (empty csrf)
-// auth (JWT?)
-// master
-// preview { ref }

@@ -1,5 +1,10 @@
+import 'regenerator-runtime/runtime';
 export { Messenger } from './messenger';
+export { Publisher } from './publisher';
 export { Hooks } from './hooks';
+
+// Fetch Wrapper
+export const fetchy = ({ url, ...other }) => fetch(url, other).then(r => r.json());
 
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
 export const readyDOM = _ => Promise.resolve(true);
@@ -19,19 +24,30 @@ export const script = src => loadNode({ type: 'script', src });
 
 // Random id
 export function random(num) {
-  const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return [...Array(num)]
     .map(_ => chars[Math.floor(Math.random() * chars.length)])
     .join('');
 }
+
+// Load unique div in body
+export const div = (id, obj) => {
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = id;
+    document.body.appendChild(el);
+  }
+  Object.assign(el, obj);
+  return el;
+};
 
 // Load iFrame
 export const iFrame = (src, options) =>
   loadNode({
     type: 'iframe',
     src,
-    options,
+    options: Object.assign({ frameBorder: 0 }, options),
     body: true,
   });
 
@@ -43,7 +59,7 @@ async function loadNode({ type, src, options, body }) {
     if (duplicate) return resolve(duplicate);
 
     // Create node
-    const node = document.createElement(type);
+    let node = document.createElement(type);
     node = Object.assign(node, options, { src });
     node.onload = resolve(node);
 
@@ -52,6 +68,16 @@ async function loadNode({ type, src, options, body }) {
     else document.head.appendChild(node);
   });
 }
+
+// Parse Toolbar Bootstrap state
+export const normalizeState = _state => {
+  const state = {};
+  state.guest = _state.isGuest;
+  state.auth = _state.isAuthenticated;
+  state.master = _state.masterRef;
+  state.preview = _state.previewState || null;
+  return state;
+};
 
 // Parse Prismic ref
 export const normalizeRef = _ref => {

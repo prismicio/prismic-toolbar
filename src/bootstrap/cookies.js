@@ -1,110 +1,113 @@
 import Cookies from 'js-cookie';
-import { reload, query, parseQuery, random, normalizeRef } from 'common';
-import { bootstrap } from './config';
+import { reload, query, random, normalizeRef } from 'common';
 
 // Preview cookie manager
 
 class PreviewCookie {
-  name = 'io.prismic.preview';
-
   constructor() {
-    // Get state
-    Object.assign(this, {
-      authorized: Boolean(this.get().ref), // quic auth
-      master: bootstrap.post('state').then(s => s.master),
-    });
+    this.name = 'io.prismic.preview';
+    this.auth = Boolean(this.get().ref);
+    this.fixCookie();
+  }
 
-    // Fix servers setting bad cookies
+  // State
+
+  setState(state) {
+    Object.assign(this, state);
+  }
+
+  // Fix bad cookie (from server, auth, etc)
+
+  fixCookie() {
     const { ref, url, track, breaker } = this;
-    demolishCookie(name);
+    demolishCookie(name); // remove later
     this.set({ ref, url, track, breaker });
-
-    // ALWAYS have the correct tracker
-    this.authSetup();
   }
 
-  // Tracking fetures
+  // Cookie get/set
 
-  async authSetup() {
-    // URL Request Hooks
-    const hooks = new Hooks();
-    const url = window.location.pathname;
-
-    // Enable tracking
-    if (this.authorized) {
-      this.track = random(8);
-      this.breakerTimer = setInterval(_ => (this.breaker = random(8)), 100);
-      // TODO beforeUnload change track?
-      hooks.on('beforeRequest', _ => (this.url = url));
-      hooks.on('afterRequest', _ => (this.url = null));
-    }
-
-    // Get permanent auth state
-    const state = await bootstrap.post('state');
-    this.authorized = state.auth;
-
-    // Disable tracking
-    if (!this.authorized) {
-      clearInterval(this.breakerTimer);
-      hooks.off();
-      this.set(); // clear querystring
-    }
+  get() {
+    return normalizeRef(getCookie(this.name));
   }
 
-  // Private
+  set(args) {
+    const { ref, url, track, breaker } = Object.assign(this.get(), args);
+    if (!ref) return deleteCookie(this.name); // Always need ref or remove all state
+    const qs = '?' + query({ url, track, breaker });
+    setCookie(this.name, this.auth ? ref + qs : ref, 0.1);
+  }
 
-  get = _ => normalizeRef(getCookie(this.name));
+  // Master
 
-  set = ({ ref = this.ref, url, track, breaker }) => {
-    const qs = query({ url, track, breaker });
-    const value = this.authorized ? `${ref}?${qs}` : ref;
-    setCookie(this.name, value, 0.1);
-  };
+  get master() {
+    return new Promise(resolve => {
+      if (this._master) resolve(this._master);
+      else this.resolveMaster = resolve;
+    });
+  }
 
-  // Getters
+  set master(value) {
+    this._master = value;
+    if (this.resolveMaster) this.resolveMaster(value);
+  }
+
+  // Ref
 
   get ref() {
     return this.get().ref;
   }
 
+  set ref() {
+    this.set({ ref });
+  }
+
+  setPreview(ref) {
+    if (!ref) return this.delPreview(); // No ref
+    if (ref === this.ref) return; // Same ref
+    this.set({ ref }); // Set
+    reload(); // Reload
+  }
+
+  async delPreview() {
+    const oldRef = this.ref;
+    const master = await this.master;
+
+    // Delete
+    if (this.auth) this.set({ ref: master });
+    else deleteCookie(this.name);
+
+    // Reload
+    if (oldRef && oldRef !== master) reload();
+  }
+
+  // Url
+
   get url() {
     return this.get().url;
   }
+
+  set url(value) {
+    this.set({ url: value });
+  }
+
+  // Track
 
   get track() {
     return this.get().track;
   }
 
+  set track(value) {
+    this.set({ track: value });
+  }
+
+  // Breaker
+
   get breaker() {
     return this.get().breaker;
   }
 
-  // Setters
-
-  set url(value) {
-    this.set({ ...this.get(), url: value });
-  }
-
-  set track(value) {
-    this.set({ ...this.get(), track: value });
-  }
-
   set breaker(value) {
-    this.set({ ...this.get(), breaker: value });
-  }
-
-  setRef(value, { reload: shouldReload = false }) {
-    if (value !== this.ref) return;
-    this.set({ ...this.get(), ref: value });
-    if (shouldReload) reload();
-  }
-
-  // Delete
-
-  async deleteRef({ reload: shouldReload = false }) {
-    if (this.authorized) this.set({ ...this.get(), ref: await this.master });
-    else deleteCookie(this.name);
-    if (shouldReload) reload();
+    this.set({ breaker: value });
   }
 }
 
@@ -148,7 +151,7 @@ function deleteCookie(name) {
 }
 
 // TODO remove after we force no /preview route (url prediction)
-function demolishCookie(name) {
+export function demolishCookie(name) {
   const subdomains = window.location.hostname.split('.'); // ['www','gosport','com']
   const subpaths = window.location.pathname.slice(1).split('/'); // ['my','path']
 
@@ -158,12 +161,8 @@ function demolishCookie(name) {
     .concat(null); // no domain specified
 
   const PATHS = []
-    .concat(
-      subpaths.map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}`)
-    ) // /a/b/foo
-    .concat(
-      subpaths.map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}/`)
-    ) // /a/b/foo/
+    .concat(subpaths.map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}`)) // /a/b/foo
+    .concat(subpaths.map((path, idx) => `/${subpaths.slice(0, idx + 1).join('/')}/`)) // /a/b/foo/
     .concat('/') // root path
     .concat(null); // no path specified
 
@@ -174,5 +173,5 @@ function demolishCookie(name) {
 
 // Exports
 
-export const preview = bootstrap && new PreviewCookie();
+export const preview = new PreviewCookie();
 export const experiment = new ExperimentCookie();

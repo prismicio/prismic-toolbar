@@ -3,9 +3,9 @@ const webpack = require('webpack');
 const resolve = path => require('path').resolve(__dirname, path);
 
 module.exports = env => {
-  const prod = env.mode === 'production'
+  const prod = env.mode === 'production';
 
-  return ({
+  return {
     output: {
       filename: prod ? '[name].min.js' : '[name].js',
     },
@@ -13,7 +13,6 @@ module.exports = env => {
     entry: {
       toolbar: resolve('src/toolbar'),
       bootstrap: resolve('src/bootstrap'),
-      'bootstrap-iframe': resolve('src/bootstrap-iframe'),
     },
 
     resolve: {
@@ -37,5 +36,5 @@ module.exports = env => {
         },
       ],
     },
-  })
+  };
 };

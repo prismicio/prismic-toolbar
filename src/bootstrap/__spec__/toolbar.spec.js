@@ -1,8 +1,8 @@
 import Puppeteer from 'puppeteer';
-import Cookies from '../cookies';
+import { demolishCookie } from './cookies';
 
 describe('Cookies', () => {
-  it('removePreviewCookie should remove cookies for all domain/path combinations.', async () => {
+  it('demolishCookie should remove cookies for all domain/path combinations.', async () => {
     // Set up puppeteer
     const browser = await Puppeteer.launch();
     const page = await browser.newPage();
@@ -11,7 +11,7 @@ describe('Cookies', () => {
     // Expose functions
     await page.exposeFunction('setCookie', setCookie);
     await page.exposeFunction('cookieExists', cookieExists);
-    await page.exposeFunction('removePreviewCookie', Cookies.removePreviewCookie);
+    await page.exposeFunction('demolishCookie', demolishCookie);
 
     // Set preview cookies
     let cookie = await page.evaluate(() => {
@@ -28,7 +28,7 @@ describe('Cookies', () => {
 
     // Remove all preview cookies
     cookie = await page.evaluate(() => {
-      removePreviewCookie(); // eslint-disable-line
+      demolishCookie();
       return cookieExists('io.prismic.preview');
     });
 
@@ -40,17 +40,17 @@ describe('Cookies', () => {
   });
 });
 
-
 function cookieExists(cookie) {
   return document.cookie.includes(cookie);
 }
-
 
 function setCookie(name = null, value = null, domain = null, path = '/', expires = 1000) {
   if (!name) throw new Error('setCookie: no name specified');
   const c = `${name}=${value};`;
   const p = path ? `path=${path};` : '';
   const d = domain ? `domain=${domain};` : '';
-  const e = `expires=${new Date(Date.now() + (1000 * 60 * 60 * 24 * expires)).toGMTString()}`;
+  const e = `expires=${new Date(
+    Date.now() + 1000 * 60 * 60 * 24 * expires
+  ).toGMTString()}`;
   document.cookie = c + p + d + e;
 }
