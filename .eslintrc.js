@@ -1,13 +1,16 @@
 module.exports = {
   parser: 'babel-eslint',
-  extends: ['airbnb-base'],
+  extends: ['standard', 'standard-preact', 'airbnb-base'],
   env: {
     browser: true,
     jest: true,
   },
   rules: {
     'func-names': 0,
+    'no-new': 0,
+    'no-multi-assign': 0,
     'space-before-function-paren': 0,
+    'function-paren-newline': 0,
     'no-param-reassign': 0,
     'no-return-assign': [2, 'except-parens'],
     'no-use-before-define': 0,
@@ -15,5 +18,24 @@ module.exports = {
     'no-prototype-builtins': 0,
     'arrow-parens': [2, 'as-needed'],
     'no-console': [2, { allow: ['warn', 'error'] }],
+    'prefer-rest-params': 0,
+    'nonblock-statement-body-position': 0,
+    'no-underscore-dangle': 0,
+    'comma-dangle': [
+      'error',
+      {
+        arrays: 'only-multiline',
+        objects: 'only-multiline',
+        imports: 'only-multiline',
+        exports: 'only-multiline',
+        functions: 'ignore',
+      },
+    ],
+    'import/prefer-default-export': 0,
+    'import/no-extraneous-dependencies': 0,
+    'object-curly-newline': 0,
+    'implicit-arrow-linebreak': 0,
+    'import/no-unresolved': [2, { ignore: ['^common$'] }],
+    curly: 0,
   },
 };

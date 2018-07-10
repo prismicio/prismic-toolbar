@@ -1,13 +1,12 @@
-// TODO no more promise/fetch, just babel-polyfill if IE 11, if <IE11, return warning 'not supported'
+// TODO no promise/fetch, just babel-polyfill if IE 11, if <IE11, return warning 'not supported'
 import 'promise-polyfill/src/polyfill';
 import 'regenerator-runtime/runtime';
 import 'whatwg-fetch';
 
-import { readyDOM, endpointWarning, normalizeState, Messenger, iFrame } from 'common';
+import { readyDOM, endpointWarning, Messenger } from 'common';
 import { globals, baseURL } from './config';
-import { preview } from './cookies';
+import { preview as previewCookie } from './cookies';
 import { Prediction } from './prediction';
-import { Preview } from './preview';
 import { Toolbar } from './toolbar';
 
 (async () => {
@@ -20,6 +19,7 @@ import { Toolbar } from './toolbar';
   // State
   const messenger = new Messenger(`${baseURL}/toolbar/bootstrap`);
   const prediction = new Prediction(messenger);
+  const documents = prediction.getDocuments();
 
   // Ready DOM
   await readyDOM();
@@ -30,12 +30,13 @@ import { Toolbar } from './toolbar';
     .forEach(el => el.remove());
 
   // Setup
-  const { auth, master, preview, previewRef } = await messenger.post('state');
-  preview.setPreview(previewRef);
-  preview.setState({ auth, master });
-  prediction.setState({ auth });
+  const { auth, master, preview } = await messenger.post('state'); // Get State
+  previewCookie.state = { auth, master, messenger };
+  prediction.active = auth;
+
+  // Preview
+  await previewCookie.setPreview(preview && preview.ref);
 
   // Toolbar
-  const documents = await prediction.documents;
-  new Toolbar({ auth, preview, documents });
+  new Toolbar({ auth, preview, documents: await documents });
 })();

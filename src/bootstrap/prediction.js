@@ -1,43 +1,47 @@
-import { Hooks, fetchy } from 'common';
-import { preview } from './preview';
-import { baseURL } from './config';
+import { Hooks, random } from 'common';
+import { preview } from './cookies';
 
 export class Prediction {
   constructor(messenger) {
     this.messenger = messenger;
     this.hooks = new Hooks();
-    this.auth = Boolean(this.get().ref);
+    this.active = preview.ref;
   }
 
-  // State
+  // Documents
 
-  setState(state) {
-    Object.assign(this, state);
-  }
-
-  // Auth
-
-  get auth() {
-    return this._auth || Boolean(preview.get().ref);
-  }
-
-  set auth(value) {
-    this._auth = Boolean(value);
-    clearInterval(this.breakerTimer);
-
-    if (value) {
-      this.track = random(8);
-      this.breakerTimer = setInterval(_ => (this.breaker = random(8)), 100);
-      this.hooks.on('beforeRequest', _ => (this.url = window.location.pathname));
-      this.hooks.on('afterRequest', _ => (this.url = null));
+  getDocuments() {
+    if (this.active)
       this.documents = this.messenger.post('documents', {
         url: window.location.pathname,
         track: preview.track,
       });
-    } else {
+    else this.documents = Promise.resolve([]);
+    return this.documents;
+  }
+
+  // Activate
+
+  get active() {
+    return Boolean(this._active);
+  }
+
+  set active(beActive) {
+    if (Boolean(beActive) === this._active) return;
+    this._active = beActive;
+
+    // Setup
+    if (beActive) {
+      this.track = random(8);
+      this.breakerTimer = setInterval(() => (preview.breaker = random(8)), 100);
+      this.hooks.on('beforeRequest', () => (preview.url = window.location.pathname));
+      this.hooks.on('afterRequest', () => (preview.url = null));
+    }
+
+    // Teardown
+    else {
+      clearInterval(this.breakerTimer);
       this.hooks.off();
-      this.fixCookie();
-      this.documents = Promise.resolve([]);
     }
   }
 }

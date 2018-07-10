@@ -1,3 +1,10 @@
 .Panel {
-	background: gray;
+	background: #FAFAFA;
+	box-shadow: 0 20px 30px 0 #D3D3D388;
+	border-radius: 10px;
+	width: 375px;
+	height: 673px;
+	position: absolute;
+	bottom: 130px;
+	left: 30px;
 }

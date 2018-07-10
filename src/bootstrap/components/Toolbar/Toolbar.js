@@ -1,26 +1,32 @@
 import { Panel, Menu, views } from '..';
 import { h, Component } from 'preact';
 import './Toolbar.css';
-const { NONE, DOCS, DRAFTS, SHARE } = views;
+
+const { NONE } = views;
 
 export class Toolbar extends Component {
   constructor() {
     super(...arguments);
-    const { auth, drafts, documents } = this.props;
     this.state = { page: NONE };
   }
 
   render() {
-    const { auth, drafts, documents } = this.props;
+    const { auth, preview, documents, closePreview } = this.props;
     const { page } = this.state;
 
     return (
       <div className="Toolbar">
-        <Panel page={page} drafts={drafts} documents={documents} />
+        <Panel
+          setPage={p => this.setState({ page: p })}
+          page={page}
+          documents={documents}
+          drafts={preview ? preview.drafts : []}
+        />
         <Menu
-          setPage={page => this.setState({ page })}
+          setPage={p => this.setState({ page: p })}
+          closePreview={closePreview}
+          preview={preview}
           auth={auth}
-          preview={Boolean(drafts.length)}
         />
       </div>
     );

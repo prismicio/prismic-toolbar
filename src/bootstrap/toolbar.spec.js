@@ -1,5 +1,5 @@
 import Puppeteer from 'puppeteer';
-import { demolishCookie } from './cookies';
+import { demolishCookie } from 'common';
 
 describe('Cookies', () => {
   it('demolishCookie should remove cookies for all domain/path combinations.', async () => {

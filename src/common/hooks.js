@@ -20,9 +20,7 @@ export class Hooks {
   }
 
   _removeAll() {
-    this.hooks.forEach(hook =>
-      window.removeEventListener(hook.type, hook.callback)
-    );
+    this.hooks.forEach(hook => window.removeEventListener(hook.type, hook.callback));
     this.hooks = [];
   }
 
@@ -52,7 +50,7 @@ XMLHttpRequest.prototype.send = function(...args) {
 
   event('beforeRequest', args);
 
-  this.onreadystatechange = _ => {
+  this.onreadystatechange = () => {
     if (this.readyState === 2) event('afterRequest', args);
     if (oldChange) oldChange();
   };
@@ -64,7 +62,7 @@ XMLHttpRequest.prototype.send = function(...args) {
 const oldFetch = window.fetch;
 
 window.fetch = async (...args) => {
-  if (args[1] && args[1].emitEvents === false) return await oldFetch(...args);
+  if (args[1] && args[1].emitEvents === false) return oldFetch(...args);
   event('beforeRequest', args);
   const response = await oldFetch(...args);
   event('afterRequest', args);

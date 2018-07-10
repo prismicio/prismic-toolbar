@@ -1,3 +1,23 @@
+.Menu, .Menu-Preview {
+	background-color: #5163BA;
+	position: absolute;
+	bottom: 30px;
+	left: 30px;
+	color: white;
+}
+
 .Menu {
-	background: green;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 100px;
+	width: 70px;
+	height: 70px;
+
+}
+
+.Menu-Preview {
+	border-radius: 6px;
+	width: 395px;
+	height: 70px;
 }

@@ -1,19 +1,27 @@
 import 'regenerator-runtime/runtime';
-import { Publisher, normalizeState, fetchy, query } from 'common';
+import {
+  Publisher,
+  normalizeState,
+  normalizeDocument,
+  fetchy,
+  query,
+  deleteCookie,
+} from 'common';
 
 // State
 const state = normalizeState(window.prismicState);
-state.previewRef = window.previewRef || null; // TODO
 
 // Prediction documents
-const documents = async ({ url, track }) => (
+const documents = async params =>
   await fetchy({
-    url: `/prediction/predict?${query({ url, track })}`,
+    url: `/prediction/predict?${query(params)}`,
     credentials: 'same-origin',
-  });
-);
+  }).then(data => data.documents.map(normalizeDocument));
 
-// TODO normalize preview drafts (and documents?)
+// Close preview session
+const closePreview = () => deleteCookie('io.prismic.previewSession');
+
+// TODO Preview ref ping, Screenshot
 
 // Publish State
-new Publisher({ state, documents });
+new Publisher({ state, documents, closePreview });

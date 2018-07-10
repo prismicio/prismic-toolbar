@@ -1,23 +1,32 @@
 import 'regenerator-runtime/runtime';
+
+export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
+export { div, iFrame } from './domnodes';
 export { Messenger } from './messenger';
 export { Publisher } from './publisher';
 export { Hooks } from './hooks';
+
+// Switchy
+export const switchy = (val = '') => (obj = {}) => {
+  if (typeof obj[val] === 'function') return obj[val]();
+  return obj[val] || obj._ || null;
+};
 
 // Fetch Wrapper
 export const fetchy = ({ url, ...other }) => fetch(url, other).then(r => r.json());
 
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
-export const readyDOM = _ => Promise.resolve(true);
+export const readyDOM = () => Promise.resolve(true);
 
 // Wait in seconds
 export const wait = seconds =>
   new Promise(resolve => setTimeout(resolve, seconds * 1000));
 
 // Reload
-export const reload = window.location.reload;
+export const reload = () => window.location.reload();
 
 // Cookies disabled
-export const disabledCookies = _ => !navigator.cookieEnabled;
+export const disabledCookies = () => !navigator.cookieEnabled;
 
 // Load script
 export const script = src => loadNode({ type: 'script', src });
@@ -26,48 +35,22 @@ export const script = src => loadNode({ type: 'script', src });
 export function random(num) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return [...Array(num)]
-    .map(_ => chars[Math.floor(Math.random() * chars.length)])
+    .map(() => chars[Math.floor(Math.random() * chars.length)])
     .join('');
 }
 
-// Load unique div in body
-export const div = (id, obj) => {
-  let el = document.getElementById(id);
-  if (!el) {
-    el = document.createElement('div');
-    el.id = id;
-    document.body.appendChild(el);
-  }
-  Object.assign(el, obj);
-  return el;
-};
+// TODO
+export const normalizeDocument = doc => doc;
 
-// Load iFrame
-export const iFrame = (src, options) =>
-  loadNode({
-    type: 'iframe',
-    src,
-    options: Object.assign({ frameBorder: 0 }, options),
-    body: true,
-  });
-
-// Load something
-async function loadNode({ type, src, options, body }) {
-  return new Promise(resolve => {
-    // Prevent duplicates
-    const duplicate = document.querySelector(`[src="${src}"]`);
-    if (duplicate) return resolve(duplicate);
-
-    // Create node
-    let node = document.createElement(type);
-    node = Object.assign(node, options, { src });
-    node.onload = resolve(node);
-
-    // Append node
-    if (body) document.body.appendChild(node);
-    else document.head.appendChild(node);
-  });
-}
+export const normalizeDraft = draft =>
+  Object.assign(
+    {
+      title: null,
+      summary: null,
+      url: null,
+    },
+    draft || {}
+  );
 
 // Parse Toolbar Bootstrap state
 export const normalizeState = _state => {
@@ -76,6 +59,23 @@ export const normalizeState = _state => {
   state.auth = _state.isAuthenticated;
   state.master = _state.masterRef;
   state.preview = _state.previewState || null;
+
+  if (state.preview) {
+    const old = state.preview;
+    const p = {};
+
+    p.ref = old.ref;
+    p.title = old.title;
+    p.updated = old.lastUpdate;
+    p.drafts = []
+      .concat(old.draftPreview)
+      .concat(old.releasePreview)
+      .filter(Boolean)
+      .map(normalizeDraft);
+
+    state.preview = p;
+  }
+
   return state;
 };
 
@@ -126,7 +126,7 @@ export const delay = t => new Promise(resolve => setTimeout(resolve, t));
 export const slugify = str => str.normalize('NFD'); // TODO IE polyfill
 
 // Invalid prismic endpoint
-export const endpointWarning = _ =>
+export const endpointWarning = () =>
   console.warn(`
 Invalid window.prismic.endpoint.
 Learn how to set it up in the documentation: https://prismic.link/2LQcOWJ.
@@ -134,14 +134,14 @@ https://github.com/prismicio/prismic-toolbar'
 `);
 
 // Debounce
-export const debounced = delay => func => {
+export const debounced = _delay => func => {
   let timeout;
   return function(...args) {
     clearTimeout(timeout);
     timeout = setTimeout(() => {
       func.apply(this, args);
       timeout = null;
-    }, delay);
+    }, _delay);
   };
 };
 
