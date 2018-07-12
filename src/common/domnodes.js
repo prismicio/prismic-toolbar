@@ -1,38 +1,25 @@
-// Load unique div in body
-export const div = (id, obj) => {
-  let el = document.getElementById(id);
-  if (!el) {
-    el = document.createElement('div');
-    el.id = id;
-    document.body.appendChild(el);
-  }
-  Object.assign(el, obj);
-  return el;
+export const div = ({ id, options }) => node({ id, type: 'div', options });
+export const script = src => srcNode({ type: 'script', src });
+
+export const deleteNodes = cssQuery => {
+  document.querySelectorAll(cssQuery).forEach(el => el.remove());
 };
 
-// Load iFrame
-export const iFrame = (src, options) =>
-  loadNode({
-    type: 'iframe',
-    src,
-    options: Object.assign({ frameBorder: 0 }, options),
-    body: true,
-  });
-
 // Load something
-async function loadNode({ type, src, options, body }) {
+function node({ id, type, options, body = true }) {
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement(type);
+    document[body ? 'body' : 'head'].appendChild(el);
+  }
+  Object.assign(el, options, { id });
+  return el;
+}
+
+// Load something with src
+async function srcNode({ src, type, options, body = false }) {
   return new Promise(resolve => {
-    // Prevent duplicates
-    const duplicate = document.querySelector(`[src="${src}"]`);
-    if (duplicate) return resolve(duplicate);
-
-    // Create node
-    let node = document.createElement(type);
-    node = Object.assign(node, options, { src });
-    node.onload = resolve(node);
-
-    // Append node
-    if (body) document.body.appendChild(node);
-    else document.head.appendChild(node);
+    const el = node({ id: src, type, options: { ...options, src }, body });
+    el.onload = resolve(el);
   });
 }

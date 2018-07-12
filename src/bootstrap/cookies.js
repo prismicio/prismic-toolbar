@@ -13,25 +13,19 @@ import {
 class PreviewCookie {
   constructor() {
     this.name = 'io.prismic.preview';
-    this.auth = Boolean(this.ref);
+    this.useQuery = Boolean(this.ref);
     this.fixCookie();
   }
 
-  // State
-
-  set state(state) {
-    Object.assign(this, state);
-  }
-
-  // Fix bad cookie (from server, auth, etc)
+  // Fix bad cookie from server (remove this later)
 
   fixCookie() {
     const { ref, url, track, breaker } = this;
-    demolishCookie(this.name); // remove later
+    demolishCookie(this.name);
     this.set({ ref, url, track, breaker });
   }
 
-  // Cookie (getter & setter)
+  // Cookie getter setter deleter
 
   get() {
     return normalizeRef(getCookie(this.name));
@@ -39,57 +33,13 @@ class PreviewCookie {
 
   set(args) {
     const { ref, url, track, breaker } = Object.assign(this.get(), args);
-    if (!ref) return deleteCookie(this.name); // Always need ref or remove all state
+    if (!ref) return this.delete(); // Always need ref or remove all state
     const qs = `?${query({ url, track, breaker })}`;
-    setCookie(this.name, this.auth ? ref + qs : ref, 0.1);
+    setCookie(this.name, this.useQuery ? ref + qs : ref, 0.1);
   }
 
-  // Preview
-
-  setPreview = async ref => {
-    if (!ref) return this.closePreview(); // No ref
-    if (ref === this.ref) return; // Same ref
-    this.set({ ref }); // Set
-    reload(); // Reload
-  };
-
-  closePreview = async () => {
-    const oldRef = this.ref;
-    const master = await this.master;
-    const messenger = await this.messenger;
-
-    // Delete
-    await messenger.post('closePreview');
-
-    if (this.auth) this.set({ ref: master });
-    else deleteCookie(this.name);
-
-    // Reload
-    if (oldRef && oldRef !== master) reload();
-  };
-
-  // Messenger (async value) TODO
-
-  get messenger() {
-    if (this._messenger) return Promise.resolve(this._messenger);
-    return new Promise(resolve => (this.resolveMessenger = resolve));
-  }
-
-  set messenger(value) {
-    this._messenger = value;
-    if (this.resolveMessenger) this.resolveMessenger(value);
-  }
-
-  // Master (async value) TODO
-
-  get master() {
-    if (this._master) return Promise.resolve(this._master);
-    return new Promise(resolve => (this.resolveMaster = resolve));
-  }
-
-  set master(value) {
-    this._master = value;
-    if (this.resolveMaster) this.resolveMaster(value);
+  delete() {
+    deleteCookie(this.name);
   }
 
   // Ref
@@ -146,7 +96,7 @@ class ExperimentCookie {
     const value = [expId, variation].join(' ');
     if (value === this.get()) return;
     setCookie(this.name, value);
-    reload();
+    reload(); // TODO in experiment.js
   }
 
   delete() {

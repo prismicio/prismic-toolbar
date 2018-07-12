@@ -1,47 +1,30 @@
-import { Hooks, random } from 'common';
+import { random, Hooks, Promises } from 'common';
 import { preview } from './cookies';
 
 export class Prediction {
   constructor(messenger) {
     this.messenger = messenger;
+
+    // Initial fetch
+    this.fetchDocuments();
+
+    // Setup preview cookie
+    preview.useQuery = true;
+    preview.track = random(8);
+    setInterval(() => (preview.breaker = random(8)), 100);
+
+    // Setup hooks
     this.hooks = new Hooks();
-    this.active = preview.ref;
+    this.hooks.on('beforeRequest', () => (preview.url = window.location.pathname));
+    this.hooks.on('afterRequest', () => (preview.url = null));
+    this.hooks.on('pageChange', () => this.fetchDocuments()); // TODO page change hook
   }
 
-  // Documents
-
-  getDocuments() {
-    if (this.active)
-      this.documents = this.messenger.post('documents', {
-        url: window.location.pathname,
-        track: preview.track,
-      });
-    else this.documents = Promise.resolve([]);
-    return this.documents;
-  }
-
-  // Activate
-
-  get active() {
-    return Boolean(this._active);
-  }
-
-  set active(beActive) {
-    if (Boolean(beActive) === this._active) return;
-    this._active = beActive;
-
-    // Setup
-    if (beActive) {
-      this.track = random(8);
-      this.breakerTimer = setInterval(() => (preview.breaker = random(8)), 100);
-      this.hooks.on('beforeRequest', () => (preview.url = window.location.pathname));
-      this.hooks.on('afterRequest', () => (preview.url = null));
-    }
-
-    // Teardown
-    else {
-      clearInterval(this.breakerTimer);
-      this.hooks.off();
-    }
+  // Fetch documents for current url
+  fetchDocuments() {
+    this.documents = this.messenger.post('documents', {
+      url: window.location.pathname,
+      track: preview.track,
+    });
   }
 }

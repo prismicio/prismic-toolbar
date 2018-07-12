@@ -6,9 +6,19 @@ import './Panel.css';
 
 const { NONE, DOCS, DRAFTS, SHARE } = views;
 
+// TODO maybe need more components to handle all pages
+// TODO the pages state should be part of this component
+
 export class Panel extends Component {
+  constructor() {
+    super(...arguments);
+    this.state = { documents: null };
+    this.props.prediction.documents.then(documents => this.setState({ documents }));
+  }
+
   render() {
-    const { setPage, page, drafts, documents } = this.props;
+    const { setPage, prediction, preview, page } = this.props;
+    const { documents, loading } = this.state;
 
     if (page === NONE) return null;
 
@@ -16,9 +26,9 @@ export class Panel extends Component {
       <div className="Panel">
         <div onClick={_ => setPage(NONE)}>setPage(NONE)</div>
         {switchy(page)({
-          [DOCS]: () => documents.map(doc => <Document doc={doc} />),
+          [DOCS]: () => documents.map(doc => <Document doc={messenger} />),
           [DRAFTS]: () => drafts.map(draft => <Draft draft={draft} />),
-          [SHARE]: () => <Share />,
+          [SHARE]: () => <Share url={messenger.post('share', window.location)} />,
         })}
       </div>
     );

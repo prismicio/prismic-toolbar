@@ -2,23 +2,27 @@ import { h, render } from 'preact';
 import { div } from 'common';
 import { preview as previewCookie } from './cookies';
 import { Toolbar as ToolbarComponent } from './components';
+import { Prediction } from './prediction';
+import { Preview } from './preview';
 
 // TODO blinking on reload preview????
 
 export class Toolbar {
-  constructor({ auth, preview, documents }) {
-    if (!auth && !preview) return;
+  constructor({ messenger, preview }) {
+    this.messenger = messenger;
+    this.setup();
+  }
 
-    // TODO shadow or div, (using custom shadowDOM component w/ inline <style scoped />)
+  async setup() {
+    const auth = await this.messenger.post('auth');
 
-    // TODO take screenshot immediately if preview
+    if (!auth && !preview.active) return;
 
+    // TODO shadow or div, (using custom shadowDOM component w/ inline <style/>)
     render(
       <ToolbarComponent
-        auth={auth}
         preview={preview}
-        documents={documents}
-        closePreview={previewCookie.closePreview}
+        prediction={auth ? new Prediction(this.messenger) : null}
       />,
       div('prismic-toolbar-v2')
     );

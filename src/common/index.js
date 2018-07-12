@@ -1,7 +1,7 @@
 import 'regenerator-runtime/runtime';
 
 export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
-export { div, iFrame } from './domnodes';
+export { div, script, deleteNodes } from './domnodes';
 export { Messenger } from './messenger';
 export { Publisher } from './publisher';
 export { Hooks } from './hooks';
@@ -28,9 +28,6 @@ export const reload = () => window.location.reload();
 // Cookies disabled
 export const disabledCookies = () => !navigator.cookieEnabled;
 
-// Load script
-export const script = src => loadNode({ type: 'script', src });
-
 // Random id
 export function random(num) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -55,6 +52,7 @@ export const normalizeDraft = draft =>
 // Parse Toolbar Bootstrap state
 export const normalizeState = _state => {
   const state = {};
+  state.csrf = _state.csrf || null;
   state.guest = _state.isGuest;
   state.auth = _state.isAuthenticated;
   state.master = _state.masterRef;
@@ -168,3 +166,26 @@ export function copyToClipboard(text) {
     }
   }
 }
+
+// Getter returns promise, setter resolves it (once)
+export const Promises = (...args) =>
+  class Promises {
+    constructor() {
+      args.forEach(arg => {
+        const priv = `_${arg}`;
+        let resolver;
+
+        this[priv] = new Promise(resolve => (resolver = resolve));
+
+        Object.defineProperty(this, arg, {
+          get() {
+            return this[priv];
+          },
+
+          set(value) {
+            resolver(value);
+          },
+        });
+      });
+    }
+  };

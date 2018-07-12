@@ -10,24 +10,21 @@ export class Toolbar extends Component {
     this.state = { page: NONE };
   }
 
+  setPage = page => this.setState({ page });
+
   render() {
-    const { auth, preview, documents, closePreview } = this.props;
+    const { preview, prediction } = this.props;
     const { page } = this.state;
 
     return (
       <div className="Toolbar">
         <Panel
-          setPage={p => this.setState({ page: p })}
-          page={page}
-          documents={documents}
-          drafts={preview ? preview.drafts : []}
-        />
-        <Menu
-          setPage={p => this.setState({ page: p })}
-          closePreview={closePreview}
+          setPage={this.setPage}
+          prediction={prediction}
           preview={preview}
-          auth={auth}
+          page={page}
         />
+        <Menu setPage={this.setPage} preview={preview} />
       </div>
     );
   }

@@ -1,27 +1,17 @@
+// TODO rename to bootstrap-iframe
+
 import 'regenerator-runtime/runtime';
-import {
-  Publisher,
-  normalizeState,
-  normalizeDocument,
-  fetchy,
-  query,
-  deleteCookie,
-} from 'common';
+import { Publisher, normalizeState } from 'common'; // TODO maybe no need for common
+import { documents } from './prediction';
+import { preview } from './preview';
 
 // State
 const state = normalizeState(window.prismicState);
 
-// Prediction documents
-const documents = async params =>
-  await fetchy({
-    url: `/prediction/predict?${query(params)}`,
-    credentials: 'same-origin',
-  }).then(data => data.documents.map(normalizeDocument));
+// Auth
+const auth = state.auth;
 
-// Close preview session
-const closePreview = () => deleteCookie('io.prismic.previewSession');
-
-// TODO Preview ref ping, Screenshot
+// TODO: checkPreviewRef
 
 // Publish State
-new Publisher({ state, documents, closePreview });
+new Publisher({ auth, state, documents, ...preview(state) });

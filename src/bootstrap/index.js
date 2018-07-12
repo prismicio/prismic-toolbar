@@ -3,10 +3,8 @@ import 'promise-polyfill/src/polyfill';
 import 'regenerator-runtime/runtime';
 import 'whatwg-fetch';
 
-import { readyDOM, endpointWarning, Messenger } from 'common';
+import { readyDOM, endpointWarning, Messenger, Publisher } from 'common';
 import { globals, baseURL } from './config';
-import { preview as previewCookie } from './cookies';
-import { Prediction } from './prediction';
 import { Toolbar } from './toolbar';
 
 (async () => {
@@ -18,25 +16,17 @@ import { Toolbar } from './toolbar';
 
   // State
   const messenger = new Messenger(`${baseURL}/toolbar/bootstrap`);
-  const prediction = new Prediction(messenger);
-  const documents = prediction.getDocuments();
+  const preview = new Preview(messenger);
 
   // Ready DOM
   await readyDOM();
 
   // Cleanup
-  document
-    .querySelectorAll('.wio-link, [data-wio-id], #io-prismic-toolbar')
-    .forEach(el => el.remove());
-
-  // Setup
-  const { auth, master, preview } = await messenger.post('state'); // Get State
-  previewCookie.state = { auth, master, messenger };
-  prediction.active = auth;
+  deleteNodes('.wio-link, [data-wio-id], #io-prismic-toolbar');
 
   // Preview
-  await previewCookie.setPreview(preview && preview.ref);
+  await preview.setup();
 
   // Toolbar
-  new Toolbar({ auth, preview, documents: await documents });
+  new Toolbar({ messenger, preview });
 })();
