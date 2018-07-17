@@ -1,4 +1,5 @@
-[![Dependency Status](https://david-dm.org/prismicio/prismic-toolbar.svg)](https://david-dm.org/prismicio/prismic-toolbar)
+[![Build Status](https://api.travis-ci.org/prismicio/prismic-toolbar.png)](https://travis-ci.org/prismicio/prismic-toolbar)
+[![Dependency Status](https://david-dm.org/prismicio/prismic-toolbar.svg)](https://david-dm.org/prismicio/prismic-toolbar) [![Greenkeeper badge](https://badges.greenkeeper.io/prismicio/prismic-toolbar.svg)](https://greenkeeper.io/)
 
 # Prismic toolbar
 The prismic toolbar is integrated to your website for:
