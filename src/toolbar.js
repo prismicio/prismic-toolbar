@@ -1,5 +1,6 @@
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas'; // TODO dom-to-image and dynamic load
 import Preview from './preview';
+import Share from './share';
 
 // Remember some styles so we can easily restore them back after toggle
 let toolbarStyle;
@@ -107,7 +108,7 @@ function setup() {
     })();
 
     // Listen to prismic.io messages
-    window.addEventListener('message', (e) => {
+    window.addEventListener('message', e => {
       const message = e.data;
       switch (message.type) {
         case 'io.prismic.ping':
@@ -132,6 +133,8 @@ function setup() {
 
         case 'io.prismic.closeSession':
           Preview.close();
+          Share.close();
+          window.location.reload();
           break;
 
         case 'io.prismic.screenshot': {
@@ -143,8 +146,8 @@ function setup() {
             ignoreElements: element => element.classList.contains('wio-link'),
           };
 
-          html2canvas(document.body, html2canvasOptions).then((canvas) => {
-            resizeCanvas(canvas, canvasOptions.maxWidth, canvasOptions.maxHeight).toBlob((blob) => {
+          html2canvas(document.body, html2canvasOptions).then(canvas => {
+            resizeCanvas(canvas, canvasOptions.maxWidth, canvasOptions.maxHeight).toBlob(blob => {
               iframe.contentWindow.postMessage({
                 type: 'io.prismic.screenshot',
                 data: { blob, page },
@@ -161,6 +164,7 @@ function setup() {
         case 'io.prismic.change':
           Preview.close();
           Preview.set(message.data.ref);
+          window.location.reload();
           break;
 
         case 'io.prismic.toggle':

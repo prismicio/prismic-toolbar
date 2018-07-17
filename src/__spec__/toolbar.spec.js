@@ -1,74 +1,58 @@
-import toolbar from '../toolbar';
+import Puppeteer from 'puppeteer';
 import Cookies from '../cookies';
 
-jest.mock('../cookies', () => ({
-  removePreviewCookie: jest.fn(),
-  getPreviewToken: () => 'previewToken',
-  PREVIEW_COOKIE_KEY: 'previewCookieKey',
-}));
+jest.setTimeout(10000);
 
-describe('closeSession', () => {
+describe('Cookies', () => {
+  it('removePreviewCookie should remove cookies for all domain/path combinations.', async () => {
+    // Set up puppeteer
+    const browser = await Puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
+    const page = await browser.newPage();
+    await page.goto('https://www.awwwards.com/websites/');
 
-  let closeSessionEvent;
+    // Expose functions
+    await page.exposeFunction('setCookie', setCookie);
+    await page.exposeFunction('cookieExists', cookieExists);
+    await page.exposeFunction('removePreviewCookie', Cookies.removePreviewCookie);
 
-  beforeEach(() => {
-    toolbar.setup();
-    closeSessionEvent = new Event('message');
-    closeSessionEvent.data = { type: 'io.prismic.closeSession' };
-  });
-
-  it('should remove cookies for each domain part when path is root', () => {
-    // given
-    const hostname = 'www.myhostname.com';
-    const pathname = '/';
-
-    jsdom.reconfigure({
-      url: `http://${hostname}${pathname}`,
+    // Set preview cookies
+    let cookie = await page.evaluate(() => {
+      setCookie('io.prismic.preview', 'foo', '.www.awwwards.com', '/websites');
+      setCookie('io.prismic.preview', 'foo', 'www.awwwards.com', '/websites/');
+      setCookie('io.prismic.preview', 'foo', '.awwwards.com', '/');
+      setCookie('io.prismic.preview', 'foo', 'awwwards.com', null);
+      setCookie('io.prismic.preview', 'foo', null, '/');
+      return cookieExists('io.prismic.preview');
     });
 
-    // when
-    window.dispatchEvent(closeSessionEvent);
+    // Test
+    expect(cookie).toBeTruthy();
 
-    // then
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'www.myhostname.com');
-
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.myhostname.com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'myhostname.com');
-
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/');
-  });
-
-  it('should remove cookies for each domain part and each path part when path is an uri', () => {
-    // given
-    const hostname = 'www.myhostname.com';
-    const pathname = '/a/path';
-
-    jsdom.reconfigure({
-      url: `http://${hostname}${pathname}`,
+    // Remove all preview cookies
+    cookie = await page.evaluate(() => {
+      removePreviewCookie(); // eslint-disable-line
+      return cookieExists('io.prismic.preview');
     });
 
-    // when
-    window.dispatchEvent(closeSessionEvent);
+    // Test
+    expect(cookie).toBeFalsy();
 
-    // then
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'www.myhostname.com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', 'www.myhostname.com');
-
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.myhostname.com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', '.myhostname.com');
-
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'myhostname.com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', 'myhostname.com');
-
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', '.com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', '.com');
-
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/', 'com');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/', 'com');
-
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/');
-    expect(Cookies.removePreviewCookie).toHaveBeenCalledWith('/a/');
+    // Close puppeteer
+    await browser.close();
   });
 });
+
+
+function cookieExists(cookie) {
+  return document.cookie.includes(cookie);
+}
+
+
+function setCookie(name = null, value = null, domain = null, path = '/', expires = 1000) {
+  if (!name) throw new Error('setCookie: no name specified');
+  const c = `${name}=${value};`;
+  const p = path ? `path=${path};` : '';
+  const d = domain ? `domain=${domain};` : '';
+  const e = `expires=${new Date(Date.now() + (1000 * 60 * 60 * 24 * expires)).toGMTString()}`;
+  document.cookie = c + p + d + e;
+}
