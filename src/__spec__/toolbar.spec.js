@@ -1,10 +1,12 @@
 import Puppeteer from 'puppeteer';
 import Cookies from '../cookies';
 
+jest.setTimeout(10000);
+
 describe('Cookies', () => {
   it('removePreviewCookie should remove cookies for all domain/path combinations.', async () => {
     // Set up puppeteer
-    const browser = await Puppeteer.launch();
+    const browser = await Puppeteer.launch({args: ['--no-sandbox', '--disable-setuid-sandbox']});
     const page = await browser.newPage();
     await page.goto('https://www.awwwards.com/websites/');
 
