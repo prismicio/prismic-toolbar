@@ -6,6 +6,10 @@ module.exports = {
     jest: true,
   },
   rules: {
+    'import/no-cycle': 0, // maybe revert this one (config-experiment, panel-children)
+    'no-await-in-loop': 0,
+    'promise/param-names': 0,
+    'class-methods-use-this': 0,
     'func-names': 0,
     'no-new': 0,
     'no-multi-assign': 0,

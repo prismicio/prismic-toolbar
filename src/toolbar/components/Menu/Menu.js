@@ -1,5 +1,4 @@
-import { h, Component } from 'preact';
-import { screenshot } from 'common';
+import { h } from 'preact';
 import { views } from '..';
 import './Menu.css';
 
@@ -11,19 +10,19 @@ export const Menu = ({ setPage, preview }) => {
       <div className="Menu-Preview">
         <div>
           <div>{preview.title}</div>
-          <div className="docs" onClick={_ => setPage(DRAFTS)}>
-            {preview.drafts.length} docs
+          <div className="docs" onClick={() => setPage(DRAFTS)}>
+            {preview.documents.length} docs
           </div>
-          <div className="share" onClick={preview.share}>
+          <div className="share" onClick={() => setPage(SHARE)}>
             Get a shareable link
           </div>
         </div>
-        <div onClick={preview.close}>x</div>
+        <div onClick={preview.end}>x</div>
       </div>
     );
 
   return (
-    <div className="Menu" onClick={_ => setPage(DOCS)}>
+    <div className="Menu" onClick={() => setPage(DOCS)}>
       ✏
     </div>
   );

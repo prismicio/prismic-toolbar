@@ -1,69 +1,51 @@
-import { fetchy, query, getCookie, deleteCookie, slugify } from 'common';
+import html2canvas from 'html2canvas';
+import { preview as previewCookie } from './cookies';
+import { reloadOrigin } from './config';
+import { getLocation } from 'common';
 
-// Export
-export const preview = state => ({ closePreview, screenshot, share: share(state) });
+export class Preview {
+  constructor(messenger) {
+    this.messenger = messenger;
+  }
 
-// Session id
-const sessionId = getCookie('io.prismic.previewSession');
+  setup = async () => {
+    const { auth, master, preview } = await this.messenger.post('state');
 
-// Close preview session
-const closePreview = () => deleteCookie('io.prismic.previewSession');
+    await this.start(preview && preview.ref);
 
-// Screenshot
-let resolveScreenshot;
-const futureScreenshot = new Promise(resolve => (resolveScreenshot = resolve));
-const screenshot = img => resolveScreenshot(img);
+    this.active = preview && preview.ref !== master;
+    this.authorized = auth;
+    Object.assign(this, preview);
 
-// Share
-const share = state => async location => {
-  const imagePath = location.pathname.slice(1);
-  const imageName = slugify(`${imagePath}${location.hash}$-${sessionId}.jpg`);
-  const session = await getShareableSession({ location, state, imageName });
-  if (!session.hasPreviewImage) uploadScreenshot(imageName);
-  return session.url;
-};
+    if (this.active) setInterval(this.reload, 3000);
+  };
 
-// Get shareable session
-const getShareableSession = ({ location, state, imageName }) => {
-  const qs = query({
-    sessionId,
-    pageURL: location.href,
-    title: state.preview.title,
-    imageName,
-    _: state.csrf,
-  });
+  reload = async () => {
+    this.start(await this.messenger.post('reloadPreview'));
+  };
 
-  return fetchy({
-    url: `/previews/s?${qs}`,
-    method: 'POST',
-    credentials: 'same-origin',
-  });
-};
+  // TODO visual loader
+  start = async ref => {
+    if (!ref) return this.end();
+    if (ref === previewCookie.ref) return;
+    previewCookie.ref = ref;
+    reloadOrigin();
+  };
 
-// Upload screenshot
-const uploadScreenshot = async iamgeName => {
-  // ACL
-  const acl = await fetchy({
-    url: `/previews/${sessionId}/acl`,
-    credentials: 'same-origin',
-  });
+  end = async () => {
+    const oldRef = this.ref;
+    const { auth, master } = await this.messenger.post('state');
+    await this.messenger.post('closePreview');
+    if (auth) previewCookie.ref = master;
+    else previewCookie.delete();
+    if (oldRef && oldRef !== master) reloadOrigin(); // Reload
+  };
 
-  // Form
-  const form = new FormData();
-  form.append('key', `${acl.directory}/${imageName}`);
-  form.append('AWSAccessKeyId', acl.key);
-  form.append('acl', 'public-read');
-  form.append('policy', acl.policy);
-  form.append('signature', acl.signature);
-  form.append('Content-Type', 'image/png');
-  form.append('Cache-Control', 'max-age=315360000');
-  form.append('Content-Disposition', `inline; filename=${imageName}`);
-  form.append('file', await futureScreenshot);
-
-  // Upload
-  return fetchy({
-    url: acl.url,
-    method: 'POST',
-    body: form,
-  });
-};
+  // TODO performance
+  share = async () => {
+    const canvas = await html2canvas(document.body);
+    const screenshot = new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.5));
+    screenshot.then(s => this.messenger.post('screenshot', s));
+    return this.messenger.post('share', getLocation());
+  };
+}

@@ -19,7 +19,7 @@ export class Toolbar extends Component {
     return (
       <div className="Toolbar">
         <Panel
-          setPage={this.setPage}
+          closePanel={() => this.setPage(NONE)}
           prediction={prediction}
           preview={preview}
           page={page}

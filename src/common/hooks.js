@@ -68,3 +68,17 @@ window.fetch = async (...args) => {
   event('afterRequest', args);
   return response;
 };
+
+// History hook
+const _wr = function(type) {
+  const orig = window.history[type];
+  return function() {
+    const rv = orig.apply(this, arguments);
+    const e = new Event(type);
+    e.arguments = arguments;
+    window.dispatchEvent(e);
+    return rv;
+  };
+};
+window.history.pushState = _wr('historyChange');
+window.history.replaceState = _wr('historyChange');

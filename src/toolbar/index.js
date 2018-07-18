@@ -1,17 +1,33 @@
-// TODO rename to bootstrap-iframe
-
+// TODO no promise/fetch, just babel-polyfill if IE 11, if <IE11, return warning 'not supported'
+import 'promise-polyfill/src/polyfill';
 import 'regenerator-runtime/runtime';
-import { Publisher, normalizeState } from 'common'; // TODO maybe no need for common
-import { documents } from './prediction';
-import { preview } from './preview';
+import 'whatwg-fetch';
 
-// State
-const state = normalizeState(window.prismicState);
+import { readyDOM, endpointWarning, Messenger, deleteNodes } from 'common';
+import { globals, baseURL } from './config';
+import { Preview } from './preview';
+import { Toolbar } from './toolbar';
 
-// Auth
-const auth = state.auth;
+(async () => {
+  // Invalid prismic.endpoint
+  if (!baseURL) return endpointWarning();
 
-// TODO: checkPreviewRef
+  // Globals
+  window.prismic = window.PrismicToolbar = globals;
 
-// Publish State
-new Publisher({ auth, state, documents, ...preview(state) });
+  // State
+  const messenger = new Messenger(`${baseURL}/toolbar/bootstrap`);
+  const preview = new Preview(messenger);
+
+  // Ready DOM
+  await readyDOM();
+
+  // Cleanup
+  deleteNodes('.wio-link, [data-wio-id], #io-prismic-toolbar');
+
+  // Preview
+  await preview.setup();
+
+  // Toolbar
+  new Toolbar({ messenger, preview });
+})();

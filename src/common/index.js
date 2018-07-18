@@ -5,6 +5,12 @@ export { div, script, deleteNodes } from './domnodes';
 export { Messenger } from './messenger';
 export { Publisher } from './publisher';
 export { Hooks } from './hooks';
+export {
+  normalizeDocument,
+  normalizeDraft,
+  normalizeState,
+  normalizeRef,
+} from './normalize';
 
 // Switchy
 export const switchy = (val = '') => (obj = {}) => {
@@ -16,78 +22,29 @@ export const switchy = (val = '') => (obj = {}) => {
 export const fetchy = ({ url, ...other }) => fetch(url, other).then(r => r.json());
 
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
-export const readyDOM = () => Promise.resolve(true);
+export const readyDOM = async () => {
+  if (document.readyState !== 'complete') await wait(0);
+  return true;
+};
 
 // Wait in seconds
-export const wait = seconds =>
-  new Promise(resolve => setTimeout(resolve, seconds * 1000));
+export const wait = seconds => new Promise(rs => setTimeout(rs, seconds * 1000));
+
+// Wait in milliseconds
+export const delay = t => new Promise(rs => setTimeout(rs, t));
 
 // Reload
-export const reload = () => window.location.reload();
+export const reload = url => window.location.reload(url);
 
 // Cookies disabled
 export const disabledCookies = () => !navigator.cookieEnabled;
 
 // Random id
-export function random(num) {
+export const random = num => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   return [...Array(num)]
     .map(() => chars[Math.floor(Math.random() * chars.length)])
     .join('');
-}
-
-// TODO
-export const normalizeDocument = doc => doc;
-
-export const normalizeDraft = draft =>
-  Object.assign(
-    {
-      title: null,
-      summary: null,
-      url: null,
-    },
-    draft || {}
-  );
-
-// Parse Toolbar Bootstrap state
-export const normalizeState = _state => {
-  const state = {};
-  state.csrf = _state.csrf || null;
-  state.guest = _state.isGuest;
-  state.auth = _state.isAuthenticated;
-  state.master = _state.masterRef;
-  state.preview = _state.previewState || null;
-
-  if (state.preview) {
-    const old = state.preview;
-    const p = {};
-
-    p.ref = old.ref;
-    p.title = old.title;
-    p.updated = old.lastUpdate;
-    p.drafts = []
-      .concat(old.draftPreview)
-      .concat(old.releasePreview)
-      .filter(Boolean)
-      .map(normalizeDraft);
-
-    state.preview = p;
-  }
-
-  return state;
-};
-
-// Parse Prismic ref
-export const normalizeRef = _ref => {
-  let ref = _ref || null;
-  if (ref) ref = ref.split('?')[0] || null;
-  return {
-    ref,
-    url: null,
-    track: null,
-    breaker: null,
-    ...parseQuery(_ref),
-  };
 };
 
 // Build querystring
@@ -117,31 +74,14 @@ export const parseQuery = _uri => {
     );
 };
 
-// Wait in milliseconds TODO
-export const delay = t => new Promise(resolve => setTimeout(resolve, t));
-
-// Normalize string
-export const slugify = str => str.normalize('NFD'); // TODO IE polyfill
+// Normalize string TODO IE polyfill
+export const slugify = str => str.normalize('NFD');
 
 // Invalid prismic endpoint
 export const endpointWarning = () =>
-  console.warn(`
-Invalid window.prismic.endpoint.
+  console.warn(`Invalid window.prismic.endpoint.
 Learn how to set it up in the documentation: https://prismic.link/2LQcOWJ.
-https://github.com/prismicio/prismic-toolbar'
-`);
-
-// Debounce
-export const debounced = _delay => func => {
-  let timeout;
-  return function(...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      func.apply(this, args);
-      timeout = null;
-    }, _delay);
-  };
-};
+https://github.com/prismicio/prismic-toolbar`);
 
 // Copy to clipboard TODO
 export function copyToClipboard(text) {
@@ -167,25 +107,47 @@ export function copyToClipboard(text) {
   }
 }
 
-// Getter returns promise, setter resolves it (once)
-export const Promises = (...args) =>
-  class Promises {
-    constructor() {
-      args.forEach(arg => {
-        const priv = `_${arg}`;
-        let resolver;
-
-        this[priv] = new Promise(resolve => (resolver = resolve));
-
-        Object.defineProperty(this, arg, {
-          get() {
-            return this[priv];
-          },
-
-          set(value) {
-            resolver(value);
-          },
-        });
-      });
-    }
+// Throttle (https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf)
+export const throttle = (func, timeout) => {
+  let queue;
+  let lastReturn;
+  let lastRan = -Infinity;
+  return function() {
+    const since = Date.now() - lastRan;
+    const due = since >= timeout;
+    const run = () => {
+      lastRan = Date.now();
+      lastReturn = func.apply(this, arguments);
+    };
+    clearTimeout(queue);
+    if (due) run();
+    else queue = setTimeout(run, timeout - since);
+    return lastReturn;
   };
+};
+
+// Simple location object
+export const getLocation = () => {
+  const {
+    href,
+    origin,
+    protocol,
+    host,
+    hostname,
+    port,
+    pathname,
+    search,
+    hash,
+  } = window.location;
+  return {
+    href,
+    origin,
+    protocol,
+    host,
+    hostname,
+    port,
+    pathname,
+    search,
+    hash,
+  };
+};

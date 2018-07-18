@@ -1,5 +1,4 @@
 import {
-  reload,
   query,
   normalizeRef,
   getCookie,
@@ -94,15 +93,11 @@ class ExperimentCookie {
 
   set(expId, variation) {
     const value = [expId, variation].join(' ');
-    if (value === this.get()) return;
     setCookie(this.name, value);
-    reload(); // TODO in experiment.js
   }
 
   delete() {
-    if (!this.get()) return;
     deleteCookie(this.name);
-    reload();
   }
 }
 

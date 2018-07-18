@@ -6,13 +6,17 @@ module.exports = env => {
   const prod = env.mode === 'production';
 
   return {
+    watchOptions: {
+      ignored: '/node_modules/',
+    },
+
     output: {
       filename: prod ? '[name].min.js' : '[name].js',
     },
 
     entry: {
+      iframe: resolve('src/iframe'),
       toolbar: resolve('src/toolbar'),
-      bootstrap: resolve('src/bootstrap'),
     },
 
     resolve: {

@@ -1,37 +1,34 @@
 import { random } from 'common';
 
+// TODO improve messenger
+
 export class Messenger {
-  constructor(recipient) {
-    if (typeof recipient === 'string') this.recipient = iframe(recipient);
-    else this.recipient = Promise.resolve(recipient);
+  constructor(src) {
+    // Create iframe
+    this.iframe = document.createElement('iframe');
+    this.iframe.src = src;
+    document.head.appendChild(this.iframe);
 
-    this.target = new EventTarget();
-    this.channel = new MessageChannel();
+    // Listen for ready
+    this.ready = new Promise(resolve => {
+      this.iframe.addEventListener('load', resolve, { once: true });
+    });
 
-    this.channel.port1.onmessage = msg => {
+    // Dispatch messages to iframe
+    window.addEventListener('message', msg => {
+      if (this.iframe.contentWindow !== msg.source) return;
       const { type, data } = msg.data;
       const event = new Event(type);
       event.detail = data;
-      this.target.dispatchEvent(event);
-    };
-  }
-
-  async post(_type, data) {
-    const type = _type + random(8);
-    const recipient = await this.recipient;
-
-    return new Promise(resolve => {
-      this.target.addEventListener(type, e => resolve(e.detail), { once: true });
-      recipient.postMessage({ type, data }, '*');
+      this.iframe.dispatchEvent(event);
     });
   }
-}
 
-async function iframe(src) {
-  return new Promise(resolve => {
-    let node = document.createElement('iframe');
-    node.onload = () => resolve(node.contentWindow);
-    node.src = src;
-    document.head.appendChild(node);
-  });
+  async post(type, data) {
+    await this.ready;
+    return new Promise(resolve => {
+      this.iframe.addEventListener(type, e => resolve(e.detail), { once: true });
+      this.iframe.contentWindow.postMessage({ type, data }, '*');
+    });
+  }
 }
