@@ -17,11 +17,11 @@ export class Preview {
     this.authorized = auth;
     Object.assign(this, preview);
 
-    if (this.active) setInterval(this.reload, 3000);
+    if (this.active) this.reloadPing();
   };
 
-  reload = async () => {
-    this.start(await this.messenger.post('reloadPreview'));
+  reloadPing = () => {
+    this.messenger.post('reloadPreview').then(this.start);
   };
 
   // TODO visual loader
@@ -36,6 +36,7 @@ export class Preview {
     const oldRef = this.ref;
     const { auth, master } = await this.messenger.post('state');
     await this.messenger.post('closePreview');
+    // TODO set master ref upon auth page load
     if (auth) previewCookie.ref = master;
     else previewCookie.delete();
     if (oldRef && oldRef !== master) reloadOrigin(); // Reload

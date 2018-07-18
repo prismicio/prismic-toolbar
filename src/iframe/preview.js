@@ -24,7 +24,7 @@ const sessionId = getCookie('io.prismic.previewSession');
 // Close preview session
 const closePreview = () => deleteCookie('io.prismic.previewSession');
 
-// Screenshot
+// Screenshot TODO resolve multiple times with react (Publisher) await toolbar.post('screenshot')
 let resolveScreenshot;
 const futureScreenshot = new Promise(resolve => (resolveScreenshot = resolve));
 const screenshot = img => resolveScreenshot(img);

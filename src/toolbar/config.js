@@ -8,7 +8,7 @@ export const globals = {
   startExperiment: expId => new Experiment(expId), // TODO automate
   setupEditButton: _ => _, // Legacy (log 'deprecated')
   version: process.env.npm_package_version,
-  setup: _ => _, // NOTE do we really need this? (more work for nothing) (maybe watch div?)
+  setup: _ => _, // TODO deprecated
 };
 
 // Validate prismic.endpoint
