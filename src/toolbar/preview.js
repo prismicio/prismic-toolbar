@@ -17,11 +17,7 @@ export class Preview {
     this.authorized = auth;
     Object.assign(this, preview);
 
-    if (this.active) this.reloadPing();
-  };
-
-  reloadPing = () => {
-    this.messenger.post('reloadPreview').then(this.start);
+    if (this.active) this.messenger.post('newPreviewRef').then(this.start);
   };
 
   // TODO visual loader
@@ -43,10 +39,5 @@ export class Preview {
   };
 
   // TODO performance
-  share = async () => {
-    const canvas = await html2canvas(document.body);
-    const screenshot = new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.5));
-    screenshot.then(s => this.messenger.post('screenshot', s));
-    return this.messenger.post('share', getLocation());
-  };
+  share = () => this.messenger.post('share', getLocation());
 }

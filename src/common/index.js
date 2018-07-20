@@ -21,6 +21,10 @@ export const switchy = (val = '') => (obj = {}) => {
 // Fetch Wrapper
 export const fetchy = ({ url, ...other }) => fetch(url, other).then(r => r.json());
 
+// Cutoff text ellipsis
+export const ellipsis = (text, cutoff) =>
+  text.length > cutoff ? text.substring(0, cutoff - 1) + '…' : text;
+
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
 export const readyDOM = async () => {
   if (document.readyState !== 'complete') await wait(0);
@@ -74,38 +78,27 @@ export const parseQuery = _uri => {
     );
 };
 
-// Normalize string TODO IE polyfill
-export const slugify = str => str.normalize('NFD');
-
 // Invalid prismic endpoint
 export const endpointWarning = () =>
   console.warn(`Invalid window.prismic.endpoint.
 Learn how to set it up in the documentation: https://prismic.link/2LQcOWJ.
 https://github.com/prismicio/prismic-toolbar`);
 
-// Copy to clipboard TODO
-export function copyToClipboard(text) {
-  // IE specific code path to prevent textarea being shown while dialog is visible.
-  if (window.clipboardData && window.clipboardData.setData) {
-    return window.clipboardData.setData('Text', text);
-  }
+// Copy text to clipboard
+export const copyText = text =>
+  navigator.clipboard ? navigator.clipboard.writeText(text) : fallbackCopy(text);
 
-  if (document.queryCommandSupported('copy')) {
-    const textarea = document.createElement('textarea');
-    textarea.textContent = text;
-    textarea.style.position = 'fixed'; // Prevent scrolling to bottom of page in MS Edge.
-    document.body.appendChild(textarea);
-    textarea.select();
-    try {
-      return document.execCommand('copy'); // Security exception may be thrown by some browsers.
-    } catch (ex) {
-      console.warn('Copy to clipboard failed.', ex);
-      return false;
-    } finally {
-      document.body.removeChild(textarea);
-    }
-  }
-}
+const fallbackCopyText = text => {
+  var textArea = document.createElement('textarea');
+  textArea.value = text;
+  textarea.style.position = 'fixed';
+  document.body.appendChild(textArea);
+  textArea.focus();
+  textArea.select();
+  if (document.queryCommandEnabled('copy')) document.execCommand('copy');
+  document.body.removeChild(textArea);
+  return Promise.resolve(true);
+};
 
 // Throttle (https://codeburst.io/throttling-and-debouncing-in-javascript-b01cad5c8edf)
 export const throttle = (func, timeout) => {
@@ -123,6 +116,16 @@ export const throttle = (func, timeout) => {
     if (due) run();
     else queue = setTimeout(run, timeout - since);
     return lastReturn;
+  };
+};
+
+// Memoize (can have a custom memoizer)
+export const memoize = (func, memoizer) => {
+  let memory = new Map();
+  return function(...args) {
+    const key = memoizer(...args) || JSON.stringify(args);
+    if (!memory.has(key)) memory.set(key, func(...args));
+    return memory.get(key);
   };
 };
 

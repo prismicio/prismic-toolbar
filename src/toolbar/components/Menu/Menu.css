@@ -13,7 +13,8 @@
 	border-radius: 100px;
 	width: 70px;
 	height: 70px;
-
+  user-select: none;
+  cursor: pointer;
 }
 
 .Menu-Preview {

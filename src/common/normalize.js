@@ -1,6 +1,10 @@
 import { parseQuery } from 'common';
 
-export const normalizeDocument = doc => doc; // TODO
+export const normalizeDocument = doc => ({
+  title: `Title ${doc.id}`,
+  summary: `Our goal at Prismic is to build the future of the CMS. All our improvements and features are based on the great ideas of our good leader John Doe. These truths are self-evident, that all men are created equal. Blah blah blah this should be hidden. Blah blah blah this should be hidden. Blah blah blah this should be hidden. Blah blah blah this should be hidden. Blah blah blah this should be hidden.`,
+  url: `http://foyer-demo.wroom.test/documents/working`,
+});
 
 export const normalizeDraft = draft =>
   Object.assign(

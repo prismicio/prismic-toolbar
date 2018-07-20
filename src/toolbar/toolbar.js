@@ -1,5 +1,6 @@
 import { h, render } from 'preact';
-import { div } from 'common';
+import html2canvas from 'html2canvas';
+import { div, Publisher } from 'common';
 import { Toolbar as ToolbarComponent } from './components';
 import { Prediction } from './prediction';
 
@@ -13,11 +14,20 @@ export class Toolbar {
   }
 
   async setup() {
-    const auth = await this.messenger.post('auth');
+    const auth = this.messenger.post('auth');
 
-    if (!auth && !this.preview.active) return;
+    // Just visiting
+    if (!(await auth) && !this.preview.active) return;
 
-    // TODO shadow or div, (using custom shadowDOM component w/ inline <style/>)
+    // Page screenshot
+    new Publisher({
+      async screenshot() {
+        const canvas = await html2canvas(document.body);
+        return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.5));
+      },
+    });
+
+    // Render Toolbar TODO shadowDiv, (custom shadowDOM component w/ inline <style/>)
     render(
       <ToolbarComponent
         preview={this.preview}

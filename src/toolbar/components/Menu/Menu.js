@@ -1,10 +1,11 @@
 import { h } from 'preact';
-import { views } from '..';
+import { pencilSvg } from '.';
+import { Icon, views } from '..';
 import './Menu.css';
 
-const { DOCS, DRAFTS, SHARE } = views;
+const { DOCS, DRAFTS, SHARE, NONE } = views;
 
-export const Menu = ({ setPage, preview }) => {
+export const Menu = ({ setPage, preview, page }) => {
   if (preview.active)
     return (
       <div className="Menu-Preview">
@@ -22,8 +23,8 @@ export const Menu = ({ setPage, preview }) => {
     );
 
   return (
-    <div className="Menu" onClick={() => setPage(DOCS)}>
-      ✏
+    <div className="Menu" onClick={() => setPage(page ? NONE : DOCS)}>
+      <Icon src={pencilSvg} />
     </div>
   );
 };

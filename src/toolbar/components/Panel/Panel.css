@@ -1,10 +1,100 @@
+/* Panel */
+
 .Panel {
 	background: #FAFAFA;
-	box-shadow: 0 20px 30px 0 #D3D3D388;
+	box-shadow: 0 7px 38px -6px #AAA8;
 	border-radius: 10px;
-	width: 375px;
-	height: 673px;
+	width: 360px;
+	height: 650px;
 	position: absolute;
 	bottom: 130px;
 	left: 30px;
+  overflow-y: hidden;
+}
+
+.Panel .Top {
+  background: #FDFDFD;
+}
+
+/* DocumentPanel Top */
+
+.DocumentPanel .Top {
+  padding: 30px;
+  position: relative;
+}
+
+.DocumentPanel .Top .Icon {
+  position: absolute;
+  top: 36px;
+  right: 30px;
+}
+
+.DocumentPanel .Top h1 {
+  margin-bottom: 30px;
+}
+
+.DocumentPanel .Top h2 {
+  margin-bottom: 5px;
+}
+
+.DocumentPanel .Top .Document {
+  font-size: 13px;
+}
+
+.DocumentPanel .Top .Document h3 {
+  color: #5163BA;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.DocumentPanel .Top .Document .label {
+  background: #FFDBA2;
+  color: #53452E;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 11px;
+  font-size: 13px;
+}
+
+.DocumentPanel .Top .Document header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+/* DocumentPanel OtherDocuments */
+
+.DocumentPanel .OtherDocuments {
+  padding: 30px;
+}
+
+.DocumentPanel .OtherDocuments h2 {
+  color: #8091A5;
+}
+
+.DocumentPanel .OtherDocuments .Document {
+  margin: 16px 0;
+  font-size: 12px;
+}
+
+.DocumentPanel .OtherDocuments .Document h3 {
+  margin-bottom: 7px;
+}
+
+.DocumentPanel .OtherDocuments .more {
+  background: #FAFAFA;
+  color: #5163BA;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  padding: 22px;
+  width: 100%;
+  text-align: center;
+  font-weight: 500;
+  user-select: none;
+  cursor: pointer;
+}
+
+.DocumentPanel .OtherDocuments .more:hover {
+  color: #4050a0;
 }

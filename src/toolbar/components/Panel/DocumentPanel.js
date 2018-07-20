@@ -1,5 +1,7 @@
 import { h, Component } from 'preact';
-import { BasePanel } from '.';
+import { ellipsis } from 'common';
+import { BasePanel, prismicSvg } from '.';
+import { Icon } from '..';
 
 export class DocumentPanel extends Component {
   constructor() {
@@ -11,22 +13,55 @@ export class DocumentPanel extends Component {
   }
 
   render() {
+    const { documents, loading } = this.state;
     const { onClose } = this.props;
+    console.log(this.props.prediction);
+    console.log(documents);
     return (
-      <BasePanel onClose={onClose}>
-        <Documents {...this.state} />
+      <BasePanel className="DocumentPanel">
+        <MainDocument doc={documents[0]} loading={loading} />
+        <OtherDocuments documents={documents.slice(1)} loading={loading} />
       </BasePanel>
     );
   }
 }
 
-const Documents = ({ documents, loading }) => {
-  if (loading) return 'loading docs...';
-  return <div>{documents.map(doc => <Document doc={doc} />)}</div>;
+const MainDocument = ({ doc, loading }) => {
+  if (loading) return 'loading main doc...';
+  return (
+    <div className="MainDocument Top">
+      <Icon src={prismicSvg} />
+
+      <header>
+        <h2>Edit your content in Prismic</h2>
+        <h1>Main document</h1>
+      </header>
+
+      <a className="Document" href={doc.url} target="_blank">
+        <header>
+          <h3>{doc.title}</h3>
+          <div className="label">{doc.status}Draft</div>
+        </header>
+        <div>{ellipsis(doc.summary, 300)}</div>
+      </a>
+    </div>
+  );
+};
+
+const OtherDocuments = ({ documents, loading }) => {
+  if (loading) return 'loading other docs...';
+  return (
+    <div className="OtherDocuments">
+      <h2>Other documents</h2>
+      <div>{documents.slice(0, 3).map(doc => <Document doc={doc} />)}</div>
+      <div className="more">View more</div>
+    </div>
+  );
 };
 
 const Document = ({ doc }) => (
-  <div className="Document">
-    <div>{doc.id}</div>
-  </div>
+  <a className="Document" href={doc.url} target="_blank">
+    <h3>{doc.title}</h3>
+    <div>{ellipsis(doc.summary, 200)}</div>
+  </a>
 );

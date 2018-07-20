@@ -38,6 +38,10 @@ module.exports = env => {
           test: /\.css$/,
           use: ['style-loader', 'css-loader'],
         },
+        {
+          test: /\.(svg|jpg)$/,
+          use: 'url-loader',
+        },
       ],
     },
   };

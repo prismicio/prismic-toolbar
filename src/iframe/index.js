@@ -2,7 +2,7 @@
 
 import 'regenerator-runtime/runtime';
 import { Publisher } from 'common'; // TODO no need common?
-import { auth, state } from './state';
+import { auth, state } from './config';
 import { documents } from './prediction';
 import { preview } from './preview';
 
