@@ -1,8 +1,9 @@
 import { h, render } from 'preact';
 import html2canvas from 'html2canvas';
-import { div, Publisher } from 'common';
+import { div, Publisher, appendCSS, shadow } from 'common';
 import { Toolbar as ToolbarComponent } from './components';
 import { Prediction } from './prediction';
+import styles from './index.css';
 
 // BUG blinking on reload preview????
 
@@ -27,13 +28,19 @@ export class Toolbar {
       },
     });
 
-    // Render Toolbar TODO shadowDiv, (custom shadowDOM component w/ inline <style/>)
+    // Create Shadow Container
+    const toolbar = shadow('prismic-toolbar-v2');
+
+    // Add CSS
+    appendCSS(toolbar, styles);
+
+    // Render
     render(
       <ToolbarComponent
         preview={this.preview}
         prediction={auth ? new Prediction(this.messenger) : null}
       />,
-      div('prismic-toolbar-v2')
+      toolbar
     );
   }
 }

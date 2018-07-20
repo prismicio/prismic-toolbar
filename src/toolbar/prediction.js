@@ -17,6 +17,7 @@ export class Prediction {
     // Setup hooks
     this.hooks = new Hooks();
     this.hooks.on('beforeRequest', () => (preview.url = window.location.pathname));
+    // TODO don't fire this if fetches are in progress. Also disable above when tab in background
     this.hooks.on('afterRequest', () => (preview.url = null));
     this.hooks.on('historyChange', () => this.fetchDocuments());
   }

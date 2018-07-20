@@ -1,7 +1,6 @@
 import { h } from 'preact';
 import { pencilSvg } from '.';
 import { Icon, views } from '..';
-import './Menu.css';
 
 const { DOCS, NONE } = views;
 

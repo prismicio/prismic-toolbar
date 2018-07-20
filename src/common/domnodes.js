@@ -1,8 +1,22 @@
 export const div = (id, options) => node({ type: 'div', id, ...options });
 export const script = src => srcNode({ type: 'script', src });
 
+export const shadow = id => {
+  let node = div(id);
+  if (Boolean(document.head.attachShadow)) node = node.attachShadow({ mode: 'open' });
+  return node;
+};
+
 export const deleteNodes = cssQuery => {
   document.querySelectorAll(cssQuery).forEach(el => el.remove());
+};
+
+// Append Stylesheet to DOM node
+export const appendCSS = (node, css) => {
+  const style = document.createElement('style');
+  style.type = 'text/css';
+  style.appendChild(document.createTextNode(css));
+  node.appendChild(style);
 };
 
 // Load something

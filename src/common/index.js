@@ -1,7 +1,7 @@
 import 'regenerator-runtime/runtime';
 
 export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
-export { div, script, deleteNodes } from './domnodes';
+export { div, script, deleteNodes, appendCSS, shadow } from './domnodes';
 export { Messenger } from './messenger';
 export { Publisher } from './publisher';
 export { Hooks } from './hooks';

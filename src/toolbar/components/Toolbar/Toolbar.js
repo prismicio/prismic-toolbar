@@ -1,6 +1,5 @@
 import { Panel, Menu, PreviewMenu, views } from '..';
 import { h, Component } from 'preact';
-import './Toolbar.css';
 
 const { NONE } = views;
 
