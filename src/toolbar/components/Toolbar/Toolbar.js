@@ -1,4 +1,4 @@
-import { Panel, Menu, views } from '..';
+import { Panel, Menu, PreviewMenu, views } from '..';
 import { h, Component } from 'preact';
 import './Toolbar.css';
 
@@ -24,7 +24,8 @@ export class Toolbar extends Component {
           preview={preview}
           page={page}
         />
-        <Menu setPage={this.setPage} preview={preview} page={page} />
+        <Menu setPage={this.setPage} page={page} />
+        {preview.active && <PreviewMenu setPage={this.setPage} preview={preview} />}
       </div>
     );
   }

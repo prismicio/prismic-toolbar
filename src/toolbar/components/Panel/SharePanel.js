@@ -19,7 +19,7 @@ export class SharePanel extends Component {
     const { url, loading } = this.state;
     return (
       <BasePanel className="SharePanel">
-        <Icon src={xSvg} onClick={onClose} />
+        <Icon className="x" src={xSvg} onClick={onClose} />
         <ShareHeader title={preview.title} />
         <Share url={url} loading={loading} />
       </BasePanel>
@@ -28,9 +28,9 @@ export class SharePanel extends Component {
 }
 
 const ShareHeader = ({ title }) => (
-  <div className="ShareHeader">
-    <div>{title}</div>
-    <div>Get a shareable link</div>
+  <div className="ShareHeader top">
+    <h2>{title}</h2>
+    <h1>Get a shareable link</h1>
   </div>
 );
 
@@ -38,9 +38,11 @@ const Share = ({ url, loading }) => {
   if (loading) return 'loading share...';
   return (
     <div className="Share">
-      <div>Share this preview via public share link</div>
-      <div>{url}</div>
-      <div onClick={() => copyText(url)}>Copy the link</div>
+      <h2>Share this preview via public share link</h2>
+      <div className="url">{url}</div>
+      <div className="copy" onClick={() => copyText(url)}>
+        Copy the link
+      </div>
     </div>
   );
 };

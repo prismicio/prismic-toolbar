@@ -1,4 +1,4 @@
-export const div = ({ id, options }) => node({ id, type: 'div', options });
+export const div = (id, options) => node({ type: 'div', id, ...options });
 export const script = src => srcNode({ type: 'script', src });
 
 export const deleteNodes = cssQuery => {
@@ -6,7 +6,7 @@ export const deleteNodes = cssQuery => {
 };
 
 // Load something
-function node({ id, type, options, body = true }) {
+function node({ id, type, body = true, ...options }) {
   let el = document.getElementById(id);
   if (!el) {
     el = document.createElement(type);
@@ -17,9 +17,9 @@ function node({ id, type, options, body = true }) {
 }
 
 // Load something with src
-async function srcNode({ src, type, options, body = false }) {
+async function srcNode({ src, type, body = false, ...options }) {
   return new Promise(resolve => {
-    const el = node({ id: src, type, options: { ...options, src }, body });
-    el.onload = resolve(el);
+    const el = node({ ...options, id: src, type, body });
+    el.addEventListener('load', () => resolve(el));
   });
 }

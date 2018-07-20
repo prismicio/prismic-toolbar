@@ -1,0 +1,50 @@
+.PreviewMenu {
+  background-color: #5163BA;
+  position: absolute;
+  bottom: 30px;
+  left: 130px;
+  color: white;
+
+	border-radius: 6px;
+	width: 395px;
+	height: 70px;
+  padding: 15px 22px;
+}
+
+.PreviewMenu .top {
+  margin-bottom: 3px;
+}
+
+.PreviewMenu h1 {
+  color: white;
+  font-size: 16px;
+  font-weight: 500;
+  display: inline;
+}
+
+.PreviewMenu .docs {
+  text-decoration: underline;
+  cursor: pointer;
+  display: inline;
+  font-size: 12px;
+  margin-left: 5px;
+}
+
+.PreviewMenu .share {
+  color: #B6C1FD;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.PreviewMenu .x {
+  position: absolute;
+  right: 22px;
+  top: 26px;
+}
+
+.PreviewMenu .link {
+  margin-left: 5px;
+}

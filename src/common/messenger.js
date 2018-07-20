@@ -13,7 +13,8 @@ export class Messenger {
     // Start Channels
     const { port1, port2 } = new MessageChannel();
     this.port = port1;
-    port1.onmessage = this._dispatchEvent.bind(this); // 1: Prepare to handle all messages from port2
+    // 1: Prepare to handle all messages from port2
+    port1.onmessage = this._dispatchEvent.bind(this);
 
     // 2: Give port2 to window (when it can receive)
     if (ifr) (await ifr).contentWindow.postMessage('port', '*', [port2]);
@@ -38,10 +39,11 @@ export class Messenger {
 }
 
 const iframe = src => {
-  const iframe = document.createElement('iframe');
-  iframe.src = src;
-  document.head.appendChild(iframe);
-  return new Promise(
-    resolve => iframe.addEventListener('load', () => resolve(iframe), { once: true }) // check this
+  const ifr = document.createElement('iframe');
+  ifr.src = src;
+  document.head.appendChild(ifr);
+  return new Promise(resolve =>
+    // check this
+    ifr.addEventListener('load', () => resolve(ifr), { once: true })
   );
 };

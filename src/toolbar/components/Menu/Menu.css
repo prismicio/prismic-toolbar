@@ -1,12 +1,10 @@
-.Menu, .Menu-Preview {
-	background-color: #5163BA;
-	position: absolute;
-	bottom: 30px;
-	left: 30px;
-	color: white;
-}
-
 .Menu {
+  background-color: #5163BA;
+  position: absolute;
+  bottom: 30px;
+  left: 30px;
+  color: white;
+
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -15,10 +13,4 @@
 	height: 70px;
   user-select: none;
   cursor: pointer;
-}
-
-.Menu-Preview {
-	border-radius: 6px;
-	width: 395px;
-	height: 70px;
 }

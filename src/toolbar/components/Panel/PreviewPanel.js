@@ -7,7 +7,7 @@ export class PreviewPanel extends Component {
     const { onClose, preview } = this.props;
     return (
       <BasePanel className="PreviewPanel">
-        <Icon src={xSvg} onClick={onClose} />
+        <Icon className="x" src={xSvg} onClick={onClose} />
         <PreviewHeader title={preview.title} numberOfDocs={preview.documents.length} />
         <PreviewDocuments documents={preview.documents} />
       </BasePanel>
@@ -16,7 +16,7 @@ export class PreviewPanel extends Component {
 }
 
 const PreviewHeader = ({ title, numberOfDocs }) => (
-  <div className="Header Top">
+  <div className="Header top">
     <h2>{title}</h2>
     <h1>{numberOfDocs} documents to preview</h1>
   </div>

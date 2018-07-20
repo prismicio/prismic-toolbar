@@ -9,7 +9,8 @@ export class Prediction {
     this.fetchDocuments();
 
     // Setup preview cookie
-    preview.useQuery = true; // TODO not part of prediction. really part of authentication. also setting master ref
+    // TODO not part of prediction. really part of authentication. also setting master ref
+    preview.useQuery = true;
     preview.track = random(8);
     setInterval(() => (preview.breaker = random(8)), 100);
 

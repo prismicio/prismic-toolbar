@@ -3,7 +3,7 @@ import { state, messenger } from './config';
 
 // Check for new preview ref
 let newRef = null;
-let fetcher = throttle(() => {
+const fetcher = throttle(() => {
   const ref = encodeURIComponent(state.preview.ref);
   return fetchy({ url: `/previews/${sessionId}/ping?ref=${ref}` });
 }, 2000);

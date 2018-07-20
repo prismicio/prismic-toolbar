@@ -1,7 +1,6 @@
-import html2canvas from 'html2canvas';
+import { getLocation } from 'common';
 import { preview as previewCookie } from './cookies';
 import { reloadOrigin } from './config';
-import { getLocation } from 'common';
 
 export class Preview {
   constructor(messenger) {

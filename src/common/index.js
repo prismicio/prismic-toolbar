@@ -52,13 +52,13 @@ export const random = num => {
 };
 
 // Build querystring
-export function query(obj) {
+export const query = obj => {
   if (!obj) return '';
   return Object.entries(obj)
-    .filter(v => v)
+    .filter(v => v[1])
     .map(pair => pair.map(encodeURIComponent).join('='))
     .join('&');
-}
+};
 
 // Parse querystring
 export const parseQuery = _uri => {
@@ -86,12 +86,12 @@ https://github.com/prismicio/prismic-toolbar`);
 
 // Copy text to clipboard
 export const copyText = text =>
-  navigator.clipboard ? navigator.clipboard.writeText(text) : fallbackCopy(text);
+  navigator.clipboard ? navigator.clipboard.writeText(text) : fallbackCopyText(text);
 
 const fallbackCopyText = text => {
-  var textArea = document.createElement('textarea');
+  const textArea = document.createElement('textarea');
   textArea.value = text;
-  textarea.style.position = 'fixed';
+  textArea.style.position = 'fixed';
   document.body.appendChild(textArea);
   textArea.focus();
   textArea.select();
@@ -121,7 +121,7 @@ export const throttle = (func, timeout) => {
 
 // Memoize (can have a custom memoizer)
 export const memoize = (func, memoizer) => {
-  let memory = new Map();
+  const memory = new Map();
   return function(...args) {
     const key = memoizer(...args) || JSON.stringify(args);
     if (!memory.has(key)) memory.set(key, func(...args));

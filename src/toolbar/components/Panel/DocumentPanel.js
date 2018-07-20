@@ -14,9 +14,8 @@ export class DocumentPanel extends Component {
 
   render() {
     const { documents, loading } = this.state;
-    const { onClose } = this.props;
-    console.log(this.props.prediction);
-    console.log(documents);
+    if (!documents[0])
+      return <BasePanel className="DocumentPanel">No Documents TODO</BasePanel>;
     return (
       <BasePanel className="DocumentPanel">
         <MainDocument doc={documents[0]} loading={loading} />
@@ -29,7 +28,7 @@ export class DocumentPanel extends Component {
 const MainDocument = ({ doc, loading }) => {
   if (loading) return 'loading main doc...';
   return (
-    <div className="MainDocument Top">
+    <div className="MainDocument top">
       <Icon src={prismicSvg} />
 
       <header>
@@ -41,6 +40,7 @@ const MainDocument = ({ doc, loading }) => {
         <header>
           <h3>{doc.title}</h3>
           <div className="label">{doc.status}Draft</div>
+          {/* TODO several types of drafts */}
         </header>
         <div>{ellipsis(doc.summary, 300)}</div>
       </a>

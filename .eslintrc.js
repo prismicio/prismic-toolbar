@@ -6,6 +6,9 @@ module.exports = {
     jest: true,
   },
   rules: {
+    'no-unused-expressions': 0,
+    'prefer-template': 0,
+    'no-confusing-arrow': 0,
     'import/no-cycle': 0, // maybe revert this one (config-experiment, panel-children)
     'no-await-in-loop': 0,
     'promise/param-names': 0,
