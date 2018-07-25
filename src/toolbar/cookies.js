@@ -1,18 +1,10 @@
-import {
-  query,
-  normalizeRef,
-  getCookie,
-  setCookie,
-  deleteCookie,
-  demolishCookie,
-} from 'common';
+import { query, normalizeRef, getCookie, setCookie, deleteCookie, demolishCookie } from 'common';
 
 // Preview cookie manager
 
 class PreviewCookie {
   constructor() {
     this.name = 'io.prismic.preview';
-    this.useQuery = Boolean(this.ref);
     this.fixCookie();
   }
 
@@ -22,6 +14,12 @@ class PreviewCookie {
     const { ref, url, track, breaker } = this;
     demolishCookie(this.name);
     this.set({ ref, url, track, breaker });
+  }
+
+  // Remove querystring
+
+  removeQuery() {
+    this.set({ url: null, track: null, breaker: null });
   }
 
   // Cookie getter setter deleter
@@ -34,7 +32,7 @@ class PreviewCookie {
     const { ref, url, track, breaker } = Object.assign(this.get(), args);
     if (!ref) return this.delete(); // Always need ref or remove all state
     const qs = `?${query({ url, track, breaker })}`;
-    setCookie(this.name, this.useQuery ? ref + qs : ref, 0.1);
+    setCookie(this.name, ref + qs, 0.1);
   }
 
   delete() {

@@ -22,7 +22,7 @@ export const normalizeState = _state => {
   const state = {};
   state.csrf = _state.csrf || null;
   state.guest = _state.isGuest;
-  state.auth = _state.isAuthenticated;
+  state.auth = Boolean(_state.isAuthenticated);
   state.master = _state.masterRef;
   state.preview = _state.previewState || null;
 

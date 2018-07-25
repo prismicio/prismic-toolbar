@@ -1,6 +1,5 @@
 import { h, render } from 'preact';
-import html2canvas from 'html2canvas';
-import { div, Publisher, appendCSS, shadow } from 'common';
+import { appendCSS, shadow } from 'common';
 import { Toolbar as ToolbarComponent } from './components';
 import { Prediction } from './prediction';
 import styles from './index.css';
@@ -15,18 +14,10 @@ export class Toolbar {
   }
 
   async setup() {
-    const auth = this.messenger.post('auth');
+    const auth = await this.messenger.post('auth');
 
     // Just visiting
-    if (!(await auth) && !this.preview.active) return;
-
-    // Page screenshot
-    new Publisher({
-      async screenshot() {
-        const canvas = await html2canvas(document.body);
-        return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.5));
-      },
-    });
+    if (!auth && !this.preview.active) return;
 
     // Create Shadow Container
     const toolbar = shadow('prismic-toolbar-v2');

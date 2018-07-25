@@ -6,9 +6,7 @@ export class Hooks {
 
   _removeHook(type, callback) {
     window.removeEventListener(type, callback);
-    this.hooks = this.hooks.filter(
-      hook => !(hook.type === type && hook.callback === callback)
-    );
+    this.hooks = this.hooks.filter(hook => !(hook.type === type && hook.callback === callback));
   }
 
   _removeType(type) {
@@ -39,7 +37,9 @@ export class Hooks {
 
 // Window event
 function event(type, detail = null) {
-  window.dispatchEvent(new Event(type, { detail }));
+  const e = new Event(type);
+  e.detail = detail;
+  window.dispatchEvent(e);
 }
 
 // XMLHttpRequest hook
@@ -82,3 +82,12 @@ const _wr = function(type) {
 };
 window.history.pushState = _wr('historyChange');
 window.history.replaceState = _wr('historyChange');
+
+// Active Tab Hook
+window.addEventListener('focus', () => {
+  event('activeTab', true);
+});
+
+window.addEventListener('blur', () => {
+  event('activeTab', false);
+});

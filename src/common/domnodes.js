@@ -2,9 +2,9 @@ export const div = (id, options) => node({ type: 'div', id, ...options });
 export const script = src => srcNode({ type: 'script', src });
 
 export const shadow = id => {
-  let node = div(id);
-  if (Boolean(document.head.attachShadow)) node = node.attachShadow({ mode: 'open' });
-  return node;
+  let _shadow = div(id);
+  if (document.head.attachShadow) _shadow = _shadow.attachShadow({ mode: 'open' });
+  return _shadow;
 };
 
 export const deleteNodes = cssQuery => {
@@ -12,11 +12,11 @@ export const deleteNodes = cssQuery => {
 };
 
 // Append Stylesheet to DOM node
-export const appendCSS = (node, css) => {
+export const appendCSS = (el, css) => {
   const style = document.createElement('style');
   style.type = 'text/css';
   style.appendChild(document.createTextNode(css));
-  node.appendChild(style);
+  el.appendChild(style);
 };
 
 // Load something

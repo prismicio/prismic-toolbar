@@ -5,12 +5,7 @@ export { div, script, deleteNodes, appendCSS, shadow } from './domnodes';
 export { Messenger } from './messenger';
 export { Publisher } from './publisher';
 export { Hooks } from './hooks';
-export {
-  normalizeDocument,
-  normalizeDraft,
-  normalizeState,
-  normalizeRef,
-} from './normalize';
+export { normalizeDocument, normalizeDraft, normalizeState, normalizeRef } from './normalize';
 
 // Switchy
 export const switchy = (val = '') => (obj = {}) => {
@@ -46,9 +41,7 @@ export const disabledCookies = () => !navigator.cookieEnabled;
 // Random id
 export const random = num => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return [...Array(num)]
-    .map(() => chars[Math.floor(Math.random() * chars.length)])
-    .join('');
+  return [...Array(num)].map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
 };
 
 // Build querystring
@@ -129,19 +122,25 @@ export const memoize = (func, memoizer) => {
   };
 };
 
+// Localstorage
+export const localStorage = (key, defaultValue = null) => ({
+  get() {
+    const value = window.localStorage.getItem(key);
+    return value ? JSON.parse(value) : defaultValue;
+  },
+
+  set(value) {
+    window.localStorage.setItem(key, JSON.stringify(value));
+  },
+
+  remove() {
+    window.localStorage.removeItem(key);
+  },
+});
+
 // Simple location object
 export const getLocation = () => {
-  const {
-    href,
-    origin,
-    protocol,
-    host,
-    hostname,
-    port,
-    pathname,
-    search,
-    hash,
-  } = window.location;
+  const { href, origin, protocol, host, hostname, port, pathname, search, hash } = window.location;
   return {
     href,
     origin,

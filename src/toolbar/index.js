@@ -3,29 +3,34 @@ import 'promise-polyfill/src/polyfill';
 import 'regenerator-runtime/runtime';
 import 'whatwg-fetch';
 
-import { readyDOM, endpointWarning, Messenger, deleteNodes } from 'common';
+import { readyDOM, endpointWarning, Messenger, Publisher } from 'common';
+import { screenshot } from 'common/screenshot';
 import { globals, baseURL } from './config';
+import { Tracker } from './tracker';
 import { Preview } from './preview';
 import { Toolbar } from './toolbar';
+
+// TODO work with foyer demo project
 
 (async () => {
   // Invalid prismic.endpoint
   if (!baseURL) return endpointWarning();
 
-  // Globals
+  // Globals (legacy, startExperiment)
   window.prismic = window.PrismicToolbar = globals;
 
-  // State
-  const messenger = new Messenger(`${baseURL}/toolbar/bootstrap`);
-  const preview = new Preview(messenger);
+  // CORS
+  const messenger = new Messenger(`${baseURL}/toolbar/bootstrap/2`);
+  new Publisher({ screenshot });
+
+  // Request Tracker (prediction)
+  new Tracker(messenger);
 
   // Ready DOM
   await readyDOM();
 
-  // Cleanup
-  deleteNodes('.wio-link, [data-wio-id], #io-prismic-toolbar');
-
   // Preview
+  const preview = new Preview(messenger);
   await preview.setup();
 
   // Toolbar

@@ -7,14 +7,12 @@ export class DocumentPanel extends Component {
   constructor() {
     super(...arguments);
     this.state = { loading: true, documents: [] };
-    this.props.prediction.documents.then(documents =>
-      this.setState({ documents, loading: false })
-    );
+    this.props.prediction.documents.then(documents => this.setState({ documents, loading: false }));
   }
 
   render() {
     const { documents, loading } = this.state;
-    if (!documents[0])
+    if (!loading && !documents[0])
       return <BasePanel className="DocumentPanel">No Documents TODO</BasePanel>;
     return (
       <BasePanel className="DocumentPanel">
