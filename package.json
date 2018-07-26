@@ -43,6 +43,7 @@
     "postcss-easy-import": "^3.0.0",
     "postcss-loader": "^2.1.6",
     "postcss-preset-env": "^5.2.2",
+    "postcss-url": "^7.3.2",
     "preact": "^8.2.9",
     "promise-polyfill": "^8.0.0",
     "puppeteer": "^1.5.0",

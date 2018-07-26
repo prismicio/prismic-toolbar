@@ -1,10 +1,5 @@
 .Menu {
-  background-color: #5163BA;
-  position: absolute;
-  bottom: 30px;
-  left: 30px;
   color: white;
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -13,4 +8,15 @@
   height: 70px;
   user-select: none;
   cursor: pointer;
+  margin-right: 30px;
+  background: #5163BA;
+
+  & .Icon {
+    transition: all .2s;
+    will-change: transform;
+  }
+
+  &:hover .Icon {
+    transform: rotate(-90deg);
+  }
 }

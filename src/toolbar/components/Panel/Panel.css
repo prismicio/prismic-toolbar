@@ -1,145 +1,157 @@
-/* Panel */
+/* Base Panel */
 /* TODO animation */
 
-.Panel {
-	background: #f7f7f7;
+.BasePanel {
+	background: #FDFDFD;
 	box-shadow: 0 7px 38px -6px #AAA8;
 	border-radius: 10px;
 	width: 360px;
 	height: 650px;
 	position: absolute;
 	bottom: 130px;
-	left: 30px;
+	left: 0;
   overflow-y: hidden;
-}
+  display: flex;
+  flex-direction: column;
 
-.Panel .top {
-  background: #FDFDFD;
-  padding: 30px;
-}
+  & .top {
+    padding: 30px;
 
-.Panel .x {
-  position: absolute;
-  top: 15px;
-  right: 15px;
+    & h2 {
+      margin-bottom: 5px;
+    }
+  }
+
+  & .bottom {
+    background: #f7f7f7;
+    padding: 30px;
+    flex-grow: 1;
+  }
+
+  & .x {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+  }
 }
 
 /* DocumentPanel Top */
 
 .DocumentPanel .top {
-  padding: 30px;
   position: relative;
+
+  & .Icon {
+    position: absolute;
+    top: 36px;
+    right: 30px;
+  }
+
+  & h1 {
+    margin-bottom: 30px;
+  }
+
+  & .Document {
+    & h3 {
+      color: #5163BA;
+      font-weight: 500;
+      font-size: 15px;
+    }
+
+    & .label {
+      background: #FFDBA2;
+      color: #53452E;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-left: 11px;
+    }
+
+    & header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+  }
 }
 
-.DocumentPanel .top .Icon {
-  position: absolute;
-  top: 36px;
-  right: 30px;
-}
+/* DocumentPanel Bottom */
 
-.DocumentPanel .top h1 {
-  margin-bottom: 30px;
-}
+.DocumentPanel .bottom {
+  & h2 {
+    color: #8091A5;
+  }
 
-.DocumentPanel .top h2 {
-  margin-bottom: 5px;
-}
+  & .Document {
+    margin: 16px 0;
+    font-size: 12px;
 
-.DocumentPanel .top .Document {
-  font-size: 13px;
-}
+    & h3 {
+      margin-bottom: 7px;
+    }
+  }
 
-.DocumentPanel .top .Document h3 {
-  color: #5163BA;
-  font-weight: 500;
-  font-size: 15px;
-}
+  /* & .more {
+    background: #f7f7f7;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    padding: 22px;
+    width: 100%;
+    text-align: center;
+    font-weight: 500;
+    user-select: none;
+    cursor: pointer;
+    color: #5163BA;
 
-.DocumentPanel .top .Document .label {
-  background: #FFDBA2;
-  color: #53452E;
-  padding: 2px 8px;
-  border-radius: 4px;
-  margin-left: 11px;
-  font-size: 13px;
-}
-
-.DocumentPanel .top .Document header {
-  display: flex;
-  align-items: center;
-  margin-bottom: 8px;
-}
-
-/* DocumentPanel OtherDocuments */
-
-.DocumentPanel .OtherDocuments {
-  padding: 30px;
-}
-
-.DocumentPanel .OtherDocuments h2 {
-  color: #8091A5;
-}
-
-.DocumentPanel .OtherDocuments .Document {
-  margin: 16px 0;
-  font-size: 12px;
-}
-
-.DocumentPanel .OtherDocuments .Document h3 {
-  margin-bottom: 7px;
-}
-
-.DocumentPanel .OtherDocuments .more {
-  background: #f7f7f7;
-  color: #5163BA;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  padding: 22px;
-  width: 100%;
-  text-align: center;
-  font-weight: 500;
-  user-select: none;
-  cursor: pointer;
-}
-
-.DocumentPanel .OtherDocuments .more:hover {
-  color: #4050a0;
+    &:hover {
+      color: #4050a0;
+    }
+  } */
 }
 
 /* PreviewPanel */
 
-.PreviewPanel .Documents {
-  padding: 30px;
+.PreviewPanel .Draft {
+  margin-bottom: 20px;
+
+  & h3 {
+    margin-bottom: 4px;
+  }
 }
 
 /* SharePanel */
 
-.SharePanel .top h2 {
-  margin-bottom: 5px;
-}
+.SharePanel .bottom {
+  /* Label */
+  & h2 {
+    color: #A5A5AE;
+    margin-bottom: 8px;
+  }
 
-.SharePanel .Share {
-  padding: 30px;
-}
+  /* URL */
+  & .url {
+    background: #EDEDED;
+    padding: 20px 15px;
+    border: 1px solid #E3E3E3;
+    margin-bottom: 30px;
+    user-select: all;
 
-.SharePanel .Share h2 {
-  color: #A5A5AE;
-  font-size: 13px;
-  margin-bottom: 3px;
-}
+    &::before {
+      content: url('link.svg');
+      margin-right: 10px;
+    }
+  }
 
-.SharePanel .Share .url {
-  background: #EDEDED;
-  padding: 22px;
-  border: 1px solid #E3E3E3;
-}
+  /* Copy button */
+  & .copy {
+    border-radius: 4px;
+    width: 100%;
+    text-align: center;
+    padding: 16px;
+    color: white;
+    background: #5163BA;
 
-.SharePanel .Share .copy {
-  background: #5163BA;
-  border-radius: 4px;
-  width: 100%;
-  text-align: center;
-  padding: 16px;
-  color: white;
+    &:hover {
+      background: #4050a0;
+    }
+  }
 }

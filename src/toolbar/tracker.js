@@ -2,7 +2,7 @@ import { random, Hooks, localStorage } from 'common';
 import { preview as previewCookie } from './cookies';
 
 // Cross-tab tracker status
-const globalCurrentState = localStorage('mlke4a29');
+const globalCurrentState = localStorage('mlke4a29', {});
 const globalTracking = localStorage('lkjtwrh8');
 
 // Preview cookie helpers
@@ -28,7 +28,7 @@ export class Tracker {
       this.track(); // Track
     });
 
-    // Takeover track
+    // Takeover track (in auth tabs)
     if (globalTracking.get()) setInterval(this.track.bind(this), 2000);
 
     // Handle unload
@@ -52,7 +52,7 @@ export class Tracker {
     globalTracking.set(true);
 
     // Update track
-    previewCookie.track = random(8); // TODO breaks prediction.js endpoint call
+    previewCookie.track = random(8);
 
     // Update breaker
     if (!this.breaker) this.breaker = setupBreaker();

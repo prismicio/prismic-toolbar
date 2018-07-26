@@ -1,7 +1,8 @@
 const webpack = require('webpack');
 const cssnano = require('cssnano');
-const postcssPresetEnv = require('postcss-preset-env');
+const postcssUrl = require('postcss-url');
 const postcssEasyImport = require('postcss-easy-import');
+const postcssPresetEnv = require('postcss-preset-env');
 
 const resolve = path => require('path').resolve(__dirname, path);
 
@@ -44,7 +45,17 @@ module.exports = env => {
               loader: 'postcss-loader',
               options: {
                 sourceMap: 'inline',
-                plugins: () => [postcssEasyImport(), postcssPresetEnv(), cssnano()],
+                plugins: () => [
+                  postcssEasyImport(),
+                  postcssUrl({ url: 'inline' }),
+                  postcssPresetEnv({
+                    features: {
+                      'nesting-rules': true,
+                      'color-mod-function': true,
+                    },
+                  }),
+                  cssnano(),
+                ],
               },
             },
           ],

@@ -1,4 +1,4 @@
-import { Hooks, memoize, wait } from 'common';
+import { Hooks, memoize, wait, random } from 'common';
 import { preview } from './cookies';
 
 // Initial track
@@ -8,23 +8,18 @@ export class Prediction {
   constructor(messenger) {
     this.messenger = messenger;
     this.hooks = new Hooks();
+    this.documentsHooks = [];
+    this.count = 0;
 
-    // Setup
+    // Memoize
     this.fetchDocuments = memoize(this.fetchDocuments.bind(this), () => window.location.href);
-    this.documents = new Promise(rs => (this.resolveDocuments = rs));
 
     // Fetch
-    this.fetchSoon().then(this.resolveDocuments);
-    this.hooks.on('historyChange', () => (this.documents = this.fetchSoon()));
+    this.fetchSoon();
+    this.hooks.on('historyChange', this.fetchSoon.bind(this));
   }
 
-  // Fetch in .5s
-  async fetchSoon() {
-    await wait(0.5);
-    return this.fetchDocuments();
-  }
-
-  // Fetch documents for current url
+  // Fetch documents (for current url)
   fetchDocuments() {
     const t = initialTrack; // First time hack
     initialTrack = null;
@@ -32,5 +27,19 @@ export class Prediction {
       url: window.location.pathname,
       track: t || preview.track,
     });
+  }
+
+  // Fetch in .5 seconds, dispatch to hooks
+  async fetchSoon() {
+    await wait(0.5);
+    const documents = await this.fetchDocuments();
+    Object.values(this.documentsHooks).forEach(hook => hook(documents));
+  }
+
+  // Documents hook
+  onDocuments(func) {
+    const c = this.count++;
+    this.documentsHooks[c] = func;
+    return () => delete this.documentsHooks[c];
   }
 }

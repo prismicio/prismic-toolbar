@@ -23,7 +23,7 @@ const PreviewHeader = ({ title, numberOfDocs }) => (
 );
 
 const PreviewDocuments = ({ documents }) => (
-  <div className="Documents">
+  <div className="Documents bottom">
     {documents.map((doc, i) => <PreviewDocument doc={doc} key={i} />)}
   </div>
 );

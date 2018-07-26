@@ -34,15 +34,12 @@ const ShareHeader = ({ title }) => (
   </div>
 );
 
-const Share = ({ url, loading }) => {
-  if (loading) return 'loading share...';
-  return (
-    <div className="Share">
-      <h2>Share this preview via public share link</h2>
-      <div className="url">{url}</div>
-      <div className="copy" onClick={() => copyText(url)}>
-        Copy the link
-      </div>
+const Share = ({ url, loading }) => (
+  <div className="Share bottom">
+    <h2>Share this preview via public share link</h2>
+    <div className="url">{loading ? 'Loading...' : url}</div>
+    <div className="copy" onClick={() => copyText(url)}>
+      Copy the link
     </div>
-  );
-};
+  </div>
+);
