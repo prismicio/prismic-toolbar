@@ -1,21 +1,13 @@
 import { parseQuery } from 'common';
 
+const { origin } = window.location;
+
 export const normalizeDocument = doc => ({
   doc,
   title: doc.metadata.title,
   summary: doc.metadata.description || 'No summary available.',
-  url: `${window.location.origin}/app/documents/${doc.id}/ref`,
+  url: `${origin}/app/documents/${doc.id}/ref`,
 });
-
-export const normalizeDraft = draft =>
-  Object.assign(
-    {
-      title: null,
-      summary: null,
-      url: null,
-    },
-    draft || {}
-  );
 
 // Parse Toolbar Bootstrap state
 export const normalizeState = _state => {
@@ -36,8 +28,7 @@ export const normalizeState = _state => {
     p.documents = []
       .concat(old.draftPreview)
       .concat(old.releasePreview)
-      .filter(Boolean)
-      .map(normalizeDraft);
+      .filter(Boolean);
 
     state.preview = p;
   }

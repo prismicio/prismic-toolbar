@@ -30,8 +30,8 @@
 
   & .x {
     position: absolute;
-    top: 15px;
-    right: 15px;
+    top: 20px;
+    right: 20px;
   }
 }
 
@@ -149,6 +149,8 @@
     padding: 16px;
     color: white;
     background: #5163BA;
+    user-select: none;
+    cursor: pointer;
 
     &:hover {
       background: #4050a0;

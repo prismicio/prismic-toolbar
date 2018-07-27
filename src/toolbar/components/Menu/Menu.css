@@ -14,9 +14,9 @@
   & .Icon {
     transition: all .2s;
     will-change: transform;
-  }
 
-  &:hover .Icon {
-    transform: rotate(-90deg);
+    &.x {
+      transform: rotate(-90deg);
+    }
   }
 }

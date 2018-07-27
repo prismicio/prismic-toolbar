@@ -29,9 +29,8 @@ const PreviewDocuments = ({ documents }) => (
 );
 
 const PreviewDocument = ({ doc }) => (
-  <div className="Draft">
+  <a className="Draft" href={doc.url} target="_blank">
     <h3>{doc.title}</h3>
     <div>{doc.summary}</div>
-    <div>{doc.url}</div>
-  </div>
+  </a>
 );

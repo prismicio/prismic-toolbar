@@ -1,5 +1,5 @@
 import { h, Component } from 'preact';
-import { copyText, memoize } from 'common';
+import { copyText, memoize, wait } from 'common';
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
 
@@ -34,12 +34,32 @@ const ShareHeader = ({ title }) => (
   </div>
 );
 
-const Share = ({ url, loading }) => (
-  <div className="Share bottom">
-    <h2>Share this preview via public share link</h2>
-    <div className="url">{loading ? 'Loading...' : url}</div>
-    <div className="copy" onClick={() => copyText(url)}>
-      Copy the link
-    </div>
-  </div>
-);
+class Share extends Component {
+  constructor() {
+    super(...arguments);
+    this.state = { copied: false };
+  }
+
+  async copy() {
+    copyText(this.props.url);
+    this.setState({ copied: true });
+    await wait(1);
+    this.setState({ copied: false });
+  }
+
+  render() {
+    const { url, loading } = this.props;
+    const { copied } = this.state;
+    return (
+      <div className="Share bottom">
+        <h2>Share this preview via public share link</h2>
+        <div className="url">{loading ? 'Loading...' : url}</div>
+        {url && (
+          <div className="copy" onClick={this.copy.bind(this)}>
+            {copied ? 'Copied!' : 'Copy the link'}
+          </div>
+        )}
+      </div>
+    );
+  }
+}

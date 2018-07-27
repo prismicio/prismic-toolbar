@@ -41,6 +41,11 @@
     top: 26px;
     cursor: pointer;
     user-select: none;
+    transition: all .2s;
+
+    &:hover {
+      transform: scale(.9);
+    }
   }
 
   & .link {
