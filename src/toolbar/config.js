@@ -5,16 +5,17 @@ import { Experiment } from './experiment';
 export const globals = {
   endpoint: null,
   ...window.prismic,
-  startExperiment: expId => new Experiment(expId), // TODO automate
-  setupEditButton: _ => _, // Legacy (log 'deprecated')
   version: process.env.npm_package_version,
-  setup: _ => _, // TODO deprecated
+  setup: () => console.warn(`prismic.setup() is deprecated. It now initiates automatically.`),
+  startExperiment: expId => new Experiment(expId), // TODO automate
+  setupEditButton: () =>
+    console.warn(
+      `prismic.setupEditButton() is deprecated. Edit buttons have been replaced by the new Edit feature.`
+    ),
 };
 
 // Validate prismic.endpoint
-const matches = (globals.endpoint || '')
-  .replace(/\.cdn/, '')
-  .match(new RegExp('https?://[^/]*'));
+const matches = (globals.endpoint || '').replace(/\.cdn/, '').match(new RegExp('https?://[^/]*'));
 
 // Set base URL
 export const baseURL = matches ? matches[0] : null;

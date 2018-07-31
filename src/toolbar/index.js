@@ -1,7 +1,10 @@
-// TODO no promise/fetch, just babel-polyfill if IE 11, if <IE11, return warning 'not supported'
+// TODO only polyfill if IE 11: https://cdn.jsdelivr.net/npm/@babel/polyfill@7.0.0-beta.52/dist/polyfill.min.js
 import 'promise-polyfill/src/polyfill';
-import 'regenerator-runtime/runtime';
 import 'whatwg-fetch';
+
+import 'regenerator-runtime/runtime';
+
+// TODO If < IE 11 error "Not supported"
 
 import { readyDOM, endpointWarning, Messenger, Publisher } from 'common';
 import { screenshot } from 'common/screenshot';
@@ -9,8 +12,6 @@ import { globals, baseURL } from './config';
 import { Tracker } from './tracker';
 import { Preview } from './preview';
 import { Toolbar } from './toolbar';
-
-// TODO work with foyer demo project
 
 (async () => {
   // Invalid prismic.endpoint
