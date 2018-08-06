@@ -1,8 +1,14 @@
 module.exports = {
-  presets: [
-    '@babel/preset-env',
-    '@babel/preset-react',
-    ['@babel/preset-stage-2', { decoratorsLegacy: true }],
+  presets: ['@babel/preset-env', '@babel/preset-react'],
+  plugins: [
+    // Stage 2
+    '@babel/plugin-proposal-export-namespace-from',
+    '@babel/plugin-proposal-numeric-separator',
+    '@babel/plugin-proposal-throw-expressions',
+
+    // Stage 3
+    '@babel/plugin-syntax-dynamic-import',
+    ['@babel/plugin-proposal-class-properties', { loose: false }],
+    '@babel/plugin-proposal-json-strings',
   ],
-  plugins: [['@babel/plugin-transform-react-jsx', { pragma: 'h' }]],
 };
