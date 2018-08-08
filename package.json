@@ -8,7 +8,7 @@
     "serve": "webpack-serve",
     "ngrok": "ngrok http 8080",
 
-    "start": "webpack --mode development",
+    "start": "webpack --mode development --watch",
     "build": "webpack --mode production",
 
     "lint": "eslint src; exit 0",
