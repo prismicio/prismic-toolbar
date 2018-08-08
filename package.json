@@ -1,12 +1,16 @@
 {
   "name": "prismic-toolbar",
-  "version": "1.1.7",
+  "version": "1.1.8",
   "description": "Prismic Toolbar",
   "license": "Apache-2.0",
   "main": "build/prismic-toolbar.js",
   "scripts": {
-    "start": "webpack --mode development --watch",
+    "serve": "webpack-serve",
+    "ngrok": "ngrok http 8080",
+
+    "start": "webpack --mode development",
     "build": "webpack --mode production",
+
     "lint": "eslint src; exit 0",
     "test": "jest"
   },
@@ -59,6 +63,7 @@
     "url-loader": "^1.0.1",
     "webpack": "^4.12.2",
     "webpack-command": "^0.3.1",
+    "webpack-serve": "^2.0.2",
     "whatwg-fetch": "^2.0.4"
   }
 }

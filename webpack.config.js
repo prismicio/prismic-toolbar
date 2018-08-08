@@ -6,74 +6,76 @@ const postcssPresetEnv = require('postcss-preset-env');
 
 const resolve = path => require('path').resolve(__dirname, path);
 
-module.exports = env => {
-  const prod = env.mode === 'production';
+const dev = process.env.WEBPACK_SERVE;
 
-  return {
-    watchOptions: {
-      ignored: '/node_modules/',
+module.exports = {
+  mode: dev ? 'development' : 'production',
+
+  devtool: dev ? 'cheap-source-map' : false,
+
+  watchOptions: {
+    ignored: '/node_modules/',
+  },
+
+  output: {
+    path: resolve('../../app/assets/javascripts/toolbar'),
+  },
+
+  // Toolbar & iFrame
+  entry: {
+    iframe: resolve('src/iframe'),
+    toolbar: resolve('src/toolbar'),
+  },
+
+  // Helper Functions
+  resolve: {
+    alias: {
+      common: resolve('src/common'),
     },
+  },
 
-    output: {
-      filename: prod ? '[name].min.js' : '[name].js',
-    },
+  // Expose environment variables
+  plugins: [new webpack.EnvironmentPlugin(['npm_package_version'])],
 
-    // Toolbar & iFrame
-    entry: {
-      iframe: resolve('src/iframe'),
-      toolbar: resolve('src/toolbar'),
-    },
-
-    // Helper Functions
-    resolve: {
-      alias: {
-        common: resolve('src/common'),
-      },
-    },
-
-    // Expose environment variables
-    plugins: [new webpack.EnvironmentPlugin(['npm_package_version'])],
-
-    module: {
-      rules: [
-        // PostCSS
-        {
-          test: /\.css$/,
-          use: [
-            'raw-loader',
-            {
-              loader: 'postcss-loader',
-              options: {
-                sourceMap: 'inline',
-                plugins: () => [
-                  postcssEasyImport(),
-                  postcssUrl({ url: 'inline' }),
-                  postcssPresetEnv({
-                    features: {
-                      'nesting-rules': true,
-                      'color-mod-function': true,
-                    },
-                  }),
-                  cssnano(),
-                ],
-              },
+  module: {
+    rules: [
+      // PostCSS
+      {
+        test: /\.css$/,
+        use: [
+          'raw-loader',
+          {
+            loader: 'postcss-loader',
+            options: {
+              sourceMap: 'inline',
+              plugins: () => [
+                postcssEasyImport(),
+                postcssUrl({ url: 'inline' }),
+                postcssPresetEnv({
+                  features: {
+                    'nesting-rules': true,
+                    'color-mod-function': true,
+                  },
+                }),
+                cssnano(),
+              ],
             },
-          ],
-        },
+          },
+        ],
+      },
 
-        // Babel
-        {
-          test: /\.js$/,
-          exclude: /node_modules/,
-          use: 'babel-loader',
-        },
+      // Babel
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: 'babel-loader',
+      },
 
-        // DataURI Image Loader
-        {
-          test: /\.(svg|jpg)$/,
-          use: 'url-loader',
-        },
-      ],
-    },
-  };
+      // DataURI Image Loader
+      {
+        test: /\.(svg|jpg)$/,
+        use: 'url-loader',
+      },
+    ],
+  },
 };

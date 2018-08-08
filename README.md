@@ -2,7 +2,7 @@
 The prismic toolbar enables content writers to:
  - Preview unpublished changes (drafts and releases)
  - Perform A/B tests (experiments)
- - Directly link to documents in Writing Room
+ - Browse Prismic documents on the page
 
 <!-- TODO add screenshots -->
 
