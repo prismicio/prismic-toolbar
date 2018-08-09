@@ -33,6 +33,7 @@ export class Prediction {
   async fetchSoon() {
     await wait(0.5);
     const documents = await this.fetchDocuments();
+    window.prismic._predictionDocuments = documents; // Debug
     Object.values(this.documentsHooks).forEach(hook => hook(documents));
   }
 

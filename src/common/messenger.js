@@ -1,7 +1,7 @@
 export class Messenger {
   constructor(src) {
     this.ready = new Promise(rs => (this.becomeReady = rs));
-    this.events = new EventTarget();
+    this.events = document.createElement('span'); // EventTarget unsupported in IE
 
     this._setup(src);
   }
