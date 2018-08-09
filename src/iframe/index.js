@@ -1,7 +1,5 @@
 // TODO make iframe static so it loads faster (and easy to update prismic.js)
-
-import 'regenerator-runtime/runtime';
-import { Publisher } from 'common'; // TODO remove common dependency
+import { Publisher } from 'common';
 import { auth, state, master } from './config';
 import { documents } from './prediction';
 import { preview } from './preview';

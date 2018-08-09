@@ -1,8 +1,4 @@
-// TODO only polyfill if IE 11: https://cdn.jsdelivr.net/npm/@babel/polyfill@7.0.0-beta.52/dist/polyfill.min.js
-import 'promise-polyfill/src/polyfill';
-import 'whatwg-fetch';
-
-import 'regenerator-runtime/runtime';
+// TODO MAYBE NOT only polyfill if IE 11: https://cdn.jsdelivr.net/npm/@babel/polyfill@7.0.0-beta.52/dist/polyfill.min.js
 
 // TODO If < IE 11 error "Not supported"
 

@@ -5,6 +5,7 @@ const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
 
 const resolve = path => require('path').resolve(__dirname, path);
+const polyfill = path => [resolve('polyfill'), resolve(path)];
 
 const dev = process.env.WEBPACK_SERVE;
 
@@ -23,8 +24,8 @@ module.exports = {
 
   // Toolbar & iFrame
   entry: {
-    iframe: resolve('src/iframe'),
-    toolbar: resolve('src/toolbar'),
+    iframe: polyfill('src/iframe'),
+    toolbar: polyfill('src/toolbar'),
   },
 
   // Helper Functions
