@@ -1,6 +1,9 @@
 module.exports = {
   presets: ['@babel/preset-env', '@babel/preset-react'],
   plugins: [
+    // Preact
+    ['@babel/plugin-transform-react-jsx', { pragma: 'h' }],
+
     // Stage 2
     '@babel/plugin-proposal-export-namespace-from',
     '@babel/plugin-proposal-numeric-separator',

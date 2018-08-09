@@ -17,7 +17,7 @@ import { Toolbar } from './toolbar';
   window.prismic = window.PrismicToolbar = globals;
 
   // CORS
-  const messenger = new Messenger(`${baseURL}/toolbar/bootstrap`);
+  const messenger = new Messenger(`${baseURL}/toolbar/bootstrap/2`);
   new Publisher({ screenshot });
 
   // Request Tracker (prediction)

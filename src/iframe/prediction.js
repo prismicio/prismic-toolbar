@@ -1,4 +1,4 @@
-import { normalizeDocument, fetchy, query } from 'common';
+import { fetchy, query, normalizeDocument } from 'common';
 
 export const documents = params =>
   fetchy({
