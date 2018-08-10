@@ -1,10 +1,10 @@
 import { h, render } from 'preact';
-import { appendCSS, shadow } from 'common';
+import { appendCSS, shadow, div } from 'common';
 import { Toolbar as ToolbarComponent } from './components';
 import { Prediction } from './prediction';
-import styles from './index.css';
+import shadowStyles from './index.css';
 
-// BUG blinking on reload preview????
+// TODO blinking on reload preview????
 
 export class Toolbar {
   constructor({ messenger, preview }) {
@@ -20,10 +20,13 @@ export class Toolbar {
     if (!auth && !this.preview.active) return;
 
     // Create Shadow Container
-    const toolbar = shadow('prismic-toolbar-v2');
+    const toolbar = shadow('prismic-toolbar-v2', { style: containerStyle });
+
+    // Above Intercom
+    appendCSS(document.body, `#intercom-container { z-index: 2147483646 !important }`);
 
     // Add CSS
-    appendCSS(toolbar, styles);
+    appendCSS(toolbar, shadowStyles);
 
     // Render
     render(
@@ -35,3 +38,8 @@ export class Toolbar {
     );
   }
 }
+
+const containerStyle = {
+  position: 'fixed',
+  zIndex: 2147483647,
+};

@@ -6,13 +6,15 @@
 	box-shadow: 0 7px 38px -6px #AAA8;
 	border-radius: 10px;
 	width: 360px;
-	height: 650px;
+	height: calc(100vh - 160px);
 	position: absolute;
-	bottom: 130px;
+	bottom: 100px;
 	left: 0;
   overflow-y: scroll;
   display: flex;
   flex-direction: column;
+  min-height: 250px;
+  max-height: 650px;
 
   & .top {
     padding: 30px;
@@ -32,6 +34,7 @@
     position: absolute;
     top: 20px;
     right: 20px;
+    cursor: pointer;
   }
 }
 

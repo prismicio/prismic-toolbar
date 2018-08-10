@@ -1,8 +1,8 @@
-export const div = (id, options) => node({ type: 'div', id, ...options });
+export const div = (id, options) => node({ type: 'div', id, options });
 export const script = src => srcNode({ type: 'script', src });
 
-export const shadow = id => {
-  let _shadow = div(id);
+export const shadow = (id, options) => {
+  let _shadow = div(id, options);
   if (document.head.attachShadow) _shadow = _shadow.attachShadow({ mode: 'open' });
   return _shadow;
 };
@@ -20,20 +20,22 @@ export const appendCSS = (el, css) => {
 };
 
 // Load something
-function node({ id, type, body = true, ...options }) {
+function node({ id, type, body = true, options = {} }) {
+  const { style, ...otherOpts } = options;
   let el = document.getElementById(id);
   if (!el) {
     el = document.createElement(type);
     document[body ? 'body' : 'head'].appendChild(el);
   }
-  Object.assign(el, options, { id });
+  Object.assign(el.style, style);
+  Object.assign(el, otherOpts, { id });
   return el;
 }
 
 // Load something with src
 async function srcNode({ src, type, body = false, ...options }) {
   return new Promise(resolve => {
-    const el = node({ ...options, id: src, type, body });
+    const el = node({ options, id: src, type, body });
     el.addEventListener('load', () => resolve(el));
   });
 }
