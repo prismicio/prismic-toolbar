@@ -13,7 +13,7 @@
   "dependencies": {
     "html2canvas": "^1.0.0-alpha.12",
     "js-cookie": "^2.2.0",
-    "promise-polyfill": "8.0.0",
+    "promise-polyfill": "8.1.0",
     "regenerator-runtime": "^0.11.1",
     "whatwg-fetch": "^2.0.4"
   },
