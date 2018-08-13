@@ -8,6 +8,7 @@
   background: #5163BA;
 
   & .top {
+    height: 20px;
     margin-bottom: 3px;
 
     & h1 {

@@ -10,7 +10,7 @@
 	position: absolute;
 	bottom: 100px;
 	left: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   min-height: 250px;
