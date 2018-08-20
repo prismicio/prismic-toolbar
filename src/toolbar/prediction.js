@@ -25,6 +25,7 @@ export class Prediction {
     initialTrack = null;
     return this.messenger.post('documents', {
       url: window.location.pathname,
+      ref: preview.ref,
       track: t || preview.track,
     });
   }

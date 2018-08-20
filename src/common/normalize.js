@@ -4,8 +4,8 @@ const { origin } = window.location;
 
 export const normalizeDocument = doc => ({
   doc,
-  title: doc.metadata.title,
-  summary: doc.metadata.description || 'No summary available.',
+  title: doc.title,
+  summary: doc.summary || 'No summary available.',
   url: `${origin}/app/documents/${doc.id}/ref`,
 });
 
