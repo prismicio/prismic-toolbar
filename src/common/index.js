@@ -3,7 +3,13 @@ export { div, script, deleteNodes, appendCSS, shadow } from './domnodes';
 export { Messenger } from './messenger';
 export { Publisher } from './publisher';
 export { Hooks } from './hooks';
-export { normalizeDocument, normalizeDraft, normalizeState, normalizeRef } from './normalize';
+export {
+  normalizeDocument,
+  normalizeDraft,
+  normalizeState,
+  normalizeRef,
+  Sorter,
+} from './normalize';
 
 // Switchy
 export const switchy = (val = '') => (obj = {}) => {
