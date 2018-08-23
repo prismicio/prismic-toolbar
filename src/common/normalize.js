@@ -1,4 +1,5 @@
 import { parseQuery } from 'common';
+import Fuse from 'fuse.js'; // TODO maybe not
 
 const { origin } = window.location;
 
@@ -11,13 +12,13 @@ export class Sorter {
     this.filters = [];
   }
 
-  addFilter(computeValue, compare) {
-    this.filters.push({ computeValue, compare });
+  addFilter(computeValues, compare) {
+    this.filters.push({ computeValues, compare });
     return this;
   }
 
   compareData() {
-    const computedValues = this.filters.map(f => this.data.map(f.computeValue));
+    const computedValues = this.filters.map(f => f.computeValues(this.data));
     return transpose(computedValues).map((nodes, index) => ({ nodes, index }));
   }
 
@@ -33,9 +34,19 @@ export class Sorter {
     };
   }
 
+  is(val) {
+    return this.addFilter(
+      data => data.map(x => Boolean(val(x))),
+      (a, b) => ({
+        didFirstWin: a,
+        tie: a === b,
+      })
+    );
+  }
+
   min(val) {
     return this.addFilter(
-      x => val(x),
+      data => data.map(x => val(x)),
       (a, b) => ({
         didFirstWin: a < b,
         tie: a === b,
@@ -45,7 +56,7 @@ export class Sorter {
 
   max(val) {
     return this.addFilter(
-      x => val(x),
+      data => data.map(x => val(x)),
       (a, b) => ({
         didFirstWin: a > b,
         tie: a === b,
@@ -55,7 +66,7 @@ export class Sorter {
 
   missing(val, regex) {
     return this.addFilter(
-      x => Boolean(val(x).match(regex)),
+      data => data.map(x => Boolean(val(x).match(regex))),
       (a, b) => ({
         didFirstWin: a,
         tie: a === b,
@@ -65,9 +76,46 @@ export class Sorter {
 
   in(val, str) {
     return this.addFilter(
-      x => Boolean(str.match(val(x))),
+      data => data.map(x => Boolean(str.match(val(x)))),
       (a, b) => ({
         didFirstWin: a,
+        tie: a === b,
+      })
+    );
+  }
+
+  // val: x => 'food', query: 'foo', options: { caseSensitive, threshold, location, distance }
+  fuzzy(val, text, options) {
+    return this.addFilter(
+      data => {
+        const values = data.map(x => val(x));
+
+        const defaults = {
+          caseSensitive: false,
+          maxPatternLength: 300,
+          minMatchCharLength: 4,
+        };
+
+        const overrides = {
+          id: undefined,
+          keys: undefined,
+          shouldSort: false,
+          tokenize: true,
+          matchAllTokens: true,
+          includeScore: true,
+          findAllMatches: true,
+          includeMatches: false,
+        };
+
+        const fuse = new Fuse([text], Object.assign(defaults, options, overrides));
+
+        // Return search results
+        return values
+          .map(value => fuse.search(value.slice(0, 300).trim())[0] || { score: 1 })
+          .map(x => x.score);
+      },
+      (a, b) => ({
+        didFirstWin: a < b,
         tie: a === b,
       })
     );
@@ -87,8 +135,6 @@ const stableSort = (arr, compare) =>
 
 export const normalizeDocument = doc => ({
   ...doc,
-  title: doc.title || 'Untitled Document',
-  summary: doc.summary || 'No summary available.',
   url: `${origin}/app/documents/${doc.id}/ref`,
 });
 
@@ -130,4 +176,12 @@ export const normalizeRef = _ref => {
     breaker: null,
     ...parseQuery(_ref),
   };
+};
+
+const assert = (condition, message) => {
+  if (!condition) {
+    message = message || 'Assertion failed';
+    if (typeof Error !== 'undefined') throw new Error(message);
+    throw message; // Fallback
+  }
 };

@@ -1,4 +1,4 @@
-import { Hooks, memoize, wait, random } from 'common';
+import { Hooks, memoize, wait, random, getLocation } from 'common';
 import { preview } from './cookies';
 
 // Initial track
@@ -23,10 +23,18 @@ export class Prediction {
   fetchDocuments() {
     const t = initialTrack; // First time hack
     initialTrack = null;
+
+    const mainEl = document.querySelector('main') || document.body;
+    const mainText = mainEl.textContent.replace(/\s+/g, ' ').slice(0, 3000);
+
     return this.messenger.post('documents', {
+      // Predict
       url: window.location.pathname,
       ref: preview.ref,
       track: t || preview.track,
+      // Main document
+      location: getLocation(),
+      text: mainText,
     });
   }
 

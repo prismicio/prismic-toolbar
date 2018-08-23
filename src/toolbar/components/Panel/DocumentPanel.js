@@ -25,12 +25,7 @@ const MainDocument = ({ doc }) => (
       <h1>Main document</h1>
     </header>
 
-    <a className="Document" href={doc.url} target="_blank">
-      <header>
-        <h3>{doc.title}</h3>
-      </header>
-      <div>{ellipsis(doc.summary, 300)}</div>
-    </a>
+    <Document doc={doc} isMain />
   </div>
 );
 
@@ -44,9 +39,24 @@ const OtherDocuments = ({ documents }) => {
   );
 };
 
-const Document = ({ doc }) => (
-  <a className="Document" href={doc.url} target="_blank">
-    <h3>{doc.title}</h3>
-    <div>{ellipsis(doc.summary, 200)}</div>
-  </a>
-);
+const Document = ({ doc, isMain }) => {
+  const title = doc.title || 'Untitled Document';
+  const summary = doc.summary || 'No summary available.';
+
+  if (isMain)
+    return (
+      <a className="Document" href={doc.url} target="_blank">
+        <header>
+          <h3>{title}</h3>
+        </header>
+        <div>{ellipsis(summary, 300)}</div>
+      </a>
+    );
+
+  return (
+    <a className="Document" href={doc.url} target="_blank">
+      <h3>{title}</h3>
+      <div>{ellipsis(summary, 200)}</div>
+    </a>
+  );
+};
