@@ -31,8 +31,8 @@ class PreviewCookie {
   set(args) {
     const { ref, url, track, breaker } = Object.assign(this.get(), args);
     if (!ref) return this.delete(); // Always need ref or remove all state
-    const qs = `?${query({ url, track, breaker })}`;
-    setCookie(this.name, ref + qs, 0.1);
+    const value = url || track || breaker ? ref + `?${query({ url, track, breaker })}` : ref;
+    setCookie(this.name, value, 0.1);
   }
 
   delete() {

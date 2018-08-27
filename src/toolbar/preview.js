@@ -34,9 +34,9 @@ export class Preview {
   // End preview
   end = async () => {
     const oldRef = this.ref;
-    const { master } = await this.messenger.post('state');
+    const { auth, master } = await this.messenger.post('state');
     await this.messenger.post('closePreview');
-    previewCookie.ref = master;
+    previewCookie.ref = auth ? master : null
     if (oldRef && oldRef !== master) reloadOrigin(); // Reload
   };
 
