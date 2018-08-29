@@ -10,5 +10,6 @@ export default matches ? {
     hash: window.location.hash,
     pathname: window.location.pathname,
     search: window.location.search,
+    href: window.location.href,
   },
 } : {};
