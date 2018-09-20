@@ -1,5 +1,8 @@
-import { random, Hooks, localStorage } from 'common';
+import { random, Hooks } from 'common';
 import { preview as previewCookie } from './cookies';
+
+// Stop URL tracking
+const resetUrl = () => (previewCookie.url = null);
 
 // Tracker
 export class Tracker {
@@ -8,7 +11,7 @@ export class Tracker {
     this.messenger = messenger;
     this.hooks = new Hooks();
     this.auth = Boolean(previewCookie.track);
-    this.preview = Boolean(previewCookie.ref.match('^http'));
+    this.preview = Boolean(previewCookie.ref && previewCookie.ref.match('^http'));
     this.master = previewCookie.ref
 
     // Quick track
@@ -34,7 +37,7 @@ export class Tracker {
     this.tracking = true;
 
     // Update ref / track / breaker
-    if (!this.preview) return (previewCookie.ref = state.master);
+    if (!this.preview) return (previewCookie.ref = this.master);
     previewCookie.track = random(8);
     this.breaker = setInterval(() => (previewCookie.breaker = random(8)), 100);
 
@@ -43,7 +46,7 @@ export class Tracker {
     this.hooks.on('beforeRequest', () => {
       clearTimeout(this.clearUrl);
       previewCookie.url = window.location.pathname;
-      this.clearUrl = setTimeout(() => (previewCookie.url = null), 300);
+      this.clearUrl = setTimeout(resetUrl, 300);
     });
   }
 
