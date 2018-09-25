@@ -1,5 +1,4 @@
 export const div = (id, options) => node({ type: 'div', id, options });
-export const script = src => srcNode({ type: 'script', src });
 
 export const shadow = (id, options) => {
   let _shadow = div(id, options);
@@ -32,10 +31,16 @@ function node({ id, type, body = true, options = {} }) {
   return el;
 }
 
-// Load something with src
-async function srcNode({ src, type, body = false, ...options }) {
+// Load script
+export function script(src) {
   return new Promise(resolve => {
-    const el = node({ options, id: src, type, body });
+    let el = document.getElementById(src);
+    if (!el) {
+      el = document.createElement('script');
+      el.id = src
+      el.src = src
+      document.head.appendChild(el);
+    }
     el.addEventListener('load', () => resolve(el));
   });
 }
