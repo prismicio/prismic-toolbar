@@ -37,7 +37,7 @@ export class Tracker {
     this.tracking = true;
 
     // Update ref / track / breaker
-    if (!this.preview) return (previewCookie.ref = this.master);
+    if (!this.preview) previewCookie.ref = this.master;
     previewCookie.track = random(8);
     this.breaker = setInterval(() => (previewCookie.breaker = random(8)), 100);
 
