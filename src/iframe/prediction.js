@@ -7,7 +7,6 @@ export const documents = async ({ url, ref, track, location }) => {
   }).then(res => res.documents.map(normalizeDocument));
 
   return (
-    // TODO test on a good website & maybe add scoring
     new Sorter(data)
       // .max(a => a.occurences) // No use case
       // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong

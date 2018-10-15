@@ -3,8 +3,8 @@ import { PreviewCookie } from './cookies';
 import { reloadOrigin } from './config';
 
 export class Preview {
-  constructor(messenger, domain) {
-    this.cookie = new PreviewCookie(domain)
+  constructor(messenger) {
+    this.cookie = new PreviewCookie(messenger.hostname);
     this.messenger = messenger;
   }
 

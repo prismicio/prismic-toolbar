@@ -1,8 +1,7 @@
 import html2canvas from 'html2canvas';
-import { div } from 'common';
 
 export const screenshot = async () => {
-  div('prismic-toolbar-v2').setAttribute('data-html2canvas-ignore', true);
+  document.getElementById('prismic-toolbar-v2').setAttribute('data-html2canvas-ignore', true);
 
   const canvas = await html2canvas(document.body, {
     logging: false,

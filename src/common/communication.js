@@ -1,6 +1,7 @@
 // TODO allow multiple instances, thru one port
 export class Messenger {
   constructor(src) {
+    this.hostname = (new URL(src)).hostname;
     this.ready = new Promise(rs => (this.becomeReady = rs));
     this.events = document.createElement('span'); // EventTarget unsupported in IE
 

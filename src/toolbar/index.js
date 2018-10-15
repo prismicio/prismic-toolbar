@@ -1,8 +1,4 @@
-// TODO MAYBE NOT only polyfill if IE 11: https://cdn.jsdelivr.net/npm/@babel/polyfill@7.0.0-beta.52/dist/polyfill.min.js
-
-// TODO If < IE 11 error "Not supported"
-
-import { readyDOM, Messenger, Publisher } from 'common';
+import { readyDOM, Messenger, Publisher, isIE } from 'common';
 import { screenshot } from 'common/screenshot';
 import { globals, repos } from './config';
 import { Tracker } from './tracker';
@@ -11,6 +7,9 @@ import { Toolbar } from './toolbar';
 const repository = repos[0]; // TODO support multi-repo
 
 (async () => {
+  // TODO support IE 11
+  if (isIE()) return warn`Prismic toolbar does not support Internet Explorer.`;
+
   // Invalid prismic.endpoint
   if (repos.length < 1) return warn`
     Please connect prismic.js to a repository (or several). For example, 
@@ -24,15 +23,15 @@ const repository = repos[0]; // TODO support multi-repo
   new Publisher({ screenshot });
 
   // Request Tracker (prediction)
-  new Tracker(messenger, repository);
+  new Tracker(messenger);
 
   // Ready DOM
   await readyDOM();
 
   // Preview
-  const preview = new Preview(messenger, repository);
+  const preview = new Preview(messenger);
   await preview.setup();
 
   // Toolbar
-  new Toolbar({ messenger, preview, repository });
+  new Toolbar({ messenger, preview });
 })();

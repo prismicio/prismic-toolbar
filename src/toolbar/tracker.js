@@ -3,9 +3,9 @@ import { PreviewCookie } from './cookies';
 
 // Tracker
 export class Tracker {
-  constructor(messenger, domain) {
+  constructor(messenger) {
     // Assign
-    this.cookie = new PreviewCookie(domain);
+    this.cookie = new PreviewCookie(messenger.hostname);
     this.messenger = messenger;
     this.hooks = new Hooks();
     this.auth = Boolean(PreviewCookie.track);

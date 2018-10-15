@@ -1,4 +1,3 @@
-// TODO make iframe static so it loads faster (and easy to update prismic.js)
 import { Publisher } from 'common';
 import { auth, state, master, preview } from './config';
 import { documents } from './prediction';
