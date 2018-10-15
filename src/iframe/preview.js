@@ -8,7 +8,7 @@ const fetcher = throttle(() => {
   return fetchy({ url: `/previews/${sessionId}/ping?ref=${ref}` });
 }, 2000);
 
-const newPreviewRef = async () => {
+export const newPreviewRef = async () => {
   while (true) {
     if (newRef) return newRef;
     const { reload, ref } = await fetcher();
@@ -22,10 +22,10 @@ const newPreviewRef = async () => {
 const sessionId = getCookie('io.prismic.previewSession');
 
 // Close preview session
-const closePreview = () => deleteCookie('io.prismic.previewSession');
+export const closePreview = () => deleteCookie('io.prismic.previewSession');
 
 // Share
-const share = async location => {
+export const sharePreview = async location => {
   const imageId = location.pathname.slice(1) + location.hash + sessionId + '.jpg';
   const imageName = encodeURIComponent(imageId); // check this
   const session = await getShareableSession({ location, imageName });
@@ -72,11 +72,4 @@ const uploadScreenshot = async imageName => {
 
   // Upload
   return fetch(acl.url, { method: 'POST', body });
-};
-
-// Export
-export const preview = {
-  share,
-  newPreviewRef,
-  closePreview,
 };

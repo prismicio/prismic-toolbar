@@ -1,7 +1,6 @@
 export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
 export { div, script, deleteNodes, appendCSS, shadow } from './domnodes';
-export { Messenger } from './messenger';
-export { Publisher } from './publisher';
+export { Messenger, Publisher } from './communication';
 export { Hooks } from './hooks';
 export {
   normalizeDocument,
@@ -10,6 +9,15 @@ export {
   normalizeRef,
   Sorter,
 } from './normalize';
+
+const oneLine = (...str) => String.raw(...str).replace(/\s+/g, ' ').trim()
+
+// Console warn one-liner
+export const warn = (...str) => console.warn(oneLine(...str))
+export const err = (...str) => {throw new Error(oneLine(...str))}
+
+// Is pure Object
+export const isObject = val => Boolean(val && typeof val === 'object' && val.constructor === Object);
 
 // Switchy
 export const switchy = (val = '') => (obj = {}) => {
@@ -74,12 +82,6 @@ export const parseQuery = _uri => {
       {}
     );
 };
-
-// Invalid prismic endpoint
-export const endpointWarning = () =>
-  console.warn(`Invalid window.prismic.endpoint.
-Learn how to set it up in the documentation: https://prismic.link/2LQcOWJ.
-https://github.com/prismicio/prismic-toolbar`);
 
 // Copy text to clipboard
 export const copyText = text =>

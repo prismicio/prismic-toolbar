@@ -1,5 +1,5 @@
 import { h, render } from 'preact';
-import { appendCSS, shadow, div } from 'common';
+import { appendCSS, shadow } from 'common';
 import { Toolbar as ToolbarComponent } from './components';
 import { Prediction } from './prediction';
 import shadowStyles from './index.css';
@@ -7,7 +7,8 @@ import shadowStyles from './index.css';
 // TODO blinking on reload preview????
 
 export class Toolbar {
-  constructor({ messenger, preview }) {
+  constructor({ messenger, preview, repository }) {
+    this.repository = repository;
     this.messenger = messenger;
     this.preview = preview;
     this.setup();
@@ -32,7 +33,7 @@ export class Toolbar {
     render(
       <ToolbarComponent
         preview={this.preview}
-        prediction={auth ? new Prediction(this.messenger) : null}
+        prediction={auth ? new Prediction(this.messenger, this.repository) : null}
       />,
       toolbar
     );

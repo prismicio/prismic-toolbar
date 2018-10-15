@@ -1,6 +1,6 @@
 import { fetchy, query, normalizeDocument, Sorter } from 'common';
 
-export const documents = async ({ url, ref, track, location, text }) => {
+export const documents = async ({ url, ref, track, location }) => {
   const data = await fetchy({
     url: `/toolbar/predict?${query({ url, ref, track })}`,
     credentials: 'same-origin',
@@ -11,7 +11,6 @@ export const documents = async ({ url, ref, track, location, text }) => {
     new Sorter(data)
       // .max(a => a.occurences) // No use case
       // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
-
       .max(a => a.updated)
       .min(a => a.urls.length)
       .min(a => a.queryTotal)

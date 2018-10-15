@@ -1,18 +1,14 @@
 import { random, Hooks } from 'common';
-import { preview as previewCookie } from './cookies';
-
-// Stop URL tracking
-const resetUrl = () => (previewCookie.url = null);
+import { PreviewCookie } from './cookies';
 
 // Tracker
 export class Tracker {
-  constructor(messenger) {
+  constructor(messenger, domain) {
     // Assign
+    this.cookie = new PreviewCookie(domain);
     this.messenger = messenger;
     this.hooks = new Hooks();
-    this.auth = Boolean(previewCookie.track);
-    this.preview = Boolean(previewCookie.ref && previewCookie.ref.match('^http'));
-    this.master = previewCookie.ref
+    this.auth = Boolean(PreviewCookie.track);
 
     // Quick track
     this.track();
@@ -20,8 +16,6 @@ export class Tracker {
     // Track
     this.messenger.post('state').then(state => {
       this.auth = state.auth;
-      this.preview = Boolean(state.preview);
-      this.master = state.master
       this.track();
     });
   }
@@ -36,17 +30,15 @@ export class Tracker {
     if (this.tracking === true) return;
     this.tracking = true;
 
-    // Update ref / track / breaker
-    if (!this.preview) previewCookie.ref = this.master;
-    previewCookie.track = random(8);
-    this.breaker = setInterval(() => (previewCookie.breaker = random(8)), 100);
+    // Update track once per page
+    PreviewCookie.track = random(8);
 
-    // Update url
-    this.hooks.on('keydown', resetUrl);
+    // Hooks for updating url
+    this.hooks.on('keydown', () => (this.cookie.url = null));
     this.hooks.on('beforeRequest', () => {
       clearTimeout(this.clearUrl);
-      previewCookie.url = window.location.pathname;
-      this.clearUrl = setTimeout(resetUrl, 300);
+      this.cookie.url = window.location.pathname;
+      this.clearUrl = setTimeout(() => (this.cookie.url = null), 300);
     });
   }
 
@@ -55,12 +47,9 @@ export class Tracker {
     if (this.tracking === false) return;
     this.tracking = false;
 
-    // Reset object
+    // Reset
     this.hooks.off();
-    clearInterval(this.breaker);
-
-    // Reset cookie
-    if (this.preview) previewCookie.removeQuery();
-    else previewCookie.delete();
+    PreviewCookie.track = null;
+    PreviewCookie.url = null;
   }
 }

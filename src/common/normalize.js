@@ -1,4 +1,3 @@
-import { parseQuery } from 'common';
 import Fuse from 'fuse.js'; // TODO maybe not
 
 const { origin } = window.location;
@@ -163,19 +162,6 @@ export const normalizeState = _state => {
   }
 
   return state;
-};
-
-// Parse Prismic ref
-export const normalizeRef = _ref => {
-  let ref = _ref || null;
-  if (ref) ref = ref.split('?')[0] || null;
-  return {
-    ref,
-    url: null,
-    track: null,
-    breaker: null,
-    ...parseQuery(_ref),
-  };
 };
 
 const assert = (condition, message) => {

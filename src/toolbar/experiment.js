@@ -1,9 +1,10 @@
 import { script, disabledCookies } from 'common';
-import { experiment } from './cookies';
+import { ExperimentCookie } from './cookies';
 import { reloadOrigin } from './config';
 
 export class Experiment {
   constructor(expId) {
+    this.cookie = new ExperimentCookie();
     if (!disabledCookies) Experiment.setup(expId);
   }
 
@@ -12,14 +13,14 @@ export class Experiment {
     const variation = window.cxApi.chooseVariation();
     if (window.cxApi.NOT_PARTICIPATING) return this.end();
 
-    const old = experiment.get();
-    experiment.set(expId, variation);
-    if (experiment.get() === old) return;
+    const old = this.cookie.get();
+    this.cookie.set(expId, variation);
+    if (this.cookie.get() === old) return;
     reloadOrigin();
   };
 
   end = () => {
-    experiment.delete();
+    this.cookie.delete();
     reloadOrigin();
   };
 }

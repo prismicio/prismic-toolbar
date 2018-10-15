@@ -1,55 +1,53 @@
-import { Hooks, memoize, wait, random, getLocation } from 'common';
-import { preview } from './cookies';
+import { Hooks, memoize, wait, getLocation } from 'common';
+import { PreviewCookie } from './cookies';
 
 // Initial track
-let initialTrack = preview.track;
+let initialTrack = PreviewCookie.track;
 
 export class Prediction {
-  constructor(messenger) {
+  constructor(messenger, repository) {
+    this.cookie = new PreviewCookie(repository);
     this.messenger = messenger;
     this.hooks = new Hooks();
-    this.documentsHooks = [];
+    this.documentHooks = [];
     this.count = 0;
 
-    // Memoize
+    // Memoize fetchDocuments once per URL
     this.fetchDocuments = memoize(this.fetchDocuments.bind(this), () => window.location.href);
 
     // Fetch
-    this.fetchSoon();
-    this.hooks.on('historyChange', this.fetchSoon.bind(this));
+    this.delayedFetch();
+    this.hooks.on('historyChange', this.delayedFetch.bind(this));
   }
 
-  // Fetch documents (for current url)
+  // Fetch documents for the current url
   fetchDocuments() {
-    const t = initialTrack; // First time hack
+    // Remember the initial track for the page
+    // Otherwise predictions will break if we load URLs too fast
+    const t = initialTrack;
     initialTrack = null;
 
-    const mainEl = document.querySelector('main') || document.body;
-    const mainText = mainEl.textContent.replace(/\s+/g, ' ').slice(0, 3000);
-
+    // Predict!
     return this.messenger.post('documents', {
-      // Predict
-      url: window.location.pathname,
-      ref: preview.ref,
-      track: t || preview.track,
-      // Main document
-      location: getLocation(),
-      text: mainText,
+      ref: this.cookie.preview, // The ref for the version of content to display (TODO or null?)
+      url: window.location.pathname, // The URL for which we need the documents
+      track: t || PreviewCookie.track, // So we can match the previous request to this URL
+      location: getLocation(), // URL helps sort main document
     });
   }
 
-  // Fetch in .5 seconds, dispatch to hooks
-  async fetchSoon() {
+  // Fetch in .5 seconds (enough time for the server to run the API request, TODO retry), dispatch to hooks
+  async delayedFetch() {
     await wait(0.5);
     const documents = await this.fetchDocuments();
     window.prismic._predictionDocuments = documents; // Debug
-    Object.values(this.documentsHooks).forEach(hook => hook(documents));
+    Object.values(this.documentHooks).forEach(hook => hook(documents)); // Run the hooks
   }
 
   // Documents hook
   onDocuments(func) {
-    const c = this.count++;
-    this.documentsHooks[c] = func;
-    return () => delete this.documentsHooks[c];
+    const c = this.count++; // Create the hook key
+    this.documentHooks[c] = func; // Create the hook
+    return () => delete this.documentHooks[c]; // Alternative to removeEventListener
   }
 }

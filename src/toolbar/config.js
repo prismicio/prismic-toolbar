@@ -1,25 +1,33 @@
-import { reload } from 'common';
+import { reload, warn } from 'common';
 import { Experiment } from './experiment';
 
-// Globals
 export const globals = {
-  endpoint: null,
-  ...window.prismic,
+  endpoint: null, // Legacy
+  ...window.prismic, // Legacy
   version: process.env.npm_package_version,
-  setup: () => console.warn(`prismic.setup() is deprecated. It now initiates automatically.`),
+  setup: () => warn`prismic.setup() is deprecated. It now initiates automatically.`, // Legacy
   startExperiment: expId => new Experiment(expId), // TODO automate
-  setupEditButton: () =>
-    console.warn(
-      `prismic.setupEditButton() is deprecated. Edit buttons have been replaced by the new Edit feature.`
-    ),
+  setupEditButton: () => warn`
+     prismic.setupEditButton() is deprecated.
+     Edit buttons have been replaced by the new Edit feature.
+  `, // Legacy
 };
 
-// Validate prismic.endpoint
-const matches = (globals.endpoint || '').replace(/\.cdn/, '').match(new RegExp('https?://[^/]*'));
-
-// Set base URL
-export const baseURL = matches ? matches[0] : null;
-
-// Load original page URL
+// Reload original page URL
 const { href } = window.location;
 export const reloadOrigin = () => reload(href);
+
+// Repositories
+export let repos = [] // [example, other.wroom.io]
+// Source: (<script> tag & legacy prismic.endpoint)
+try { repos.push(new URL(globals.endpoint).hostname) } catch(e) {}
+repos.concat((new URL(document.currentScript.src)).searchParams.get('repo').split(','))
+// Normalize (example -> example.prismic.io)
+repos = repos.map(repo => repo.includes('.') ? repo : `${repo}.prismic.io`)
+// Validate & filter
+const validRepo = repo => !/[^-a-zA-Z0-9\.]/.test(repo)
+repos = repos.filter(repo => {
+  if (validRepo(repo)) return true
+  warn`${repo} is an invalid repository.`
+  return false
+})

@@ -1,45 +1,47 @@
 import { getLocation } from 'common';
-import { preview as previewCookie } from './cookies';
+import { PreviewCookie } from './cookies';
 import { reloadOrigin } from './config';
 
 export class Preview {
-  constructor(messenger) {
+  constructor(messenger, domain) {
+    this.cookie = new PreviewCookie(domain)
     this.messenger = messenger;
   }
 
   setup = async () => {
-    // State
-    const { auth, master, preview } = await this.messenger.post('state');
+    // Get state
+    const state = await this.messenger.post('preview');
 
-    // Start
-    await this.start(preview && preview.ref);
+    // Assign state
+    this.active = Boolean(state.preview);
+    this.ref = state.preview.ref;
+    this.title = state.preview.title;
+    this.updated = state.preview.updated;
+    this.documents = state.preview.documents
 
-    // State
-    this.active = preview && preview.ref !== master;
-    this.authorized = auth;
-    Object.assign(this, preview);
+    // Start or end preview
+    await this.start(state.preview ? state.preview.ref : null);
 
-    // Start upon new ref
+    // Update on new preview ref
     if (this.active) this.messenger.post('newPreviewRef').then(this.start);
   };
 
   // Start preview (TODO static visualLoader.html onClick previewEye, same with shareable)
   start = async ref => {
     if (!ref) return this.end();
-    if (ref === previewCookie.ref) return;
-    previewCookie.ref = ref;
+    if (ref === this.cookie.preview) return;
+    this.cookie.preview = ref;
     reloadOrigin();
   };
 
   // End preview
   end = async () => {
-    const oldRef = this.ref;
-    const { auth, master } = await this.messenger.post('state');
+    const old = this.cookie.preview;
     await this.messenger.post('closePreview');
-    previewCookie.ref = auth ? master : null
-    if (oldRef && oldRef !== master) reloadOrigin(); // Reload
+    this.cookie.preview = null;
+    if (old) reloadOrigin();
   };
 
-  // Start sharing
-  share = () => this.messenger.post('share', getLocation());
+  // Start sharing preview
+  share = () => this.messenger.post('sharePreview', getLocation());
 }
