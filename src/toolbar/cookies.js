@@ -18,7 +18,7 @@ export class PreviewCookie {
   }
 
   set preview(value) {
-    return PreviewCookie.setPreviewForDomain(this.domain, value)
+    PreviewCookie.setPreviewForDomain(this.domain, value)
   }
 
   static get url() {
@@ -26,7 +26,7 @@ export class PreviewCookie {
   }
 
   static set url(value) {
-    return PreviewCookie.setUrl(value)
+    PreviewCookie.setUrl(value)
   }
 
   static get track() {
@@ -34,7 +34,15 @@ export class PreviewCookie {
   }
 
   static set track(value) {
-    return PreviewCookie.setTrack(value)
+    PreviewCookie.setTrack(value)
+  }
+
+  static get breaker() {
+    return PreviewCookie.getBreakerOrNull()
+  }
+
+  static set breaker(value) {
+    PreviewCookie.setBreaker(value)
   }
 
   // Static methods ---------------------
@@ -75,28 +83,42 @@ export class PreviewCookie {
     PreviewCookie.setCompliant(obj)
   }
 
+  // -> string | null
+  static getBreakerOrNull() {
+    return PreviewCookie.getCompliantOrObj()._breaker || null
+  }
+
+  // _breaker: set with a truthyString or remove with a falsy value
+  static setBreaker(value) {
+    const obj = PreviewCookie.getCompliantOrObj()
+    obj._breaker = value
+    PreviewCookie.setCompliant(obj)
+  }
+
   // domain -> an object with the keys it found i.e. { preview, experiment, foo }
   static getDomainOrObj(domain) {
-    PreviewCookie.getCompliantOrObj()[domain] || {}
+    return PreviewCookie.getCompliantOrObj()[domain] || {}
   }
 
   // domain, value -> set with value of { preview: String } or remove domain
   // NOTE allow more keys here in the future
   static setDomain(domain, value) {
     let mergeableValue = null
-    if (isObject(value) && value.preview) mergeableValue = { [domain]: { preview: value.preview } }
+    if (isObject(value)) mergeableValue = { [domain]: { preview: value.preview } }
     const mergedValue = Object.assign(PreviewCookie.getCompliantOrObj(), mergeableValue)
     PreviewCookie.setCompliant(mergedValue)
   }
 
   // Fetch a compliant preview cookie or {}
   static getCompliantOrObj() {
-    return PreviewCookie.createCompliant(getCookie(previewCookieName))
+    return PreviewCookie.createCompliant(getCookie(previewCookieName)) || {}
   }
 
   // Set a compliant preview cookie or delete it
   static setCompliant(obj) {
-    return setCookie(previewCookieName, PreviewCookie.createCompliant(obj))
+    const compliant = PreviewCookie.createCompliant(obj)
+    if (compliant) setCookie(previewCookieName, compliant)
+    else deleteCookie(previewCookieName)
   }
 
   // Raw preview cookie (String or Object) -> Spec-compliant preview cookie
@@ -118,7 +140,7 @@ export class PreviewCookie {
     }
     
     // Domain-specific validations
-    Object.keys(compliant).filter(k => !/(_track|_url|_user)/.test(k)).map(repoKey => {
+    Object.keys(compliant).filter(k => !/(_track|_url|_breaker|_user)/.test(k)).map(repoKey => {
       const repoVal = compliant[repoKey]
       const delRepo = () => delete compliant[repoKey]
       
@@ -133,6 +155,9 @@ export class PreviewCookie {
       // Remove domain if no more values
       if (Object.values(repoVal).length === 0) return delRepo()
     })
+
+    // Remove null top-level entries (_url/_track)
+    for (const [key, val] of Object.entries(compliant)) if (!val) delete compliant[key];
 
     // If no keys, remove the cookie
     if (Object.keys(compliant).length === 0) return
@@ -165,5 +190,5 @@ export class ExperimentCookie {
 function fixCookiePath(name) {
   const value = getCookie(name);
   demolishCookie(name);
-  setCookie(name, value);
+  if (value) setCookie(name, value);
 }

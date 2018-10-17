@@ -19,9 +19,11 @@ export const reloadOrigin = () => reload(href);
 
 // Repositories
 export let repos = [] // [example, other.wroom.io]
-// Source: (<script> tag & legacy prismic.endpoint)
+// Source: legacy prismic.endpoint
 try { repos.push(new URL(globals.endpoint).hostname) } catch(e) {}
-repos.concat((new URL(document.currentScript.src)).searchParams.get('repo').split(','))
+// Source: <script> tag
+const repoParam = (new URL(document.currentScript.src)).searchParams.get('repo')
+if (repoParam) repos.concat(repoParam.split(','))
 // Normalize (example -> example.prismic.io)
 repos = repos.map(repo => repo.includes('.') ? repo : `${repo}.prismic.io`)
 // Validate & filter

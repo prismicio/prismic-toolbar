@@ -1,10 +1,10 @@
-// TODO allow multiple instances, thru one port
+// TODO allow multiple instances with same reference thru one port
+// Messenger: String | Window -> Messenger
 export class Messenger {
   constructor(src) {
-    this.hostname = (new URL(src)).hostname;
+    this.hostname = typeof src === 'string' ? new URL(src).hostname : null;
     this.ready = new Promise(rs => (this.becomeReady = rs));
     this.events = document.createElement('span'); // EventTarget unsupported in IE
-
     this._setup(src);
   }
 

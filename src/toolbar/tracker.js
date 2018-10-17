@@ -1,6 +1,9 @@
 import { random, Hooks } from 'common';
 import { PreviewCookie } from './cookies';
 
+// One breaker interval per tab
+let breakerInterval;
+
 // Tracker
 export class Tracker {
   constructor(messenger) {
@@ -33,6 +36,10 @@ export class Tracker {
     // Update track once per page
     PreviewCookie.track = random(8);
 
+    // Update breaker every 150ms
+    clearInterval(breakerInterval);
+    breakerInterval = setInterval(() => (PreviewCookie.breaker = random(8)), 150);
+
     // Hooks for updating url
     this.hooks.on('keydown', () => (this.cookie.url = null));
     this.hooks.on('beforeRequest', () => {
@@ -49,7 +56,9 @@ export class Tracker {
 
     // Reset
     this.hooks.off();
+    clearInterval(breakerInterval);
     PreviewCookie.track = null;
     PreviewCookie.url = null;
+    PreviewCookie.breaker = null;
   }
 }

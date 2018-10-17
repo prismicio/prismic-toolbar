@@ -10,17 +10,17 @@ export class Preview {
 
   setup = async () => {
     // Get state
-    const state = await this.messenger.post('preview');
+    const preview = (await this.messenger.post('preview')) || {};
 
     // Assign state
-    this.active = Boolean(state.preview);
-    this.ref = state.preview.ref;
-    this.title = state.preview.title;
-    this.updated = state.preview.updated;
-    this.documents = state.preview.documents
+    this.active = Boolean(preview.ref);
+    this.ref = preview.ref;
+    this.title = preview.title;
+    this.updated = preview.updated;
+    this.documents = preview.documents
 
     // Start or end preview
-    await this.start(state.preview ? state.preview.ref : null);
+    await this.start(this.ref);
 
     // Update on new preview ref
     if (this.active) this.messenger.post('newPreviewRef').then(this.start);

@@ -4,7 +4,7 @@ import { Toolbar as ToolbarComponent } from './components';
 import { Prediction } from './prediction';
 import shadowStyles from './index.css';
 
-// TODO blinking on reload preview????
+// TODO Toolbar shouldn't render when starting preview, use loader or stop execution on reload.
 
 export class Toolbar {
   constructor({ messenger, preview }) {
