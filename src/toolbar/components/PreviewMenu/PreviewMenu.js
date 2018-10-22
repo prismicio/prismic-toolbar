@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import { Icon, views } from '..';
+import { Icon, views, ScrollingName } from '..';
 import { xSvg, linkSvg } from '.';
 
 const { DRAFTS, SHARE } = views;
@@ -9,7 +9,7 @@ export const PreviewMenu = ({ setPage, preview }) => {
   return (
     <div className="PreviewMenu">
       <div className="top">
-        <h1>{preview.title}</h1>
+        <ScrollingName className='preview-title'>{preview.title}</ScrollingName>
         <div className="docs" onClick={() => setPage(DRAFTS)}>
           ({len} doc{len !== 1 ? 's' : ''})
         </div>

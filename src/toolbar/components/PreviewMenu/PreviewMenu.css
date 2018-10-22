@@ -10,21 +10,27 @@
   & .top {
     height: 20px;
     margin-bottom: 3px;
+    display: flex;
+    align-items: center;
 
-    & h1 {
+    & .preview-title {
       color: white;
       font-size: 16px;
       font-weight: 500;
-      display: inline;
+      white-space: nowrap;
+      overflow: hidden;
+      cursor: default;
     }
-  }
 
-  & .docs {
-    text-decoration: underline;
-    cursor: pointer;
-    display: inline;
-    font-size: 12px;
-    margin-left: 5px;
+    & .docs {
+      text-decoration: underline;
+      cursor: pointer;
+      display: inline;
+      font-size: 12px;
+      margin-left: 5px;
+      white-space: nowrap;
+      margin-right: 35px;
+    }
   }
 
   & .share {
