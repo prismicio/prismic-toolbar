@@ -17,19 +17,19 @@ export const globals = {
 const { href } = window.location;
 export const reloadOrigin = () => reload(href);
 
-// Repositories
+// Source Repositories
 export let repos = new Set(); // [example.prismic.io, other.wroom.io]
-// Source: legacy prismic.endpoint
-try { repos.add( new URL(globals.endpoint).hostname.replace('.cdn','') ); } catch(e) {}
-// Source: <script> tag
+try { repos.add( new URL(globals.endpoint).hostname.replace('.cdn', '') ); } catch(e) {}
 const repoParam = (new URL(document.currentScript.src)).searchParams.get('repo')
 if (repoParam) repos = new Set([...repos, ...repoParam.split(',')])
-// Normalize (example -> example.prismic.io)
-repos = [...repos].map(repo => repo.includes('.') ? repo : `${repo}.prismic.io`)
-// Validate & filter
-const validRepo = repo => !/[^-a-zA-Z0-9\.]/.test(repo)
-repos = repos.filter(repo => {
-  if (validRepo(repo)) return true
-  warn`\`${repo}\` is an invalid repository.`
-  return false
-})
+
+// Normalize and notify of errors (example -> example.prismic.io)
+const validRepo = repo => Boolean(repo) && !/[^-a-zA-Z0-9\.]/.test(repo)
+repos = [...repos].reduce((acc, repo) => {
+  if (validRepo(repo)) return [...acc, repo.includes('.') ? repo : `${repo}.prismic.io`]
+  warn`
+    Invalid prismic.js configuration: ${repoParam}
+    (Expected a repository but got ${repo || 'nothing'})
+  `
+  return acc
+}, [])

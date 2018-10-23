@@ -1,4 +1,4 @@
-const oneLine = (...str) => String.raw(...str).replace(/\s+/g, ' ').trim()
+const oneLine = (...str) => String.raw(...str).split('\n').map(line => line.trim()).join('\n').trim()
 
 // Console warn one-liner
 export const warn = (...str) => console.warn(oneLine(...str))
