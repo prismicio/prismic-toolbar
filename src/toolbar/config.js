@@ -18,18 +18,18 @@ const { href } = window.location;
 export const reloadOrigin = () => reload(href);
 
 // Repositories
-export let repos = [] // [example, other.wroom.io]
+export let repos = new Set(); // [example.prismic.io, other.wroom.io]
 // Source: legacy prismic.endpoint
-try { repos.push(new URL(globals.endpoint).hostname) } catch(e) {}
+try { repos.add( new URL(globals.endpoint).hostname.replace('.cdn','') ); } catch(e) {}
 // Source: <script> tag
 const repoParam = (new URL(document.currentScript.src)).searchParams.get('repo')
-if (repoParam) repos.concat(repoParam.split(','))
+if (repoParam) repos = new Set([...repos, ...repoParam.split(',')])
 // Normalize (example -> example.prismic.io)
-repos = repos.map(repo => repo.includes('.') ? repo : `${repo}.prismic.io`)
+repos = [...repos].map(repo => repo.includes('.') ? repo : `${repo}.prismic.io`)
 // Validate & filter
 const validRepo = repo => !/[^-a-zA-Z0-9\.]/.test(repo)
 repos = repos.filter(repo => {
   if (validRepo(repo)) return true
-  warn`${repo} is an invalid repository.`
+  warn`\`${repo}\` is an invalid repository.`
   return false
 })
