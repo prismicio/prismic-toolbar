@@ -1,4 +1,4 @@
-import Fuse from 'fuse.js'; // TODO maybe remove this
+// import Fuse from 'fuse.js'; // TODO uncomment if using this
 
 const transpose = matrix => matrix[0].map((col, i) => matrix.map(row => row[i]));
 

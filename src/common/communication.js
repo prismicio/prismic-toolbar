@@ -26,8 +26,7 @@ export class Messenger {
   async _dispatchEvent(msg) {
     if (msg.data === 'ready') return this.becomeReady(); // Init
     const { type, data } = msg.data;
-    const event = new Event(type);
-    event.detail = data != null ? data : null;
+    const event = new CustomEvent(type, { detail: data != null ? data : null });
     this.events.dispatchEvent(event);
   }
 

@@ -4,79 +4,82 @@ const postcssUrl = require('postcss-url');
 const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
 
-const resolve = path => require('path').resolve(__dirname, path);
-const polyfill = path => [resolve('polyfill'), resolve(path)];
+// Make relative path
+const relative = path => require('path').resolve(__dirname, path);
 
-const dev = process.env.WEBPACK_SERVE;
+// Prepare syntax for IE
+const entry = path => ['promise-polyfill/src/polyfill', 'regenerator-runtime/runtime', relative(path)];
 
-module.exports = {
-  mode: dev ? 'development' : 'production',
+module.exports = (_, argv) => {
 
-  devtool: dev ? 'cheap-source-map' : false,
+  const dev = argv.mode === 'development'
 
-  watchOptions: {
-    ignored: '/node_modules/',
-  },
+  return {
+    // Minimal console output
+    stats: 'minimal',
 
-  output: {
-    path: resolve('../../app/assets/javascripts/toolbar'),
-  },
+    // Source maps
+    devtool: dev ? 'cheap-source-map' : false,
 
-  // Toolbar & iFrame
-  entry: {
-    iframe: polyfill('src/iframe'),
-    toolbar: polyfill('src/toolbar'),
-  },
+    // Don't watch node_modules
+    watchOptions: { ignored: '/node_modules/' },
 
-  // Helper Functions
-  resolve: {
-    alias: {
-      common: resolve('src/common'),
+    // Output to prismic app
+    output: { path: relative('../../app/assets/javascripts/toolbar') },
+
+    // Toolbar & iFrame
+    entry: {
+      iframe: entry('src/iframe'),
+      toolbar: entry('src/toolbar'),
     },
-  },
 
-  // Expose environment variables
-  plugins: [new webpack.EnvironmentPlugin(['npm_package_version'])],
+    // Helper Functions
+    resolve: { alias: { common: relative('src/common') } },
 
-  module: {
-    rules: [
-      // PostCSS
-      {
-        test: /\.css$/,
-        use: [
-          'raw-loader',
-          {
-            loader: 'postcss-loader',
-            options: {
-              sourceMap: 'inline',
-              plugins: () => [
-                postcssEasyImport(),
-                postcssUrl({ url: 'inline' }),
-                postcssPresetEnv({
-                  features: {
-                    'nesting-rules': true,
-                    'color-mod-function': true,
-                  },
-                }),
-                cssnano(),
-              ],
+    // Expose environment variables
+    plugins: [new webpack.EnvironmentPlugin(['npm_package_version'])],
+
+    module: {
+      rules: [
+        {
+          test: /\.css$/,
+          use: [
+            // `import foo.css` gets the raw text to inject anywhere
+            'raw-loader',
+            {
+              // PostCSS
+              loader: 'postcss-loader',
+              options: {
+                sourceMap: 'inline',
+                plugins: () => [
+                  postcssEasyImport(),
+                  postcssUrl({ url: 'inline' }),
+                  postcssPresetEnv({
+                    features: {
+                      'nesting-rules': true,
+                      'color-mod-function': true,
+                    },
+                  }),
+                  cssnano(),
+                ],
+              },
             },
-          },
-        ],
-      },
+          ],
+        },
 
-      // Babel
-      {
-        test: /\.js$/,
-        exclude: /node_modules/,
-        use: 'babel-loader',
-      },
+        // Babel
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: 'babel-loader',
+        },
 
-      // DataURI Image Loader
-      {
-        test: /\.(svg|jpg)$/,
-        use: 'url-loader',
-      },
-    ],
-  },
+        // DataURI Image Loader
+        {
+          test: /\.(svg|jpg)$/,
+          use: 'url-loader',
+        },
+      ],
+    },
+  }
 };

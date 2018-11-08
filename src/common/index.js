@@ -27,7 +27,7 @@ export {
   deleteNodes,
   appendCSS,
   script,
-  isIE,
+  getAbsoluteURL,
 } from './general';
 
 // Helpers specific to Prismic toolbar

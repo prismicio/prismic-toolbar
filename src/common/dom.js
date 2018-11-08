@@ -1,11 +1,24 @@
-export const div = (id, options) => node({ type: 'div', id, options });
+// Div
+export const div = (id, options = {}) => {
+  const { style, ...otherOpts } = options;
+  let el = document.getElementById(id);
+  if (!el) {
+    el = document.createElement('div');
+    document.body.appendChild(el);
+  }
+  Object.assign(el.style, style);
+  Object.assign(el, otherOpts, { id });
+  return el;
+}
 
+// Shadow DOM
 export const shadow = (id, options) => {
   let _shadow = div(id, options);
   if (document.head.attachShadow) _shadow = _shadow.attachShadow({ mode: 'open' });
   return _shadow;
 };
 
+// Delete DOM nodes matching CSS query
 export const deleteNodes = cssQuery => {
   document.querySelectorAll(cssQuery).forEach(el => el.remove());
 };
@@ -18,20 +31,7 @@ export const appendCSS = (el, css) => {
   el.appendChild(style);
 };
 
-// Load something
-function node({ id, type, body = true, options = {} }) {
-  const { style, ...otherOpts } = options;
-  let el = document.getElementById(id);
-  if (!el) {
-    el = document.createElement(type);
-    document[body ? 'body' : 'head'].appendChild(el);
-  }
-  Object.assign(el.style, style);
-  Object.assign(el, otherOpts, { id });
-  return el;
-}
-
-// Load script
+// Load script (with a promise)
 export function script(src) {
   return new Promise(resolve => {
     let el = document.getElementById(src);

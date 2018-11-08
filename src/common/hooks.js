@@ -37,8 +37,7 @@ export class Hooks {
 
 // Window event
 function event(type, detail = null) {
-  const e = new Event(type);
-  e.detail = detail;
+  const e = new CustomEvent(type, { detail });
   window.dispatchEvent(e);
 }
 
@@ -74,8 +73,7 @@ const _wr = function(type) {
   const orig = window.history[type];
   return function() {
     const rv = orig.apply(this, arguments);
-    const e = new Event(type);
-    e.arguments = arguments;
+    const e = new CustomEvent(type, { detail: arguments });
     window.dispatchEvent(e);
     return rv;
   };

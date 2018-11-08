@@ -1,4 +1,4 @@
-import { reload, warn } from 'common';
+import { reload, warn, getAbsoluteURL } from 'common';
 import { Experiment } from './experiment';
 
 export const globals = {
@@ -20,7 +20,9 @@ export const reloadOrigin = () => reload(href);
 // Source Repositories
 export let repos = new Set(); // [example.prismic.io, other.wroom.io]
 try { repos.add( new URL(globals.endpoint).hostname.replace('.cdn', '') ); } catch(e) {}
-const repoParam = (new URL(document.currentScript.src)).searchParams.get('repo')
+
+const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')))
+const repoParam = scriptURL.searchParams.get('repo')
 if (repoParam) repos = new Set([...repos, ...repoParam.split(',')])
 
 // Normalize and notify of errors (example -> example.prismic.io)

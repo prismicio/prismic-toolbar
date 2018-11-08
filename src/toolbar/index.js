@@ -1,14 +1,15 @@
-import { readyDOM, Messenger, Publisher, isIE } from 'common';
-import { screenshot } from 'common/screenshot';
-import { globals, repos } from './config';
-import { Tracker } from './tracker';
-import { Preview } from './preview';
-import { Toolbar } from './toolbar';
-const repository = repos[0]; // TODO support multi-repo
-
 (async () => {
-  // TODO support IE 11
-  if (isIE()) return warn`Prismic toolbar does not support Internet Explorer.`;
+  // Support IE 11
+  await require('common/polyfill').polyfillIE();
+
+  // Imports
+  const { readyDOM, Messenger, Publisher } = require('common');
+  const { screenshot } = require('common/screenshot');
+  const { globals, repos } = require('./config');
+  const { Tracker } = require('./tracker');
+  const { Preview } = require('./preview');
+  const { Toolbar } = require('./toolbar');
+  const repository = repos[0]; // TODO support multi-repo
 
   // Invalid prismic.endpoint
   if (repos.length < 1) return warn`
