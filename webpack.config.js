@@ -19,7 +19,7 @@ module.exports = (_, argv) => {
     stats: 'minimal',
 
     // Source maps
-    devtool: dev ? 'cheap-source-map' : false,
+    devtool: dev ? 'inline-cheap-module-source-map' : false,
 
     // Don't watch node_modules
     watchOptions: { ignored: '/node_modules/' },
