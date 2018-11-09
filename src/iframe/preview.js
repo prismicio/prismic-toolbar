@@ -3,12 +3,13 @@ import { state, messenger } from './config';
 
 // Check for new preview ref
 let newRef = null;
-const fetcher = throttle(() => {
-  const ref = encodeURIComponent(state.preview.ref);
+const fetcher = throttle(async _ => {
+  const s = await state()
+  const ref = encodeURIComponent(s.preview.ref);
   return fetchy({ url: `/previews/${sessionId}/ping?ref=${ref}` });
 }, 2000);
 
-export const newPreviewRef = async () => {
+export const newPreviewRef = async _ => {
   while (true) {
     if (newRef) return newRef;
     const { reload, ref } = await fetcher();
@@ -22,7 +23,7 @@ export const newPreviewRef = async () => {
 const sessionId = getCookie('io.prismic.previewSession');
 
 // Close preview session
-export const closePreview = () => deleteCookie('io.prismic.previewSession');
+export const closePreview = _ => deleteCookie('io.prismic.previewSession');
 
 // Share
 export const sharePreview = async location => {
@@ -34,13 +35,14 @@ export const sharePreview = async location => {
 };
 
 // Get shareable session
-const getShareableSession = ({ location, imageName }) => {
+const getShareableSession = async ({ location, imageName }) => {
+  const s = await state()
   const qs = query({
     sessionId,
     pageURL: location.href,
-    title: state.preview.title,
+    title: s.preview.title,
     imageName,
-    _: state.csrf,
+    _: s.csrf,
   });
 
   return fetchy({

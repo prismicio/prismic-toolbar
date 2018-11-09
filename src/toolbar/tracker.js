@@ -1,7 +1,7 @@
 import { random, Hooks } from 'common';
 import { PreviewCookie } from './cookies';
 
-// One breaker interval per tab
+// One breaker interval per scope (tab but ideally browser)
 let breakerInterval;
 
 // Tracker
@@ -41,11 +41,12 @@ export class Tracker {
     breakerInterval = setInterval(() => (PreviewCookie.breaker = random(8)), 150);
 
     // Hooks for updating url
-    this.hooks.on('keydown', () => (this.cookie.url = null));
-    this.hooks.on('beforeRequest', () => {
+    this.hooks.on('keydown', _ => (PreviewCookie.url = null));
+    this.hooks.on('beforeunload', _ => (PreviewCookie.url = null));
+    this.hooks.on('beforeRequest', _ => {
       clearTimeout(this.clearUrl);
-      this.cookie.url = window.location.pathname;
-      this.clearUrl = setTimeout(() => (this.cookie.url = null), 300);
+      PreviewCookie.url = window.location.pathname;
+      this.clearUrl = setTimeout(_ => (PreviewCookie.url = null), 300);
     });
   }
 

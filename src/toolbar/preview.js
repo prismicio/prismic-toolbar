@@ -6,9 +6,10 @@ export class Preview {
   constructor(messenger) {
     this.cookie = new PreviewCookie(messenger.hostname);
     this.messenger = messenger;
+    this.shouldReload = false;
   }
 
-  setup = async () => {
+  setup = async _ => {
     // Get state
     const preview = (await this.messenger.post('preview')) || {};
 
@@ -32,16 +33,20 @@ export class Preview {
     if (ref === this.cookie.preview) return;
     this.cookie.preview = ref;
     reloadOrigin();
+    this.shouldReload = true;
   };
 
   // End preview
-  end = async () => {
+  end = async _ => {
     const old = this.cookie.preview;
     await this.messenger.post('closePreview');
     this.cookie.preview = null;
-    if (old) reloadOrigin();
+    if (old) {
+      reloadOrigin();
+      this.shouldReload = true;
+    }
   };
 
   // Start sharing preview
-  share = () => this.messenger.post('sharePreview', getLocation());
+  share = _ => this.messenger.post('sharePreview', getLocation());
 }

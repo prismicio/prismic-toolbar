@@ -19,7 +19,7 @@ export class Experiment {
     reloadOrigin();
   };
 
-  end = () => {
+  end = _ => {
     this.cookie.delete();
     reloadOrigin();
   };

@@ -3,6 +3,7 @@ const cssnano = require('cssnano');
 const postcssUrl = require('postcss-url');
 const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
+const { WebPlugin } = require('web-webpack-plugin');
 
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
@@ -36,8 +37,15 @@ module.exports = (_, argv) => {
     // Helper Functions
     resolve: { alias: { common: relative('src/common') } },
 
-    // Expose environment variables
-    plugins: [new webpack.EnvironmentPlugin(['npm_package_version'])],
+    plugins: [
+      // Expose environment variables
+      new webpack.EnvironmentPlugin(['npm_package_version']),
+      // Output HTML for iFrame
+      new WebPlugin({
+        filename: 'iframe.html',
+        template: relative('src/iframe/index.html'),
+      }),
+    ],
 
     module: {
       rules: [
@@ -51,7 +59,7 @@ module.exports = (_, argv) => {
               loader: 'postcss-loader',
               options: {
                 sourceMap: 'inline',
-                plugins: () => [
+                plugins: _ => [
                   postcssEasyImport(),
                   postcssUrl({ url: 'inline' }),
                   postcssPresetEnv({

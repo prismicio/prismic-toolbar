@@ -6,12 +6,10 @@ export const normalizeDocument = doc => ({
 });
 
 // Parse Toolbar Bootstrap state
-export const normalizeState = _state => {
+export const normalizeState = (_state = {}) => {
   const state = {};
   state.csrf = _state.csrf || null;
-  state.guest = _state.isGuest;
   state.auth = Boolean(_state.isAuthenticated);
-  state.master = _state.masterRef;
   state.preview = _state.previewState || null;
 
   if (state.preview) {

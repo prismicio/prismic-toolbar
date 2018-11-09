@@ -4,8 +4,6 @@ import { Toolbar as ToolbarComponent } from './components';
 import { Prediction } from './prediction';
 import shadowStyles from './index.css';
 
-// TODO Toolbar shouldn't render when starting preview, use loader or stop execution on reload.
-
 export class Toolbar {
   constructor({ messenger, preview }) {
     this.messenger = messenger;
@@ -14,7 +12,7 @@ export class Toolbar {
   }
 
   async setup() {
-    const auth = await this.messenger.post('auth');
+    const { auth } = await this.messenger.post('state');
 
     // Hide for normal visitors
     if (!auth && !this.preview.active) return;
@@ -35,7 +33,7 @@ export class Toolbar {
     render(
       <ToolbarComponent
         preview={this.preview}
-        prediction={auth ? new Prediction(this.messenger, this.messenger.hostname) : null}
+        prediction={auth ? new Prediction(this.messenger) : null}
       />,
       toolbar
     );

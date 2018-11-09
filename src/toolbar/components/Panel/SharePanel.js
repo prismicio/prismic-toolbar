@@ -10,7 +10,7 @@ export class SharePanel extends Component {
     super(...arguments);
     this.state = { loading: true, url: '' };
 
-    if (!mShare) mShare = memoize(this.props.preview.share, () => window.location.href);
+    if (!mShare) mShare = memoize(this.props.preview.share, _ => window.location.href);
     mShare().then(url => this.setState({ url, loading: false }));
   }
 

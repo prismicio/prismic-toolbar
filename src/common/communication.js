@@ -45,7 +45,7 @@ const iframe = src => {
   document.head.appendChild(ifr);
   return new Promise(resolve =>
     // check this
-    ifr.addEventListener('load', () => resolve(ifr), { once: true })
+    ifr.addEventListener('load', _ => resolve(ifr), { once: true })
   );
 };
 
@@ -72,7 +72,7 @@ export class Publisher {
   
         let result;
         if (typeof action === 'function') result = await action(data);
-        else if (action != null) result = action;
+        else if (action != null) result = await action;
         else result = null;
   
         port.postMessage({ type, data: result });

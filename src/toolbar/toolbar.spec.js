@@ -1,8 +1,8 @@
 import Puppeteer from 'puppeteer';
 import { demolishCookie } from 'common';
 
-describe('Cookies', () => {
-  it('demolishCookie should remove cookies for all domain/path combinations.', async () => {
+describe('Cookies',_ => {
+  it('demolishCookie should remove cookies for all domain/path combinations.', async _ => {
     // Set up puppeteer
     const browser = await Puppeteer.launch();
     const page = await browser.newPage();

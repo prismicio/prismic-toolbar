@@ -5,15 +5,15 @@ import { PreviewCookie } from './cookies';
 let initialTrack = PreviewCookie.track;
 
 export class Prediction {
-  constructor(messenger, repository) {
-    this.cookie = new PreviewCookie(repository);
+  constructor(messenger) {
+    this.cookie = new PreviewCookie(messenger.hostname);
     this.messenger = messenger;
     this.hooks = new Hooks();
     this.documentHooks = [];
     this.count = 0;
 
     // Memoize fetchDocuments once per URL
-    this.fetchDocuments = memoize(this.fetchDocuments.bind(this), () => window.location.href);
+    this.fetchDocuments = memoize(this.fetchDocuments.bind(this), _ => window.location.href);
 
     // Fetch
     this.delayedFetch();
@@ -29,7 +29,7 @@ export class Prediction {
 
     // Predict!
     return this.messenger.post('documents', {
-      ref: this.cookie.preview, // The ref for the version of content to display (TODO or null?)
+      ref: this.cookie.preview, // The ref for the version of content to display
       url: window.location.pathname, // The URL for which we need the documents
       track: t || PreviewCookie.track, // So we can match the previous request to this URL
       location: getLocation(), // URL helps sort main document
@@ -48,6 +48,6 @@ export class Prediction {
   onDocuments(func) {
     const c = this.count++; // Create the hook key
     this.documentHooks[c] = func; // Create the hook
-    return () => delete this.documentHooks[c]; // Alternative to removeEventListener
+    return _ => delete this.documentHooks[c]; // Alternative to removeEventListener
   }
 }

@@ -142,7 +142,7 @@ export class PreviewCookie {
     // Domain-specific validations
     Object.keys(compliant).filter(k => !/(_track|_url|_breaker|_user)/.test(k)).map(repoKey => {
       const repoVal = compliant[repoKey]
-      const delRepo = () => delete compliant[repoKey]
+      const delRepo = _ => delete compliant[repoKey]
       
       // Remove domain if the key is invalid
       if (!/^[-a-zA-Z0-9]+\.[a-z]+\.[a-z]+$/.test(repoKey)) return delRepo()

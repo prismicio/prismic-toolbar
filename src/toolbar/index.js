@@ -1,6 +1,7 @@
-(async () => {
-  // Support IE 11
-  await require('common/polyfill').polyfillIE();
+(async _ => {
+  // Support IE 11 TODO finish this
+  const { isIE, polyfillIE } = require('common/polyfill');
+  if (isIE) await polyfillIE();
 
   // Imports
   const { readyDOM, Messenger, Publisher } = require('common');
@@ -20,7 +21,7 @@
   window.prismic = window.PrismicToolbar = globals;
 
   // Communicate with repository
-  const messenger = new Messenger(`${window.location.protocol}//${repository}/toolbar/bootstrap/2`);
+  const messenger = new Messenger(`${window.location.protocol}//${repository}/toolbar/iframe`);
   new Publisher({ screenshot });
 
   // Request Tracker (prediction)
@@ -32,6 +33,9 @@
   // Preview
   const preview = new Preview(messenger);
   await preview.setup();
+
+  // Do not render toolbar while reloading (reload is async)
+  if (preview.shouldReload) return;
 
   // Toolbar
   new Toolbar({ messenger, preview });

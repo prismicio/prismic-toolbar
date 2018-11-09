@@ -41,25 +41,9 @@ function event(type, detail = null) {
   window.dispatchEvent(e);
 }
 
-// XMLHttpRequest hook
-const oldXML = XMLHttpRequest.prototype.send;
-
-XMLHttpRequest.prototype.send = function(...args) {
-  const oldChange = this.onreadystatechange;
-
-  event('beforeRequest', args);
-
-  this.onreadystatechange = () => {
-    if (this.readyState === 2) event('afterRequest', args);
-    if (oldChange) oldChange();
-  };
-
-  return oldXML();
-};
-
-// Fetch hook
+// Fetch hook (works for IE because fetch polyfill is active here)
+// TODO check that whatwg-fetch only polyfills if necessary and works in IE
 const oldFetch = window.fetch;
-
 window.fetch = async (...args) => {
   if (args[1] && args[1].emitEvents === false) return oldFetch(...args);
   event('beforeRequest', args);
@@ -82,10 +66,10 @@ window.history.pushState = _wr('historyChange');
 window.history.replaceState = _wr('historyChange');
 
 // Active Tab Hook
-window.addEventListener('focus', () => {
+window.addEventListener('focus', _ => {
   event('activeTab', true);
 });
 
-window.addEventListener('blur', () => {
+window.addEventListener('blur', _ => {
   event('activeTab', false);
 });

@@ -5,9 +5,9 @@ export const globals = {
   endpoint: null, // Legacy
   ...window.prismic, // Legacy
   version: process.env.npm_package_version,
-  setup: () => warn`prismic.setup() is deprecated. It now initiates automatically.`, // Legacy
+  setup: _ => warn`prismic.setup() is deprecated. It now initiates automatically.`, // Legacy
   startExperiment: expId => new Experiment(expId), // TODO automate
-  setupEditButton: () => warn`
+  setupEditButton: _ => warn`
      prismic.setupEditButton() is deprecated.
      Edit buttons have been replaced by the new Edit feature.
   `, // Legacy
@@ -15,7 +15,7 @@ export const globals = {
 
 // Reload original page URL
 const { href } = window.location;
-export const reloadOrigin = () => reload(href);
+export const reloadOrigin = _ => reload(href);
 
 // Source Repositories
 export let repos = new Set(); // [example.prismic.io, other.wroom.io]

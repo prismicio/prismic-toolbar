@@ -5,8 +5,8 @@ function loadJS(src) {
   return new Promise(resolve => {
     const el = document.createElement('script');
     el.src = src
-    document.body.appendChild(el);
-    el.addEventListener('load', () => resolve(el));
+    document.head.appendChild(el);
+    el.addEventListener('load', _ => resolve(el));
   });
 }
 
@@ -15,3 +15,5 @@ export async function polyfillIE() {
   if (!isIE11) return;
   await loadJS('//local:9000/main.js'); // TODO handle dev and prod
 }
+
+export const ieIE = isIE11 || ltIE11;

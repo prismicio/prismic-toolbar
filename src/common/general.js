@@ -21,7 +21,7 @@ export const ellipsis = (text, cutoff) =>
   text.length > cutoff ? text.substring(0, cutoff - 1) + '…' : text;
 
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
-export const readyDOM = async () => {
+export const readyDOM = async _ => {
   if (document.readyState !== 'complete') await wait(0);
   return true;
 };
@@ -36,7 +36,7 @@ export const delay = t => new Promise(rs => setTimeout(rs, t));
 export const reload = url => window.location.reload(url);
 
 // Cookies disabled
-export const disabledCookies = () => !navigator.cookieEnabled;
+export const disabledCookies = _ => !navigator.cookieEnabled;
 
 // Random id
 export const random = num => {
@@ -95,7 +95,7 @@ export const throttle = (func, timeout) => {
   return function() {
     const since = Date.now() - lastRan;
     const due = since >= timeout;
-    const run = () => {
+    const run = _ => {
       lastRan = Date.now();
       lastReturn = func.apply(this, arguments);
     };
@@ -110,9 +110,22 @@ export const throttle = (func, timeout) => {
 export const memoize = (func, memoizer) => {
   const memory = new Map();
   return function(...args) {
-    const key = memoizer(...args) || JSON.stringify(args);
+    const key = memoizer ? memoizer(...args) : JSON.stringify(args);
     if (!memory.has(key)) memory.set(key, func(...args));
     return memory.get(key);
+  };
+};
+
+// Once
+export const once = func => {
+  let result;
+  let done;
+  return function(...args) {
+    if (!done) {
+      result = func(...args);
+      done = true;
+    }
+    return result;
   };
 };
 
@@ -133,7 +146,7 @@ export const localStorage = (key, defaultValue = null) => ({
 });
 
 // Simple location object
-export const getLocation = () => {
+export const getLocation = _ => {
   const { href, origin, protocol, host, hostname, port, pathname, search, hash } = window.location;
   return {
     href,
@@ -180,7 +193,7 @@ export function script(src) {
       el.src = src
       document.head.appendChild(el);
     }
-    el.addEventListener('load', () => resolve(el));
+    el.addEventListener('load', _ => resolve(el));
   });
 }
 

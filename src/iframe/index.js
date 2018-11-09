@@ -1,16 +1,21 @@
-import { Publisher } from 'common';
-import { auth, state, master, preview } from './config';
-import { documents } from './prediction';
-import { newPreviewRef, closePreview, sharePreview } from './preview';
+// TODO Do publisher/messenger still work with async iFrame?
+(async _ => {
+  // Support IE 11
+  const { isIE, polyfillIE } = require('common/polyfill');
+  if (isIE) await polyfillIE();
 
-// Publish State
-new Publisher({
-  auth,
-  state,
-  master,
-  documents,
-  preview,
-  newPreviewRef,
-  closePreview,
-  sharePreview,
-});
+  const { Publisher } = require('common');
+  const { state, preview } = require('./config');
+  const { documents } = require('./prediction');
+  const { newPreviewRef, closePreview, sharePreview } = require('./preview');
+
+  // Publish State
+  new Publisher({
+    state,
+    preview,
+    newPreviewRef,
+    closePreview,
+    sharePreview,
+    documents,
+  });
+})();

@@ -21,6 +21,7 @@ export {
   copyText,
   throttle,
   memoize,
+  once,
   localStorage,
   getLocation,
   shadow,

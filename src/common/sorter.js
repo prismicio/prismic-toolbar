@@ -1,4 +1,4 @@
-// import Fuse from 'fuse.js'; // TODO uncomment if using this
+// import Fuse from 'fuse.js'; // uncomment to use fuzzy find
 
 const transpose = matrix => matrix[0].map((col, i) => matrix.map(row => row[i]));
 
