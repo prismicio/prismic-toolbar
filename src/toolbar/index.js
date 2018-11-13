@@ -3,6 +3,8 @@
   const { isIE, polyfillIE } = require('common/polyfill');
   if (isIE) await polyfillIE();
 
+  // TODO see Toolbar.scala for more todos
+
   // Imports
   const { readyDOM, Messenger, Publisher } = require('common');
   const { screenshot } = require('common/screenshot');

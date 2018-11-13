@@ -1,10 +1,10 @@
 const ltIE11 = window.navigator.userAgent.indexOf('MSIE ') > 0;
 const isIE11 = window.navigator.userAgent.indexOf('Trident/') > 0;
 
-function loadJS(src) {
+function loadIEJS(src) {
   return new Promise(resolve => {
     const el = document.createElement('script');
-    el.src = src
+    el.src = src;
     document.head.appendChild(el);
     el.addEventListener('load', _ => resolve(el));
   });
@@ -13,7 +13,7 @@ function loadJS(src) {
 export async function polyfillIE() {
   if (ltIE11) throw new Error('Prismic does not support IE 10 or earlier.')
   if (!isIE11) return;
-  await loadJS('//local:9000/main.js'); // TODO handle dev and prod
+  await loadIEJS('//local:9000/main.js'); // TODO handle dev and prod
 }
 
-export const ieIE = isIE11 || ltIE11;
+export const isIE = Boolean(isIE11 || ltIE11);

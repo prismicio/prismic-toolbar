@@ -4,7 +4,7 @@ import { normalizeState, Messenger, fetchy, getCookie, once } from 'common';
 const liveStateNeeded = Boolean(getCookie('is-logged-in')) || Boolean(getCookie('io.prismic.previewSession'));
 
 // State (memoized)
-const getState = once(async _ => {
+  const getState = once(async _ => {
   if (!liveStateNeeded) return normalizeState();
   return fetchy({
     url: `/toolbar/state`, // TODO doesn't send cookies in IE
