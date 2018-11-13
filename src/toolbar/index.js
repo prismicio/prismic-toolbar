@@ -6,7 +6,7 @@
   // TODO see Toolbar.scala for more todos
 
   // Imports
-  const { readyDOM, Messenger, Publisher } = require('common');
+  const { readyDOM, Messenger, Publisher, warn } = require('common');
   const { screenshot } = require('common/screenshot');
   const { globals, repos } = require('./config');
   const { Tracker } = require('./tracker');
@@ -16,7 +16,7 @@
 
   // Invalid prismic.endpoint
   if (repos.length < 1) return warn`
-    Please connect prismic.js to a repository (or several). For example, 
+    Please connect prismic.js to a repository (or several). For example,
     <script async defer src=https://prismic.io/prismic.js?repo=my-repository,another-repository>`;
 
   // Globals (legacy, startExperiment)

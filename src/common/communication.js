@@ -24,7 +24,9 @@ export class Messenger {
   }
 
   async _dispatchEvent(msg) {
-    if (msg.data === 'ready') return this.becomeReady(); // Init
+    if (msg.data === 'ready') {
+      return this.becomeReady(); // Init
+    }
     const { type, data } = msg.data;
     const event = new CustomEvent(type, { detail: data != null ? data : null });
     this.events.dispatchEvent(event);
@@ -55,28 +57,27 @@ export class Publisher {
       // 1: Catch window event asking for port
       window.addEventListener('message', this.getPort.bind(this));
     }
-  
+
     getPort(e) {
       if (e.data !== 'port') return;
       window.removeEventListener('message', this.getPort.bind(this));
-  
+
       const port = e.ports[0];
       this.listen(port); // 2: Wait for requests
       port.postMessage('ready'); // 3: Send 'ready' back through port
     }
-  
+
     async listen(port) {
       port.onmessage = async e => {
         const { type, data } = e.data;
         const action = this.config[type];
-  
+
         let result;
         if (typeof action === 'function') result = await action(data);
         else if (action != null) result = await action;
         else result = null;
-  
+
         port.postMessage({ type, data: result });
       };
     }
   }
-  

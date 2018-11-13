@@ -9,7 +9,7 @@ const { WebPlugin } = require('web-webpack-plugin');
 const relative = path => require('path').resolve(__dirname, path);
 
 // Prepare syntax for IE
-const entry = path => ['promise-polyfill/src/polyfill', 'regenerator-runtime/runtime', relative(path)];
+const entry = path => ['regenerator-runtime/runtime', relative(path)];
 
 module.exports = (_, argv) => {
 
