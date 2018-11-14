@@ -42,7 +42,7 @@ export class Tracker {
 
     // Hooks for updating url
     this.hooks.on('keydown', _ => (PreviewCookie.url = null));
-    this.hooks.on('beforeunload', _ => (PreviewCookie.url = null));
+    this.hooks.on('unload', _ => (PreviewCookie.url = null));
     this.hooks.on('beforeRequest', _ => {
       clearTimeout(this.clearUrl);
       PreviewCookie.url = window.location.pathname;

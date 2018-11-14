@@ -8,9 +8,6 @@ const { WebPlugin } = require('web-webpack-plugin');
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
 
-// Prepare syntax for IE
-const entry = path => ['regenerator-runtime/runtime', relative(path)];
-
 module.exports = (_, argv) => {
 
   const dev = argv.mode === 'development'
@@ -30,14 +27,19 @@ module.exports = (_, argv) => {
 
     // Toolbar & iFrame
     entry: {
-      iframe: entry('src/iframe'),
-      toolbar: entry('src/toolbar'),
+      iframe: relative('src/iframe'),
+      toolbar: relative('src/toolbar'),
     },
 
     // Helper Functions
     resolve: { alias: { common: relative('src/common') } },
 
     plugins: [
+      // Ensure working regenerator-runtime
+      new webpack.ProvidePlugin({
+        Promise: 'bluebird',
+        regeneratorRuntime: 'regenerator-runtime',
+      }),
       // Expose environment variables
       new webpack.EnvironmentPlugin(['npm_package_version']),
       // Output HTML for iFrame
