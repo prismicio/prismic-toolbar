@@ -41,8 +41,7 @@ function event(type, detail = null) {
   window.dispatchEvent(e);
 }
 
-// Fetch hook (works for IE because fetch polyfill is active here)
-// TODO check that whatwg-fetch only polyfills if necessary and works in IE
+// Fetch hook
 const oldFetch = window.fetch;
 window.fetch = async (...args) => {
   if (args[1] && args[1].emitEvents === false) return oldFetch(...args);

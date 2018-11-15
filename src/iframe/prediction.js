@@ -1,5 +1,6 @@
-import { fetchy, query, normalizeDocument, Sorter } from 'common';
+import { fetchy, query, Sorter } from 'common';
 
+// TODO show live/draft label state
 export const documents = async ({ url, ref, track, location }) => {
   const data = await fetchy({
     url: `/toolbar/predict?${query({ url, ref, track })}`,
@@ -21,3 +22,9 @@ export const documents = async ({ url, ref, track, location }) => {
       .compute()
   );
 };
+
+// window.location.origin
+const normalizeDocument = doc => ({
+  ...doc,
+  url: window.location.origin + doc.url,
+})

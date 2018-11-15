@@ -1,9 +1,7 @@
 (async _ => {
-  // Support IE 11 TODO finish this
+  // Support IE 11 TODO finish this after prismic is fixed
   const { isIE, polyfillIE } = require('common/polyfill');
   if (isIE) await polyfillIE();
-
-  // TODO see Toolbar.scala for more todos
 
   // Imports
   const { readyDOM, Messenger, Publisher, warn } = require('common');

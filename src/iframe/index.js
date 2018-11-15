@@ -1,4 +1,3 @@
-// TODO Do publisher/messenger still work with async iFrame?
 (async _ => {
   // Support IE 11
   const { isIE, polyfillIE } = require('common/polyfill');

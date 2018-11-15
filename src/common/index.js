@@ -30,6 +30,3 @@ export {
   script,
   getAbsoluteURL,
 } from './general';
-
-// Helpers specific to Prismic toolbar
-export { normalizeDocument, normalizeState } from './toolbar';
