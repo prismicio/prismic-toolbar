@@ -27,4 +27,5 @@ export const documents = async ({ url, ref, track, location }) => {
 const normalizeDocument = doc => ({
   ...doc,
   url: window.location.origin + doc.url,
+  isDraft: doc.url.includes('c=unclassified'),
 })

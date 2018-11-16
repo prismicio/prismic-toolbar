@@ -9,16 +9,17 @@ export class Preview {
     this.shouldReload = false;
   }
 
+  // Run once on page load to start or end preview
   setup = async _ => {
     // Get state
     const preview = (await this.messenger.post('preview')) || {};
 
     // Assign state
     this.active = Boolean(preview.ref);
-    this.ref = preview.ref;
-    this.title = preview.title;
-    this.updated = preview.updated;
-    this.documents = preview.documents
+    this.ref = preview.ref || null;
+    this.title = preview.title || null;
+    this.updated = preview.updated || null;
+    this.documents = preview.documents || [];
 
     // Start or end preview
     await this.start(this.ref);
@@ -41,10 +42,9 @@ export class Preview {
     const old = this.cookie.preview;
     await this.messenger.post('closePreview');
     this.cookie.preview = null;
-    if (old) {
-      reloadOrigin();
-      this.shouldReload = true;
-    }
+    if (!old) return;
+    reloadOrigin();
+    this.shouldReload = true;
   };
 
   // Start sharing preview

@@ -1,4 +1,4 @@
-import { Hooks, memoize, wait, getLocation } from 'common';
+import { Hooks, wait, getLocation } from 'common';
 import { PreviewCookie } from './cookies';
 
 // Initial track
@@ -10,42 +10,48 @@ export class Prediction {
     this.messenger = messenger;
     this.hooks = new Hooks();
     this.documentHooks = [];
+    this.documents = [];
     this.count = 0;
-
-    // Memoize fetchDocuments once per URL
-    this.fetchDocuments = memoize(this.fetchDocuments.bind(this), _ => window.location.href);
-
-    // Fetch
-    this.delayedFetch();
-    this.hooks.on('historyChange', this.delayedFetch.bind(this));
   }
 
-  // Fetch documents for the current url
-  fetchDocuments() {
-    // Remember the initial track for the page
-    // Otherwise predictions will break if we load URLs too fast
-    const t = initialTrack;
+  // Start predictions for this page load
+  setup = async _ => {
+    const { auth } = await this.messenger.post('state');
+    if (!auth) return;
+    await this.start();
+    this.hooks.on('historyChange', this.start);
+  }
+
+  // Start predictions for this URL
+  start = async _ => {
+    // Wait for the frontend (React) app to finish loading requests. Fetch again.
+    wait(2).then(this.predict);
+
+    // For initial page load SSR requests (match track -> url) and for quickly getting documents
+    const fetch = this.predict(initialTrack || PreviewCookie.track)
     initialTrack = null;
-
-    // Predict!
-    return this.messenger.post('documents', {
-      ref: this.cookie.preview, // The ref for the version of content to display
-      url: window.location.pathname, // The URL for which we need the documents
-      track: t || PreviewCookie.track, // So we can match the previous request to this URL
-      location: getLocation(), // URL helps sort main document
-    });
+    await fetch
   }
 
-  // Fetch in .5 seconds (enough time for the server to run the API request, TODO retry), dispatch to hooks
-  async delayedFetch() {
-    await wait(0.5);
-    const documents = await this.fetchDocuments();
-    window.prismic._predictionDocuments = documents; // Debug
-    Object.values(this.documentHooks).forEach(hook => hook(documents)); // Run the hooks
+  // Fetch predicted documents
+  predict = async (track = null) => {
+    this.dispatch(await this.messenger.post('documents', {
+      ref: this.cookie.preview,  // The ref for the version of content to display
+      url: window.location.pathname, // The URL for which we need the documents
+      track, // Match the prior request to this URL
+      location: getLocation(), // Help sort main document
+    }));
+  }
+
+  // Dispatch documents to hooks
+  dispatch = documents => {
+    this.documents = documents;
+    window.prismic._predictionDocuments = this.documents; // Debug
+    Object.values(this.documentHooks).forEach(hook => hook(this.documents)); // Run the hooks
   }
 
   // Documents hook
-  onDocuments(func) {
+  onDocuments = func => {
     const c = this.count++; // Create the hook key
     this.documentHooks[c] = func; // Create the hook
     return _ => delete this.documentHooks[c]; // Alternative to removeEventListener

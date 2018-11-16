@@ -1,4 +1,4 @@
-import { h, Component } from 'preact';
+import { Component } from 'preact';
 import { copyText, memoize, wait } from 'common';
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';

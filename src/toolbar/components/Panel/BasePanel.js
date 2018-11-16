@@ -1,5 +1,7 @@
-import { h } from 'preact';
+import { Animation } from '..';
 
 export const BasePanel = ({ children, className = '' }) => (
-  <div className={`BasePanel ${className}`}>{children}</div>
+  <Animation.SlideIn>
+    <div className={`BasePanel ${className}`}>{children}</div>
+  </Animation.SlideIn>
 );

@@ -41,7 +41,7 @@ export const disabledCookies = _ => !navigator.cookieEnabled;
 // Random id
 export const random = num => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return [...Array(num)].map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return [...Array(num)].map(_ => chars[Math.floor(Math.random() * chars.length)]).join('');
 };
 
 // Build querystring

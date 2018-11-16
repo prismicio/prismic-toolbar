@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import { switchy } from 'common';
 import { views } from '..';
 import { DocumentPanel, PreviewPanel, SharePanel } from '.';

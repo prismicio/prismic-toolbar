@@ -4,11 +4,12 @@
   if (isIE) await polyfillIE();
 
   // Imports
-  const { readyDOM, Messenger, Publisher, warn } = require('common');
+  const { Messenger, Publisher, warn } = require('common');
   const { screenshot } = require('common/screenshot');
   const { globals, repos } = require('./config');
   const { Tracker } = require('./tracker');
   const { Preview } = require('./preview');
+  const { Prediction } = require('./prediction');
   const { Toolbar } = require('./toolbar');
   const repository = repos[0]; // TODO support multi-repo
 
@@ -27,16 +28,16 @@
   // Request Tracker (prediction)
   new Tracker(messenger);
 
-  // Ready DOM
-  await readyDOM();
-
-  // Preview
+  // Preview & Prediction
   const preview = new Preview(messenger);
-  await preview.setup();
+  const prediction = new Prediction(messenger);
 
+  // Start concurrently
+  await Promise.all([preview.setup(), prediction.setup()]);
+  
   // Do not render toolbar while reloading (reload is async)
   if (preview.shouldReload) return;
 
   // Toolbar
-  new Toolbar({ messenger, preview });
+  new Toolbar({ messenger, preview, prediction });
 })();

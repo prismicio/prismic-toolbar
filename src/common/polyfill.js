@@ -13,7 +13,8 @@ function loadIEJS(src) {
 export async function polyfillIE() {
   if (ltIE11) throw new Error('Prismic does not support IE 10 or earlier.')
   if (!isIE11) return;
-  await loadIEJS('//ie11.test/main.js'); // TODO handle dev and prod
+  await loadIEJS('https://cdn.jsdelivr.net/gh/krabbypattified/ie11-polyfill@master/dist/main.js');
+  // await loadIEJS('//ie11.test/main.js');
 }
 
 export const isIE = Boolean(isIE11 || ltIE11);

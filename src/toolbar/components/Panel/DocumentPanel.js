@@ -1,4 +1,4 @@
-import { h, Component } from 'preact';
+import { Component } from 'preact';
 import { ellipsis } from 'common';
 import { BasePanel, prismicSvg } from '.';
 import { Icon } from '..';
@@ -43,20 +43,13 @@ const Document = ({ doc, isMain }) => {
   const title = doc.title || 'Untitled Document';
   const summary = doc.summary || 'No summary available.';
 
-  if (isMain)
-    return (
-      <a className="Document" href={doc.url} target="_blank">
-        <header>
-          <h3>{title}</h3>
-        </header>
-        <div>{ellipsis(summary, 300)}</div>
-      </a>
-    );
-
   return (
     <a className="Document" href={doc.url} target="_blank">
-      <h3>{title}</h3>
-      <div>{ellipsis(summary, 200)}</div>
+      <header>
+        <h3>{title}</h3>
+        {doc.isDraft && <div className="label">Draft</div>}
+      </header>
+      <div>{ellipsis(summary, isMain ? 300 : 200)}</div>
     </a>
   );
 };

@@ -1,0 +1,17 @@
+@keyframes growIn {
+  from  { transform: scale(.8) }
+  50%  { transform: scale(1.03) }
+  75%  { transform: scale(.98) }
+}
+
+.growIn-enter-active, .growIn-appear-active {
+  animation: growIn 300ms ease;
+}
+
+@keyframes slideIn {
+  from { transform: perspective(1000px) translateY(18px); }
+}
+
+.slideIn-enter-active, .slideIn-appear-active {
+  animation: slideIn 200ms ease-out;
+}

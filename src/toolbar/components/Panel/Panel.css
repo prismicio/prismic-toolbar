@@ -1,5 +1,4 @@
 /* Base Panel */
-/* TODO animation */
 
 .BasePanel {
 	background: #FDFDFD;
@@ -53,26 +52,28 @@
     margin-bottom: 30px;
   }
 
-  & .Document {
-    & h3 {
-      color: #5163BA;
-      font-weight: 500;
-      font-size: 15px;
-    }
+  & .Document h3 {
+    color: #5163BA;
+    font-weight: 500;
+    font-size: 15px;
+  }
+}
 
-    & .label {
-      background: #FFDBA2;
-      color: #53452E;
-      padding: 2px 8px;
-      border-radius: 4px;
-      margin-left: 11px;
-    }
+/* DocumentPanel any Document (draft label) */
 
-    & header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 8px;
-    }
+.DocumentPanel .Document {
+  & .label {
+    background: #FFDBA2;
+    color: #53452E;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 11px;
+  }
+
+  & header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
   }
 }
 

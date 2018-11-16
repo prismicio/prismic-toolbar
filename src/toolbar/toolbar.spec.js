@@ -14,7 +14,7 @@ describe('Cookies',_ => {
     await page.exposeFunction('demolishCookie', demolishCookie);
 
     // Set preview cookies
-    let cookie = await page.evaluate(() => {
+    let cookie = await page.evaluate(_ => {
       setCookie('io.prismic.preview', 'foo', '.www.awwwards.com', '/websites');
       setCookie('io.prismic.preview', 'foo', 'www.awwwards.com', '/websites/');
       setCookie('io.prismic.preview', 'foo', '.awwwards.com', '/');
@@ -27,7 +27,7 @@ describe('Cookies',_ => {
     expect(cookie).toBeTruthy();
 
     // Remove all preview cookies
-    cookie = await page.evaluate(() => {
+    cookie = await page.evaluate(_ => {
       demolishCookie();
       return cookieExists('io.prismic.preview');
     });

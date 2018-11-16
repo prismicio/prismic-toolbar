@@ -1,13 +1,13 @@
-import { h, render } from 'preact';
-import { appendCSS, shadow } from 'common';
+import { render } from 'preact';
+import { appendCSS, shadow, readyDOM } from 'common';
 import { Toolbar as ToolbarComponent } from './components';
-import { Prediction } from './prediction';
 import shadowStyles from './index.css';
 
 export class Toolbar {
-  constructor({ messenger, preview }) {
+  constructor({ messenger, preview, prediction }) {
     this.messenger = messenger;
     this.preview = preview;
+    this.prediction = prediction;
     this.setup();
   }
 
@@ -16,6 +16,9 @@ export class Toolbar {
 
     // Hide for normal visitors
     if (!auth && !this.preview.active) return;
+
+    // Because we need the DOM now
+    await readyDOM();
 
     // Create toolbar in a shadow DOM
     const toolbar = shadow({
@@ -33,7 +36,7 @@ export class Toolbar {
     render(
       <ToolbarComponent
         preview={this.preview}
-        prediction={auth ? new Prediction(this.messenger) : null}
+        prediction={this.prediction}
       />,
       toolbar
     );

@@ -1,4 +1,4 @@
-import { h, Component } from 'preact';
+import { Component } from 'preact';
 
 export class ScrollingName extends Component {
   componentDidMount() {

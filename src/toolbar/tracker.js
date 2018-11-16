@@ -38,7 +38,7 @@ export class Tracker {
 
     // Update breaker every 150ms
     clearInterval(breakerInterval);
-    breakerInterval = setInterval(() => (PreviewCookie.breaker = random(8)), 150);
+    breakerInterval = setInterval(_ => (PreviewCookie.breaker = random(8)), 150);
 
     // Hooks for updating url
     this.hooks.on('keydown', _ => (PreviewCookie.url = null));

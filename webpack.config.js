@@ -32,13 +32,19 @@ module.exports = (_, argv) => {
     },
 
     // Helper Functions
-    resolve: { alias: { common: relative('src/common') } },
+    resolve: { alias:{
+      common: relative('src/common'),
+      common: relative('src/common'),
+      'react': 'preact-compat',
+      'react-dom': 'preact-compat',
+    } },
 
     plugins: [
       // Ensure working regenerator-runtime
       new webpack.ProvidePlugin({
-        Promise: 'bluebird',
+        Promise: 'bluebird', // Remember to build with a promise polyfill for IE
         regeneratorRuntime: 'regenerator-runtime',
+        h: ['preact', 'h'],
       }),
       // Expose environment variables
       new webpack.EnvironmentPlugin(['npm_package_version']),
