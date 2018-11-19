@@ -5,10 +5,10 @@ import { Icon } from '..';
 
 export class DocumentPanel extends Component {
   render() {
-    const { documents } = this.props;
+    const { documents, in:inProp } = this.props;
     if (!documents.length) return null;
     return (
-      <BasePanel className="DocumentPanel">
+      <BasePanel className="DocumentPanel" in={inProp}>
         <MainDocument doc={documents[0]} />
         <OtherDocuments documents={documents.slice(1)} />
       </BasePanel>

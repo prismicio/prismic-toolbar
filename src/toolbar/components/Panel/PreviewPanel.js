@@ -4,9 +4,9 @@ import { Icon } from '..';
 
 export class PreviewPanel extends Component {
   render() {
-    const { onClose, preview } = this.props;
+    const { onClose, preview, in:inProp } = this.props;
     return (
-      <BasePanel className="PreviewPanel">
+      <BasePanel className="PreviewPanel" in={inProp}>
         <Icon className="x" src={xSvg} onClick={onClose} />
         <PreviewHeader title={preview.title} numberOfDocs={preview.documents.length} />
         <PreviewDocuments documents={preview.documents} />

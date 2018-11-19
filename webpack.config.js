@@ -8,9 +8,9 @@ const { WebPlugin } = require('web-webpack-plugin');
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
 
-module.exports = (_, argv) => {
+module.exports = (_, { mode }) => {
 
-  const dev = argv.mode === 'development'
+  const dev = mode === 'development';
 
   return {
     // Minimal console output
@@ -18,6 +18,9 @@ module.exports = (_, argv) => {
 
     // Source maps
     devtool: dev ? 'inline-cheap-module-source-map' : false,
+
+    // Webpack scope hoisting is broken
+    optimization: { concatenateModules: false },
 
     // Don't watch node_modules
     watchOptions: { ignored: '/node_modules/' },
@@ -42,7 +45,7 @@ module.exports = (_, argv) => {
     plugins: [
       // Ensure working regenerator-runtime
       new webpack.ProvidePlugin({
-        Promise: 'bluebird', // Remember to build with a promise polyfill for IE
+        // Promise: 'bluebird', // Remember to build with a promise polyfill for IE
         regeneratorRuntime: 'regenerator-runtime',
         h: ['preact', 'h'],
       }),

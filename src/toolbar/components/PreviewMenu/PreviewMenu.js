@@ -3,16 +3,16 @@ import { xSvg, linkSvg } from '.';
 
 const { DRAFTS, SHARE } = views;
 
-export const PreviewMenu = ({ setPage, preview, inProp }) => {
+export const PreviewMenu = ({ setPage, preview, in:inProp }) => {
   const len = preview.documents.length;
   return (
-    <Animation.SlideIn inProp={inProp}>
+    <Animation.SlideIn in={inProp}>
       <div className="PreviewMenu">
         <div className="top">
           <ScrollingName className='preview-title'>{preview.title}</ScrollingName>
-          <div className="docs" onClick={_ => setPage(DRAFTS)}>
+          {Boolean(len) && <div className="docs" onClick={_ => setPage(DRAFTS)}>
             ({len} doc{len !== 1 ? 's' : ''})
-          </div>
+          </div>}
         </div>
 
         <div className="share" onClick={_ => setPage(SHARE)}>

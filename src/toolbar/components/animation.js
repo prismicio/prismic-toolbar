@@ -1,6 +1,6 @@
 import { CSSTransition } from 'react-transition-group';
 
-export const GrowIn = ({ children, inProp = true, ...other }) => (
+export const GrowIn = ({ children, in:inProp = true, ...other }) => (
   <CSSTransition
     in={inProp}
     timeout={300}
@@ -13,7 +13,7 @@ export const GrowIn = ({ children, inProp = true, ...other }) => (
   </CSSTransition>
 )
 
-export const SlideIn = ({ children, inProp = true, ...other }) => (
+export const SlideIn = ({ children, in:inProp = true, ...other }) => (
   <CSSTransition
     in={inProp}
     timeout={200}

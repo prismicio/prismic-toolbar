@@ -15,10 +15,10 @@ export class SharePanel extends Component {
   }
 
   render() {
-    const { onClose, preview } = this.props;
+    const { onClose, preview, in:inProp } = this.props;
     const { url, loading } = this.state;
     return (
-      <BasePanel className="SharePanel">
+      <BasePanel className="SharePanel" in={inProp}>
         <Icon className="x" src={xSvg} onClick={onClose} />
         <ShareHeader title={preview.title} />
         <Share url={url} loading={loading} />

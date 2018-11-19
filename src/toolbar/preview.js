@@ -28,7 +28,7 @@ export class Preview {
     if (this.active) this.messenger.post('newPreviewRef').then(this.start);
   };
 
-  // Start preview (TODO static visualLoader.html onClick previewEye, same with shareable)
+  // Start preview
   start = async ref => {
     if (!ref) return this.end();
     if (ref === this.cookie.preview) return;

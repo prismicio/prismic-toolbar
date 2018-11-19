@@ -1,5 +1,4 @@
-// TODO Research more stable method to connect with async iFrame
-// TODO Allow multiple instances efficiently? (same URL shares a port)
+// TODO Research stable method to connect with async iFrame, & allow multiple instances efficiently
 // Messenger: String | Window -> Messenger
 export class Messenger {
   constructor(src) {

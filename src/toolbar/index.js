@@ -1,5 +1,5 @@
 (async _ => {
-  // Support IE 11 TODO finish this after prismic is fixed
+  // Support IE 11 TODO Finish after Prismic is fixed
   const { isIE, polyfillIE } = require('common/polyfill');
   if (isIE) await polyfillIE();
 

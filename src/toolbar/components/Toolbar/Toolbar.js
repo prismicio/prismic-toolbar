@@ -25,8 +25,8 @@ export class Toolbar extends Component {
           preview={preview}
           page={page}
         />
-        <Menu setPage={this.setPage} page={page} inProp={hasDocs} />
-        <PreviewMenu setPage={this.setPage} preview={preview} inProp={preview.active} />
+        <Menu setPage={this.setPage} page={page} in={hasDocs} />
+        <PreviewMenu setPage={this.setPage} preview={preview} in={preview.active} />
       </div>
     );
   }
