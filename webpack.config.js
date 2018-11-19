@@ -45,7 +45,7 @@ module.exports = (_, { mode }) => {
     plugins: [
       // Ensure working regenerator-runtime
       new webpack.ProvidePlugin({
-        // Promise: 'bluebird', // Remember to build with a promise polyfill for IE
+        Promise: 'bluebird', // Remember to build with a promise polyfill for IE
         regeneratorRuntime: 'regenerator-runtime',
         h: ['preact', 'h'],
       }),
