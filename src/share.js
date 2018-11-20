@@ -6,10 +6,10 @@ let bootstrap;
 const PRISMIC_SESSION_REG = /#(([^~]+)~)?prismic-session=([-_a-zA-Z0-9]{16})/;
 
 async function listen() {
-  bootstrap = new Messenger(`${Config.baseURL}/toolbar/bootstrap`);
+  bootstrap = new Messenger(`${Config.cdnBaseURL}/toolbar/bootstrap`);
 
   // Legacy
-  const legacy = !(await fetch(`${Config.baseURL}/toolbar/bootstrap`).then(r => r.text()));
+  const legacy = !(await fetch(`${Config.cdnBaseURL}/toolbar/bootstrap`).then(r => r.text()));
   if (legacy) return legacySetup();
 
   // Get ref & cookie
