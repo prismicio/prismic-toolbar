@@ -48,7 +48,6 @@ const getShareableSession = async ({ location, imageName }) => {
   return fetchy({
     url: `/previews/s?${qs}`,
     method: 'POST',
-    credentials: 'same-origin',
   });
 };
 
@@ -57,7 +56,6 @@ const uploadScreenshot = async imageName => {
   // ACL
   const acl = await fetchy({
     url: `/previews/${sessionId}/acl`,
-    credentials: 'same-origin',
   });
 
   // Form

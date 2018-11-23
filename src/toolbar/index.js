@@ -10,6 +10,7 @@
   const { Tracker } = require('./tracker');
   const { Preview } = require('./preview');
   const { Prediction } = require('./prediction');
+  const { Analytics } = require('./analytics');
   const { Toolbar } = require('./toolbar');
   const repository = repos[0]; // TODO support multi-repo
 
@@ -31,6 +32,7 @@
   // Preview & Prediction
   const preview = new Preview(messenger);
   const prediction = new Prediction(messenger);
+  const analytics = new Analytics(messenger);
 
   // Start concurrently
   await Promise.all([preview.setup(), prediction.setup()]);
@@ -39,5 +41,8 @@
   if (preview.shouldReload) return;
 
   // Toolbar
-  new Toolbar({ messenger, preview, prediction });
+  new Toolbar({ messenger, preview, prediction, analytics });
+
+  // Track initial setup of toolbar
+  analytics.trackToolbarSetup();
 })();

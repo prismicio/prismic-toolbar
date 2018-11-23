@@ -4,10 +4,11 @@ import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
 export class Toolbar {
-  constructor({ messenger, preview, prediction }) {
+  constructor({ messenger, preview, prediction, analytics }) {
     this.messenger = messenger;
     this.preview = preview;
     this.prediction = prediction;
+    this.analytics = analytics;
     this.setup();
   }
 
@@ -37,6 +38,7 @@ export class Toolbar {
       <ToolbarComponent
         preview={this.preview}
         prediction={this.prediction}
+        analytics={this.analytics}
       />,
       toolbar
     );

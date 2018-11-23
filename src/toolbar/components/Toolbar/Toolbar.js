@@ -13,13 +13,14 @@ export class Toolbar extends Component {
   setPage = page => this.setState({ page });
 
   render() {
-    const { preview } = this.props;
+    const { preview, analytics } = this.props;
     const { page, documents } = this.state;
     const hasDocs = Boolean(documents.length);
 
     return (
       <div className="Toolbar">
         <Panel
+          onDocumentClick={analytics.trackDocumentClick}
           closePanel={_ => this.setPage(NONE)}
           documents={documents}
           preview={preview}

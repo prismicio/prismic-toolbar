@@ -7,6 +7,7 @@
   const { state, preview } = require('./config');
   const { documents } = require('./prediction');
   const { newPreviewRef, closePreview, sharePreview } = require('./preview');
+  const { trackDocumentClick, trackToolbarSetup } = require('./analytics');
 
   // Publish State
   new Publisher({
@@ -16,5 +17,7 @@
     closePreview,
     sharePreview,
     documents,
+    trackDocumentClick,
+    trackToolbarSetup,
   });
 })();

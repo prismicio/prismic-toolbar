@@ -8,7 +8,6 @@ const getState = once(async _ => {
   if (!liveStateNeeded) return normalizeState();
   return fetchy({
     url: `/toolbar/state`,
-    credentials: 'same-origin',
   }).then(normalizeState);
 });
 

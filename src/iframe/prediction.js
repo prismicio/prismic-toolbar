@@ -3,7 +3,6 @@ import { fetchy, query, Sorter } from 'common';
 export const documents = async ({ url, ref, track, location }) => {
   const data = await fetchy({
     url: `/toolbar/predict?${query({ url, ref, track })}`,
-    credentials: 'same-origin',
   }).then(res => res.documents.map(normalizeDocument));
 
   return (
