@@ -6,22 +6,27 @@ import { reloadOrigin } from './config';
 export class Experiment {
   constructor(expId) {
     this.cookie = new ExperimentCookie();
-    if (!disabledCookies) Experiment.setup(expId);
+    this.expId = expId;
+    this.setup();
   }
 
-  start = async expId => {
-    await script(`//www.google-analytics.com/cx/api.js?experiment=${expId}`);
-    const variation = window.cxApi.chooseVariation();
-    if (window.cxApi.NOT_PARTICIPATING) return this.end();
+  async setup() {
+    if (disabledCookies()) return;
+    await script(`//www.google-analytics.com/cx/api.js?experiment=${this.expId}`);
+    this.variation = window.cxApi.chooseVariation();
+    if (this.variation === window.cxApi.NOT_PARTICIPATING) this.end();
+    else this.start();
+  }
 
+  async start() {
     const old = this.cookie.get();
-    this.cookie.set(expId, variation);
-    if (this.cookie.get() === old) return;
-    reloadOrigin();
+    this.cookie.set(this.expId, this.variation);
+    if (this.cookie.get() !== old) reloadOrigin();
   };
 
-  end = _ => {
+  end() {
+    const old = this.cookie.get();
     this.cookie.delete();
-    reloadOrigin();
+    if (this.cookie.get() !== old) reloadOrigin();
   };
 }

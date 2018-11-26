@@ -1,19 +1,15 @@
-import { Component } from 'preact';
 import { ellipsis } from 'common';
 import { BasePanel, prismicSvg } from '.';
 import { Icon } from '..';
 
-export class DocumentPanel extends Component {
-  render() {
-    const { documents, in:inProp, onDocumentClick } = this.props;
-    if (!documents.length) return null;
-    return (
-      <BasePanel className="DocumentPanel" in={inProp}>
-        <MainDocument doc={documents[0]} onClick={onDocumentClick} />
-        <OtherDocuments documents={documents.slice(1)} onClick={onDocumentClick} />
-      </BasePanel>
-    );
-  }
+export const DocumentPanel = ({ documents, in:inProp, onDocumentClick }) => {
+  if (!documents.length) return null;
+  return (
+    <BasePanel className="DocumentPanel" in={inProp}>
+      <MainDocument doc={documents[0]} onClick={onDocumentClick} />
+      <OtherDocuments documents={documents.slice(1)} onClick={onDocumentClick} />
+    </BasePanel>
+  );
 }
 
 const MainDocument = ({ doc, onClick }) => (

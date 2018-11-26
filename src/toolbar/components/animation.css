@@ -13,7 +13,8 @@
 }
 
 @keyframes slideIn {
-  from { transform: translateY(18px); }
+  from { opacity: 0; transform: translateY(18px); }
+  40% { opacity: 1; }
 }
 
 .slideIn-enter-active, .slideIn-appear-active {

@@ -1,24 +1,18 @@
-import { Component } from 'preact';
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
 
-export class PreviewPanel extends Component {
-  render() {
-    const { onClose, preview, in:inProp } = this.props;
-    return (
-      <BasePanel className="PreviewPanel" in={inProp}>
-        <Icon className="x" src={xSvg} onClick={onClose} />
-        <PreviewHeader title={preview.title} numberOfDocs={preview.documents.length} />
-        <PreviewDocuments documents={preview.documents} />
-      </BasePanel>
-    );
-  }
-}
+export const PreviewPanel = ({ onClose, preview, in:inProp }) => (
+  <BasePanel className="PreviewPanel" in={inProp}>
+    <Icon className="x" src={xSvg} onClick={onClose} />
+    <PreviewHeader title={preview.title} numberOfDocs={preview.documents.length} />
+    <PreviewDocuments documents={preview.documents} />
+  </BasePanel>
+)
 
 const PreviewHeader = ({ title, numberOfDocs }) => (
   <div className="Header top">
     <h2>{title}</h2>
-    <h1>{numberOfDocs} documents to preview</h1>
+    <h1>{numberOfDocs} document{numberOfDocs === 1 ? '' : 's'} to preview</h1>
   </div>
 );
 

@@ -10,13 +10,16 @@ export class SharePanel extends Component {
     super(...arguments);
     this.state = { loading: true, url: '' };
 
-    if (!mShare) mShare = memoize(this.props.preview.share, _ => window.location.href);
-    mShare().then(url => this.setState({ url, loading: false }));
+    if (!mShare) mShare = memoize(async _ => {
+      const url = await this.props.preview.share()
+      this.setState({ url, loading: false })
+    }, _ => window.location.href);
   }
 
   render() {
     const { onClose, preview, in:inProp } = this.props;
     const { url, loading } = this.state;
+    if (inProp) mShare();
     return (
       <BasePanel className="SharePanel" in={inProp}>
         <Icon className="x" src={xSvg} onClick={onClose} />
@@ -35,10 +38,7 @@ const ShareHeader = ({ title }) => (
 );
 
 class Share extends Component {
-  constructor() {
-    super(...arguments);
-    this.state = { copied: false };
-  }
+  state = { copied: false };
 
   async copy() {
     copyText(this.props.url);
