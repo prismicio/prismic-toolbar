@@ -1,8 +1,8 @@
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
 
-export const PreviewPanel = ({ onClose, preview, in:inProp }) => (
-  <BasePanel className="PreviewPanel" in={inProp}>
+export const PreviewPanel = ({ onClose, preview }) => (
+  <BasePanel className="PreviewPanel">
     <Icon className="x" src={xSvg} onClick={onClose} />
     <PreviewHeader title={preview.title} numberOfDocs={preview.documents.length} />
     <PreviewDocuments documents={preview.documents} />

@@ -2,10 +2,10 @@ import { ellipsis } from 'common';
 import { BasePanel, prismicSvg } from '.';
 import { Icon } from '..';
 
-export const DocumentPanel = ({ documents, in:inProp, onDocumentClick }) => {
+export const DocumentPanel = ({ documents, onDocumentClick }) => {
   if (!documents.length) return null;
   return (
-    <BasePanel className="DocumentPanel" in={inProp}>
+    <BasePanel className="DocumentPanel">
       <MainDocument doc={documents[0]} onClick={onDocumentClick} />
       <OtherDocuments documents={documents.slice(1)} onClick={onDocumentClick} />
     </BasePanel>
