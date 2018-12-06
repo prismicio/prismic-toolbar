@@ -1,8 +1,8 @@
 const oneLine = (...str) => String.raw(...str).split('\n').map(line => line.trim()).join('\n').trim()
 
 // Console warn one-liner
-export const warn = (...str) => console.warn(oneLine(...str))
-export const err = (...str) => {throw new Error(oneLine(...str))}
+export const warn = (...str) => console.warn('Prismic Toolbar\n\n' + oneLine(...str))
+export const err = (...str) => {throw new Error('Prismic Toolbar\n\n' + oneLine(...str))}
 
 // Is pure Object
 export const isObject = val => Boolean(val && typeof val === 'object' && val.constructor === Object);

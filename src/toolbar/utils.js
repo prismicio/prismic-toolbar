@@ -7,7 +7,11 @@ const validEndpoint = repo => Boolean(repo) && !/[^-a-zA-Z0-9\.]/.test(repo);
 
 // Get window.prismic.endpoint
 export const getLegacyEndpoint = _ => {
-  return new URL(window.prismic.endpoint).hostname.replace('.cdn', '')
+  try {
+    return new URL(window.prismic.endpoint).hostname.replace('.cdn', '')
+  } catch(_) {
+    return window.prismic.endpoint
+  }
 }
 
 // Parse an endpoint

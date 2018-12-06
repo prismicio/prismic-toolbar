@@ -7,31 +7,45 @@ window.prismic = window.PrismicToolbar = {
   setup: withPolyfill((...args) => args.forEach(setup)),
   startExperiment/*TODO automate*/: withPolyfill(expId => new require('./experiment').Experiment(expId)),
   setupEditButton/*Legacy*/: withPolyfill(_ => require('common').warn`
-     prismic.setupEditButton() is deprecated.
+     window.prismic.setupEditButton is deprecated.
      Edit buttons have been replaced by the new Edit feature.
   `),
 };
 
-// Legacy setup
+// Automatic setup
 withPolyfill(_ => {
-  const { getLegacyEndpoint } = require('./utils')
-  const { warn } = require('common')
-  const domain = getLegacyEndpoint()
-  if (domain) warn`
-    Using window.prismic.endpoint is deprecated.
-    Please set up the Prismic Toolbar by calling the
-    setup function with your repository name.
-    window.prismic.setup('example') OR
-    window.prismic.setup('example.prismic.io')
-  `
-  setup(domain)
+  const { getLegacyEndpoint } = require('./utils');
+  const { warn, getAbsoluteURL } = require('common');
+  let repos = new Set();
+
+  // Querystring setup
+  const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
+  const repoParam = scriptURL.searchParams.get('repo');
+  if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
+
+  // Legacy setup
+  const legacyEndpoint = getLegacyEndpoint();
+  if (legacyEndpoint) {
+    warn`
+    window.prismic.endpoint is deprecated.
+    Please remove your current Prismic Toolbar installation and replace it with
+    
+    <script async defer src=//prismic.io/prismic.js?repo=example-repository></script>
+
+    For complete documentation on setting up the Prismic Toolbar, please refer to
+    https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`;
+    repos.add(legacyEndpoint);
+  }
+
+  repos.forEach(setup);
 })()
 
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
-let isSetup = false;
+let setupDomain = null;
 async function setup (rawInput) {
   // Imports
   const { Messenger, Publisher, warn } = require('common');
+  const { parseEndpoint } = require('./utils');
   const { screenshot } = require('common/screenshot');
   const { Tracker } = require('./tracker');
   const { Preview } = require('./preview');
@@ -43,15 +57,13 @@ async function setup (rawInput) {
   const domain = parseEndpoint(rawInput)
 
   if (!domain) return warn`
-    Invalid prismic.js configuration.
-    Expected a repository but got ${rawInput || 'nothing'}.`;
+    Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
 
   // Only allow setup to be called once
-  if (isSetup) return warn`
-    The Prismic Toolbar can only connect to one repository.
-    Multi-repo support is in the roadmap.`;
+  if (setupDomain) return warn`
+    Already connected to a repository (${setupDomain}).`;
 
-  isSetup = true;
+  setupDomain = domain;
 
   // Communicate with repository
   const messenger = new Messenger(`${window.location.protocol}//${domain}/toolbar/iframe`);
