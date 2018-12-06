@@ -1,5 +1,5 @@
 import { fetchy, query, getCookie, deleteCookie, wait, throttle } from 'common';
-import { state, messenger } from './config';
+import { state, messenger } from './utils';
 
 // Check for new preview ref
 let newRef = null;

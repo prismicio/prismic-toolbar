@@ -1,6 +1,6 @@
 import { getLocation } from 'common';
 import { PreviewCookie } from './cookies';
-import { reloadOrigin } from './config';
+import { reloadOrigin } from './utils';
 
 export class Preview {
   constructor(messenger) {
