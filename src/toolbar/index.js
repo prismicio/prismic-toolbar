@@ -5,7 +5,7 @@ window.prismic = window.PrismicToolbar = {
   endpoint: null, ...window.prismic/*Legacy*/,
   version: process.env.npm_package_version,
   setup: withPolyfill((...args) => args.forEach(setup)),
-  startExperiment/*TODO automate*/: withPolyfill(expId => new require('./experiment').Experiment(expId)),
+  startExperiment/*TODO automate*/: withPolyfill(expId => new (require('./experiment')).Experiment(expId)),
   setupEditButton/*Legacy*/: withPolyfill(_ => require('common').warn`
      window.prismic.setupEditButton is deprecated.
      Edit buttons have been replaced by the new Edit feature.
