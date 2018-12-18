@@ -1,4 +1,4 @@
-import { ellipsis } from 'common';
+import { ellipsis, switchy } from 'common';
 import { BasePanel, prismicSvg } from '.';
 import { Icon } from '..';
 
@@ -43,7 +43,12 @@ const Document = ({ doc, isMain, onClick }) => {
     <a className="Document" href={doc.url} target="_blank" onClick={_ => onClick({ isMain })}>
       <header>
         <h3>{title}</h3>
-        {doc.isDraft && <div className="label">Draft</div>}
+        {switchy(doc.status)({
+          draft: <div className="label gold">Draft</div>,
+          release: <div className="label navy">Release</div>,
+          experiment: <div className="label gold">Experiment</div>,
+          _: null,
+        })}
       </header>
       <div>{ellipsis(summary, isMain ? 300 : 200)}</div>
     </a>

@@ -12,6 +12,9 @@ window.prismic = window.PrismicToolbar = {
   `),
 };
 
+// Prismic variable is available
+window.dispatchEvent(new CustomEvent('prismic'))
+
 // Automatic setup
 withPolyfill(_ => {
   const { getLegacyEndpoint } = require('./utils');
@@ -45,6 +48,7 @@ let setupDomain = null;
 async function setup (rawInput) {
   // Imports
   const { Messenger, Publisher, warn } = require('common');
+  const { fixPreviewCookie } = require('./cookies');
   const { parseEndpoint } = require('./utils');
   const { screenshot } = require('common/screenshot');
   const { Tracker } = require('./tracker');
@@ -52,6 +56,9 @@ async function setup (rawInput) {
   const { Prediction } = require('./prediction');
   const { Analytics } = require('./analytics');
   const { Toolbar } = require('./toolbar');
+
+  // Fix broken preview cookies and ensure the path is /
+  fixPreviewCookie()
 
   // Validate repository
   const domain = parseEndpoint(rawInput)

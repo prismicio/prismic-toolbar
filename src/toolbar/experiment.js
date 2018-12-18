@@ -2,7 +2,6 @@ import { script, disabledCookies } from 'common';
 import { ExperimentCookie } from './cookies';
 import { reloadOrigin } from './utils';
 
-// TODO test experiments
 export class Experiment {
   constructor(expId) {
     this.cookie = new ExperimentCookie();

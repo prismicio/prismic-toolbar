@@ -64,11 +64,17 @@
 
 .DocumentPanel .Document {
   & .label {
-    background: #FFDBA2;
-    color: #53452E;
     padding: 2px 8px;
     border-radius: 4px;
     margin-left: 11px;
+    &.gold {
+      background: #FFDBA2;
+      color: #53452E;
+    }
+    &.navy {
+      background: #5163ba;
+      color: #FFFFFF;
+    }
   }
 
   & header {

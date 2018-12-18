@@ -3,7 +3,14 @@ import { getCookie, setCookie, deleteCookie, demolishCookie, isObject } from 'co
 const previewCookieName = 'io.prismic.preview'
 const experimentCookieName = 'io.prismic.experiment'
 
-fixCookiePath(previewCookieName)
+// Makes sure the only cookie is one with a path of `/`.
+// Make sure it's a readable cookie. Otherwise delete it.
+export function fixPreviewCookie() {
+  const x = getCookie(previewCookieName)
+  const value = PreviewCookie.createCompliant(x);
+  demolishCookie(previewCookieName);
+  if (value) setCookie(previewCookieName, value);
+}
 
 // Preview cookie manager for a specific repository (safe to have multiple instances)
 export class PreviewCookie {
@@ -182,13 +189,4 @@ export class ExperimentCookie {
   delete() {
     deleteCookie(experimentCookieName);
   }
-}
-
-// Helpers
-
-// Makes sure the only cookie is one with a path of `/`
-function fixCookiePath(name) {
-  const value = getCookie(name);
-  demolishCookie(name);
-  if (value) setCookie(name, value);
 }
