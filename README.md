@@ -1,21 +1,16 @@
 # Prismic toolbar
 The prismic toolbar enables content writers to:
+ - Identify Prismic content on the page
  - Preview unpublished changes (drafts and releases)
  - Perform A/B tests (experiments)
- - Browse Prismic documents on the page
 
 <!-- TODO add screenshots -->
 
 ## How to use it?
 Include the following script on every page of your site (including the `404` page).
 
-Remember to replace `<your-repo-name>` with the name of your Prismic repository.
+Remember to replace `YOUR_REPO_NAME` with the name of your Prismic repository.
 
 ```
-<script>
-  window.prismic = {
-    endpoint: 'https://<your-repo-name>.prismic.io/api/v2'
-  };
-</script>
-<script src=//static.cdn.prismic.io/prismic.min.js></script>
+<script src=//prismic.io/prismic.js?repo=YOUR_REPO_NAME></script>
 ```
