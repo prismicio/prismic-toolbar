@@ -14,9 +14,9 @@ export const documents = async ({ url, ref, track, location }) => {
       .min(a => a.queryTotal)
       .is(a => a.singleton)
       .min(a => a.priority)
-      .is(a => location.search.match(a.slug))
-      .is(a => location.hash.match(a.slug))
-      .is(a => location.pathname.match(a.slug))
+      .is(a => location.search.match(a.uid))
+      .is(a => location.hash.match(a.uid))
+      .is(a => location.pathname.match(a.uid))
       .compute()
   );
 };
@@ -24,11 +24,11 @@ export const documents = async ({ url, ref, track, location }) => {
 // window.location.origin
 const normalizeDocument = doc => ({
   ...doc,
-  url: window.location.origin + doc.url,
+  editorUrl: window.location.origin + doc.editorUrl,
   status: (
-    doc.url.includes('c=unclassified') ? 'draft' :
-    doc.url.includes('c=release') ? 'release' :
-    doc.url.includes('c=variation') ? 'experiment' :
+    doc.editorUrl.includes('c=unclassified') ? 'draft' :
+    doc.editorUrl.includes('c=release') ? 'release' :
+    doc.editorUrl.includes('c=variation') ? 'experiment' :
     null
   ),
 })

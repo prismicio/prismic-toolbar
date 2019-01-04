@@ -80,13 +80,13 @@ export class PreviewCookie {
 
   // -> string | null
   static getTrackOrNull() {
-    return PreviewCookie.getCompliantOrObj()._track || null
+    return PreviewCookie.getCompliantOrObj()._tracker || null
   }
 
-  // _track: set with a truthyString or remove with a falsy value
+  // _tracker: set with a truthyString or remove with a falsy value
   static setTrack(value) {
     const obj = PreviewCookie.getCompliantOrObj()
-    obj._track = value
+    obj._tracker = value
     PreviewCookie.setCompliant(obj)
   }
 
@@ -129,7 +129,7 @@ export class PreviewCookie {
   }
 
   // Raw preview cookie (String or Object) -> Spec-compliant preview cookie
-  // JSON { (0 or more) "ex.wroom.io": { "atLeastOneKey": "truthyString" }, (opt) "_url":  "...", (opt) "_track": "..." } | undefined
+  // JSON { (0 or more) "ex.wroom.io": { "atLeastOneKey": "truthyString" }, (opt) "_url":  "...", (opt) "_tracker": "..." } | undefined
   static createCompliant(raw) {
     let compliant
 
@@ -147,7 +147,7 @@ export class PreviewCookie {
     }
     
     // Domain-specific validations
-    Object.keys(compliant).filter(k => !/(_track|_url|_breaker|_user)/.test(k)).map(repoKey => {
+    Object.keys(compliant).filter(k => !/(_tracker|_url|_breaker|_user)/.test(k)).map(repoKey => {
       const repoVal = compliant[repoKey]
       const delRepo = _ => delete compliant[repoKey]
       
@@ -163,7 +163,7 @@ export class PreviewCookie {
       if (Object.values(repoVal).length === 0) return delRepo()
     })
 
-    // Remove null top-level entries (_url/_track)
+    // Remove null top-level entries (_url/_tracker)
     for (const [key, val] of Object.entries(compliant)) if (!val) delete compliant[key];
 
     // If no keys, remove the cookie
