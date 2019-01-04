@@ -1,4 +1,4 @@
-import { fetchy, query, getCookie, deleteCookie, wait, throttle } from 'common';
+import { fetchy, query, getCookie, demolishCookie, wait, throttle } from 'common';
 import { state, messenger } from './utils';
 
 // Check for new preview ref
@@ -23,7 +23,7 @@ export const newPreviewRef = async _ => {
 const sessionId = getCookie('io.prismic.previewSession');
 
 // Close preview session
-export const closePreview = _ => deleteCookie('io.prismic.previewSession');
+export const closePreview = _ => demolishCookie('io.prismic.previewSession');
 
 // Share
 export const sharePreview = async location => {
