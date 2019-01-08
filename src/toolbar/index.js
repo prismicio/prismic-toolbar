@@ -12,21 +12,20 @@ window.prismic = window.PrismicToolbar = {
   `),
 };
 
-// Prismic variable is available
-window.dispatchEvent(new CustomEvent('prismic'))
-
-// Automatic setup
-withPolyfill(_ => {
+withPolyfill(_ => { 
   const { getLegacyEndpoint } = require('./utils');
   const { warn, getAbsoluteURL } = require('common');
   let repos = new Set();
 
-  // Querystring setup
+  // Prismic variable is available
+  window.dispatchEvent(new CustomEvent('prismic'))
+
+  // Auto-querystring setup
   const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
   const repoParam = scriptURL.searchParams.get('repo');
   if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
 
-  // Legacy setup
+  // Auto-legacy setup
   const legacyEndpoint = getLegacyEndpoint();
   if (legacyEndpoint) {
     warn`

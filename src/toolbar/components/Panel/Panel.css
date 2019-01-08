@@ -10,14 +10,14 @@
 	bottom: 100px;
 	left: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
   min-height: 250px;
   max-height: 650px;
   will-change: transform;
+  background: #f7f7f7;
 
   & .top {
     padding: 30px;
+    background: white;
 
     & h2 {
       margin-bottom: 5px;
@@ -25,7 +25,6 @@
   }
 
   & .bottom {
-    background: #f7f7f7;
     padding: 30px;
     flex-grow: 1;
   }
@@ -94,10 +93,6 @@
   & .Document {
     margin: 16px 0;
     font-size: 12px;
-
-    & h3 {
-      margin-bottom: 7px;
-    }
   }
 
   /* & .more {

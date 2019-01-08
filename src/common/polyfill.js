@@ -5,7 +5,7 @@ const isIE = ltIE11 | isIE11;
 
 // Callback vars
 const callbacks = []
-const isPolyfilled = isIE ? false : true
+let isPolyfilled = isIE ? false : true
 
 // Run code after polyfilled
 export function withPolyfill(func) {
@@ -25,7 +25,6 @@ function dispatchPolyfill() {
 // Load the polyfills
 if (ltIE11) throw new Error('Prismic does not support IE 10 or earlier.')
 if (isIE11) loadScript('https://cdn.jsdelivr.net/gh/krabbypattified/ie11-polyfill@master/dist/main.js', dispatchPolyfill);
-// loadIEJS('//ie11.test/main.js', callback);
 
 // Load a script
 function loadScript(src, callback) {

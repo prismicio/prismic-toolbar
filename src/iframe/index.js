@@ -1,6 +1,6 @@
-(async _ => {
-  require('common/polyfill'); // Support IE 11
+const { withPolyfill } = require('common/polyfill'); // Support IE 11
 
+withPolyfill(_ => {
   const { Publisher } = require('common');
   const { state, preview } = require('./utils');
   const { documents } = require('./prediction');

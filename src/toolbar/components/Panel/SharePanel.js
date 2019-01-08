@@ -3,23 +3,16 @@ import { copyText, memoize, wait } from 'common';
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
 
-let mShare; // Memoized share (load once for same URL)
-
 export class SharePanel extends Component {
   constructor() {
     super(...arguments);
     this.state = { loading: true, url: '' };
-
-    if (!mShare) mShare = memoize(async _ => {
-      const url = await this.props.preview.share()
-      this.setState({ url, loading: false })
-    }, _ => window.location.href);
+    this.props.preview.share().then(url => this.setState({ url, loading: false }))
   }
 
   render() {
     const { onClose, preview } = this.props;
     const { url, loading } = this.state;
-    mShare();
     return (
       <BasePanel className="SharePanel">
         <Icon className="x" src={xSvg} onClick={onClose} />
