@@ -1,6 +1,6 @@
 # Project
 node_modules/
-dist/
+build/
 
 # Config
 .prettierrc.js

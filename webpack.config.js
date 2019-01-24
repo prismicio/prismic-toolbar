@@ -4,6 +4,7 @@ const postcssUrl = require('postcss-url');
 const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
 const { WebPlugin } = require('web-webpack-plugin');
+const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
 
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
@@ -26,7 +27,7 @@ module.exports = (_, { mode }) => {
     watchOptions: { ignored: '/node_modules/' },
 
     // Output to prismic app
-    output: { path: relative('../../app/assets/javascripts/toolbar') },
+    output: { path: relative('build') },
 
     // Toolbar & iFrame
     entry: {
@@ -56,6 +57,7 @@ module.exports = (_, { mode }) => {
         filename: 'iframe.html',
         template: relative('src/iframe/index.html'),
       }),
+      new SuppressChunksPlugin(['iframe']),
     ],
 
     module: {
