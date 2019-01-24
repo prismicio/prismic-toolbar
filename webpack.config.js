@@ -1,8 +1,29 @@
+const { WebPlugin } = require('web-webpack-plugin');
+const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
+
+// Make relative path
+const relative = path => require('path').resolve(__dirname, path);
+
+const deps = ['regenerator-runtime/runtime', 'whatwg-fetch', 'promise-polyfill/src/polyfill'];
+
 module.exports = {
-  entry: ['regenerator-runtime/runtime', 'whatwg-fetch', 'promise-polyfill/src/polyfill', './src/index.js'],
-  output: {
-    filename: 'prismic-toolbar.js'
+  entry: {
+    prismic: [...deps, './src/index.js'],
+    iframe: [...deps, './src/iframe/toolbar.js']
   },
+
+  output: {
+    path: relative('build')
+  },
+
+  plugins: [
+    new WebPlugin({
+      filename: 'iframe.html',
+      template: relative('src/iframe/index.html'),
+    }),
+    new SuppressChunksPlugin(['iframe']),
+  ],
+
   module: {
     rules: [
       {
