@@ -32,7 +32,7 @@ module.exports = (_, { mode }) => {
     // Toolbar & iFrame
     entry: {
       iframe: relative('src/iframe'),
-      toolbar: relative('src/toolbar'),
+      prismic: relative('src/toolbar'),
     },
 
     // Helper Functions

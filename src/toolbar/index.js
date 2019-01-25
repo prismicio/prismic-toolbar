@@ -1,9 +1,11 @@
 const { withPolyfill } = require('common/polyfill'); // Support IE 11 (TODO after build is fixed)
 
+const version = process.env.npm_package_version;
+
 // Prismic Toolbar Interface
 window.prismic = window.PrismicToolbar = {
   endpoint: null, ...window.prismic/*Legacy*/,
-  version: process.env.npm_package_version,
+  version,
   setup: withPolyfill((...args) => args.forEach(setup)),
   startExperiment/*TODO automate*/: withPolyfill(expId => new (require('./experiment')).Experiment(expId)),
   setupEditButton/*Legacy*/: withPolyfill(_ => require('common').warn`
@@ -72,7 +74,7 @@ async function setup (rawInput) {
   setupDomain = domain;
 
   // Communicate with repository
-  const messenger = new Messenger(`${window.location.protocol}//${domain}/toolbar/iframe`);
+  const messenger = new Messenger(`${window.location.protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
   new Publisher({ screenshot });
 
   // Request Tracker (prediction)
