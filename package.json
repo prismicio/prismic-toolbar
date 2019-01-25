@@ -1,6 +1,6 @@
 {
   "name": "prismic-toolbar",
-  "version": "0.0.11",
+  "version": "1.1.11",
   "description": "Prismic Toolbar",
   "main": "./dist/npm-prismic-toolbar.js",
   "scripts": {
