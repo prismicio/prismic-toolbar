@@ -1,9 +1,12 @@
-import html2canvas from 'html2canvas';
+let html2canvasPromise;
 
 export const screenshot = async _ => {
   document.getElementById('prismic-toolbar-v2').setAttribute('data-html2canvas-ignore', true);
 
-  const canvas = await html2canvas(document.body, {
+  if (!html2canvasPromise) html2canvasPromise = script('https://unpkg.com/html2canvas@1.0.0-alpha.12/dist/html2canvas.min.js');
+  await html2canvasPromise;
+
+  const canvas = await window.html2canvas(document.body, {
     logging: false,
     width: '100%',
     height: window.innerHeight,
@@ -11,3 +14,12 @@ export const screenshot = async _ => {
 
   return new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.6));
 };
+
+function script(src) {
+  return new Promise(resolve => {
+    let el = document.createElement('script');
+    el.src = src
+    document.head.appendChild(el);
+    el.addEventListener('load', _ => resolve(el));
+  });
+}
