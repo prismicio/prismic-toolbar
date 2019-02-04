@@ -21,7 +21,6 @@ export const documents = async ({ url, ref, track, location }) => {
   );
 };
 
-// window.location.origin
 const normalizeDocument = doc => ({
   ...doc,
   editorUrl: window.location.origin + doc.editorUrl,

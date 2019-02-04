@@ -51,18 +51,18 @@ window.fetch = async (...args) => {
   return response;
 };
 
-// History hook TODO
-const _wr = function(type) {
+// History hook
+const wrapHistory = function(type) {
   const orig = window.history[type];
   return function() {
     const rv = orig.apply(this, arguments);
-    const e = new CustomEvent(type, { detail: arguments });
+    const e = new CustomEvent('historyChange', { detail: arguments });
     window.dispatchEvent(e);
     return rv;
   };
 };
-window.history.pushState = _wr('historyChange');
-window.history.replaceState = _wr('historyChange');
+window.history.pushState = wrapHistory('pushState');
+window.history.replaceState = wrapHistory('replaceState');
 
 // Active Tab Hook
 window.addEventListener('focus', _ => {

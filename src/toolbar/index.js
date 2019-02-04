@@ -63,7 +63,7 @@ async function setup (rawInput) {
 
   // Validate repository
   const domain = parseEndpoint(rawInput)
-  const protocol = domain.match('.test$') ? 'https' : window.location.protocol
+  const protocol = domain.match('.test$') ? window.location.protocol : 'https:'
 
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
