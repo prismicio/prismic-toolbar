@@ -1,4 +1,4 @@
-const { withPolyfill } = require('common/polyfill'); // Support IE 11 (TODO after build is fixed)
+const { withPolyfill } = require('common/polyfill'); // Support IE 11 TODO
 
 const version = process.env.npm_package_version;
 
@@ -63,6 +63,7 @@ async function setup (rawInput) {
 
   // Validate repository
   const domain = parseEndpoint(rawInput)
+  const protocol = domain.match('.test$') ? 'https' : window.location.protocol
 
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
@@ -74,7 +75,7 @@ async function setup (rawInput) {
   setupDomain = domain;
 
   // Communicate with repository
-  const messenger = new Messenger(`${window.location.protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
+  const messenger = new Messenger(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
   new Publisher({ screenshot });
 
   // Request Tracker (prediction)

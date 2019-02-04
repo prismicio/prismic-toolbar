@@ -51,7 +51,7 @@ window.fetch = async (...args) => {
   return response;
 };
 
-// History hook
+// History hook TODO
 const _wr = function(type) {
   const orig = window.history[type];
   return function() {
