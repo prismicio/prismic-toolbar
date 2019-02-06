@@ -2,21 +2,35 @@ const { withPolyfill } = require('common/polyfill'); // Support IE 11 TODO
 
 const version = process.env.npm_package_version;
 
+const warn = (...message) => require('common').warn`
+${String.raw(...message)}
+
+Please remove your current Prismic Toolbar installation and replace it with
+
+<script async defer src=//prismic.io/prismic.js?repo=example-repository></script>
+
+For complete documentation on setting up the Prismic Toolbar, please refer to
+https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`
+
 // Prismic Toolbar Interface
 window.prismic = window.PrismicToolbar = {
   endpoint: null, ...window.prismic/*Legacy*/,
   version,
-  setup: withPolyfill((...args) => args.forEach(setup)),
-  startExperiment/*TODO automate*/: withPolyfill(expId => new (require('./experiment')).Experiment(expId)),
-  setupEditButton/*Legacy*/: withPolyfill(_ => require('common').warn`
-     window.prismic.setupEditButton is deprecated.
-     Edit buttons have been replaced by the new Edit feature.
-  `),
+  setup: withPolyfill((...args) => {
+    warn`window.prismic.setup is deprecated.`;
+    args.forEach(setup);
+  }),
+  startExperiment/*TODO automate*/: withPolyfill(expId => {
+    const { Experiment } = require('./experiment');
+    new Experiment(expId);
+  }),
+  setupEditButton/*Legacy*/: withPolyfill(_ => {
+    warn`window.prismic.setupEditButton is deprecated.`;
+  }),
 };
 
 withPolyfill(_ => { 
-  const { getLegacyEndpoint } = require('./utils');
-  const { warn, getAbsoluteURL } = require('common');
+  const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
   let repos = new Set();
 
   // Prismic variable is available
@@ -30,16 +44,11 @@ withPolyfill(_ => {
   // Auto-legacy setup
   const legacyEndpoint = getLegacyEndpoint();
   if (legacyEndpoint) {
-    warn`
-    window.prismic.endpoint is deprecated.
-    Please remove your current Prismic Toolbar installation and replace it with
-    
-    <script async defer src=//prismic.io/prismic.js?repo=example-repository></script>
-
-    For complete documentation on setting up the Prismic Toolbar, please refer to
-    https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`;
+    warn`window.prismic.endpoint is deprecated.`;
     repos.add(legacyEndpoint);
   }
+
+  if (!repos.size) warn`Your are not connected to a repository.`
 
   repos.forEach(setup);
 })()

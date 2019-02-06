@@ -28,5 +28,4 @@ export {
   deleteNodes,
   appendCSS,
   script,
-  getAbsoluteURL,
 } from './general';

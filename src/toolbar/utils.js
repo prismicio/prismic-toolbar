@@ -20,3 +20,11 @@ export const parseEndpoint = repo => {
   if (!repo.includes('.')) repo = `${repo}.prismic.io`
   return repo;
 }
+
+// Get absolute URL
+let a;
+export const getAbsoluteURL = url => {
+  if(!a) a = document.createElement('a');
+  a.href = url;
+  return a.href;
+}
