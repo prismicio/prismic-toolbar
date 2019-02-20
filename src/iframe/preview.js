@@ -28,7 +28,7 @@ export const closePreview = _ => demolishCookie('io.prismic.previewSession');
 // Share
 export const sharePreview = memoize(async location => {
   const imageId = location.pathname.slice(1) + location.hash + sessionId + '.jpg';
-  const imageName = encodeURIComponent(imageId); // check this
+  const imageName = imageId
   const session = await getShareableSession({ location, imageName });
   if (!session.hasPreviewImage) uploadScreenshot(imageName);
   return session.url;
