@@ -44,7 +44,8 @@ export class Messenger {
 const iframe = src => {
   const ifr = document.createElement('iframe');
   ifr.src = src;
-  document.head.appendChild(ifr);
+  ifr.style.cssText='display:none!important';
+  document.body.appendChild(ifr);
   return new Promise(resolve =>
     // check this
     ifr.addEventListener('load', _ => resolve(ifr), { once: true })
