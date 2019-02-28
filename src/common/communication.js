@@ -41,16 +41,18 @@ export class Messenger {
   }
 }
 
-const iframe = src => {
+const documentBody = new Promise(async resolve => {
+  if (document.body) resolve(document.body);
+  else document.addEventListener('DOMContentLoaded', _ => resolve(document.body));
+});
+
+const iframe = src => new Promise(resolve => {
   const ifr = document.createElement('iframe');
   ifr.src = src;
   ifr.style.cssText='display:none!important';
-  document.body.appendChild(ifr);
-  return new Promise(resolve =>
-    // check this
-    ifr.addEventListener('load', _ => resolve(ifr), { once: true })
-  );
-};
+  ifr.addEventListener('load', _ => resolve(ifr), { once: true })
+  documentBody.then(body => body.appendChild(ifr))
+});
 
 export class Publisher {
     constructor(config) {
