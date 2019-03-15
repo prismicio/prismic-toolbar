@@ -7,7 +7,7 @@ ${String.raw(...message)}
 
 Please remove your current Prismic Toolbar installation and replace it with
 
-<script async defer src=//prismic.io/prismic.js?repo=example-repository></script>
+<script async defer src=//static.cdn.prismic.io/prismic.js?repo=example-repository&new=true></script>
 
 For complete documentation on setting up the Prismic Toolbar, please refer to
 https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`
