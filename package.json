@@ -14,7 +14,7 @@
     "html2canvas": "^1.0.0-alpha.12",
     "js-cookie": "^2.2.0",
     "promise-polyfill": "8.0.0",
-    "regenerator-runtime": "^0.11.1",
+    "regenerator-runtime": "^0.13.2",
     "whatwg-fetch": "^2.0.4"
   },
   "devDependencies": {
