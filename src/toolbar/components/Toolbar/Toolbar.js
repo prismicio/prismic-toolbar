@@ -6,7 +6,7 @@ const { NONE } = views;
 export class Toolbar extends Component {
   constructor({ prediction }) {
     super(...arguments);
-    this.state = { page: NONE, documents: prediction.documents };
+    this.state = { page: NONE, documents: prediction.documents, queries: prediction.queries };
     prediction.onDocuments(documents => this.setState({ documents }));
   }
 
@@ -14,7 +14,7 @@ export class Toolbar extends Component {
 
   render() {
     const { preview, analytics } = this.props;
-    const { page, documents } = this.state;
+    const { page, documents, queries } = this.state;
     const hasDocs = Boolean(documents.length);
 
     return (

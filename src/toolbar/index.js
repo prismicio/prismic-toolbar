@@ -70,6 +70,8 @@ async function setup (rawInput) {
   // Fix broken preview cookies and ensure the path is /
   fixPreviewCookie()
 
+  //verifier si les preview ou experiment cookie existe
+
   // Validate repository
   const domain = parseEndpoint(rawInput)
   const protocol = domain.match('.test$') ? window.location.protocol : 'https:'
@@ -92,7 +94,7 @@ async function setup (rawInput) {
 
   // Preview & Prediction
   const preview = new Preview(messenger);
-  const prediction = new Prediction(messenger);
+  const prediction = new Prediction(messenger, this.prismic.endpoint);
   const analytics = new Analytics(messenger);
 
   // Start concurrently

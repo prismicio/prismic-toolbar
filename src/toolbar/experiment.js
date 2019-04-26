@@ -7,6 +7,7 @@ export class Experiment {
     this.cookie = new ExperimentCookie();
     this.expId = expId;
     this.setup();
+    console.log('experiment-------'+this)
   }
 
   async setup() {

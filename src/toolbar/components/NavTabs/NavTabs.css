@@ -1,0 +1,38 @@
+.TabList{
+    list-style: none;
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    width: 100%;
+    height: 60px;
+    margin: auto;
+    padding: 0;
+}
+
+.Tab{
+    /* Shape Of Tab */
+    flex-basis: 50%;
+    text-align: center;
+    align-self: center;
+    height: 100%;
+    background: #FFFFFF;
+    vertical-align: middle;
+    line-height: 100%;
+    padding-top: 25px;
+
+    /* Style of text */
+    font-family: SFProText-Semibold;
+    font-size: 16px;
+    color: #293258;
+    letter-spacing: 0.23px;
+    line-height: 20px;
+
+   & .active{
+       box-shadow: inset 0 -4px 0 0 #5163BA;
+   }
+}
+
+.react-tabs__tab--selected{
+    box-shadow: inset 0 -4px 0 0 #5163BA;
+}

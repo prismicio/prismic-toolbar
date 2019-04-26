@@ -12,3 +12,4 @@ export { Panel } from './Panel';
 export { Menu } from './Menu';
 export { PreviewMenu } from './PreviewMenu';
 export { ScrollingName } from './ScrollingName';
+export { NavTabs } from './NavTabs';
