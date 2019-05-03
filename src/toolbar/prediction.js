@@ -26,9 +26,6 @@ export class Prediction {
 
   // Start predictions for this URL
   start = async _ => {
-    // Wait for the frontend (React) app to finish loading requests. Fetch again.
-    wait(2);
-
     // For initial page load SSR requests (match track -> url) and for quickly getting documents
     const fetch = this.predict(initialTrack || PreviewCookie.track)
     initialTrack = null;
@@ -37,7 +34,7 @@ export class Prediction {
 
   // Fetch predicted documents
   predict = async (track = null) => {
-    this.dispatch(await this.messenger.post('documents', {
+    await this.dispatch(await this.messenger.post('documents', {
       ref: this.cookie.preview,  // The ref for the version of content to display
       url: window.location.pathname, // The URL for which we need the documents
       track, // Match the prior request to this URL
@@ -46,12 +43,12 @@ export class Prediction {
   }
 
   // Dispatch documents to hooks
-  dispatch = data => {
-    this.getAndlinkDataToDocs(data.documents, data.queries).then(docs => {
-      this.documents = docs
-      window.prismic._predictionDocuments = this.documents; // Debug
-      Object.values(this.documentHooks).forEach(hook => hook(this.documents)); // Run the hooks
-    })
+  dispatch = async (data) => {
+    const docData = await this.getDocsData(data.queries)
+    this.documents = data.documents;
+    this.docData = docData;
+    window.prismic._predictionDocuments = this.documents; // Debug
+    Object.values(this.documentHooks).forEach(hook => hook(this.documents)); // Run the hooks
   }
 
   // Documents hook
@@ -74,26 +71,20 @@ export class Prediction {
   }
 
   // Get the data for each document and put it inside the json of the document
-  getAndlinkDataToDocs = async (documents, queries) => {
-    if(!queries){return documents}
+  getDocsData = async (queries) => {
+    if(!queries){return}
     const promiseList = [];
-    const dataList = {};
-    const copyOfDocuments = JSON.parse(JSON.stringify(documents));
+    const dataList = [];
     queries.forEach(async queryParams => {
       const promise = this.getDataFromQuery(queryParams)
       promiseList.push(promise);
     })
     await Promise.all(promiseList).then(promisesRes => {
       promisesRes.forEach(query => {
-        query.forEach(doc => {
-          dataList[doc.id] = doc.data;
-        })
+        dataList.push(query);
       })
     })
-    copyOfDocuments.map(document => {
-      document.data = dataList[document.id];
-    })   
-    return copyOfDocuments
+    return dataList
   }
 
   // Do one query to get documents

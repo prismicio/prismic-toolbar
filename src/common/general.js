@@ -27,7 +27,7 @@ export const readyDOM = async _ => {
 };
 
 // Wait in seconds
-export const wait = seconds => new Promise(rs => setTimeout(rs, seconds * 1000));
+export const wait = async (seconds) => await new Promise(rs => setTimeout(rs, seconds * 1000));
 
 // Wait in milliseconds
 export const delay = t => new Promise(rs => setTimeout(rs, t));

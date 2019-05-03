@@ -31,9 +31,10 @@ const normalizeDocument = doc => ({
   ...doc,
   editorUrl: window.location.origin + doc.editorUrl,
   status: (
-    doc.editorUrl.includes('c=unclassified') ? 'draft' :
-    doc.editorUrl.includes('c=release') ? 'release' :
-    doc.editorUrl.includes('c=variation') ? 'experiment' :
+    doc.editorUrl.includes('c=unclassified') ? 'Draft' :
+    doc.editorUrl.includes('c=release') ? 'Release' :
+    doc.editorUrl.includes('c=variation') ? 'Experiment' :
+    doc.editorUrl.includes('c=published') ? 'Live' :
     null
   ),
 })

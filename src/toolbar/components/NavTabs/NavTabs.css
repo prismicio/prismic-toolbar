@@ -1,4 +1,4 @@
-.TabList{
+.nav-tab-list{
     list-style: none;
     display:flex;
     align-items: center;
@@ -10,9 +10,10 @@
     padding: 0;
 }
 
-.Tab{
+.nav-tab{
     /* Shape Of Tab */
     flex-basis: 50%;
+    font-weight: bold;
     text-align: center;
     align-self: center;
     height: 100%;
@@ -20,19 +21,18 @@
     vertical-align: middle;
     line-height: 100%;
     padding-top: 25px;
+    cursor: pointer;
+    box-shadow: 0 4px 4px -4px rgba(0,0,0,0.15);
+
 
     /* Style of text */
-    font-family: SFProText-Semibold;
     font-size: 16px;
     color: #293258;
     letter-spacing: 0.23px;
     line-height: 20px;
 
-   & .active{
+
+   &.active{
        box-shadow: inset 0 -4px 0 0 #5163BA;
    }
-}
-
-.react-tabs__tab--selected{
-    box-shadow: inset 0 -4px 0 0 #5163BA;
 }

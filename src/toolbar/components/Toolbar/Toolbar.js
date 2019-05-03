@@ -6,15 +6,16 @@ const { NONE } = views;
 export class Toolbar extends Component {
   constructor({ prediction }) {
     super(...arguments);
-    this.state = { page: NONE, documents: prediction.documents, queries: prediction.queries };
+    this.state = { page: NONE, documents: prediction.documents, docData: prediction.docData };
     prediction.onDocuments(documents => this.setState({ documents }));
+
   }
 
   setPage = page => this.setState({ page });
 
   render() {
     const { preview, analytics } = this.props;
-    const { page, documents, queries } = this.state;
+    const { page, documents, docData } = this.state;
     const hasDocs = Boolean(documents.length);
 
     return (
@@ -23,6 +24,7 @@ export class Toolbar extends Component {
           onDocumentClick={analytics.trackDocumentClick}
           closePanel={_ => this.setPage(NONE)}
           documents={documents}
+          docData={docData}
           preview={preview}
           page={page}
         />

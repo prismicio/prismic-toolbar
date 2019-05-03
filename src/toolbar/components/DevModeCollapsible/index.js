@@ -1,1 +1,1 @@
-export { NavTabs } from './NavTabs';
+export { DevModeCollapsible } from './DevModeCollapsible';

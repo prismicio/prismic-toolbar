@@ -74,6 +74,7 @@
     "whatwg-fetch": "^3.0.0"
   },
   "dependencies": {
+    "react-collapsible": "^2.6.0",
     "react-tabs": "^3.0.0"
   }
 }

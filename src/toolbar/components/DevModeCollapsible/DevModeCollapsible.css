@@ -1,37 +1,45 @@
-.nav-tab-list{
-    list-style: none;
-    display:flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: nowrap;
-    width: 100%;
-    height: 60px;
-    margin: auto;
-    padding: 0;
+.Collapsible{
+
 }
 
-.nav-tab{
-    /* Shape Of Tab */
-    flex-basis: 50%;
-    text-align: center;
-    align-self: center;
-    height: 100%;
-    background: #FFFFFF;
-    vertical-align: middle;
-    line-height: 100%;
-    padding-top: 25px;
-    cursor: pointer;
-    box-shadow: 0 4px 4px -4px rgba(0,0,0,0.15);
+.Collapsible__trigger{
+    height: 70px;
+    display: block;
+    border-bottom: 1px solid #E0E2EE;
+    border-top: 1px solid #E0E2EE;
+    padding-left:25px;
+    padding-top:15px;
+}
+
+.Collapsible__contentOuter{
+    background: #F5F6F9;
+    padding-left: 25px;
+}
+
+.wrapper-trigger{
 
 
-    /* Style of text */
-    font-size: 16px;
-    color: #293258;
-    letter-spacing: 0.23px;
-    line-height: 20px;
+    & .trigger-title{
+        font-size: 16px;
+        color: #293258;
+        letter-spacing: 0.23px;
+        line-height: 20px;
+        font-weight: bold;
+    }
 
+    & .trigger-subtitle{
+        font-size: 13px;
+        color: #435169;
+        letter-spacing: 0.19px;
+        line-height: 20px;
+    }
 
-   &.active{
-       box-shadow: inset 0 -4px 0 0 #5163BA;
-   }
+    & .trigger-triangle{
+        position: relative;
+        left: 370px;
+        bottom: 29px;
+        background: #3F4A56;
+        height: 12px;
+        width: 8px;
+    }
 }
