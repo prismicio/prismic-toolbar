@@ -90,7 +90,7 @@ export class Prediction {
   // Do one query to get documents
   getDataFromQuery = async(queryParams) => {
     const data = await fetchy({
-          url: `${this.baseEndPoint}/api/documents/search?${query({
+          url: `${this.baseEndPoint}/api/${queryParams.version}/documents/search?${query({
             version: queryParams.version,
             ref: queryParams.ref,
             integrationFieldsRef: queryParams.integrationFieldsRef,

@@ -45,15 +45,17 @@ const DocumentsSummaryTab = ({ documents, onClick}) => {
   <div className="documents-summary-tab">
    <h4 className="small-title" > Main Document </h4>
    <DocumentSummary document={mainDoc} isMain onClick={onClick} />
-   <h4 className="small-title" > Other Documents</h4>
-   {otherDocs.map(document => <DocumentSummary document={document} /> )}
+   {hasOtherDocs(otherDocs)}
+   {
+    otherDocs.map(document => <DocumentSummary document={document} onClick={onClick} /> )
+   }
   </div>
   )
 
 }
 
 const DocumentSummary = ({ document, isMain, onClick }) => (
-  <a className="document-summary" href={document.editorUrl} target="_blank" onClick={e=> onClick({ isMain })}>
+  <a className="document-summary" href={document.editorUrl} target="_blank" onClick={e => onClick({ isMain })}>
     <div className="wrapper-title-status">
      <span className={document.status.toLowerCase()}>{document.status}</span>
      <h2>{document.title}</h2>
@@ -61,6 +63,17 @@ const DocumentSummary = ({ document, isMain, onClick }) => (
     <p>{document.summary || "Our goal at Prismic is to build the future of the CMS. All our improvements and features are based on the great"}</p>
   </a>
 )
+
+const hasOtherDocs = otherDocs => {
+  if(otherDocs && otherDocs.length){ // check if array exist and has elements
+    return(
+      <h4 className="small-title" > Other Documents</h4>
+    );
+  }
+}
+
+
+/* Old toolbar
 
 const MainDocument = ({ doc, onClick }) => (
   <div className="MainDocument top">
@@ -139,3 +152,4 @@ const Document = ({ doc, isMain, onClick }) => {
   );
 };
 
+*/

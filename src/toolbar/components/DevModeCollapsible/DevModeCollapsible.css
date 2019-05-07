@@ -5,19 +5,21 @@
 .Collapsible__trigger{
     height: 70px;
     display: block;
-    border-bottom: 1px solid #E0E2EE;
-    border-top: 1px solid #E0E2EE;
     padding-left:25px;
     padding-top:15px;
+
+    &.is-open{
+      border-bottom: 1px solid #E0E2EE;
+    }
 }
 
 .Collapsible__contentOuter{
     background: #F5F6F9;
-    padding-left: 25px;
+    border-bottom: 1px solid #E0E2EE;
 }
 
 .wrapper-trigger{
-
+    cursor:pointer;
 
     & .trigger-title{
         font-size: 16px;
@@ -37,9 +39,42 @@
     & .trigger-triangle{
         position: relative;
         left: 370px;
-        bottom: 29px;
-        background: #3F4A56;
-        height: 12px;
-        width: 8px;
+        bottom: 30px;
+        color: #3F4A56;
+        height: 10px;
+        width: 10px;
+        line-height: 12px;
+        transition: all 0.2s ease;
+
+        &.active{
+           transform: rotate(90deg);
+        }
     }
 }
+
+.wrapper-json{
+    padding: 20px 0px 0px 25px;
+
+    & .react-json-view{
+        padding-bottom: 20px;
+    }
+
+    & .object-key-val{
+        & .object-key:hover{
+        background: rgba(81,99,186,0.10);
+        }
+        & .array-key:hover{
+        background: rgba(81,99,186,0.10);
+        }
+    }
+
+    & .variable-row:hover{
+        background: rgba(81,99,186,0.10);
+
+        & .object-key:hover{
+            background: transparent;
+        }
+    }
+}
+
+
