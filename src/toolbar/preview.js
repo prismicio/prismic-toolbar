@@ -32,8 +32,8 @@ export class Preview {
   start = async ref => {
     if (!ref) return this.end();
     if (ref === this.cookie.preview) return;
-    this.cookie.preview = ref;
-    reloadOrigin();
+    //  this.cookie.preview = ref;
+     reloadOrigin();
     this.shouldReload = true;
   };
 

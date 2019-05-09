@@ -29,7 +29,7 @@ window.prismic = window.PrismicToolbar = {
   }),
 };
 
-withPolyfill(_ => { 
+withPolyfill(_ => {
   const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
   let repos = new Set();
 
@@ -57,7 +57,7 @@ withPolyfill(_ => {
 let setupDomain = null;
 async function setup (rawInput) {
   // Imports
-  const { Messenger, Publisher, warn } = require('common');
+  const { createMessenger, Publisher, warn } = require('common');
   const { fixPreviewCookie } = require('./cookies');
   const { parseEndpoint } = require('./utils');
   const { screenshot } = require('common/screenshot');
@@ -84,7 +84,9 @@ async function setup (rawInput) {
   setupDomain = domain;
 
   // Communicate with repository
-  const messenger = new Messenger(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
+  const messenger = await createMessenger(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
+  console.log("messenger")
+  console.log(messenger)
   new Publisher({ screenshot });
 
   // Request Tracker (prediction)

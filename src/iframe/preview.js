@@ -1,5 +1,5 @@
 import { fetchy, query, getCookie, demolishCookie, wait, throttle, memoize } from 'common';
-import { state, messenger } from './utils';
+import { state, messengerF } from './utils';
 
 // Check for new preview ref
 let newRef = null;
@@ -68,7 +68,7 @@ const uploadScreenshot = async imageName => {
   body.append('Content-Type', 'image/png');
   body.append('Cache-Control', 'max-age=315360000');
   body.append('Content-Disposition', `inline; filename=${imageName}`);
-  body.append('file', await messenger.post('screenshot'));
+  body.append('file', await (await messengerF).post('screenshot'));
 
   // Upload
   return fetch(acl.url, { method: 'POST', body });

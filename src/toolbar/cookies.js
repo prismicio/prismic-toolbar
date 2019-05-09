@@ -19,7 +19,7 @@ export class PreviewCookie {
   }
 
   // Getters & Setters (shortcuts) ---------------------
-  
+
   get preview() {
     return PreviewCookie.getPreviewForDomainOrNull(this.domain)
   }
@@ -139,18 +139,18 @@ export class PreviewCookie {
     } catch(e) {
       try { // Or legacy
         compliant = {}
-        compliant[new URL(raw).hostname] = raw
+        compliant[new URL(raw).hostname] = {preview:raw}
       }
       catch(e) { // Or give up
         return
       }
     }
-    
+
     // Domain-specific validations
     Object.keys(compliant).filter(k => !/(_tracker|_url|_breaker|_user)/.test(k)).map(repoKey => {
       const repoVal = compliant[repoKey]
       const delRepo = _ => delete compliant[repoKey]
-      
+
       // Remove domain if the key is invalid
       if (!/^[-a-zA-Z0-9]+\.[a-z]+\.[a-z]+$/.test(repoKey)) return delRepo()
       // Remove domain if the value is not an Object

@@ -1,4 +1,4 @@
-import { Messenger, fetchy, getCookie, once } from 'common';
+import { createMessenger, fetchy, getCookie, once } from 'common';
 
 // Only fetch if live state is needed
 const liveStateNeeded = Boolean(getCookie('is-logged-in')) || Boolean(getCookie('io.prismic.previewSession'));
@@ -15,9 +15,9 @@ const getState = once(async _ => {
 const preview = _ => getState().then(s => s.preview);
 
 // Screenshot
-const messenger = new Messenger(window.parent);
+const messengerF = createMessenger(window.parent);
 
-export { isPrismicUser, getState as state, preview, messenger };
+export { isPrismicUser, getState as state, preview, messengerF };
 
 // Normalize toolbar state
 const normalizeState = (_state = {}) => {
