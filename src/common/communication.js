@@ -62,6 +62,7 @@ export class Publisher {
     }
 
     getPort(e) {
+      console.log(e);
       if (e.data !== 'port') return;
       window.removeEventListener('message', this.getPort.bind(this));
 

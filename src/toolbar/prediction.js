@@ -44,9 +44,11 @@ export class Prediction {
 
   // Dispatch documents to hooks
   dispatch = async (data) => {
-    const docData = await this.getDocsData(data.queries)
+    if(data.queries){
+      const docData = await this.getDocsData(data.queries)
+      this.docData = docData;
+    }
     this.documents = data.documents;
-    this.docData = docData;
     window.prismic._predictionDocuments = this.documents; // Debug
     Object.values(this.documentHooks).forEach(hook => hook(this.documents)); // Run the hooks
   }

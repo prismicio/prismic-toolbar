@@ -7,25 +7,23 @@ import ReactJson from 'react-json-view';
 export class DevModeCollapsible extends Component{
   constructor (props) {
     super(props);
-    this.state = { documents: props.documents, docData : props.docData }
+    this.state = {docData : props.docData }
   }
 
   render() {
     const { docData } = this.state;
-    if(!docData){return(<div className="devMode-noQueries"> There are no queries available right now</div>)}
+    if(!docData){return(<div className="dev-mode__no-queries"> There are no queries available right now, please reload the page</div>)}
 
     return (
       <Fragment>
       {
       docData.map(query => {
         const triggerInfo = getTriggerInfo(query);
-        const title = constructTitle(triggerInfo);
-        const countLinkedDoc = query.map(doc => countLinkedDocInObject(doc.data)).reduce((acc, val) => acc + val);
 
         return (
           <Collapsible
-            trigger={<Trigger title={title} nbLinkedDoc={countLinkedDoc} />}
-            triggerWhenOpen={<Trigger title={title} nbLinkedDoc={countLinkedDoc} isOpen />}
+            trigger={<Trigger title={triggerInfo.title} nbLinkedDoc={triggerInfo.nbLinkedDoc} />}
+            triggerWhenOpen={<Trigger title={triggerInfo.title} nbLinkedDoc={triggerInfo.nbLinkedDoc} isOpen />}
             transitionTime={100}>
 
             <div className="wrapper-json">
@@ -81,27 +79,35 @@ const Trigger = ({ title, nbLinkedDoc, isOpen }) => (
 const getTriggerInfo = docData => {
   if(!docData ){ return }
 
-  const startValueReducer = {nbLinkedDoc: 0, main: docData[0].type};
-
+  const startValueReducer = {};
+  /*
+    expected format of triggerInfo
+    {
+      type1 : ...,
+      type2 : ...,
+      ...
+    }
+  */
   const triggerInfo = docData.map(doc => {
       const type = doc.type;
-      const length = doc.linked_documents.length;
-      return {type: type, nbLinkedDoc: length}
+      return {type: type}
      }).reduce(
       triggerInfoReducer,
       startValueReducer
      )
-   return triggerInfo;
+  const title = constructTitle(triggerInfo);
+  // expected format of title : (X) type 1 & (Y) type 2 ...
+  const nbLinkedDoc = docData.map(doc => countLinkedDocInObject(doc.data)).reduce((acc, val) => acc + val);
+
+  // expected to return title and number of linked docs
+  return {title: title, nbLinkedDoc: nbLinkedDoc};
 }
 
 const constructTitle = triggerInfo => {
-  if(!triggerInfo){return ''}
+  if(!triggerInfo){return ""}
 
   let title = "";
   const copyInfo = JSON.parse(JSON.stringify(triggerInfo));
-  const main = triggerInfo.main;
-  delete copyInfo.main;
-  delete copyInfo.nbLinkedDoc;
 
   const keys = Object.keys(copyInfo);
   const length = keys.length;
@@ -116,19 +122,20 @@ const constructTitle = triggerInfo => {
 
 const triggerInfoReducer = (acc, val) => {
   if(acc[val.type]){
-    acc[val.type] += 1
+    acc[val.type] += 1;
   }else{
     acc[val.type] = 1;
   }
-  acc['nbLinkedDoc'] += val['nbLinkedDoc'];
   return acc;
 }
 
 const countLinkedDocInObject = (data) => {
-  if(!data){return 0}
-  if(data["link_type"] && data['link_type']['']){return 1}
+  if(!data){return 0} // First case data is empty or null
+  if(data["link_type"] === "Document" && data["id"]){return 1} // Second case there is a document, return 1 to increment the count
 
+  // Last case it is an object but not a document, so we check every object inside.
   var count = 0;
+  var types = {};
   const keys = Object.keys(data);
   keys.forEach(key => {
     if(typeof data[key] === "object"){

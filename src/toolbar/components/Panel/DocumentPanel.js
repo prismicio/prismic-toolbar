@@ -8,16 +8,24 @@ import { DevModeCollapsible } from '..';
 
 export const DocumentPanel = ({ documents, docData, onDocumentClick }) => {
   if (!documents.length) return null;
+  let panelContent;
+
+  if(docData){
+    panelContent = (<NavTabs
+                      tabsName={["Edit Button","Dev Mode"]}
+                      tabsContent={[
+                       <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />,
+                       <DevModeCollapsible docData={docData} />
+                      ]}
+                  />);
+  }else{
+    panelContent = <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />;
+  }
+
   return (
     <BasePanel className="DocumentPanel">
       <ToolbarHeader />
-      <NavTabs
-       tabsName={["Edit Button","Dev Mode"]}
-       tabsContent={[
-                    <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />,
-                    <DevModeCollapsible docData={docData} />
-                   ]}
-      />
+      {panelContent}
     </BasePanel>
   );
 }
