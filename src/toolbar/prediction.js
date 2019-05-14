@@ -1,4 +1,4 @@
-import { Hooks, wait, getLocation } from 'common';
+import { Hooks, wait, getLocation } from '@common';
 import { PreviewCookie } from './cookies';
 
 // Initial track
@@ -28,15 +28,15 @@ export class Prediction {
     wait(2).then(this.predict);
 
     // For initial page load SSR requests (match track -> url) and for quickly getting documents
-    const fetch = this.predict(initialTrack || PreviewCookie.track)
+    const fetch = this.predict(initialTrack || PreviewCookie.track);
     initialTrack = null;
-    await fetch
+    await fetch;
   }
 
   // Fetch predicted documents
   predict = async (track = null) => {
     this.dispatch(await this.messenger.post('documents', {
-      ref: this.cookie.preview,  // The ref for the version of content to display
+      ref: this.cookie.preview, // The ref for the version of content to display
       url: window.location.pathname, // The URL for which we need the documents
       track, // Match the prior request to this URL
       location: getLocation(), // Help sort main document

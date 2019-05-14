@@ -9,7 +9,7 @@ export const div = (id, options = {}) => {
   Object.assign(el.style, style);
   Object.assign(el, otherOpts, { id });
   return el;
-}
+};
 
 // Shadow DOM
 export const shadow = (id, options) => {
@@ -37,8 +37,8 @@ export function script(src) {
     let el = document.getElementById(src);
     if (!el) {
       el = document.createElement('script');
-      el.id = src
-      el.src = src
+      el.id = src;
+      el.src = src;
       document.head.appendChild(el);
     }
     el.addEventListener('load', _ => resolve(el));

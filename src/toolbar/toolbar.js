@@ -1,5 +1,5 @@
 import { render } from 'preact';
-import { appendCSS, shadow, readyDOM } from 'common';
+import { appendCSS, shadow, readyDOM } from '@common';
 import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
@@ -28,7 +28,7 @@ export class Toolbar {
     });
 
     // Put above Intercom
-    appendCSS(document.body, `#intercom-container { z-index: 2147483646 !important }`);
+    appendCSS(document.body, '#intercom-container { z-index: 2147483646 !important }');
 
     // Styles
     appendCSS(toolbar, shadowStyles);

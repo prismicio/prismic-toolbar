@@ -1,5 +1,6 @@
 // Animations
 import * as Animation from './animation';
+
 export { Animation };
 
 // Constants

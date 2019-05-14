@@ -1,4 +1,4 @@
-import { random, Hooks } from 'common';
+import { random, Hooks } from '@babel/preset-stage-2';
 import { PreviewCookie } from './cookies';
 
 // One breaker interval per scope (tab but ideally browser)

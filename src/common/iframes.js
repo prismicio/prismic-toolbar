@@ -12,7 +12,7 @@ function _connectIframeToMainHandler(event) {
   const iframeEvents = document.createElement('span')
 
   const portToMain = event.ports[0];
-  portToMain.onmessage = m => _dispatchEvent(iframeEvents, m)
+  _setupIframeMessageHandler(portToMain)
 
   return {
     postToMain: _post.bind(this, iframeEvents, portToMain)
@@ -32,24 +32,69 @@ async function _dispatchEvent(events, msg) {
   events.dispatchEvent(event);
 }
 
+async function buildIframe(src) {
+  const ifr = document.createElement('iframe');
+  ifr.src = src;
+  ifr.style.cssText='display:none!important';
+  return ifr
+}
+
 export const Iframes = {
-  connectMainToIframe({ iframeElement, portToIframe}) {
+  async connectMainToIframe({ iframeSrc, portToIframe, config }) {
     await _bodyReady()
+    const iframeElement = await buildIframe(iframeSrc)
 
     //use to trigger an event when receive a message from the iframe.
     // When we catch the message, we resolve the promise of the post function so we get the response as a promise for the triggered action.
     const mainEvents = document.createElement('span')
 
     document.body.append(iframeElement)
-    portToIframe.onmessage = m => _dispatchEvent(mainEvents, m)
+    await new Promise(resolve => {
+      iframeElement.addEventListener('load', _ => {
+        resolve(ifr)
+      }, { once: true })
+    })
+
+    _setupMainMessageHandler(portToIframe)
+
     iframeElement.contentWindow.postMessage('port', '*', [connectionWithMain]);
 
     return {
-      postToIframe: _post.bind(this, mainEvents, portToIframe)
+      hostname: typeof src === 'string' ? new URL(src).hostname : null,
+      send: _post.bind(this, mainEvents, portToIframe),
     }
   },
 
   connectIframeToMain() {
-    window.addEventListener('message', _connectIframeToMainHandler.bind(this))
+    return new Promise(resolve => {
+      window.addEventListener('message', (m) => {
+        resolve(await _connectIframeToMainHandler(m))
+      })
+    })
   }
+}
+
+const Roles = {
+  Sender: 'sender',
+  Receiver: 'receiver'
+}
+
+function _setupMessageHandler(port) {
+  port.onmessage = async e => {
+    const { role, type, data } = e.data;
+
+    if(role === Roles.receiver) {
+      const action = this.config[type];
+
+      let result;
+      if (typeof action === 'function') result = await action(data);
+      else if (action != null) result = await action;
+      else result = null;
+
+      port.postMessage({ type, data: result });
+    } else if(role === Roles.sender) {
+      const event = new CustomEvent(type, { detail: data != null ? data : null });
+      events.dispatchEvent(event);
+    }
+  };
 }

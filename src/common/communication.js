@@ -2,26 +2,24 @@
 // Messenger: String | Window -> Messenger
 
 export function createMessenger(src) {
-  const hostname = typeof src === 'string' ? new URL(src).hostname : null
-  const events = document.createElement('span')
-  return _setup(hostname, events, src)
+  const hostname = typeof src === 'string' ? new URL(src).hostname : null;
+  const events = document.createElement('span');
+  return _setup(hostname, events, src);
 }
 
 async function _setup(hostname, events, src) {
-  const body = await documentBody()
-  console.log(body)
+  const body = await documentBody();
   const ifr = iframe(src);
-  console.log(ifr)
-  body.appendChild(ifr)
+  body.appendChild(ifr);
 
+  // wait for the iframe to be loaded
   await new Promise(resolve => {
     ifr.addEventListener('load', _ => {
-      console.log('loaded')
-      resolve(ifr)
-    }, { once: true })
-  })
+      resolve(ifr);
+    }, { once: true });
+  });
 
-  const { post } = establishConnection(ifr, events)
+  const { post } = establishConnection(ifr, events);
 
   return {
     hostname,
@@ -33,15 +31,15 @@ async function _setup(hostname, events, src) {
 function establishConnection(ifr, events) {
   const { port1: connectionWithIframe, port2: connectionWithMain } = new MessageChannel();
 
-  connectionWithIframe.onmessage = _dispatchEvent.bind(this, events)
+  connectionWithIframe.onmessage = _dispatchEvent.bind(this, events);
   ifr.contentWindow.postMessage('port', '*', [connectionWithMain]);
 
   return {
     post: _post.bind(this, connectionWithIframe, events)
-  }
+  };
 }
 async function _dispatchEvent(events, msg) {
-  console.log('dispatch event', msg)
+  console.log('dispatch event', msg);
   // if (msg.data === 'ready') {
   //   return this.becomeReady(); // Init
   // }
@@ -50,10 +48,21 @@ async function _dispatchEvent(events, msg) {
   events.dispatchEvent(event);
 }
 
+function setupMessageHandler(port) {
+  port.onmessage = async e => {
+    const { type, data } = e.data;
+    const action = this.config[type];
+
+    let result;
+    if (typeof action === 'function') result = await action(data);
+    else if (action != null) result = await action;
+    else result = null;
+
+    port.postMessage({ type, data: result });
+  };
+}
+
 async function _post(port, events, type, data = null) {
-  console.log("post to the iframe")
-  console.log(type)
-  console.log(data)
   return new Promise(resolve => {
     events.addEventListener(type, e => resolve(e.detail), { once: true });
     port.postMessage({ type, data });
@@ -61,11 +70,11 @@ async function _post(port, events, type, data = null) {
 }
 
 function iframe(src) {
-  //build the iframe
+  // build the iframe
   const ifr = document.createElement('iframe');
   ifr.src = src;
-  ifr.style.cssText='display:none!important';
-  return ifr
+  ifr.style.cssText = 'display:none!important';
+  return ifr;
 }
 
 function documentBody() {
@@ -130,33 +139,33 @@ function documentBody() {
 // });
 
 export class Publisher {
-    constructor(config) {
-      this.config = config;
-      // 1: Catch window event asking for port
-      window.addEventListener('message', this.getPort.bind(this));
-    }
-
-    getPort(e) {
-      console.log('getport', e)
-      if (e.data !== 'port') return;
-      window.removeEventListener('message', this.getPort.bind(this));
-
-      const port = e.ports[0];
-      this.listen(port); // 2: Wait for requests
-      port.postMessage('ready'); // 3: Send 'ready' back through port
-    }
-
-    async listen(port) {
-      port.onmessage = async e => {
-        const { type, data } = e.data;
-        const action = this.config[type];
-
-        let result;
-        if (typeof action === 'function') result = await action(data);
-        else if (action != null) result = await action;
-        else result = null;
-
-        port.postMessage({ type, data: result });
-      };
-    }
+  constructor(config) {
+    this.config = config;
+    // 1: Catch window event asking for port
+    window.addEventListener('message', this.getPort.bind(this));
   }
+
+  getPort(e) {
+    console.log('getport', e);
+    if (e.data !== 'port') return;
+    window.removeEventListener('message', this.getPort.bind(this));
+
+    const port = e.ports[0];
+    this.listen(port); // 2: Wait for requests
+    port.postMessage('ready'); // 3: Send 'ready' back through port
+  }
+
+  async listen(port) {
+    port.onmessage = async e => {
+      const { type, data } = e.data;
+      const action = this.config[type];
+
+      let result;
+      if (typeof action === 'function') result = await action(data);
+      else if (action != null) result = await action;
+      else result = null;
+
+      port.postMessage({ type, data: result });
+    };
+  }
+}

@@ -7,7 +7,7 @@ export const PreviewPanel = ({ onClose, preview }) => (
     <PreviewHeader title={preview.title} numberOfDocs={preview.documents.length} />
     <PreviewDocuments documents={preview.documents} />
   </BasePanel>
-)
+);
 
 const PreviewHeader = ({ title, numberOfDocs }) => (
   <div className="Header top">
@@ -22,11 +22,9 @@ const PreviewDocuments = ({ documents }) => (
   </div>
 );
 
-const PreviewDocument = ({ doc }) => {
-  return (
-    <a className="Draft" href={doc.url} target="_blank">
-      <h3>{doc.title}</h3>
-      <div>{doc.summary}</div>
-    </a>
-  )
-};
+const PreviewDocument = ({ doc }) => (
+  <a className="Draft" href={doc.url} target="_blank">
+    <h3>{doc.title}</h3>
+    <div>{doc.summary}</div>
+  </a>
+);

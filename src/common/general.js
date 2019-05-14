@@ -1,8 +1,9 @@
-const oneLine = (...str) => String.raw(...str).split('\n').map(line => line.trim()).join('\n').trim()
+const oneLine = (...str) => String.raw(...str).split('\n').map(line => line.trim()).join('\n')
+  .trim();
 
 // Console warn one-liner
-export const warn = (...str) => console.warn('Prismic Toolbar\n\n' + oneLine(...str))
-export const err = (...str) => {throw new Error('Prismic Toolbar\n\n' + oneLine(...str))}
+export const warn = (...str) => console.warn('Prismic Toolbar\n\n' + oneLine(...str));
+export const err = (...str) => { throw new Error('Prismic Toolbar\n\n' + oneLine(...str)); };
 
 // Is pure Object
 export const isObject = val => Boolean(val && typeof val === 'object' && val.constructor === Object);
@@ -21,7 +22,7 @@ export const ellipsis = (text, cutoff) =>
   text.length > cutoff ? text.substring(0, cutoff - 1) + '…' : text;
 
 // ReadyDOM - DOM Listener is useless (await X is already asynchronous)
-export const readyDOM = async _ => {
+export const readyDOM = async () => {
   if (document.readyState !== 'complete') await wait(0);
   return true;
 };
@@ -189,8 +190,8 @@ export function script(src) {
     let el = document.getElementById(src);
     if (!el) {
       el = document.createElement('script');
-      el.id = src
-      el.src = src
+      el.id = src;
+      el.src = src;
       document.head.appendChild(el);
     }
     el.addEventListener('load', _ => resolve(el));

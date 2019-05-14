@@ -1,4 +1,4 @@
-import { script, disabledCookies } from 'common';
+import { script, disabledCookies } from '@common';
 import { ExperimentCookie } from './cookies';
 import { reloadOrigin } from './utils';
 
@@ -21,11 +21,11 @@ export class Experiment {
     const old = this.cookie.get();
     this.cookie.set(this.expId, this.variation);
     if (this.cookie.get() !== old) reloadOrigin();
-  };
+  }
 
   end() {
     const old = this.cookie.get();
     this.cookie.delete();
     if (this.cookie.get() !== old) reloadOrigin();
-  };
+  }
 }

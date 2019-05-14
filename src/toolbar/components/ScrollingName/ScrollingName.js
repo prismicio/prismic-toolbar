@@ -31,7 +31,7 @@ export class ScrollingName extends Component {
   }
 
   render() {
-    let { children, ...other } = this.props;
+    const { children, ...other } = this.props;
     return (
       <div {...other}>
         <div>{children}</div>

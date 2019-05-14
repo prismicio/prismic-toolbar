@@ -4,12 +4,8 @@ export class Analytics {
   }
 
   // Track edit button document clicks
-  trackDocumentClick = arg => {
-    return this.messenger.post('trackDocumentClick', arg);
-  }
+  trackDocumentClick = arg => this.messenger.post('trackDocumentClick', arg)
 
   // Track initial setup of toolbar
-  trackToolbarSetup = () => {
-    return this.messenger.post('trackToolbarSetup');
-  }
+  trackToolbarSetup = () => this.messenger.post('trackToolbarSetup')
 }

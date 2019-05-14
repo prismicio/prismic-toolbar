@@ -3,7 +3,7 @@ import { xSvg, linkSvg } from '.';
 
 const { DRAFTS, SHARE } = views;
 
-export const PreviewMenu = ({ setPage, preview, in:inProp }) => {
+export const PreviewMenu = ({ setPage, preview, in: inProp }) => {
   const len = preview.documents.length;
   return (
     <Animation.SlideIn in={inProp}>

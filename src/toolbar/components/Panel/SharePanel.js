@@ -1,5 +1,5 @@
 import { Component } from 'preact';
-import { copyText, memoize, wait } from 'common';
+import { copyText, memoize, wait } from '@common';
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
 
@@ -7,7 +7,7 @@ export class SharePanel extends Component {
   constructor() {
     super(...arguments);
     this.state = { loading: true, url: '' };
-    this.props.preview.share().then(url => this.setState({ url, loading: false }))
+    this.props.preview.share().then(url => this.setState({ url, loading: false }));
   }
 
   render() {

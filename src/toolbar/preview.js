@@ -1,18 +1,18 @@
-import { getLocation } from 'common';
+import { getLocation } from '@common';
 import { PreviewCookie } from './cookies';
 import { reloadOrigin } from './utils';
 
 export class Preview {
-  constructor(messenger) {
-    this.cookie = new PreviewCookie(messenger.hostname);
-    this.messenger = messenger;
+  constructor(client) {
+    this.cookie = new PreviewCookie(client.hostname);
+    this.client = client;
     this.shouldReload = false;
   }
 
   // Run once on page load to start or end preview
-  setup = async _ => {
+  setup = async () => {
     // Get state
-    const preview = (await this.messenger.post('preview')) || {};
+    const preview = (await this.client.post('preview')) || {};
 
     // Assign state
     this.active = Boolean(preview.ref);
@@ -25,7 +25,8 @@ export class Preview {
     await this.start(this.ref);
 
     // Update on new preview ref
-    if (this.active) this.messenger.post('newPreviewRef').then(this.start);
+    // update every 3s
+    if (this.active) this.client.post('newPreviewRef').then(this.start);
   };
 
   // Start preview
@@ -33,14 +34,14 @@ export class Preview {
     if (!ref) return this.end();
     if (ref === this.cookie.preview) return;
     //  this.cookie.preview = ref;
-     reloadOrigin();
+    reloadOrigin();
     this.shouldReload = true;
   };
 
   // End preview
-  end = async _ => {
+  end = async () => {
     const old = this.cookie.preview;
-    await this.messenger.post('closePreview');
+    await this.client.post('closePreview');
     this.cookie.preview = null;
     if (!old) return;
     reloadOrigin();
@@ -48,5 +49,8 @@ export class Preview {
   };
 
   // Start sharing preview
-  share = _ => this.messenger.post('sharePreview', getLocation());
+  share = () => {
+    //make the screenshot and send it to share preview
+    this.client.post('sharePreview', getLocation());
+  }
 }

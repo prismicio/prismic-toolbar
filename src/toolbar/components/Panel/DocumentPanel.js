@@ -1,4 +1,4 @@
-import { ellipsis, switchy } from 'common';
+import { ellipsis, switchy } from '@common';
 import { BasePanel, prismicSvg } from '.';
 import { Icon } from '..';
 
@@ -10,7 +10,7 @@ export const DocumentPanel = ({ documents, onDocumentClick }) => {
       <OtherDocuments documents={documents.slice(1)} onClick={onDocumentClick} />
     </BasePanel>
   );
-}
+};
 
 const MainDocument = ({ doc, onClick }) => (
   <div className="MainDocument top">

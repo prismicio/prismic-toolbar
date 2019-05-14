@@ -1,34 +1,29 @@
-import { fetchy, query, getCookie, demolishCookie, wait, throttle, memoize } from 'common';
-import { state, messengerF } from './utils';
+import { fetchy, query, getCookie, demolishCookie, wait, throttle, memoize } from '@common';
+import { getState } from './toolbarState';
 
 // Check for new preview ref
-let newRef = null;
-const fetcher = throttle(async _ => {
-  const s = await state()
+const fetcher = throttle(async () => {
+  const s = await getState();
   const ref = encodeURIComponent(s.preview.ref);
   return fetchy({ url: `/previews/${sessionId}/ping?ref=${ref}` });
 }, 2000);
 
-export const newPreviewRef = async _ => {
-  while (true) {
-    if (newRef) return newRef;
-    const { reload, ref } = await fetcher();
-    if (reload) newRef = ref;
-    if (newRef) return newRef;
-    await wait(3);
-  }
-};
+export function getCurrentPreviewRef () /* Promise<{ reload: boolean, ref: string }> */{
+  return fetcher();
+}
 
 // Session id
 const sessionId = getCookie('io.prismic.previewSession');
 
 // Close preview session
-export const closePreview = _ => demolishCookie('io.prismic.previewSession');
+export function closePreviewSession () /* void */{
+  demolishCookie('io.prismic.previewSession');
+}
 
 // Share
 export const sharePreview = memoize(async location => {
   const imageId = location.pathname.slice(1) + location.hash + sessionId + '.jpg';
-  const imageName = imageId
+  const imageName = imageId;
   const session = await getShareableSession({ location, imageName });
   if (!session.hasPreviewImage) uploadScreenshot(imageName);
   return session.url;
@@ -36,7 +31,7 @@ export const sharePreview = memoize(async location => {
 
 // Get shareable session
 const getShareableSession = async ({ location, imageName }) => {
-  const s = await state()
+  const s = await getState();
   const qs = query({
     sessionId,
     pageURL: location.href,

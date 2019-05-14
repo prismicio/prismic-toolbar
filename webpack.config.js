@@ -9,9 +9,9 @@ const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
 
-module.exports = (_, { mode }) => {
+module.exports = (_, options) => {
 
-  const dev = mode === 'development';
+  const dev = !options || options.mode === 'development';
 
   return {
     // Minimal console output
@@ -36,12 +36,17 @@ module.exports = (_, { mode }) => {
     },
 
     // Helper Functions
-    resolve: { alias:{
-      common: relative('src/common'),
-      common: relative('src/common'),
-      'react': 'preact-compat',
-      'react-dom': 'preact-compat',
-    } },
+    resolve: {
+      alias: {
+        '~': relative('src'),
+        '@common': relative('src/common'),
+        '@toolbar': relative('src/toolbar'),
+        '@iframe': relative('src/iframe'),
+        '@toolbar-service': relative('src/toolbar-service'),
+        react: 'preact-compat',
+        'react-dom': 'preact-compat',
+      }
+    },
 
     plugins: [
       // Ensure working regenerator-runtime
@@ -93,6 +98,13 @@ module.exports = (_, { mode }) => {
           test: /\.js$/,
           exclude: /node_modules/,
           use: 'babel-loader',
+        },
+
+        // ESLint
+        {
+          test: /\.js$/,
+          exclude: /node_modules/,
+          use: ['eslint-loader']
         },
 
         // DataURI Image Loader
