@@ -25,12 +25,12 @@ window.prismic = window.PrismicToolbar = {
     const { Experiment } = require('./experiment');
     new Experiment(expId);
   }),
-  setupEditButton/* Legacy */: withPolyfill(_ => {
+  setupEditButton/* Legacy */: withPolyfill(() => {
     warn`window.prismic.setupEditButton is deprecated.`;
   }),
 };
 
-withPolyfill(_ => {
+withPolyfill(() => {
   const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
   let repos = new Set();
 
@@ -59,18 +59,12 @@ let setupDomain = null;
 async function setup (rawInput) {
   // Imports
   const { ToolbarService } = require('@toolbar-service');
-  const { warn } = require('@common');
-  const { fixPreviewCookie } = require('./cookies');
   const { parseEndpoint } = require('./utils');
-  const { screenshot } = require('@common/screenshot');
   const { Tracker } = require('./tracker');
   const { Preview } = require('./preview');
   const { Prediction } = require('./prediction');
   const { Analytics } = require('./analytics');
   const { Toolbar } = require('./toolbar');
-
-  // Fix broken preview cookies and ensure the path is /
-  fixPreviewCookie();
 
   // Validate repository
   const domain = parseEndpoint(rawInput);
@@ -87,12 +81,13 @@ async function setup (rawInput) {
 
   // Communicate with repository
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
+  const { previewState, predictionDocs } = await toolbarClient.getInitialData();
 
   // Request Tracker (prediction)
   new Tracker(toolbarClient);
 
   // Preview & Prediction
-  const preview = new Preview(toolbarClient);
+  const preview = new Preview(toolbarClient, previewState);
   const prediction = new Prediction(toolbarClient);
   const analytics = new Analytics(toolbarClient);
 

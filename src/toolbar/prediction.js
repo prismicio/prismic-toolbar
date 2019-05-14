@@ -23,7 +23,7 @@ export class Prediction {
   }
 
   // Start predictions for this URL
-  start = async _ => {
+  start = async () => {
     // Wait for the frontend (React) app to finish loading requests. Fetch again.
     wait(2).then(this.predict);
 

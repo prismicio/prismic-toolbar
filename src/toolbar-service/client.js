@@ -25,6 +25,10 @@ export default class Client {
     return this.hostname;
   }
 
+  getInitialData() {
+    return this._messageToPromise(Messages.InitialData);
+  }
+
   updatePreview() {
     return this._messageToPromise(Messages.UpdatePreview);
   }

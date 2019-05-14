@@ -1,7 +1,7 @@
 // Browser detection
 const ltIE11 = window.navigator.userAgent.indexOf('MSIE ') > 0;
 const isIE11 = window.navigator.userAgent.indexOf('Trident/') > 0;
-const isIE = ltIE11 | isIE11;
+const isIE = ltIE11 || isIE11;
 
 // Callback vars
 const callbacks = [];
@@ -31,5 +31,5 @@ function loadScript(src, callback) {
   const el = document.createElement('script');
   el.src = src;
   document.head.appendChild(el);
-  el.addEventListener('load', _ => callback(el));
+  el.addEventListener('load', () => callback(el));
 }

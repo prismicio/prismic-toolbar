@@ -1,6 +1,5 @@
 // General helpers
 export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
-export { createMessenger, Publisher } from './communication';
 export { Hooks } from './hooks';
 export { Sorter } from './sorter';
 export {

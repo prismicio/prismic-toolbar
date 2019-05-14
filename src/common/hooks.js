@@ -65,10 +65,10 @@ window.history.pushState = wrapHistory('pushState');
 window.history.replaceState = wrapHistory('replaceState');
 
 // Active Tab Hook
-window.addEventListener('focus', _ => {
+window.addEventListener('focus', () => {
   event('activeTab', true);
 });
 
-window.addEventListener('blur', _ => {
+window.addEventListener('blur', () => {
   event('activeTab', false);
 });

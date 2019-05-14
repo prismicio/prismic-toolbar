@@ -1,5 +1,5 @@
 import { random, Hooks } from '@babel/preset-stage-2';
-import { PreviewCookie } from './cookies';
+import { PreviewCookie } from './preview-cookie';
 
 // One breaker interval per scope (tab but ideally browser)
 let breakerInterval;
@@ -41,12 +41,12 @@ export class Tracker {
     // breakerInterval = setInterval(_ => (PreviewCookie.breaker = random(8)), 150);
 
     // Hooks for updating url
-    this.hooks.on('keydown', _ => (PreviewCookie.url = null));
-    this.hooks.on('unload', _ => (PreviewCookie.url = null));
-    this.hooks.on('beforeRequest', _ => {
+    this.hooks.on('keydown', () => (PreviewCookie.url = null));
+    this.hooks.on('unload', () => (PreviewCookie.url = null));
+    this.hooks.on('beforeRequest', () => {
       clearTimeout(this.clearUrl);
       PreviewCookie.url = window.location.pathname;
-      this.clearUrl = setTimeout(_ => (PreviewCookie.url = null), 300);
+      this.clearUrl = setTimeout(() => (PreviewCookie.url = null), 300);
     });
   }
 

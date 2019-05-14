@@ -1,4 +1,3 @@
-import { getState } from '@iframe/toolbarState';
 import * as Prediction from '@iframe/prediction';
 import * as Preview from '@iframe/preview';
 import * as Analytics from '@iframe/analytics';
@@ -24,25 +23,25 @@ export function setup(portToMainWindow) {
 }
 
 async function getInitialData() /* Promise<{ state: Object, docs: Object[] }> */ {
-  const [toolbarState, predictionDocs] = await Promise.all(
-    [getState(), Prediction.getPredictionDocuments()]
+  const [previewState, predictionDocs] = await Promise.all(
+    [Preview.getState(), Prediction.getDocuments()]
   );
   return {
-    state: toolbarState,
-    docs: predictionDocs
+    previewState,
+    predictionDocs
   };
 }
 
 async function updatePreview() /* Promise<{ reload: boolean, ref: string }> */ {
-  return Preview.getCurrentPreviewRef();
+  return Preview.getCurrentRef();
 }
 
 async function closePreviewSession() /* Promise<null> */ {
-  return Preview.closePreviewSession();
+  return Preview.close();
 }
 
 async function sharePreview(location) {
-  return sharePreview(location);
+  return Preview.share(location);
 }
 
 async function trackDocumentClick({ isMain }) {

@@ -1,6 +1,6 @@
 import { fetchy, query, Sorter } from '@common';
 
-export const getPredictionDocuments = async ({ url, ref, track, location }) => {
+export const getDocuments = async ({ url, ref, track, location }) => {
   const data = await fetchy({
     url: `/toolbar/predict?${query({ url, ref, track })}`,
   }).then(res => res.documents.map(normalizeDocument));
@@ -21,13 +21,17 @@ export const getPredictionDocuments = async ({ url, ref, track, location }) => {
   );
 };
 
-const normalizeDocument = doc => ({
-  ...doc,
-  editorUrl: window.location.origin + doc.editorUrl,
-  status: (
-    doc.editorUrl.includes('c=unclassified') ? 'draft'
-      : doc.editorUrl.includes('c=release') ? 'release'
-        : doc.editorUrl.includes('c=variation') ? 'experiment'
-          : null
-  ),
-});
+function normalizeDocument(doc) {
+  const status = (() => {
+    if (doc.editorUrl.includes('c=unclassified')) return 'draft';
+    if (doc.editorUrl.includes('c=release')) return 'release';
+    if (doc.editorUrl.includes('c=variation')) return 'experiment';
+    return null;
+  })();
+
+  return {
+    ...doc,
+    editorUrl: window.location.origin + doc.editorUrl,
+    status
+  };
+}

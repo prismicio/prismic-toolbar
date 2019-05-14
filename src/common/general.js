@@ -37,12 +37,12 @@ export const delay = t => new Promise(rs => setTimeout(rs, t));
 export const reload = url => window.location.reload(url);
 
 // Cookies disabled
-export const disabledCookies = _ => !navigator.cookieEnabled;
+export const disabledCookies = () => !navigator.cookieEnabled;
 
 // Random id
 export const random = num => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  return [...Array(num)].map(_ => chars[Math.floor(Math.random() * chars.length)]).join('');
+  return [...Array(num)].map(() => chars[Math.floor(Math.random() * chars.length)]).join('');
 };
 
 // Build querystring
@@ -96,7 +96,7 @@ export const throttle = (func, timeout) => {
   return function() {
     const since = Date.now() - lastRan;
     const due = since >= timeout;
-    const run = _ => {
+    const run = () => {
       lastRan = Date.now();
       lastReturn = func.apply(this, arguments);
     };
@@ -147,7 +147,7 @@ export const localStorage = (key, defaultValue = null) => ({
 });
 
 // Simple location object
-export const getLocation = _ => {
+export const getLocation = () => {
   const { href, origin, protocol, host, hostname, port, pathname, search, hash } = window.location;
   return {
     href,
@@ -165,10 +165,10 @@ export const getLocation = _ => {
 // Generate a shadow DOM
 export const shadow = attr => {
   const div = document.createElement('div');
-  for (const [key, val] of Object.entries(attr)) div.setAttribute(key, val);
-  const shadow = document.head.attachShadow && div.attachShadow({ mode: 'open' });
+  Object.entries(attr).forEach(([key, value]) => div.setAttribute(key, value));
+  const shadowRoot = document.head.attachShadow && div.attachShadow({ mode: 'open' });
   document.body.appendChild(div);
-  return shadow || div;
+  return shadowRoot || div;
 };
 
 // Delete DOM nodes with CSS query
@@ -194,6 +194,6 @@ export function script(src) {
       el.src = src;
       document.head.appendChild(el);
     }
-    el.addEventListener('load', _ => resolve(el));
+    el.addEventListener('load', () => resolve(el));
   });
 }

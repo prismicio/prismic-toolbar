@@ -1,4 +1,4 @@
-import { eventToPromise } from '@common/utils';
+import { eventToPromise } from '@common/promise-utils';
 import ToolbarServiceClient from '@toolbar-service/client';
 import { setup as setupIframe } from './iframe';
 import { ToolbarServiceProtocol } from './messages';

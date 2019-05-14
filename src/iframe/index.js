@@ -1,15 +1,6 @@
-const { withPolyfill } = require('@common/polyfill'); // Support IE 11
+import { withPolyfill } from '@common/polyfill'; // Support IE 11
+import ToolbarService from '@toolbar-service';
 
 withPolyfill(() => {
-  const { newPreviewRef, closePreview, sharePreview } = require('./preview');
-  const { trackDocumentClick, trackToolbarSetup } = require('./analytics');
-
-  // Publish State
-  new Publisher({
-    newPreviewRef,
-    closePreview,
-    sharePreview,
-    trackDocumentClick,
-    trackToolbarSetup,
-  });
+  ToolbarService.setupIframe();
 })();
