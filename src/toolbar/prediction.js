@@ -1,5 +1,6 @@
 import { Hooks, wait, getLocation, fetchy, query, getCookie } from 'common';
 import { PreviewCookie } from './cookies';
+import { reloadOrigin } from './utils';
 
 // Initial track
 let initialTrack = PreviewCookie.track;
@@ -14,6 +15,7 @@ export class Prediction {
     this.count = 0;
     this.apiEndPoint = apiEndPoint;
     this.baseEndPoint = apiEndPoint.substr(0, apiEndPoint.indexOf('/api'));
+    this.shouldReload = false;
   }
 
   // Start predictions for this page load
@@ -47,6 +49,10 @@ export class Prediction {
     if(data.queries){
       const docData = await this.getDocsData(data.queries)
       this.docData = docData;
+    }else{
+      reloadOrigin();
+      this.shouldReload = true;
+      return
     }
     this.documents = data.documents;
     window.prismic._predictionDocuments = this.documents; // Debug

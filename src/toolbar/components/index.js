@@ -14,3 +14,4 @@ export { PreviewMenu } from './PreviewMenu';
 export { ScrollingName } from './ScrollingName';
 export { NavTabs } from './NavTabs';
 export { DevModeCollapsible } from './DevModeCollapsible';
+export { JsonView } from './JsonView';

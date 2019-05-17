@@ -101,7 +101,7 @@ async function setup (rawInput) {
   await Promise.all([preview.setup(), prediction.setup()]);
 
   // Do not render toolbar while reloading (reload is async)
-  if (preview.shouldReload) return;
+  if (preview.shouldReload || prediction.shouldReload) return;
 
   // Toolbar
   new Toolbar({ messenger, preview, prediction, analytics });

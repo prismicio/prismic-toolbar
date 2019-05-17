@@ -2,20 +2,20 @@ import React, { Fragment } from 'react';
 import { ellipsis, switchy } from 'common';
 import { BasePanel, prismicWhiteSvg } from '.';
 import { Icon } from '..';
-import ReactJson from 'react-json-view';
 import { NavTabs } from '..';
 import { DevModeCollapsible } from '..';
 
 export const DocumentPanel = ({ documents, docData, onDocumentClick }) => {
   if (!documents.length) return null;
   let panelContent;
+  const jsonOrderToDisplay = ["id","uid","type","data","href","tags","first_publication_date","last_publication_date","lang","alternate_languages"]
 
   if(docData){
     panelContent = (<NavTabs
                       tabsName={["Edit Button","Dev Mode"]}
                       tabsContent={[
                        <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />,
-                       <DevModeCollapsible docData={docData} />
+                       <DevModeCollapsible docData={docData} order={jsonOrderToDisplay} />
                       ]}
                   />);
   }else{

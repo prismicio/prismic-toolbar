@@ -61,7 +61,6 @@
     "preact-compat": "^3.18.4",
     "puppeteer": "^1.10.0",
     "raw-loader": "^0.5.1",
-    "react-json-view": "^1.19.1",
     "react-transition-group": "^2.5.0",
     "regenerator-runtime": "^0.12.1",
     "rimraf": "^2.6.2",
@@ -75,6 +74,7 @@
   },
   "dependencies": {
     "react-collapsible": "^2.6.0",
-    "react-tabs": "^3.0.0"
+    "react-tabs": "^3.0.0",
+    "react-treebeard": "^2.1.0"
   }
 }
