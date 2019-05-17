@@ -40,7 +40,7 @@ const Document = ({ doc, isMain, onClick }) => {
   const summary = doc.summary || 'No summary available.';
 
   return (
-    <a className="Document" href={doc.editorUrl} target="_blank" onClick={_ => onClick({ isMain })}>
+    <a className="Document" href={doc.editorUrl} target="_blank" onClick={() => onClick({ isMain })}>
       <header>
         <h3>{title}</h3>
         {switchy(doc.status)({

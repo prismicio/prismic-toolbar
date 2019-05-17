@@ -10,12 +10,12 @@ export const PreviewMenu = ({ setPage, preview, in: inProp }) => {
       <div className="PreviewMenu">
         <div className="top">
           <ScrollingName className='preview-title'>{preview.title}</ScrollingName>
-          {Boolean(len) && <div className="docs" onClick={_ => setPage(DRAFTS)}>
+          {Boolean(len) && <div className="docs" onClick={() => setPage(DRAFTS)}>
             ({len} doc{len !== 1 ? 's' : ''})
           </div>}
         </div>
 
-        <div className="share" onClick={_ => setPage(SHARE)}>
+        <div className="share" onClick={() => setPage(SHARE)}>
           <span>Get a shareable link</span>
           <Icon className="link" src={linkSvg} />
         </div>

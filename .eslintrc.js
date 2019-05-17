@@ -31,6 +31,7 @@ module.exports = {
     'prefer-rest-params': 0,
     'nonblock-statement-body-position': 0,
     'no-underscore-dangle': 0,
+    'react/react-in-jsx-scope': 0,
     'comma-dangle': [
       'error',
       {

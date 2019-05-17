@@ -21,10 +21,6 @@ export default class Client {
     });
   }
 
-  get hostname() {
-    return this.hostname;
-  }
-
   getInitialData() {
     return this._messageToPromise(Messages.InitialData);
   }
@@ -37,12 +33,12 @@ export default class Client {
     return this._messageToPromise(Messages.DeletePreviewSession);
   }
 
-  sharePreview() {
-    return this._messageToPromise(Messages.SharePreview);
+  sharePreview(location, blob) {
+    return this._messageToPromise(Messages.SharePreview, { location, blob });
   }
 
-  trackDocumentClick() {
-    return this._messageToPromise(Messages.TrackDocumentClick);
+  trackDocumentClick(data) {
+    return this._messageToPromise(Messages.TrackDocumentClick, data);
   }
 
   trackToolbarSetup() {

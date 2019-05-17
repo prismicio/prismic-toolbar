@@ -10,7 +10,8 @@ export const Panel = ({ closePanel, documents, preview, page, onDocumentClick })
     !page || (
       <Animation.SlideIn key={1}>{
         switchy(page)({
-          [DOCS]: <DocumentPanel documents={documents} onClose={closePanel} onDocumentClick={onDocumentClick} />,
+          [DOCS]: <DocumentPanel documents={documents}
+            onClose={closePanel} onDocumentClick={onDocumentClick} />,
           [DRAFTS]: <PreviewPanel preview={preview} onClose={closePanel} />,
           [SHARE]: <SharePanel preview={preview} onClose={closePanel} />,
         })

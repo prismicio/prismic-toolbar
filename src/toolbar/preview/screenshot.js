@@ -1,6 +1,6 @@
 let html2canvasPromise;
 
-export const screenshot = async () => {
+const screenshot = async () => {
   document.getElementById('prismic-toolbar-v2').setAttribute('data-html2canvas-ignore', true);
 
   if (!html2canvasPromise) html2canvasPromise = script('https://unpkg.com/html2canvas@1.0.0-alpha.12/dist/html2canvas.min.js');
@@ -23,3 +23,5 @@ function script(src) {
     el.addEventListener('load', () => resolve(el));
   });
 }
+
+export default screenshot;

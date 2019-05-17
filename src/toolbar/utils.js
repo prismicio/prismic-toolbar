@@ -1,15 +1,15 @@
 // Reload original page URL
 const { href } = window.location;
-export const reloadOrigin = _ => () => require('@common').reload(href);
+export const reloadOrigin = () => () => require('@common').reload(href);
 
 // Validate an endpoint
-const validEndpoint = repo => Boolean(repo) && !/[^-a-zA-Z0-9\.]/.test(repo);
+const validEndpoint = repo => Boolean(repo) && !/[^-a-zA-Z0-9.]/.test(repo);
 
 // Get window.prismic.endpoint
-export const getLegacyEndpoint = _ => {
+export const getLegacyEndpoint = () => {
   try {
     return new URL(window.prismic.endpoint).hostname.replace('.cdn', '');
-  } catch (_) {
+  } catch (e) {
     return window.prismic.endpoint;
   }
 };

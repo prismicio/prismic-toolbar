@@ -16,11 +16,11 @@ const PreviewRef = {
 };
 
 const Share = {
-  run: memoize(async location => {
+  run: memoize(async (location, blob) => {
     const imageId = location.pathname.slice(1) + location.hash + SESSION_ID + '.jpg';
     const imageName = imageId;
     const session = await this.getSession({ location, imageName });
-    if (!session.hasPreviewImage) this.uploadScreenshot(imageName);
+    if (!session.hasPreviewImage) this.uploadScreenshot(imageName, blob);
     return session.url;
   }, ({ href }) => href),
 
@@ -40,7 +40,7 @@ const Share = {
     });
   },
 
-  async uploadScreenshot(imageName) {
+  async uploadScreenshot(imageName, blob) {
     const acl = await fetchy({
       url: `/previews/${SESSION_ID}/acl`,
     });
@@ -55,7 +55,7 @@ const Share = {
     body.append('Content-Type', 'image/png');
     body.append('Cache-Control', 'max-age=315360000');
     body.append('Content-Disposition', `inline; filename=${imageName}`);
-    body.append('file', await (await messengerF).post('screenshot'));
+    body.append('file', blob);
 
     // Upload
     return fetch(acl.url, { method: 'POST', body });
@@ -69,28 +69,26 @@ const State = {
     if (!this.liveStateNeeded) return this.normalize();
     return fetchy({
       url: '/toolbar/state',
-    }).then(normalizeState);
+    }).then(this.normalize);
   }),
 
-  normalize: (_state = {}) => {
-    const state = {};
-    state.csrf = _state.csrf || null;
-    state.auth = Boolean(_state.isAuthenticated);
-    state.preview = _state.previewState || null;
-    if (state.preview) {
-      const old = state.preview;
-      const p = {};
-      p.ref = old.ref;
-      p.title = old.title;
-      p.updated = old.lastUpdate;
-      p.documents = []
-        .concat(old.draftPreview)
-        .concat(old.releasePreview)
-        .filter(Boolean);
-      state.preview = p;
-    }
-    return state;
-  }
+  normalize: (_state = {}) => (
+    Object.assign({}, {
+      csrf: _state.csrf || null,
+      auth: Boolean(_state.isAuthenticated),
+      preview: _state.previewState || null
+    }, _state.previewState ? {
+      preview: {
+        ref: _state.previewState.ref,
+        title: _state.previewState.title,
+        updated: _state.previewState.lastUpdate,
+        documents: []
+          .concat(_state.previewState.draftPreview)
+          .concat(_state.previewState.releasePreview)
+          .filter(Boolean)
+      }
+    } : {})
+  )
 };
 
 export default {

@@ -4,8 +4,7 @@ import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
 export class Toolbar {
-  constructor({ messenger, preview, prediction, analytics }) {
-    this.messenger = messenger;
+  constructor({ preview, prediction, analytics }) {
     this.preview = preview;
     this.prediction = prediction;
     this.analytics = analytics;
@@ -13,11 +12,6 @@ export class Toolbar {
   }
 
   async setup() {
-    const { auth } = await this.messenger.post('state');
-
-    // Hide for normal visitors
-    if (!auth && !this.preview.active) return;
-
     // Because we need the DOM now
     await readyDOM();
 

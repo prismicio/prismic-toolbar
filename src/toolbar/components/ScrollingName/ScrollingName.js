@@ -3,7 +3,8 @@ import { Component } from 'preact';
 export class ScrollingName extends Component {
   componentDidMount() {
     this.mounted = true;
-    this.inner = this.base.children[0];
+    const [inner] = this.base.children;
+    this.inner = inner;
     this.base.addEventListener('mouseover', this.animate.bind(this));
     this.base.addEventListener('mouseout', this.reset.bind(this));
   }

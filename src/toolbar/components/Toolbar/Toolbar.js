@@ -21,7 +21,7 @@ export class Toolbar extends Component {
       <div className="Toolbar">
         <Panel
           onDocumentClick={analytics.trackDocumentClick}
-          closePanel={_ => this.setPage(NONE)}
+          closePanel={() => this.setPage(NONE)}
           documents={documents}
           preview={preview}
           page={page}

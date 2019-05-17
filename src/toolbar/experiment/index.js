@@ -1,6 +1,6 @@
 import { script, disabledCookies } from '@common';
-import { ExperimentCookie } from './cookies';
-import { reloadOrigin } from './utils';
+import { ExperimentCookie } from './cookie';
+import { reloadOrigin } from '../utils';
 
 export class Experiment {
   constructor(expId) {

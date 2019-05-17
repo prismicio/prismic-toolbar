@@ -61,4 +61,4 @@ const Iframe = {
   }
 };
 
-export const ToolbarService = { getClient: Client.get, setupIframe: Iframe.setup };
+export default { getClient: Client.get, setupIframe: Iframe.setup };

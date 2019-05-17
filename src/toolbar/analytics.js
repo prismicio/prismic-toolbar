@@ -1,11 +1,11 @@
 export class Analytics {
-  constructor(messenger) {
-    this.messenger = messenger;
+  constructor(client) {
+    this.client = client;
   }
 
   // Track edit button document clicks
-  trackDocumentClick = arg => this.messenger.post('trackDocumentClick', arg)
+  trackDocumentClick = arg => this.client.trackDocumentClick(arg);
 
   // Track initial setup of toolbar
-  trackToolbarSetup = () => this.messenger.post('trackToolbarSetup')
+  trackToolbarSetup = () => this.client.trackToolbarSetup();
 }

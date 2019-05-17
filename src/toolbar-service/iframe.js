@@ -1,5 +1,5 @@
 import * as Prediction from '@iframe/prediction';
-import * as Preview from '@iframe/preview';
+import Preview from '@iframe/preview';
 import * as Analytics from '@iframe/analytics';
 
 import { Messages } from './messages';
@@ -40,8 +40,8 @@ async function closePreviewSession() /* Promise<null> */ {
   return Preview.close();
 }
 
-async function sharePreview(location) {
-  return Preview.share(location);
+async function sharePreview({ location, blob }) {
+  return Preview.share(location, blob);
 }
 
 async function trackDocumentClick({ isMain }) {
