@@ -49,12 +49,17 @@ export class PreviewCookie {
     const previewBlock = (() => {
       if (!preview) return {};
       if (isObject(preview)) return preview;
-      return { [this.domain]: preview };
+      return { [this.domain]: { preview } };
     })();
     return Object.assign({}, {
       _breaker: breaker || this.generateBreaker(),
       _tracker: tracker || this.generateTracker()
     }, urlBlock, previewBlock);
+  }
+
+  setDefault() {
+    const cookieValue = this.build({});
+    setCookie(PREVIEW_COOKIE_NAME, cookieValue);
   }
 
   generateTracker() {
@@ -67,8 +72,13 @@ export class PreviewCookie {
 
   upsertPreviewForDomain(previewRef) {
     const cookieData = this.get();
-    if (!cookieData.legacy) {
-      const updatedCookie = Object.assign({}, cookieData.cookie, { [this.domain]: previewRef });
+    if (cookieData && !cookieData.legacy) {
+      const updatedCookie = this.build({
+        preview: previewRef,
+        url: cookieData.cookie.url,
+        tracker: cookieData.cookie.tracker,
+        breaker: cookieData.cookie.breaker
+      });
       setCookie(PREVIEW_COOKIE_NAME, updatedCookie);
     } else {
       const compliantCookie = this.build({ preview: cookieData });
@@ -82,22 +92,26 @@ export class PreviewCookie {
 
   getRefForDomain() {
     const cookieData = this.get();
+    if (!cookieData) return;
     if (cookieData.legacy) return cookieData.cookie;
-    return cookieData.cookie.preview[this.domain];
+    return cookieData.cookie[this.domain] && cookieData.cookie[this.domain].preview;
   }
 
   getTracker() {
     const cookieData = this.get();
+    if (!cookieData) return;
     if (!cookieData.legacy) return cookieData.cookie._tracker;
   }
 
   getBreaker() {
     const cookieData = this.get();
+    if (!cookieData) return;
     if (!cookieData.legacy) return cookieData.cookie._breaker;
   }
 
   refreshBreaker() {
     const cookieData = this.get();
+    if (!cookieData) return;
     if (!cookieData.legacy) {
       const updatedCookie = Object.assign(
         {},

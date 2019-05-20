@@ -21,16 +21,20 @@ export default class Client {
     });
   }
 
-  getInitialData() {
-    return this._messageToPromise(Messages.InitialData);
+  getPreviewState() {
+    return this._messageToPromise(Messages.PreviewState);
+  }
+
+  getPredictionDocs(data) {
+    return this._messageToPromise(Messages.PredictionDocs, data);
   }
 
   updatePreview() {
     return this._messageToPromise(Messages.UpdatePreview);
   }
 
-  deletePreviewSession() {
-    return this._messageToPromise(Messages.DeletePreviewSession);
+  closePreviewSession() {
+    return this._messageToPromise(Messages.ClosePreviewSession);
   }
 
   sharePreview(location, blob) {

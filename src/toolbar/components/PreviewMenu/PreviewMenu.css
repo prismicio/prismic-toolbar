@@ -3,7 +3,7 @@
   color: white;
 	border-radius: 6px;
 	width: 395px;
-	height: 70px;
+  height: 70px;
   padding: 15px 22px;
   background: #5163BA;
   will-change: transform;
@@ -35,6 +35,12 @@
     }
   }
 
+  & a.powered-prismic {
+    color: #F5F6F9;
+    margin-top: 8px;
+    font-size: 12px;
+  }
+
   & .share {
     color: #B6C1FD;
     text-decoration: underline;
@@ -47,7 +53,7 @@
   & .x {
     position: absolute;
     right: 22px;
-    top: 26px;
+    top: calc(50% - 9px);
     cursor: pointer;
     user-select: none;
     transition: all .2s;

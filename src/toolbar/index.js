@@ -82,35 +82,33 @@ async function setup (rawInput) {
 
   // Communicate with repository
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
-
-  // fetch state with preview
   const previewState = await toolbarClient.getPreviewState();
+  const previewCookie = new PreviewCookie(toolbarClient.hostname);
+  const preview = new Preview(toolbarClient, previewCookie, previewState);
 
-  // do not render the toolbar if not authenticated
-  if (previewState.auth) {
-    // build Preview
-    const previewCookie = new PreviewCookie(toolbarClient.hostname);
-    const preview = new Preview(toolbarClient, previewCookie, previewState);
+  const { prediction, analytics } = (() => {
+    if (previewState.auth) {
+      new Tracker(toolbarClient, previewCookie);
+      return {
+        prediction: new Prediction(toolbarClient, previewCookie),
+        analytics: new Analytics(toolbarClient)
+      };
+    }
+    // default case if not authenticated
+    return {
+      prediction: null,
+      analytics: null
+    };
+  })();
+  // Start concurrently preview (always) and prediction (if authenticated)
+  const [{ displayPreview }] = await (async () => {
+    if (prediction) return Promise.all([preview.setup(), prediction.setup()]);
+    return [await preview.setup()];
+  })();
 
-    // build Prediction
-    const prediction = new Prediction(toolbarClient, previewCookie);
+  // render toolbar
+  new Toolbar({ displayPreview, auth: previewState.auth, preview, prediction, analytics });
 
-    // Request Tracker (prediction)
-    new Tracker(toolbarClient);
-
-    // Preview & Prediction
-    const analytics = new Analytics(toolbarClient);
-
-    // Start concurrently
-    await Promise.all([preview.setup(), prediction.setup()]);
-
-    // Do not render toolbar while reloading (reload is async)
-    if (preview.shouldReload) return;
-
-    // Toolbar
-    new Toolbar({ preview, prediction, analytics });
-
-    // Track initial setup of toolbar
-    analytics.trackToolbarSetup();
-  }
+  // Track initial setup of toolbar
+  if (analytics) analytics.trackToolbarSetup();
 }

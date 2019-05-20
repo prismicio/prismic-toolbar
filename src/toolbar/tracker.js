@@ -1,4 +1,4 @@
-import { Hooks } from '@babel/preset-stage-2';
+import { Hooks } from '@common';
 import { PreviewCookie } from './preview/cookie';
 
 // One breaker interval per scope (tab but ideally browser)
@@ -23,7 +23,7 @@ export class Tracker {
 
     // Update breaker every 150ms
     clearInterval(breakerInterval);
-    breakerInterval = setInterval(() => (PreviewCookie.refreshBreaker()), 150);
+    breakerInterval = setInterval(() => (this.cookie.refreshBreaker()), 150);
 
     // Hooks for updating url
     this.hooks.on('keydown', () => (PreviewCookie.url = null));

@@ -9,7 +9,8 @@ export function setup(portToMainWindow) {
     const { type, data } = msg.data;
     const result /* Promise<Object> */ = await (() => {
       switch (type) {
-        case Messages.InitialData: return getInitialData();
+        case Messages.PreviewState: return getPreviewState();
+        case Messages.PredictionDocs: return getPredictionDocs(data);
         case Messages.UpdatePreview: return updatePreview();
         case Messages.ClosePreviewSession: return closePreviewSession();
         case Messages.SharePreview: return sharePreview(data);
@@ -18,18 +19,16 @@ export function setup(portToMainWindow) {
         default: return new Promise(null);
       }
     })();
-    this.port.postMessage({ type, data: result });
+    portToMainWindow.postMessage({ type, data: result });
   };
 }
 
-async function getInitialData() /* Promise<{ state: Object, docs: Object[] }> */ {
-  const [previewState, predictionDocs] = await Promise.all(
-    [Preview.getState(), Prediction.getDocuments()]
-  );
-  return {
-    previewState,
-    predictionDocs
-  };
+async function getPreviewState() /* Promise<{ Object }> */ {
+  return Preview.getState();
+}
+
+async function getPredictionDocs(data) /* Promise<{ Object[] }> */ {
+  return Prediction.getDocuments(data);
 }
 
 async function updatePreview() /* Promise<{ reload: boolean, ref: string }> */ {

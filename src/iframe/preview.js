@@ -19,8 +19,8 @@ const Share = {
   run: memoize(async (location, blob) => {
     const imageId = location.pathname.slice(1) + location.hash + SESSION_ID + '.jpg';
     const imageName = imageId;
-    const session = await this.getSession({ location, imageName });
-    if (!session.hasPreviewImage) this.uploadScreenshot(imageName, blob);
+    const session = await Share.getSession({ location, imageName });
+    if (!session.hasPreviewImage) Share.uploadScreenshot(imageName, blob);
     return session.url;
   }, ({ href }) => href),
 
@@ -66,10 +66,10 @@ const State = {
   liveStateNeeded: Boolean(getCookie('is-logged-in')) || Boolean(getCookie('io.prismic.previewSession')),
 
   get: once(async () => {
-    if (!this.liveStateNeeded) return this.normalize();
+    if (!State.liveStateNeeded) return State.normalize();
     return fetchy({
       url: '/toolbar/state',
-    }).then(this.normalize);
+    }).then(State.normalize);
   }),
 
   normalize: (_state = {}) => (

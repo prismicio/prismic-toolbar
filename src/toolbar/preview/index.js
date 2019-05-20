@@ -6,8 +6,10 @@ export class Preview {
   constructor(client, previewCookie, previewState) {
     this.cookie = previewCookie;
     this.client = client;
-    this.shouldReload = false;
     this.state = previewState;
+
+    this.end = this.end.bind(this);
+    this.share = this.share.bind(this);
   }
 
   // Run once on page load to start or end preview
@@ -19,48 +21,53 @@ export class Preview {
     this.updated = preview.updated;
     this.documents = preview.documents || [];
 
-    // Start or end preview
-    await this.start(this.ref);
-    this.watchPreviewUpdates();
+    if (!this.active) this.cookie.setDefault();
+
+    // We don't display the preview by default unless the start function says so
+    return await this.start(this.ref) || { displayPreview: false };
   };
 
   watchPreviewUpdates() {
     if (this.active) {
-      setInterval(async () => this.updatePreview.bind(this));
+      this.interval = setInterval(() => this.updatePreview(), 2000);
     }
   }
 
   cancelPreviewUpdates() {
-    clearInterval(this.updatePreview.bind(this));
+    clearInterval(this.interval);
   }
 
   async updatePreview() {
-    const updatedRef = await this.client.updatePreview();
-    this.start(updatedRef);
+    const { ref } = await this.client.updatePreview();
+    this.start(ref);
   }
 
   // Start preview
   async start(ref) {
-    if (!ref) return this.end();
-    if (ref === this.cookie.getRefForDomain()) return;
+    if (!ref) {
+      await this.end();
+      // reloadOrigin();
+      return;
+    }
+    if (ref === this.cookie.getRefForDomain()) return { displayPreview: true };
     this.cookie.upsertPreviewForDomain(ref);
+    this.watchPreviewUpdates();
+    // Force to display the preview
     reloadOrigin();
-    this.shouldReload = true;
   }
 
   // End preview
   async end() {
-    const old = this.cookie.preview;
-    if (!old) return;
-    await this.client.deletePreviewSession();
-    this.cookie.deletePreviewForDomain();
     this.cancelPreviewUpdates();
+    await this.client.closePreviewSession();
+    if (!this.cookie.getRefForDomain()) return;
+    this.cookie.deletePreviewForDomain();
+    // reload to get rid of preview data and display the live version
     reloadOrigin();
-    this.shouldReload = true;
   }
 
   async share() {
     const screenBlob = await screenshot();
-    this.client.sharePreview(getLocation(), screenBlob);
+    return this.client.sharePreview(getLocation(), screenBlob);
   }
 }

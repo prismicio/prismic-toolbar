@@ -5,13 +5,13 @@ import { ToolbarServiceProtocol } from './messages';
 
 const Client = {
   async get(/* string */iframeSourceUrl) /* Promise<Client> */ {
-    const body = await this.documentBodyReady();
-    const iframe = this.buildIframe(iframeSourceUrl);
+    const body = await Client.documentBodyReady();
+    const iframe = Client.buildIframe(iframeSourceUrl);
     const { hostname } = new URL(iframeSourceUrl);
     body.appendChild(iframe);
 
     const loadedIframe = await eventToPromise(iframe, 'load', () => iframe);
-    const portToIframe = await this.establishConnection(loadedIframe);
+    const portToIframe = await Client.establishConnection(loadedIframe);
     return new ToolbarServiceClient(portToIframe, hostname);
   },
 
@@ -46,12 +46,12 @@ const Client = {
 
 const Iframe = {
   async setup() /* void */ {
-    window.addEventListener('message', msg => this.initialisationMessageHandler(msg));
+    window.addEventListener('message', msg => Iframe.initialisationMessageHandler(msg));
   },
 
   initialisationMessageHandler(/* MessageEvent */message) /* void */ {
     if (message.data === ToolbarServiceProtocol.SetupPort) {
-      window.removeEventListener('message', msg => this.initialisationMessageHandler(msg));
+      window.removeEventListener('message', msg => Iframe.initialisationMessageHandler(msg));
       const portToMainWindow = message.ports[0];
       setupIframe(portToMainWindow);
       portToMainWindow.postMessage(ToolbarServiceProtocol.Ready);
@@ -61,4 +61,4 @@ const Iframe = {
   }
 };
 
-export default { getClient: Client.get, setupIframe: Iframe.setup };
+export const ToolbarService = { getClient: Client.get, setupIframe: Iframe.setup };

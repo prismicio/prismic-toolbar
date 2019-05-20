@@ -4,7 +4,8 @@ export const ToolbarServiceProtocol = {
 };
 
 export const Messages = {
-  InitialData: 'initial_data',
+  PreviewState: 'preview_state',
+  PredictionDocs: 'prediction_docs',
   UpdatePreview: 'update_preview',
   ClosePreviewSession: 'close_preview_session',
   SharePreview: 'share_preview',
