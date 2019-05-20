@@ -38,17 +38,48 @@ export class JsonView extends Component {
 
   /* ----- COPY JSON PATH TO CLIPBOARD ----- */
   copyToClipboard = (node) => {
-     const { nodeCopied } = this.state;
-     if(nodeCopied != node){
-        nodeCopied.isCopied = false;
+     const { data, metadata, nodeCopied } = this.state;
+
+     if(nodeCopied != node) {
+        const oldJsonToModify = this.getWhichJsonToSet(data, metadata, nodeCopied.path);
+        this.setIsCopied(oldJsonToModify, nodeCopied.path, false);
+
+        const newJsonToModify = this.getWhichJsonToSet(data, metadata, node.path);
+        this.setIsCopied(newJsonToModify, node.path, true);
+
         const jsonPath = node.path.join('.');
         copyText(jsonPath);
-        node.isCopied = true;
-        this.setState(oldState => oldState.nodeCopied = node );
-        console.log(node)
-        console.log(nodeCopied)
-        console.log(this.state)
+        this.setState({ data: data, metadata: metadata, nodeCopied: node });
      }
+  }
+
+
+  /* ----- FUNCTION TO RETURN WHICH DATA TO SET ----- */
+  getWhichJsonToSet(data, metadata, keyNames) {
+    if(!keyNames) { return }
+    if(keyNames[0] === 'data') {
+      return data;
+    } else {
+      return metadata;
+    }
+  }
+
+  /* ----- FUNCTION TO MODIFY THE ISCOPIED PROPERTY OF A NODE ----- */
+  setIsCopied(json, keyNames, value) {
+    if(!keyNames) { return } // If the path does not exist then it's the case of the first copy where there is no nodecopied before.
+    const length = keyNames.length;
+    const reducer = (acc, key, index) => {
+      const nodeFound = acc.find( node => {
+        return node.name === key
+      })
+      if(index === length - 1) { // return the node itself if it is the last key in the path.
+        return nodeFound
+      } else { // return the children if it is not the last key in the path
+        return nodeFound.children
+      }
+    };
+    const nodeToModify = keyNames.reduce(reducer, json);
+    nodeToModify.isCopied = value;
   }
 
 
@@ -85,8 +116,8 @@ export class JsonView extends Component {
            // an key-value node has a right margin next to the border, an object does not if he has children
            return (
              <div
-              className={props.node.children && props.node.children.length > 0 ? 'last-nested-child-border' : 'last-nested-child-border with-right-margin'}
-             ></div>
+              className={props.node.children && props.node.children.length > 0 ? 'last-nested-child-border' : 'last-nested-child-border with-right-margin'} >
+             </div>
            )
          } else {
            return (
@@ -99,11 +130,14 @@ export class JsonView extends Component {
      },
 
      Copy: (props) => {
-       if(props.node.isCopied) {
-
-       } else {
-        return <img className="icon-copy" onClick={ () => this.copyToClipboard(props.node) } src={copyIcon} />
-       }
+        return (
+          <span
+            className="copy-button"
+            onClick={ () => this.copyToClipboard(props.node) }
+          >
+            {props.node.isCopied ? 'Copied' : 'Copy'}
+          </span>
+        )
      },
 
      Container: (props) => {
@@ -133,7 +167,8 @@ export class JsonView extends Component {
          node: {
              base: {
                  position: 'relative',
-                 left: '15px'
+                 left: '15px',
+                 maxWidth: 'calc(100% - 15px)'
              },
              subtree: {
                  listStyle: 'none',

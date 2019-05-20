@@ -45,11 +45,19 @@
         vertical-align: middle;
     }
 
-    & .icon-copy{
-        width: 18px;
-        height: 18px;
-        margin-left: 5px;
-        vertical-align: middle;
+    & .copy-button{
+        font-family: 'Source Code Pro', monospace;
+        font-size: 9px;
+        color: #48525E;
+        background: #FFFFFF;
+        position: absolute;
+        right: 6px;
+        top: 3px;
+        padding: 0px 3px;
+
+        letter-spacing: 0;
+        text-align: center;
+        line-height: 17px;
         display: none;
     }
 
@@ -76,10 +84,12 @@
     border-radius: 3px;
     cursor: pointer;
 
-    & .icon-copy{
-        display: inline;
+    & .copy-button{
+        display: inline-block;
     }
 }
+
+
 
 .horizontal-border{
     display: inline-block;
