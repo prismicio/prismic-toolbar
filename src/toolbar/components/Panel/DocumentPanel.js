@@ -8,39 +8,38 @@ import { DevModeCollapsible } from '..';
 export const DocumentPanel = ({ documents, docData, onDocumentClick }) => {
   if (!documents.length) return null;
   let panelContent;
-  const jsonOrderToDisplay = ["id","uid","type","data","href","tags","first_publication_date","last_publication_date","lang","alternate_languages"]
 
-  if(docData){
-    panelContent = (<NavTabs
+  if(docData){ // If there is no docData then no queries was made, therefore we can't display the json.
+    panelContent = <NavTabs
                       tabsName={["Edit Button","Dev Mode"]}
                       tabsContent={[
                        <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />,
-                       <DevModeCollapsible docData={docData} order={jsonOrderToDisplay} />
+                       <DevModeCollapsible docData={docData} />
                       ]}
-                  />);
+                   />
   }else{
-    panelContent = <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />;
+    panelContent = <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />
   }
 
   return (
-    <BasePanel className="DocumentPanel">
+    <BasePanel className="DocumentPanel" >
       <ToolbarHeader />
-      {panelContent}
+      { panelContent }
     </BasePanel>
   );
 }
 
 const ToolbarHeader = () => (
-  <div className="toolbar-header">
-    <div className="wrapper-icon">
-      <div className="background-icon">
+  <div className="toolbar-header" >
+    <div className="wrapper-icon" >
+      <div className="background-icon" >
         <Icon src={prismicWhiteSvg} />
       </div>
     </div>
 
-    <div className="wrapper-title">
+    <div className="wrapper-title" >
      <h2>Prismic Toolbar</h2>
-     <h1> Document on this page </h1>
+     <h1>Document on this page</h1>
     </div>
   </div>
 );

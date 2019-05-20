@@ -1,14 +1,14 @@
-.nav-tab-list{
+.nav-tab-list {
     list-style: none;
     display:flex;
     flex-wrap: nowrap;
     width: 100%;
     height: 60px;
-    margin: auto;
+    margin: 0;
     padding: 0;
 }
 
-.nav-tab{
+.nav-tab {
     /* Shape Of Tab */
     flex-basis: 50%;
     font-weight: bold;
@@ -28,7 +28,7 @@
     letter-spacing: 0.23px;
 
 
-   &.active{
+   &.active {
        box-shadow: inset 0px -6px 0px -2px #5163BA;
    }
 }

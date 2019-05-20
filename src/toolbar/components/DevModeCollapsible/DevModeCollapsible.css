@@ -1,49 +1,50 @@
-.Collapsible{
+.Collapsible {
     border-bottom: 1px solid #E0E2EE;
 }
 
-.Collapsible__trigger{
-    height: 70px;
-    display: block;
+.Collapsible__trigger {
     padding-left:25px;
-    padding-top:15px;
+    height: 70px;
+    display: flex;
+    align-items: center;
 
-    &.is-open{
+    &.is-open {
       border-bottom: 1px solid #E0E2EE;
     }
 }
 
-.Collapsible__contentOuter{
+.Collapsible__contentOuter {
     background: #F5F6F9;
 }
 
-.wrapper-trigger{
+.wrapper-trigger {
     cursor:pointer;
-    height: 55px;
+    height: 40px; /* height equal to line height x2 (2 lines of text) to make sure it is centered vertically */
+    line-height: 20px;
+    width: fill-available;
 
-    & .trigger-title{
+    & .trigger-title {
         font-size: 16px;
         color: #293258;
         letter-spacing: 0.23px;
-        line-height: 20px;
         font-weight: bold;
     }
 
-    & .trigger-subtitle{
+    & .trigger-subtitle {
         font-size: 13px;
         color: #435169;
         letter-spacing: 0.19px;
-        line-height: 20px;
     }
 
-    & .trigger-triangle{
+    & .trigger-triangle {
         position: relative;
-        left: 370px;
+        float: right;
+        right: 25px;
         bottom: 33px;
         color: #3F4A56;
         transition: all 0.2s ease;
 
-        &.active{
+        &.active {
            transform: rotate(90deg);
         }
     }

@@ -1,17 +1,9 @@
 import { Component } from 'preact';
 import { Treebeard } from 'react-treebeard';
-import { minusSquare, plusSquare, copyIcon} from '.';
+import { minusSquare, plusSquare } from '.';
 import { copyText } from 'common';
 import React, { Fragment } from 'react';
 import './JsonView.css';
-
-function hello() {
-
-
-}
-
-
-const hello = () => <h1>Hello</h1>
 
 /* ----- BEGINNING OF CLASS ----- */
 export class JsonView extends Component {
@@ -24,7 +16,8 @@ export class JsonView extends Component {
     this.state = {
       data: data,
       metadata: metadata,
-      nodeCopied: []
+      nodeCopied: [],
+      timeOut: -1
     }
   }
 
@@ -36,20 +29,39 @@ export class JsonView extends Component {
   }
 
 
-  /* ----- COPY JSON PATH TO CLIPBOARD ----- */
+  /* ----- COPY JSON PATH TO CLIPBOARD AND REMOVE OLD COPY ----- */
   copyToClipboard = (node) => {
-     const { data, metadata, nodeCopied } = this.state;
+     const { data, metadata, nodeCopied, timeOut } = this.state;
 
      if(nodeCopied != node) {
-        const oldJsonToModify = this.getWhichJsonToSet(data, metadata, nodeCopied.path);
-        this.setIsCopied(oldJsonToModify, nodeCopied.path, false);
+        nodeCopied.path ? this.removeOldCopied(data, metadata, nodeCopied) : '';
 
         const newJsonToModify = this.getWhichJsonToSet(data, metadata, node.path);
         this.setIsCopied(newJsonToModify, node.path, true);
 
         const jsonPath = node.path.join('.');
         copyText(jsonPath);
-        this.setState({ data: data, metadata: metadata, nodeCopied: node });
+
+        if(timeOut > -1){
+          clearTimeout(timeOut);
+        }
+
+        const newTimeOut = setTimeout( () => {
+          this.removeOldCopied(data, metadata, node);
+          this.setState({
+            data: data,
+            metadata: metadata,
+            nodeCopied: [],
+            timeOut: -1
+          });
+        }, 1500)
+
+        this.setState({
+           data: data,
+           metadata: metadata,
+           nodeCopied: node,
+           timeOut: newTimeOut
+        });
      }
   }
 
@@ -80,6 +92,13 @@ export class JsonView extends Component {
     };
     const nodeToModify = keyNames.reduce(reducer, json);
     nodeToModify.isCopied = value;
+  }
+
+
+  /* ----- FUNCTION TO REMOVE THE OLD COPY (TRIGGERED 2 SEC AFTER A CLICK AND IN CASE OF MULTIPLE CLICKS) ----- */
+  removeOldCopied = (data, metadata, nodeCopied) => {
+    const oldJsonToModify = this.getWhichJsonToSet(data, metadata, nodeCopied.path);
+    this.setIsCopied(oldJsonToModify, nodeCopied.path, false);
   }
 
 
@@ -116,13 +135,13 @@ export class JsonView extends Component {
            // an key-value node has a right margin next to the border, an object does not if he has children
            return (
              <div
-              className={props.node.children && props.node.children.length > 0 ? 'last-nested-child-border' : 'last-nested-child-border with-right-margin'} >
+              className={props.node.children && props.node.children.length > 0 ? 'border last-nested' : 'border last-nested with-right-margin'} >
              </div>
            )
          } else {
            return (
             <div
-              className={props.node.children && props.node.children.length > 0 ? 'horizontal-border' : 'horizontal-border with-right-margin'}
+              className={props.node.children && props.node.children.length > 0 ? 'border horizontal' : 'border horizontal with-right-margin'}
             ></div>
            )
          }

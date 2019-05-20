@@ -1,21 +1,21 @@
 /* ----- WRAPPER CSS ----- */
-.wrapper-json-view{
+.wrapper-json-view {
     font-family: 'Source Code Pro', monospace;
     font-size: 12px;
 
 
     /* ---- REMOVE LEFT INDENT FOR THE FIRST CHILDREN OF AN OBJECT ---- */
-    & > ul > li > div > ul > li{
+    & > ul > li > div > ul > li {
         left: 0 !important;
     }
 
-    & > ul > li{
+    & > ul > li {
         left: 0 !important;
     }
 }
 
 /* ----- BANNER FOR UID AND METADATA ----- */
-.banner-uid{
+.banner-uid {
     padding: 0px 0px 0px 25px;
     position: relative;
     color: #8091A5;
@@ -25,7 +25,7 @@
     border-bottom: 1px solid #E0E2EE;
 }
 
-.banner-metadata{
+.banner-metadata {
     color: #7F8FAA;
     letter-spacing: 0.17px;
     padding: 0px 0px 0px 25px;
@@ -33,25 +33,27 @@
 }
 
 /* ----- DECORATOR CSS ----- */
-.json-view-container{
+.json-view-container {
     line-height: 23px;
     letter-spacing: -0.2px;
     background: #F5F6F9;
 
-    & .icon-toggle{
+    & .icon-toggle {
         width: 13px;
         height: 13px;
-        margin-right: 8px;
+        padding-right: 8px;
         vertical-align: middle;
+        cursor: pointer;
     }
 
-    & .copy-button{
+    & .copy-button {
         font-family: 'Source Code Pro', monospace;
         font-size: 9px;
+        cursor: pointer;
         color: #48525E;
         background: #FFFFFF;
         position: absolute;
-        right: 6px;
+        right: 3px;
         top: 3px;
         padding: 0px 3px;
 
@@ -61,75 +63,58 @@
         display: none;
     }
 
-    & .key-object{
+    & .key-object {
         color: #5163BA;
         padding: 0;
         vertical-align: middle;
+        cursor: pointer;
     }
 
-    & .key-string{
+    & .key-string {
         color: #1E2D77;
         padding: 0;
         vertical-align: middle;
     }
 
-    & .value-string{
+    & .value-string {
         color: #435169;
         vertical-align: middle;
     }
 }
 
-.json-view-container:hover{
+.json-view-container:hover {
     background: rgba(81,99,186,0.10);
     border-radius: 3px;
-    cursor: pointer;
 
-    & .copy-button{
+    & .copy-button {
         display: inline-block;
     }
 }
 
-
-
-.horizontal-border{
+.border {
     display: inline-block;
     width: 15px;
     height: 1px;
     background: #BCC2CB;
     vertical-align: middle;
 
-    &.with-right-margin{
-        margin-right: 4px;
+    &:after {
+       content: '';
+       position: absolute;
+       top: -5px;
+       left: 0;
+       border-left: 1px solid #BCC2CB;
     }
-}
 
-
-.horizontal-border:after{
-   content: '';
-   position: absolute;
-   top: -5px;
-   left: 0;
-   height: 100%;
-   border-left: 1px solid #BCC2CB;
-}
-
-.last-nested-child-border{
-    display: inline-block;
-    width: 15px;
-    height: 1px;
-    background: #BCC2CB;
-    vertical-align: middle;
-
-    &.with-right-margin{
-        margin-right: 4px;
+    &.horizontal:after {
+       height: 100%;
     }
-}
 
-.last-nested-child-border:after{
-   content: '';
-   position: absolute;
-   top: -5px;
-   left: 0;
-   height: 17px;
-   border-left: 1px solid #BCC2CB;
+    &.last-nested:after {
+       height: 17px;
+    }
+
+    &.with-right-margin {
+         margin-right: 4px;
+     }
 }

@@ -28,8 +28,6 @@ export class NavTabs extends Component{
   }
 }
 
-
-
 const CustomTabName = ({ name, isActive }) => {
   return(
     <Tab className={isActive ? "nav-tab active": "nav-tab"} > {name} </Tab>
