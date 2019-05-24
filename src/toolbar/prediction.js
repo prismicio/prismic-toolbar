@@ -19,11 +19,11 @@ export class Prediction {
   // Start predictions for this URL
   start = async () => {
     // Wait for the frontend (React) app to finish loading requests. Fetch again.
-    wait(2).then(this.predict);
-
-    // For initial page load SSR requests (match track -> url) and for quickly getting documents
-    const fetch = this.predict();
-    await fetch;
+    await wait(1);
+    // load prediction
+    await this.predict();
+    // refresh the tracker for the next time
+    this.cookie.refreshTracker();
   }
 
   // Fetch predicted documents

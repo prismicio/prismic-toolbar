@@ -19,14 +19,9 @@ export class PreviewCookie {
           return null;
         }
       })();
-      if (parsedCookie) return {
-        legacy: false,
-        cookie: parsedCookie
-      };
-      return {
-        legacy: true,
-        cookie: cookieOpt
-      }; // Legacy cookie with ref as String
+      if (parsedCookie) return parsedCookie;
+      const converted = this.convertLegacyCookie(cookieOpt);
+      return converted;
     }
   }
 
@@ -36,25 +31,27 @@ export class PreviewCookie {
 
   build({
     preview,
-    url,
-    tracker,
-    breaker
+    tracker
   } = {
     preview: null,
-    url: null,
-    tracker: null,
-    breaker: null
+    tracker: null
   }) {
-    const urlBlock = url ? { _url: url } : {};
     const previewBlock = (() => {
       if (!preview) return {};
       if (isObject(preview)) return preview;
       return { [this.domain]: { preview } };
     })();
     return Object.assign({}, {
-      _breaker: breaker || this.generateBreaker(),
       _tracker: tracker || this.generateTracker()
-    }, urlBlock, previewBlock);
+    }, previewBlock);
+  }
+
+  convertLegacyCookie(legacyCookieValue) {
+    const cleanedCookie = this.build({
+      preview: legacyCookieValue
+    });
+    this.set(cleanedCookie);
+    return cleanedCookie;
   }
 
   setDefault() {
@@ -66,22 +63,16 @@ export class PreviewCookie {
     return random(8);
   }
 
-  generateBreaker() {
-    return random(8);
-  }
-
   upsertPreviewForDomain(previewRef) {
-    const cookieData = this.get();
-    if (cookieData && !cookieData.legacy) {
+    const cookie = this.get();
+    if (cookie) {
       const updatedCookie = this.build({
         preview: previewRef,
-        url: cookieData.cookie.url,
-        tracker: cookieData.cookie.tracker,
-        breaker: cookieData.cookie.breaker
+        tracker: cookie.tracker
       });
       setCookie(PREVIEW_COOKIE_NAME, updatedCookie);
     } else {
-      const compliantCookie = this.build({ preview: cookieData });
+      const compliantCookie = this.build({ preview: previewRef });
       setCookie(PREVIEW_COOKIE_NAME, compliantCookie);
     }
   }
@@ -91,34 +82,24 @@ export class PreviewCookie {
   }
 
   getRefForDomain() {
-    const cookieData = this.get();
-    if (!cookieData) return;
-    if (cookieData.legacy) return cookieData.cookie;
-    return cookieData.cookie[this.domain] && cookieData.cookie[this.domain].preview;
+    const cookie = this.get();
+    if (!cookie) return;
+    return cookie[this.domain] && cookie[this.domain].preview;
   }
 
   getTracker() {
-    const cookieData = this.get();
-    if (!cookieData) return;
-    if (!cookieData.legacy) return cookieData.cookie._tracker;
+    const cookie = this.get();
+    if (!cookie) return;
+    return cookie._tracker;
   }
 
-  getBreaker() {
-    const cookieData = this.get();
-    if (!cookieData) return;
-    if (!cookieData.legacy) return cookieData.cookie._breaker;
-  }
-
-  refreshBreaker() {
-    const cookieData = this.get();
-    if (!cookieData) return;
-    if (!cookieData.legacy) {
-      const updatedCookie = Object.assign(
-        {},
-        cookieData.cookie,
-        { _breaker: this.generateBreaker() }
-      );
-      setCookie(PREVIEW_COOKIE_NAME, updatedCookie);
-    }
+  refreshTracker() {
+    const cookie = this.get();
+    if (!cookie) return;
+    const updatedCookie = this.build({
+      preview: cookie.preview,
+      tracker: this.generateTracker()
+    });
+    setCookie(PREVIEW_COOKIE_NAME, updatedCookie);
   }
 }

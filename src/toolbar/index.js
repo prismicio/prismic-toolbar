@@ -60,7 +60,6 @@ async function setup (rawInput) {
   // Imports
   const { ToolbarService } = require('@toolbar-service');
   const { parseEndpoint } = require('./utils');
-  const { Tracker } = require('./tracker');
   const { Preview } = require('./preview');
   const { Prediction } = require('./prediction');
   const { Analytics } = require('./analytics');
@@ -86,20 +85,9 @@ async function setup (rawInput) {
   const previewCookie = new PreviewCookie(toolbarClient.hostname);
   const preview = new Preview(toolbarClient, previewCookie, previewState);
 
-  const { prediction, analytics } = (() => {
-    if (previewState.auth) {
-      new Tracker(toolbarClient, previewCookie);
-      return {
-        prediction: new Prediction(toolbarClient, previewCookie),
-        analytics: new Analytics(toolbarClient)
-      };
-    }
-    // default case if not authenticated
-    return {
-      prediction: null,
-      analytics: null
-    };
-  })();
+  const prediction = previewState.auth && new Prediction(toolbarClient, previewCookie);
+  const analytics = previewState.auth && new Analytics(toolbarClient);
+
   // Start concurrently preview (always) and prediction (if authenticated)
   const [{ displayPreview }] = await (async () => {
     if (prediction) return Promise.all([preview.setup(), prediction.setup()]);

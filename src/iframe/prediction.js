@@ -1,9 +1,9 @@
 import { fetchy, query, Sorter } from '@common';
 
-export const getDocuments = async ({ url, ref, track, location }) => {
+export const getDocuments = async ({ url, ref, tracker, location }) => {
   const data = await fetchy({
-    url: `/toolbar/predict?${query({ url, ref, track })}`,
-  }).then(res => res.documents.map(normalizeDocument));
+    url: `/toolbar/predict?${query({ url, ref, tracker })}`,
+  }).then(res => res.map(normalizeDocument));
 
   return (
     new Sorter(data)
