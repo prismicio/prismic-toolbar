@@ -21,31 +21,31 @@ export default class Client {
     });
   }
 
-  getPreviewState() {
+  getPreviewState() /* Promise<{ Object }> */ {
     return this._messageToPromise(Messages.PreviewState);
   }
 
-  getPredictionDocs(data) {
+  getPredictionDocs(data) /* Promise<[Boolean, Object[]]> */ {
     return this._messageToPromise(Messages.PredictionDocs, data);
   }
 
-  updatePreview() {
+  updatePreview() /* Promise<{ reload: boolean, ref: string }> */ {
     return this._messageToPromise(Messages.UpdatePreview);
   }
 
-  closePreviewSession() {
+  closePreviewSession() /* Promise<null> */ {
     return this._messageToPromise(Messages.ClosePreviewSession);
   }
 
-  sharePreview(location, blob) {
+  sharePreview(location, blob) /* Promise<string> */ {
     return this._messageToPromise(Messages.SharePreview, { location, blob });
   }
 
-  trackDocumentClick(data) {
+  trackDocumentClick(data) /* Promise<null> */ {
     return this._messageToPromise(Messages.TrackDocumentClick, data);
   }
 
-  trackToolbarSetup() {
+  trackToolbarSetup() /* Promise<null> */ {
     return this._messageToPromise(Messages.TrackToolbarSetup);
   }
 }

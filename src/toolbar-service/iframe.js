@@ -27,7 +27,7 @@ async function getPreviewState() /* Promise<{ Object }> */ {
   return Preview.getState();
 }
 
-async function getPredictionDocs(data) /* Promise<{ Object[] }> */ {
+async function getPredictionDocs(data) /* Promise<[Boolean, Object[]]> */ {
   return Prediction.getDocuments(data);
 }
 
@@ -39,14 +39,14 @@ async function closePreviewSession() /* Promise<null> */ {
   return Preview.close();
 }
 
-async function sharePreview({ location, blob }) {
+async function sharePreview({ location, blob }) /* Promise<string> */ {
   return Preview.share(location, blob);
 }
 
-async function trackDocumentClick({ isMain }) {
+async function trackDocumentClick({ isMain }) /* Promise<null> */ {
   return Analytics.trackDocumentClick(isMain);
 }
 
-async function trackToolbarSetup() {
+async function trackToolbarSetup() /* Promise<null> */ {
   return Analytics.trackToolbarSetup();
 }

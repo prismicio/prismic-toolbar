@@ -1,16 +1,26 @@
 import { ellipsis, switchy } from '@common';
 import { BasePanel, prismicSvg } from '.';
 import { Icon } from '..';
+import React from 'react';
 
-export const DocumentPanel = ({ documents, onDocumentClick }) => {
+export const DocumentPanel = ({ loading, documents, onDocumentClick }) => {
   if (!documents.length) return null;
   return (
     <BasePanel className="DocumentPanel">
-      <MainDocument doc={documents[0]} onClick={onDocumentClick} />
-      <OtherDocuments documents={documents.slice(1)} onClick={onDocumentClick} />
+      { loading
+        ? <div>loading...</div>
+        : panelContent(documents, onDocumentClick)
+      }
     </BasePanel>
   );
 };
+
+const panelContent = (documents, onDocumentClick) => (
+  <React.Fragment>
+    <MainDocument doc={documents[0]} onClick={onDocumentClick} />
+    <OtherDocuments documents={documents.slice(1)} onClick={onDocumentClick} />
+  </React.Fragment>
+);
 
 const MainDocument = ({ doc, onClick }) => (
   <div className="MainDocument top">

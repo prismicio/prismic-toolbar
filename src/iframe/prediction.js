@@ -1,11 +1,14 @@
-import { fetchy, query, Sorter } from '@common';
+import { query, Sorter } from '@common';
 
-export const getDocuments = async ({ url, ref, tracker, location }) => {
-  const data = await fetchy({
-    url: `/toolbar/predict?${query({ url, ref, tracker })}`,
-  }).then(res => res.map(normalizeDocument));
+export async function getDocuments({ url, ref, tracker, location }) {
+  const [isPartialContent, data] = await (async () => {
+    const res = await fetch(`/toolbar/predict?${query({ url, ref, tracker })}`);
+    const docs = await res.json();
+    const partial = res.status === 206;
+    return [partial, docs.map(normalizeDocument)];
+  })();
 
-  return (
+  const sorted = (
     new Sorter(data)
       // .max(a => a.occurences) // No use case
       // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
@@ -19,7 +22,8 @@ export const getDocuments = async ({ url, ref, tracker, location }) => {
       .is(a => location.pathname.match(a.uid))
       .compute()
   );
-};
+  return [isPartialContent, sorted];
+}
 
 function normalizeDocument(doc) {
   const status = (() => {

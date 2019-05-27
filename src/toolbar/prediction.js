@@ -1,4 +1,6 @@
-import { Hooks, wait, getLocation } from '@common';
+import { Hooks, getLocation } from '@common';
+
+const MAX_RETRY = 3;
 
 export class Prediction {
   constructor(client, previewCookie) {
@@ -8,6 +10,7 @@ export class Prediction {
     this.documentHooks = [];
     this.documents = [];
     this.count = 0;
+    this.retry = 0;
   }
 
   // Start predictions for this page load
@@ -18,8 +21,6 @@ export class Prediction {
 
   // Start predictions for this URL
   start = async () => {
-    // Wait for the frontend (React) app to finish loading requests. Fetch again.
-    await wait(1);
     // load prediction
     await this.predict();
     // refresh the tracker for the next time
@@ -28,20 +29,29 @@ export class Prediction {
 
   // Fetch predicted documents
   predict = async () => {
-    const predictionDocs = await this.client.getPredictionDocs({
+    const [isPartialContent, predictionDocs] = await this.client.getPredictionDocs({
       ref: this.cookie.getRefForDomain(),
       url: window.location.pathname,
       tracker: this.cookie.getTracker(),
       location: getLocation()
     });
-    this.dispatch(predictionDocs);
+
+    if (isPartialContent) {
+      this.retry = this.retry < MAX_RETRY ? this.retry + 1 : 0;
+      if (this.retry) this.retryPrediction();
+    }
+    this.dispatch(Boolean(this.retry), predictionDocs);
+  }
+
+  retryPrediction = () => {
+    const nextRetryMs = this.retry * 1000; // 1s / 2s / 3s
+    setTimeout(this.predict, nextRetryMs);
   }
 
   // Dispatch documents to hooks
-  dispatch = documents => {
+  dispatch = (retry, documents) => {
     this.documents = documents;
-    window.prismic._predictionDocuments = documents; // Debug
-    Object.values(this.documentHooks).forEach(hook => hook(documents)); // Run the hooks
+    Object.values(this.documentHooks).forEach(hook => hook(retry, documents)); // Run the hooks
   }
 
   // Documents hook

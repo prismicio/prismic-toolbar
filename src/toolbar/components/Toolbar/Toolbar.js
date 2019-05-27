@@ -12,9 +12,13 @@ export class Toolbar extends Component {
     this.state = {
       page: NONE,
       documents: prediction ? prediction.documents : [],
+      documentsLoading: true,
       renderedPreview: this.props.preview.active
     };
-    if (prediction) prediction.onDocuments(documents => this.setState({ documents }));
+    if (prediction) {
+      prediction.onDocuments((retry, documents) =>
+        this.setState({ documentsLoading: retry, documents }));
+    }
   }
 
   setPage = page => this.setState({ page });
@@ -33,6 +37,7 @@ export class Toolbar extends Component {
         <Panel
           onDocumentClick={analytics && analytics.trackDocumentClick}
           closePanel={() => this.setPage(NONE)}
+          documentsLoading={this.state.documentsLoading}
           documents={documents}
           preview={preview}
           page={page}
