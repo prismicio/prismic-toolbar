@@ -27,7 +27,7 @@ async function getPreviewState() /* Promise<{ Object }> */ {
   return Preview.getState();
 }
 
-async function getPredictionDocs(data) /* Promise<[Boolean, Object[]]> */ {
+async function getPredictionDocs(data) /* Promise<Object[]> */ {
   return Prediction.getDocuments(data);
 }
 

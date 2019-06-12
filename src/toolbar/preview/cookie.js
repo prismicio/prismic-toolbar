@@ -97,7 +97,7 @@ export class PreviewCookie {
     const cookie = this.get();
     if (!cookie) return;
     const updatedCookie = this.build({
-      preview: cookie.preview,
+      preview: cookie[this.domain].preview,
       tracker: this.generateTracker()
     });
     setCookie(PREVIEW_COOKIE_NAME, updatedCookie);

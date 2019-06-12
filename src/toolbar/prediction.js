@@ -1,6 +1,4 @@
-import { Hooks, getLocation } from '@common';
-
-const MAX_RETRY = 3;
+import { Hooks, getLocation, wait } from '@common';
 
 export class Prediction {
   constructor(client, previewCookie) {
@@ -8,6 +6,7 @@ export class Prediction {
     this.cookie = previewCookie;
     this.hooks = new Hooks();
     this.documentHooks = [];
+    this.documentLoadingHooks = [];
     this.documents = [];
     this.count = 0;
     this.retry = 0;
@@ -21,27 +20,27 @@ export class Prediction {
 
   // Start predictions for this URL
   start = async () => {
+    // wait for all requests to be played first (client side)
+    this.dispatchLoading();
+    await wait(2);
     // load prediction
     await this.predict();
-    // refresh the tracker for the next time
     this.cookie.refreshTracker();
   }
 
   // Fetch predicted documents
-  predict = async () => {
-    const [isPartialContent, predictionDocs] = await this.client.getPredictionDocs({
-      ref: this.cookie.getRefForDomain(),
-      url: window.location.pathname,
-      tracker: this.cookie.getTracker(),
-      location: getLocation()
-    });
-
-    if (isPartialContent) {
-      this.retry = this.retry < MAX_RETRY ? this.retry + 1 : 0;
-      if (this.retry) this.retryPrediction();
-    }
-    this.dispatch(Boolean(this.retry), predictionDocs);
-  }
+  predict = () => (
+    new Promise(async resolve => {
+      const predictionDocs = await this.client.getPredictionDocs({
+        ref: this.cookie.getRefForDomain(),
+        url: window.location.pathname,
+        tracker: this.cookie.getTracker(),
+        location: getLocation()
+      });
+      this.dispatch(predictionDocs);
+      resolve();
+    })
+  )
 
   retryPrediction = () => {
     const nextRetryMs = this.retry * 1000; // 1s / 2s / 3s
@@ -49,9 +48,19 @@ export class Prediction {
   }
 
   // Dispatch documents to hooks
-  dispatch = (retry, documents) => {
+  dispatch = documents => {
     this.documents = documents;
-    Object.values(this.documentHooks).forEach(hook => hook(retry, documents)); // Run the hooks
+    Object.values(this.documentHooks).forEach(hook => hook(documents)); // Run the hooks
+  }
+
+  dispatchLoading = () => {
+    Object.values(this.documentLoadingHooks).forEach(hook => hook());
+  }
+
+  onDocumentsLoading = func => {
+    const c = this.count += 1; // Create the hook key
+    this.documentLoadingHooks[c] = func; // Create the hook
+    return () => delete this.documentLoadingHooks[c]; // Alternative to removeEventListener
   }
 
   // Documents hook

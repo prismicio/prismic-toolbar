@@ -1,29 +1,33 @@
-import { query, Sorter } from '@common';
+import { query, Sorter, fetchy } from '@common';
 
 export async function getDocuments({ url, ref, tracker, location }) {
-  const [isPartialContent, data] = await (async () => {
-    const res = await fetch(`/toolbar/predict?${query({ url, ref, tracker })}`);
-    const docs = await res.json();
-    const partial = res.status === 206;
-    return [partial, docs.map(normalizeDocument)];
-  })();
+  const res = await fetchy({
+    url: `/toolbar/predict?${query({ url, ref, tracker })}`
+  });
+  const data = res.map(normalizeDocument);
 
   const sorted = (
+    // from less important to most important
     new Sorter(data)
-      // .max(a => a.occurences) // No use case
-      // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
+    // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
+    // .min(a => a.urls.length)
       .max(a => a.updated)
-      .min(a => a.urls.length)
       .min(a => a.queryTotal)
+      .is(a => a.uid && location.hash.match(a.uid))
+      .is(a => a.uid && location.search.match(a.uid))
+      .is(a => a.uid && location.pathname.match(a.uid))
       .is(a => a.singleton)
+      .is(a => a.uid && location.hash.match(a.uid) && !a.singleton)
+      .is(a => a.uid && location.search.match(a.uid) && !a.singleton)
+      .is(a => a.uid && location.pathname.match(a.uid) && !a.singleton)
+      .min(a => a.occurences)
+      .min(a => a.urls.length)
       .min(a => a.priority)
-      .is(a => location.search.match(a.uid))
-      .is(a => location.hash.match(a.uid))
-      .is(a => location.pathname.match(a.uid))
       .compute()
   );
-  return [isPartialContent, sorted];
+  return sorted;
 }
+
 
 function normalizeDocument(doc) {
   const status = (() => {

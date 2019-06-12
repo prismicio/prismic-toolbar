@@ -21,7 +21,9 @@ export class Preview {
     this.updated = preview.updated;
     this.documents = preview.documents || [];
 
-    if (!this.active) this.cookie.setDefault();
+    if (!this.active) {
+      this.cookie.setDefault();
+    }
 
     // We don't display the preview by default unless the start function says so
     return await this.start(this.ref) || { displayPreview: false };
@@ -46,7 +48,6 @@ export class Preview {
   async start(ref) {
     if (!ref) {
       await this.end();
-      // reloadOrigin();
       return;
     }
     if (ref === this.cookie.getRefForDomain()) return { displayPreview: true };

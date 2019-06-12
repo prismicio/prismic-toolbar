@@ -25,7 +25,7 @@ export default class Client {
     return this._messageToPromise(Messages.PreviewState);
   }
 
-  getPredictionDocs(data) /* Promise<[Boolean, Object[]]> */ {
+  getPredictionDocs(data) /* Promise<Object[]> */ {
     return this._messageToPromise(Messages.PredictionDocs, data);
   }
 

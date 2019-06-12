@@ -42,6 +42,16 @@ export class Sorter {
     );
   }
 
+  isNot(val) {
+    return this.addFilter(
+      data => data.map(x => Boolean(val(x))),
+      (a, b) => ({
+        didFirstWin: !a,
+        tie: a === b,
+      })
+    );
+  }
+
   min(val) {
     return this.addFilter(
       data => data.map(x => val(x)),

@@ -12,12 +12,17 @@ export class Toolbar extends Component {
     this.state = {
       page: NONE,
       documents: prediction ? prediction.documents : [],
-      documentsLoading: true,
-      renderedPreview: this.props.preview.active
+      renderedPreview: this.props.preview.active,
+      documentsLoading: false
     };
     if (prediction) {
-      prediction.onDocuments((retry, documents) =>
-        this.setState({ documentsLoading: retry, documents }));
+      prediction.onDocuments(documents => {
+        this.setState({ documents, documentsLoading: false });
+      });
+
+      prediction.onDocumentsLoading(() => {
+        this.setState({ documentsLoading: true });
+      });
     }
   }
 

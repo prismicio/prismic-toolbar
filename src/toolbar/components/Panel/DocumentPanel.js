@@ -1,6 +1,7 @@
 import { ellipsis, switchy } from '@common';
 import { BasePanel, prismicSvg } from '.';
-import { Icon } from '..';
+import { Icon } from '../Icon';
+import { Loader } from '../Loader';
 import React from 'react';
 
 export const DocumentPanel = ({ loading, documents, onDocumentClick }) => {
@@ -8,7 +9,7 @@ export const DocumentPanel = ({ loading, documents, onDocumentClick }) => {
   return (
     <BasePanel className="DocumentPanel">
       { loading
-        ? <div>loading...</div>
+        ? <Loader />
         : panelContent(documents, onDocumentClick)
       }
     </BasePanel>
