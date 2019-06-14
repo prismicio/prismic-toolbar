@@ -36,18 +36,20 @@ export class PreviewCookie {
     preview: null,
     tracker: null
   }) {
+    const trackerOrFallback = tracker || this.generateTracker();
     const previewBlock = (() => {
       if (!preview) return {};
       if (isObject(preview)) return preview;
       return { [this.domain]: { preview } };
     })();
     return Object.assign({}, {
-      _tracker: tracker || this.generateTracker()
+      _tracker: trackerOrFallback
     }, previewBlock);
   }
 
   convertLegacyCookie(legacyCookieValue) {
     const cleanedCookie = this.build({
+      tracker: this.generateTracker(),
       preview: legacyCookieValue
     });
     this.set(cleanedCookie);
@@ -55,7 +57,8 @@ export class PreviewCookie {
   }
 
   setDefault() {
-    const cookieValue = this.build({});
+    const tracker = this.getTracker();
+    const cookieValue = this.build(Object.assign({}, tracker ? { tracker } : {}));
     setCookie(PREVIEW_COOKIE_NAME, cookieValue);
   }
 
@@ -68,11 +71,11 @@ export class PreviewCookie {
     if (cookie) {
       const updatedCookie = this.build({
         preview: previewRef,
-        tracker: cookie.tracker
+        tracker: cookie._tracker
       });
       setCookie(PREVIEW_COOKIE_NAME, updatedCookie);
     } else {
-      const compliantCookie = this.build({ preview: previewRef });
+      const compliantCookie = this.build({ preview: previewRef, tracker: this.generateTracker() });
       setCookie(PREVIEW_COOKIE_NAME, compliantCookie);
     }
   }
@@ -97,7 +100,7 @@ export class PreviewCookie {
     const cookie = this.get();
     if (!cookie) return;
     const updatedCookie = this.build({
-      preview: cookie[this.domain].preview,
+      preview: cookie[this.domain] && cookie[this.domain].preview,
       tracker: this.generateTracker()
     });
     setCookie(PREVIEW_COOKIE_NAME, updatedCookie);

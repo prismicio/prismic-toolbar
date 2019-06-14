@@ -16,13 +16,12 @@ export async function getDocuments({ url, ref, tracker, location }) {
       .is(a => a.uid && location.hash.match(a.uid))
       .is(a => a.uid && location.search.match(a.uid))
       .is(a => a.uid && location.pathname.match(a.uid))
+      .min(a => a.urls.length)
+      .min(a => a.weight)
       .is(a => a.singleton)
       .is(a => a.uid && location.hash.match(a.uid) && !a.singleton)
       .is(a => a.uid && location.search.match(a.uid) && !a.singleton)
       .is(a => a.uid && location.pathname.match(a.uid) && !a.singleton)
-      .min(a => a.occurences)
-      .min(a => a.urls.length)
-      .min(a => a.priority)
       .compute()
   );
   return sorted;

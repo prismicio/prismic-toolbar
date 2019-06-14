@@ -26,17 +26,18 @@ export class Preview {
     }
 
     // We don't display the preview by default unless the start function says so
+    this.watchPreviewUpdates();
     return await this.start(this.ref) || { displayPreview: false };
   };
 
   watchPreviewUpdates() {
     if (this.active) {
-      this.interval = setInterval(() => this.updatePreview(), 2000);
+      this.interval = setInterval(() => this.updatePreview(), 3000);
     }
   }
 
   cancelPreviewUpdates() {
-    clearInterval(this.interval);
+    if (this.interval) clearInterval(this.interval);
   }
 
   async updatePreview() {
@@ -50,9 +51,10 @@ export class Preview {
       await this.end();
       return;
     }
-    if (ref === this.cookie.getRefForDomain()) return { displayPreview: true };
+    if (ref === this.cookie.getRefForDomain()) {
+      return { displayPreview: true };
+    }
     this.cookie.upsertPreviewForDomain(ref);
-    this.watchPreviewUpdates();
     // Force to display the preview
     reloadOrigin();
   }
