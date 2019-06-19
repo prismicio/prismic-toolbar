@@ -80,6 +80,8 @@ export class JsonView extends Component {
   setIsCopied(json, keyNames, value) {
     if(!keyNames) { return } // If the path does not exist then it's the case of the first copy where there is no nodecopied before.
     const length = keyNames.length;
+
+    // reducer to find the data we need to modify in the json (based on index of the current Key, last key = data to get)
     const reducer = (acc, key, index) => {
       const nodeFound = acc.find( node => {
         return node.name === key
@@ -90,6 +92,7 @@ export class JsonView extends Component {
         return nodeFound.children
       }
     };
+
     const nodeToModify = keyNames.reduce(reducer, json);
     nodeToModify.isCopied = value;
   }
@@ -105,7 +108,7 @@ export class JsonView extends Component {
   /* ----- DECORATORS THAT DEFINE HOW THE JSON IS RENDERED ----- */
   decorators = {
      Icon: (props) => {
-       // if node has children then it's an object, an object has an icon + or - if he has children
+       // if node has children property then it's an object, an object has an icon + or - if he has children
        if(props.node.children && props.node.children.length > 0) {
          return <img className="icon-toggle" onClick={props.onClick} src={props.node.toggled ? minusSquare : plusSquare} />
        }
