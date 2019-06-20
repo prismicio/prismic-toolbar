@@ -1,8 +1,8 @@
 import Puppeteer from 'puppeteer';
-import { demolishCookie } from 'common';
+import { demolishCookie } from '@common';
 
-describe('Cookies',_ => {
-  it('demolishCookie should remove cookies for all domain/path combinations.', async _ => {
+describe('Cookies', () => {
+  it('demolishCookie should remove cookies for all domain/path combinations.', async () => {
     // Set up puppeteer
     const browser = await Puppeteer.launch();
     const page = await browser.newPage();
@@ -14,7 +14,7 @@ describe('Cookies',_ => {
     await page.exposeFunction('demolishCookie', demolishCookie);
 
     // Set preview cookies
-    let cookie = await page.evaluate(_ => {
+    let cookie = await page.evaluate(() => {
       setCookie('io.prismic.preview', 'foo', '.www.awwwards.com', '/websites');
       setCookie('io.prismic.preview', 'foo', 'www.awwwards.com', '/websites/');
       setCookie('io.prismic.preview', 'foo', '.awwwards.com', '/');
@@ -27,7 +27,7 @@ describe('Cookies',_ => {
     expect(cookie).toBeTruthy();
 
     // Remove all preview cookies
-    cookie = await page.evaluate(_ => {
+    cookie = await page.evaluate(() => {
       demolishCookie();
       return cookieExists('io.prismic.preview');
     });

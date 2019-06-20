@@ -1,8 +1,8 @@
-const { withPolyfill } = require('common/polyfill'); // Support IE 11 TODO
+const { withPolyfill } = require('@common/polyfill'); // Support IE 11 TODO
 
 const version = process.env.npm_package_version;
 
-const warn = (...message) => require('common').warn`
+const warn = (...message) => require('@common').warn`
 ${String.raw(...message)}
 
 Please remove your current Prismic Toolbar installation and replace it with
@@ -10,31 +10,32 @@ Please remove your current Prismic Toolbar installation and replace it with
 <script async defer src=//static.cdn.prismic.io/prismic.js?repo=example-repository&new=true></script>
 
 For complete documentation on setting up the Prismic Toolbar, please refer to
-https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`
+https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`;
 
 // Prismic Toolbar Interface
 window.prismic = window.PrismicToolbar = {
-  endpoint: null, ...window.prismic/*Legacy*/,
+  endpoint: null,
+  ...window.prismic/* Legacy */,
   version,
   setup: withPolyfill((...args) => {
     warn`window.prismic.setup is deprecated.`;
     args.forEach(setup);
   }),
-  startExperiment/*TODO automate*/: withPolyfill(expId => {
+  startExperiment/* TODO automate */: withPolyfill(expId => {
     const { Experiment } = require('./experiment');
     new Experiment(expId);
   }),
-  setupEditButton/*Legacy*/: withPolyfill(_ => {
+  setupEditButton/* Legacy */: withPolyfill(() => {
     warn`window.prismic.setupEditButton is deprecated.`;
   }),
 };
 
-withPolyfill(_ => { 
+withPolyfill(() => {
   const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
   let repos = new Set();
 
   // Prismic variable is available
-  window.dispatchEvent(new CustomEvent('prismic'))
+  window.dispatchEvent(new CustomEvent('prismic'));
 
   // Auto-querystring setup
   const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
@@ -48,33 +49,28 @@ withPolyfill(_ => {
     repos.add(legacyEndpoint);
   }
 
-  if (!repos.size) warn`Your are not connected to a repository.`
+  if (!repos.size) warn`Your are not connected to a repository.`;
 
   repos.forEach(setup);
-})()
+})();
 
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
 let setupDomain = null;
 async function setup (rawInput) {
   // Imports
-  const { Messenger, Publisher, warn } = require('common');
-  const { fixPreviewCookie } = require('./cookies');
+  const { ToolbarService } = require('@toolbar-service');
   const { parseEndpoint } = require('./utils');
-  const { screenshot } = require('common/screenshot');
-  const { Tracker } = require('./tracker');
   const { Preview } = require('./preview');
   const { Prediction } = require('./prediction');
   const { Analytics } = require('./analytics');
   const { Toolbar } = require('./toolbar');
+  const { PreviewCookie } = require('./preview/cookie');
 
-  // Fix broken preview cookies and ensure the path is /
-  fixPreviewCookie()
-
-  //verifier si les preview ou experiment cookie existe
+  // verifier si les preview ou experiment cookie existe
 
   // Validate repository
-  const domain = parseEndpoint(rawInput)
-  const protocol = domain.match('.test$') ? window.location.protocol : 'https:'
+  const domain = parseEndpoint(rawInput);
+  const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
 
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
@@ -86,26 +82,23 @@ async function setup (rawInput) {
   setupDomain = domain;
 
   // Communicate with repository
-  const messenger = new Messenger(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
-  new Publisher({ screenshot });
+  const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
+  const previewState = await toolbarClient.getPreviewState();
+  const previewCookie = new PreviewCookie(toolbarClient.hostname);
+  const preview = new Preview(toolbarClient, previewCookie, previewState);
 
-  // Request Tracker (prediction)
-  new Tracker(messenger);
+  const prediction = previewState.auth && new Prediction(toolbarClient, previewCookie);
+  const analytics = previewState.auth && new Analytics(toolbarClient);
 
-  // Preview & Prediction
-  const preview = new Preview(messenger);
-  const prediction = new Prediction(messenger, this.prismic.endpoint);
-  const analytics = new Analytics(messenger);
+  // Start concurrently preview (always) and prediction (if authenticated)
+  const [{ displayPreview }] = await (async () => {
+    if (prediction) return Promise.all([preview.setup(), prediction.setup()]);
+    return [await preview.setup()];
+  })();
 
-  // Start concurrently
-  await Promise.all([preview.setup(), prediction.setup()]);
-
-  // Do not render toolbar while reloading (reload is async)
-  if (preview.shouldReload || prediction.shouldReload) return;
-
-  // Toolbar
-  new Toolbar({ messenger, preview, prediction, analytics });
+  // render toolbar
+  new Toolbar({ displayPreview, auth: previewState.auth, preview, prediction, analytics });
 
   // Track initial setup of toolbar
-  analytics.trackToolbarSetup();
+  if (analytics) analytics.trackToolbarSetup();
 }

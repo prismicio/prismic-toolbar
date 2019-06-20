@@ -5,8 +5,9 @@
   "license": "Apache-2.0",
   "main": "build/prismic-toolbar.js",
   "scripts": {
-    "start": "webpack --mode development --watch",
-    "build": "webpack --mode production",
+    "start": "APP_MODE=development webpack --mode development --watch",
+    "build:stage": "APP_MODE=stage webpack --mode production",
+    "build:prod": "APP_MODE=production webpack --mode production",
     "lint": "eslint src; exit 0",
     "test": "jest"
   },
@@ -39,6 +40,7 @@
     "eslint-config-standard": "^12.0.0",
     "eslint-config-standard-preact": "^1.1.6",
     "eslint-import-resolver-webpack": "^0.10.1",
+    "eslint-loader": "^2.1.2",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jsx-a11y": "^6.1.2",
     "eslint-plugin-node": "^8.0.0",

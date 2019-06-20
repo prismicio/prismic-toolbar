@@ -1,4 +1,5 @@
 // import Fuse from 'fuse.js'; // uncomment to use fuzzy find
+/* global Fuse */
 
 const transpose = matrix => matrix[0].map((col, i) => matrix.map(row => row[i]));
 
@@ -23,7 +24,7 @@ export class Sorter {
     const comparers = this.filters.map(f => f.compare);
     return function(a, b) {
       let result = 0;
-      for (let i = 0; i < comparers.length; i++) {
+      for (let i = 0; i < comparers.length; i += 1) {
         const { didFirstWin, tie } = comparers[i](a.nodes[i], b.nodes[i]);
         if (!tie) result = didFirstWin ? -1 : 1;
       }
@@ -36,6 +37,16 @@ export class Sorter {
       data => data.map(x => Boolean(val(x))),
       (a, b) => ({
         didFirstWin: a,
+        tie: a === b,
+      })
+    );
+  }
+
+  isNot(val) {
+    return this.addFilter(
+      data => data.map(x => Boolean(val(x))),
+      (a, b) => ({
+        didFirstWin: !a,
         tie: a === b,
       })
     );

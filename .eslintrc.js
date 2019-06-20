@@ -1,4 +1,9 @@
+const path = require('path');
+
 module.exports = {
+  globals: {
+    APP_MODE: true
+  },
   parser: 'babel-eslint',
   extends: ['standard', 'standard-preact', 'airbnb-base'],
   env: {
@@ -14,6 +19,7 @@ module.exports = {
     'promise/param-names': 0,
     'class-methods-use-this': 0,
     'func-names': 0,
+    "global-require": 0,
     'no-new': 0,
     'no-multi-assign': 0,
     'space-before-function-paren': 0,
@@ -28,6 +34,7 @@ module.exports = {
     'prefer-rest-params': 0,
     'nonblock-statement-body-position': 0,
     'no-underscore-dangle': 0,
+    'react/react-in-jsx-scope': 0,
     'comma-dangle': [
       'error',
       {
@@ -42,7 +49,13 @@ module.exports = {
     'import/no-extraneous-dependencies': 0,
     'object-curly-newline': 0,
     'implicit-arrow-linebreak': 0,
-    'import/no-unresolved': [2, { ignore: ['^common$'] }],
     curly: 0,
   },
+  "settings": {
+    "import/resolver": {
+      webpack: {
+        config: 'webpack.config.js'
+      }
+    }
+  }
 };

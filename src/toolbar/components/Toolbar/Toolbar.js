@@ -6,30 +6,59 @@ const { NONE } = views;
 export class Toolbar extends Component {
   constructor({ prediction }) {
     super(...arguments);
-    this.state = { page: NONE, documents: prediction.documents, docData: prediction.docData };
-    prediction.onDocuments(documents => this.setState({ documents }));
 
+    this.closePreview = this.closePreview.bind(this);
+
+    this.state = {
+      page: NONE,
+      documents: [],
+      queries: [],
+      renderedPreview: this.props.preview.active,
+      documentsLoading: false
+    };
+    if (prediction) {
+      prediction.onDocuments((documents, queries) => {
+        this.setState({ documents, queries, documentsLoading: false });
+      });
+
+      prediction.onDocumentsLoading(() => {
+        this.setState({ documentsLoading: true });
+      });
+    }
   }
 
   setPage = page => this.setState({ page });
 
+  closePreview() {
+    this.setState({ renderedPreview: false });
+  }
+
   render() {
-    const { preview, analytics } = this.props;
-    const { page, documents, docData } = this.state;
+    const { preview, analytics, auth } = this.props;
+    const { page, documents, queries } = this.state;
     const hasDocs = Boolean(documents.length);
 
     return (
       <div className="Toolbar">
         <Panel
-          onDocumentClick={analytics.trackDocumentClick}
-          closePanel={_ => this.setPage(NONE)}
+          onDocumentClick={analytics && analytics.trackDocumentClick}
+          closePanel={() => this.setPage(NONE)}
+          documentsLoading={this.state.documentsLoading}
           documents={documents}
-          docData={docData}
+          queries={queries}
           preview={preview}
           page={page}
         />
         <Menu setPage={this.setPage} page={page} in={hasDocs} />
-        <PreviewMenu setPage={this.setPage} preview={preview} in={preview.active} />
+        { this.props.displayPreview && this.state.renderedPreview
+          ? <PreviewMenu
+            auth={auth}
+            closePreview={this.closePreview}
+            setPage={this.setPage}
+            preview={preview}
+            in={preview.active} />
+          : null
+        }
       </div>
     );
   }

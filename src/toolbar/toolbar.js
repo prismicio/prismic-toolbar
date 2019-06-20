@@ -1,23 +1,19 @@
 import { render } from 'preact';
-import { appendCSS, shadow, readyDOM } from 'common';
+import { appendCSS, shadow, readyDOM } from '@common';
 import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
 export class Toolbar {
-  constructor({ messenger, preview, prediction, analytics }) {
-    this.messenger = messenger;
+  constructor({ displayPreview, auth, preview, prediction, analytics }) {
     this.preview = preview;
+    this.auth = auth;
     this.prediction = prediction;
     this.analytics = analytics;
+    this.displayPreview = displayPreview;
     this.setup();
   }
 
   async setup() {
-    const { auth } = await this.messenger.post('state');
-
-    // Hide for normal visitors
-    if (!auth && !this.preview.active) return;
-
     // Because we need the DOM now
     await readyDOM();
 
@@ -28,7 +24,7 @@ export class Toolbar {
     });
 
     // Put above Intercom
-    appendCSS(document.body, `#intercom-container { z-index: 2147483646 !important }`);
+    appendCSS(document.body, '#intercom-container { z-index: 2147483646 !important }');
 
     // Styles
     appendCSS(toolbar, shadowStyles);
@@ -36,6 +32,8 @@ export class Toolbar {
     // Render the React app
     render(
       <ToolbarComponent
+        auth={this.auth}
+        displayPreview={this.displayPreview}
         preview={this.preview}
         prediction={this.prediction}
         analytics={this.analytics}

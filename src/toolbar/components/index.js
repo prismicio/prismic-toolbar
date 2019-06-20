@@ -1,5 +1,6 @@
 // Animations
 import * as Animation from './animation';
+
 export { Animation };
 
 // Constants
@@ -12,6 +13,6 @@ export { Panel } from './Panel';
 export { Menu } from './Menu';
 export { PreviewMenu } from './PreviewMenu';
 export { ScrollingName } from './ScrollingName';
-export { NavTabs } from './NavTabs';
+export { NavTabs } from './navTabs';
 export { DevModeCollapsible } from './DevModeCollapsible';
 export { JsonView } from './JsonView';

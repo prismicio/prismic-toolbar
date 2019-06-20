@@ -1,123 +1,138 @@
-import { Hooks, wait, getLocation, fetchy, query, getCookie } from 'common';
-import { PreviewCookie } from './cookies';
-import { reloadOrigin } from './utils';
-
-// Initial track
-let initialTrack = PreviewCookie.track;
+import { Hooks, getLocation, wait, fetchy, query } from '@common';
+import { hostname } from 'os';
+import applicationMode from '../../application-mode';
 
 export class Prediction {
-  constructor(messenger, apiEndPoint) {
-    this.cookie = new PreviewCookie(messenger.hostname);
-    this.messenger = messenger;
+  constructor(client, previewCookie) {
+    this.client = client;
+    this.cookie = previewCookie;
     this.hooks = new Hooks();
     this.documentHooks = [];
-    this.documents = [];
+    this.documentLoadingHooks = [];
     this.count = 0;
-    this.apiEndPoint = apiEndPoint;
-    this.baseEndPoint = apiEndPoint.substr(0, apiEndPoint.indexOf('/api'));
-    this.shouldReload = false;
+    this.retry = 0;
+    this.apiEndPoint = this.buildApiEndpoint();
+  }
+
+  buildApiEndpoint = () => {
+    const protocol = process.env.MODE === applicationMode.DEV ? 'http' : 'https';
+    const domain = (() => {
+      switch (process.env.APP_MODE) {
+        case applicationMode.DEV: return 'wroom.test';
+        case applicationMode.PROD: return 'prismic.io';
+        case applicationMode.STAGE: return 'wroom.io';
+        default: return '';
+      }
+    })();
+    return protocol + '://' + hostname + '.' + domain + '/api';
   }
 
   // Start predictions for this page load
-  setup = async _ => {
-    const { auth } = await this.messenger.post('state');
-    if (!auth) return;
+  setup = async () => {
     await this.start();
     this.hooks.on('historyChange', this.start);
   }
 
   // Start predictions for this URL
-  start = async _ => {
-    // For initial page load SSR requests (match track -> url) and for quickly getting documents
-    const fetch = this.predict(initialTrack || PreviewCookie.track)
-    initialTrack = null;
-    await fetch
+  start = async () => {
+    // wait for all requests to be played first (client side)
+    this.dispatchLoading();
+    await wait(2);
+    // load prediction
+    await this.predict();
+    this.cookie.refreshTracker();
   }
 
   // Fetch predicted documents
-  predict = async (track = null) => {
-    await this.dispatch(await this.messenger.post('documents', {
-      ref: this.cookie.preview,  // The ref for the version of content to display
-      url: window.location.pathname, // The URL for which we need the documents
-      track, // Match the prior request to this URL
-      location: getLocation(), // Help sort main document
-    }));
+  predict = () => (
+    new Promise(async resolve => {
+      const { documents, queries } = await this.client.getPredictionDocs({
+        ref: this.cookie.getRefForDomain(),
+        url: window.location.pathname,
+        tracker: this.cookie.getTracker(),
+        location: getLocation()
+      });
+      const queriesInfos = await this.getDocsData(queries);
+      this.dispatch(documents, queriesInfos);
+      resolve();
+    })
+  )
+
+  retryPrediction = () => {
+    const nextRetryMs = this.retry * 1000; // 1s / 2s / 3s
+    setTimeout(this.predict, nextRetryMs);
   }
 
   // Dispatch documents to hooks
-  dispatch = async (data) => {
-    if(data.queries){
-      const docData = await this.getDocsData(data.queries)
-      this.docData = docData;
-    }else{
-      reloadOrigin();
-      this.shouldReload = true;
-      return
-    }
-    this.documents = data.documents;
-    window.prismic._predictionDocuments = this.documents; // Debug
-    Object.values(this.documentHooks).forEach(hook => hook(this.documents)); // Run the hooks
+  dispatch = (documents, queries) => {
+    Object.values(this.documentHooks).forEach(hook => hook(documents, queries)); // Run the hooks
+  }
+
+  dispatchLoading = () => {
+    Object.values(this.documentLoadingHooks).forEach(hook => hook());
+  }
+
+  onDocumentsLoading = func => {
+    const c = this.count += 1; // Create the hook key
+    this.documentLoadingHooks[c] = func; // Create the hook
+    return () => delete this.documentLoadingHooks[c]; // Alternative to removeEventListener
   }
 
   // Documents hook
   onDocuments = func => {
-    const c = this.count++; // Create the hook key
+    const c = this.count += 1; // Create the hook key
     this.documentHooks[c] = func; // Create the hook
-    return _ => delete this.documentHooks[c]; // Alternative to removeEventListener
+    return () => delete this.documentHooks[c]; // Alternative to removeEventListener
   }
 
   // Get the masterRef through the api endpoint
-  getMasterRef = async (apiEndPoint) => {
+  getMasterRef = async apiEndPoint => {
     const masterRef = await fetchy({
       url: `${apiEndPoint}`,
-    }).then(res => {
-      return res.refs.find( ele => {
-       return ele.isMasterRef
-      }).ref
-    })
-    return masterRef
+    }).then(res => (
+      res.refs.find(ele => ele.isMasterRef).ref
+    ));
+    return masterRef;
   }
 
   // Get the data for each document and put it inside the json of the document
-  getDocsData = async (queries) => {
-    if(!queries){return}
+  getDocsData = async queries => {
+    if (!queries) { return; }
     const promiseList = [];
     const dataList = [];
     queries.forEach(async queryParams => {
-      const promise = this.getDataFromQuery(queryParams)
+      const promise = this.getDataFromQuery(queryParams);
       promiseList.push(promise);
-    })
+    });
     await Promise.all(promiseList).then(promisesRes => {
-      promisesRes.forEach(query => {
-        dataList.push(query);
-      })
-    })
-    return dataList
+      promisesRes.forEach(q => {
+        dataList.push(q);
+      });
+    });
+    return dataList;
   }
 
   // Do one query to get documents
-  getDataFromQuery = async(queryParams) => {
+  getDataFromQuery = async queryParams => {
     const data = await fetchy({
-          url: `${this.baseEndPoint}/api/${queryParams.version}/documents/search?${query({
-            version: queryParams.version,
-            ref: queryParams.ref,
-            integrationFieldsRef: queryParams.integrationFieldsRef,
-            q: queryParams.q,
-            orderings: queryParams.orderings,
-            page: queryParams.page,
-            requestedPageSize: queryParams.requestedPageSize,
-            after: queryParams.after,
-            referer: queryParams.referer,
-            fetch: queryParams.fetch,
-            fetchLinks: queryParams.fetchLinks,
-            graphQuery: queryParams.graphQuery,
-            languageCode: queryParams.languageCode,
-            withMeta: queryParams.withMeta
-            })}` ,
-          method: 'GET'
-    }).then(res => res.results)
-    return data
+      url: `${this.apiEndPoint}/${queryParams.version}/documents/search?${query({
+        version: queryParams.version,
+        ref: queryParams.ref,
+        integrationFieldsRef: queryParams.integrationFieldsRef,
+        q: queryParams.q,
+        orderings: queryParams.orderings,
+        page: queryParams.page,
+        requestedPageSize: queryParams.requestedPageSize,
+        after: queryParams.after,
+        referer: queryParams.referer,
+        fetch: queryParams.fetch,
+        fetchLinks: queryParams.fetchLinks,
+        graphQuery: queryParams.graphQuery,
+        languageCode: queryParams.languageCode,
+        withMeta: queryParams.withMeta
+      })}`,
+      method: 'GET'
+    }).then(res => res.results);
+    return data;
   }
 }
-
-

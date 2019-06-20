@@ -1,75 +1,99 @@
-import { fetchy, query, getCookie, demolishCookie, wait, throttle, memoize } from 'common';
-import { state, messenger } from './utils';
+import { fetchy, query, getCookie, demolishCookie, throttle, memoize, once } from '@common';
 
-// Check for new preview ref
-let newRef = null;
-const fetcher = throttle(async _ => {
-  const s = await state()
-  const ref = encodeURIComponent(s.preview.ref);
-  return fetchy({ url: `/previews/${sessionId}/ping?ref=${ref}` });
-}, 2000);
+const SESSION_ID = getCookie('io.prismic.previewSession');
 
-export const newPreviewRef = async _ => {
-  while (true) {
-    if (newRef) return newRef;
-    const { reload, ref } = await fetcher();
-    if (reload) newRef = ref;
-    if (newRef) return newRef;
-    await wait(3);
+// Close preview session
+function closePreviewSession () /* void */{
+  demolishCookie('io.prismic.previewSession');
+}
+
+const PreviewRef = {
+  getCurrent: throttle(async () => {
+    const s = await State.get();
+    const ref = encodeURIComponent(s.preview.ref);
+    return fetchy({ url: `/previews/${SESSION_ID}/ping?ref=${ref}` });
+  }, 2000)
+};
+
+const Share = {
+  run: memoize(async (location, blob) => {
+    const imageId = location.pathname.slice(1) + location.hash + SESSION_ID + '.jpg';
+    const imageName = imageId;
+    const session = await Share.getSession({ location, imageName });
+    if (!session.hasPreviewImage) Share.uploadScreenshot(imageName, blob);
+    return session.url;
+  }, ({ href }) => href),
+
+  async getSession({ location, imageName }) {
+    const s = await State.get();
+    const qs = query({
+      sessionId: SESSION_ID,
+      pageURL: location.href,
+      title: s.preview.title,
+      imageName,
+      _: s.csrf,
+    });
+
+    return fetchy({
+      url: `/previews/s?${qs}`,
+      method: 'POST',
+    });
+  },
+
+  async uploadScreenshot(imageName, blob) {
+    const acl = await fetchy({
+      url: `/previews/${SESSION_ID}/acl`,
+    });
+
+    // Form
+    const body = new FormData();
+    body.append('key', `${acl.directory}/${imageName}`);
+    body.append('AWSAccessKeyId', acl.key);
+    body.append('acl', 'public-read');
+    body.append('policy', acl.policy);
+    body.append('signature', acl.signature);
+    body.append('Content-Type', 'image/png');
+    body.append('Cache-Control', 'max-age=315360000');
+    body.append('Content-Disposition', `inline; filename=${imageName}`);
+    body.append('file', blob);
+
+    // Upload
+    return fetch(acl.url, { method: 'POST', body });
   }
 };
 
-// Session id
-const sessionId = getCookie('io.prismic.previewSession');
+const State = {
+  liveStateNeeded: Boolean(getCookie('is-logged-in')) || Boolean(getCookie('io.prismic.previewSession')),
 
-// Close preview session
-export const closePreview = _ => demolishCookie('io.prismic.previewSession');
+  get: once(async () => {
+    if (!State.liveStateNeeded) return State.normalize();
+    return fetchy({
+      url: '/toolbar/state',
+    }).then(State.normalize);
+  }),
 
-// Share
-export const sharePreview = memoize(async location => {
-  const imageId = location.pathname.slice(1) + location.hash + sessionId + '.jpg';
-  const imageName = imageId
-  const session = await getShareableSession({ location, imageName });
-  if (!session.hasPreviewImage) uploadScreenshot(imageName);
-  return session.url;
-}, ({ href }) => href);
-
-// Get shareable session
-const getShareableSession = async ({ location, imageName }) => {
-  const s = await state()
-  const qs = query({
-    sessionId,
-    pageURL: location.href,
-    title: s.preview.title,
-    imageName,
-    _: s.csrf,
-  });
-
-  return fetchy({
-    url: `/previews/s?${qs}`,
-    method: 'POST',
-  });
+  normalize: (_state = {}) => (
+    Object.assign({}, {
+      csrf: _state.csrf || null,
+      auth: Boolean(_state.isAuthenticated),
+      preview: _state.previewState || null
+    }, _state.previewState ? {
+      preview: {
+        ref: _state.previewState.ref,
+        title: _state.previewState.title,
+        updated: _state.previewState.lastUpdate,
+        documents: []
+          .concat(_state.previewState.draftPreview)
+          .concat(_state.previewState.releasePreview)
+          .filter(Boolean)
+      }
+    } : {})
+  )
 };
 
-// Upload screenshot
-const uploadScreenshot = async imageName => {
-  // ACL
-  const acl = await fetchy({
-    url: `/previews/${sessionId}/acl`,
-  });
-
-  // Form
-  const body = new FormData();
-  body.append('key', `${acl.directory}/${imageName}`);
-  body.append('AWSAccessKeyId', acl.key);
-  body.append('acl', 'public-read');
-  body.append('policy', acl.policy);
-  body.append('signature', acl.signature);
-  body.append('Content-Type', 'image/png');
-  body.append('Cache-Control', 'max-age=315360000');
-  body.append('Content-Disposition', `inline; filename=${imageName}`);
-  body.append('file', await messenger.post('screenshot'));
-
-  // Upload
-  return fetch(acl.url, { method: 'POST', body });
+export default {
+  getState: State.get,
+  share: Share.run,
+  close: closePreviewSession,
+  getCurrentRef: PreviewRef.getCurrent
 };
