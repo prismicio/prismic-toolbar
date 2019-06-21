@@ -52,7 +52,6 @@ const ToolbarHeader = () => (
 );
 
 const DocumentsSummaryTab = ({ documents, onClick }) => {
-
   const mainDoc = documents[0];
   const otherDocs = documents.slice(1);
 
@@ -69,7 +68,7 @@ const DocumentsSummaryTab = ({ documents, onClick }) => {
 };
 
 const DocumentSummary = ({ document, isMain, onClick }) => (
-  <a className="document-summary" href={document.editorUrl} target="_blank" onClick={e => {onClick({ isMain }); e.stopPropagation()}}>
+  <a className="document-summary" href={document.editorUrl} target="_blank" onClick={() => onClick({ isMain })}>
     <div className="wrapper-title-status">
       <span className={document.status.toLowerCase()}>{document.status}</span>
       <h2>{document.title}</h2>
