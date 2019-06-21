@@ -5,7 +5,6 @@ const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
 const { WebPlugin } = require('web-webpack-plugin');
 const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
-const applicationMode = require('./application-mode');
 
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
