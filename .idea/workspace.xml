@@ -2,15 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e0e96955-55b5-458d-b6ad-e225b63b8749" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.eslintrc.js" beforeDir="false" afterPath="$PROJECT_DIR$/.eslintrc.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/iframe/prediction.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/iframe/prediction.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/toolbar/components/Toolbar/Toolbar.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Toolbar/Toolbar.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/toolbar/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/toolbar/prediction.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/prediction.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/webpack.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/webpack.config.js" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -27,8 +24,17 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="374">
-              <caret line="115" column="37" selection-start-line="115" selection-start-column="37" selection-end-line="115" selection-end-column="37" />
+            <state relative-caret-position="398">
+              <caret line="116" column="37" selection-start-line="116" selection-start-column="37" selection-end-line="116" selection-end-column="37" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="433">
+              <caret line="71" column="92" selection-start-line="71" selection-start-column="92" selection-end-line="71" selection-end-column="92" />
             </state>
           </provider>
         </entry>
@@ -51,7 +57,7 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/.env">
           <provider selected="true" editor-type-id="text-editor">
             <state>
@@ -90,8 +96,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/toolbar/prediction.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-495">
-              <caret line="99" column="24" selection-start-line="99" selection-start-column="24" selection-end-line="99" selection-end-column="24" />
+            <state relative-caret-position="1">
+              <caret line="89" column="21" lean-forward="true" selection-start-line="89" selection-start-column="21" selection-end-line="89" selection-end-column="21" />
             </state>
           </provider>
         </entry>
@@ -128,8 +134,8 @@
       <find>Name='</find>
       <find>385</find>
       <find>className=&quot;x&quot;</find>
-      <find>count</find>
       <find>/predict</find>
+      <find>count</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/src</dir>
@@ -177,7 +183,6 @@
         <option value="$PROJECT_DIR$/build/iframe.html" />
         <option value="$PROJECT_DIR$/src/iframe/index.html" />
         <option value="$PROJECT_DIR$/src/toolbar/components/Panel/SharePanel.js" />
-        <option value="$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js" />
         <option value="$PROJECT_DIR$/src/toolbar/components/Toolbar/Toolbar.css" />
         <option value="$PROJECT_DIR$/src/toolbar/components/NavTabs/NavTabs.css" />
         <option value="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.css" />
@@ -188,6 +193,7 @@
         <option value="$PROJECT_DIR$/src/toolbar/components/NavTabs/NavTabs.js" />
         <option value="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js" />
         <option value="$PROJECT_DIR$/.env" />
+        <option value="$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js" />
       </list>
     </option>
   </component>
@@ -223,6 +229,21 @@
               <item name="prismic-toolbar" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
               <item name="toolbar" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="prismic-toolbar" type="b2602c69:ProjectViewProjectNode" />
+              <item name="prismic-toolbar" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="toolbar" type="462c0819:PsiDirectoryNode" />
+              <item name="components" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="prismic-toolbar" type="b2602c69:ProjectViewProjectNode" />
+              <item name="prismic-toolbar" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="toolbar" type="462c0819:PsiDirectoryNode" />
+              <item name="components" type="462c0819:PsiDirectoryNode" />
+              <item name="Panel" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -301,7 +322,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.18469387" />
+      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.3612245" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="9" weight="0.32959184" />
       <window_info anchor="bottom" id="Messages" order="10" />
@@ -524,13 +545,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="39" column="36" selection-start-line="39" selection-start-column="36" selection-end-line="39" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/toolbar/components/Toolbar/Toolbar.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="150">
@@ -562,13 +576,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/toolbar/prediction.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-495">
-          <caret line="99" column="24" selection-start-line="99" selection-start-column="24" selection-end-line="99" selection-end-column="24" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/package.json">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="735">
@@ -590,13 +597,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="115" column="37" selection-start-line="115" selection-start-column="37" selection-end-line="115" selection-end-column="37" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/iframe/prediction.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="399">
@@ -611,6 +611,20 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/.env">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="22" selection-start-column="22" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/toolbar/prediction.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1">
+          <caret line="89" column="21" lean-forward="true" selection-start-line="89" selection-start-column="21" selection-end-line="89" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/toolbar/index.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="444">
@@ -618,10 +632,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/.env">
+    <entry file="file://$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="22" selection-start-column="22" selection-end-column="22" />
+        <state relative-caret-position="398">
+          <caret line="116" column="37" selection-start-line="116" selection-start-column="37" selection-end-line="116" selection-end-column="37" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="433">
+          <caret line="71" column="92" selection-start-line="71" selection-start-column="92" selection-end-line="71" selection-end-column="92" />
         </state>
       </provider>
     </entry>

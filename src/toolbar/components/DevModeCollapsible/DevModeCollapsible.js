@@ -45,12 +45,13 @@ export class DevModeCollapsible extends Component {
       }
     */
     const triggerInfo = queries.map(doc => {
-      const { type } = doc.type;
+      const { type } = doc;
       return { type };
     }).reduce(
       triggerInfoReducer,
       {}
     );
+
     const title = this.constructTitle(triggerInfo);
 
     // expected format of title : (X) type 1 & (Y) type 2 ...
@@ -71,7 +72,7 @@ export class DevModeCollapsible extends Component {
     const copyInfo = JSON.parse(JSON.stringify(triggerInfo));
 
     const keys = Object.keys(copyInfo);
-    const { length } = keys.length;
+    const { length } = keys;
     keys.forEach((key, index) => {
       title += key + ' (' + copyInfo[key] + ')';
       index !== length - 1 ? title += ' & ' : '';

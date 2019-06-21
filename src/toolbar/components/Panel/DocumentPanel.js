@@ -6,6 +6,7 @@ import { NavTabs, DevModeCollapsible } from '..';
 export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
   if (!documents.length) return null;
 
+
   return (
     <BasePanel className="DocumentPanel">
       <ToolbarHeader />
@@ -19,7 +20,7 @@ export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) 
 
 const panelContent = (documents, queries, onDocumentClick) => {
   // If there is no docData then no queries was made, therefore we can't display the json.
-  if (queries) {
+  if (queries && queries.length > 0) {
     return (
       <NavTabs
         tabsName={['Edit Button', 'Dev Mode']}
@@ -51,6 +52,7 @@ const ToolbarHeader = () => (
 );
 
 const DocumentsSummaryTab = ({ documents, onClick }) => {
+
   const mainDoc = documents[0];
   const otherDocs = documents.slice(1);
 
@@ -67,7 +69,7 @@ const DocumentsSummaryTab = ({ documents, onClick }) => {
 };
 
 const DocumentSummary = ({ document, isMain, onClick }) => (
-  <a className="document-summary" href={document.editorUrl} target="_blank" onClick={onClick({ isMain })}>
+  <a className="document-summary" href={document.editorUrl} target="_blank" onClick={e => {onClick({ isMain }); e.stopPropagation()}}>
     <div className="wrapper-title-status">
       <span className={document.status.toLowerCase()}>{document.status}</span>
       <h2>{document.title}</h2>

@@ -8,7 +8,8 @@ export class Prediction {
     this.hooks = new Hooks();
     this.documentHooks = [];
     this.documentLoadingHooks = [];
-    this.documents = []
+    this.documents = [];
+    this.queries = [];
     this.count = 0;
     this.retry = 0;
     this.apiEndPoint = this.buildApiEndpoint();
@@ -19,7 +20,7 @@ export class Prediction {
     return protocol + '://' + this.client.hostname + '/api';
   }
 
-  // Start predictions for this page load
+  // Set event listener
   setup = async () => {
     await this.start();
     this.hooks.on('historyChange', this.start);
@@ -58,10 +59,7 @@ export class Prediction {
   // Dispatch documents to hooks
   dispatch = (documents, queries) => {
     this.documents = documents;
-    console.log('documents', this.documents);
-    console.log('documents to dispatch', documents);
-    console.log('queries to dispatch', queries);
-    console.log('documentHooks : ', this.documentHooks);
+    this.queries = queries;
     Object.values(this.documentHooks).forEach(hook => hook(documents, queries)); // Run the hooks
   }
 
@@ -77,10 +75,8 @@ export class Prediction {
 
   // Documents hook
   onDocuments = func => {
-    console.log("onDocuments");
     const c = this.count += 1; // Create the hook key
     this.documentHooks[c] = func; // Create the hook
-    console.log('documentHooks in OnDocuments :',this.documentHooks);
     return () => delete this.documentHooks[c]; // Alternative to removeEventListener
   }
 
