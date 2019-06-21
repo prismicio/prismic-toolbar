@@ -2,61 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e0e96955-55b5-458d-b6ad-e225b63b8749" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/common/promise-utils.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar-service/client.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar-service/iframe.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar-service/index.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar-service/messages.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar/components/Loader/Loader.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar/components/Loader/index.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar/components/Loader/loader.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar/experiment/cookie.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar/preview/cookie.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/toolbar/preview/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.eslintrc.js" beforeDir="false" afterPath="$PROJECT_DIR$/.eslintrc.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/communication.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/dom.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/dom.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/general.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/general.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/hooks.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/hooks.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/polyfill.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/polyfill.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/screenshot.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/preview/screenshot.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/common/sorter.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/common/sorter.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/iframe/analytics.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/iframe/analytics.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/iframe/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/iframe/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/iframe/prediction.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/iframe/prediction.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/iframe/preview.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/iframe/preview.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/iframe/utils.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/analytics.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/analytics.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/JsonView/JsonView.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/JsonView/JsonView.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/JsonView/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/JsonView/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/Menu/Menu.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Menu/Menu.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/NavTabs/NavTabs.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/NavTabs/NavTabs.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Panel/DocumentPanel.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/Panel/Panel.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Panel/Panel.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/Panel/PreviewPanel.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Panel/PreviewPanel.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/Panel/SharePanel.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Panel/SharePanel.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/PreviewMenu/PreviewMenu.css" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/PreviewMenu/PreviewMenu.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/PreviewMenu/PreviewMenu.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/PreviewMenu/PreviewMenu.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/ScrollingName/ScrollingName.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/ScrollingName/ScrollingName.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/toolbar/components/Toolbar/Toolbar.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/Toolbar/Toolbar.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/animation.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/animation.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/components/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/components/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/cookies.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/experiment.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/experiment/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/toolbar/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/index.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/toolbar/prediction.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/prediction.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/preview.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/toolbar.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/toolbar.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/toolbar.spec.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/toolbar.spec.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/tracker.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/toolbar/utils.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/toolbar/utils.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/webpack.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/webpack.config.js" afterDir="false" />
     </list>
     <ignored path="$PROJECT_DIR$/out/" />
@@ -89,10 +42,28 @@
           </provider>
         </entry>
       </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/toolbar/index.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="444">
+              <caret line="67" selection-start-line="67" selection-end-line="67" />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/.env">
+          <provider selected="true" editor-type-id="text-editor">
+            <state>
+              <caret column="22" selection-start-column="22" selection-end-column="22" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/iframe/prediction.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="120">
+            <state relative-caret-position="399">
               <caret line="29" column="11" selection-start-line="29" selection-start-column="11" selection-end-line="29" selection-end-column="11" />
             </state>
           </provider>
@@ -119,8 +90,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/toolbar/prediction.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-372">
-              <caret line="101" column="24" selection-start-line="101" selection-start-column="24" selection-end-line="101" selection-end-column="24" />
+            <state relative-caret-position="-495">
+              <caret line="99" column="24" selection-start-line="99" selection-start-column="24" selection-end-line="99" selection-end-column="24" />
             </state>
           </provider>
         </entry>
@@ -216,6 +187,7 @@
         <option value="$PROJECT_DIR$/src/toolbar/components/JsonView/JsonView.js" />
         <option value="$PROJECT_DIR$/src/toolbar/components/NavTabs/NavTabs.js" />
         <option value="$PROJECT_DIR$/src/toolbar/components/DevModeCollapsible/DevModeCollapsible.js" />
+        <option value="$PROJECT_DIR$/.env" />
       </list>
     </option>
   </component>
@@ -245,6 +217,12 @@
               <item name="prismic-toolbar" type="b2602c69:ProjectViewProjectNode" />
               <item name="prismic-toolbar" type="462c0819:PsiDirectoryNode" />
               <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="prismic-toolbar" type="b2602c69:ProjectViewProjectNode" />
+              <item name="prismic-toolbar" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="toolbar" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -307,6 +285,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1680" height="1050" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.2796093" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
@@ -322,7 +301,7 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.4387755" />
+      <window_info anchor="bottom" id="Terminal" order="7" visible="true" weight="0.18469387" />
       <window_info anchor="bottom" id="Event Log" order="8" side_tool="true" />
       <window_info anchor="bottom" id="Version Control" order="9" weight="0.32959184" />
       <window_info anchor="bottom" id="Messages" order="10" />
@@ -365,13 +344,6 @@
     </layout-to-restore>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/src/toolbar/index.css">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" selection-start-line="1" selection-end-line="1" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/toolbar/components/DevModeTabs/index.js" />
     <entry file="file://$PROJECT_DIR$/src/toolbar/components/DevModeTabs/DevModeTabs.js" />
     <entry file="file://$PROJECT_DIR$/src/toolbar/components/DevModeTabs/DevModeTabs.css" />
@@ -559,13 +531,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/toolbar/index.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1335">
-          <caret line="89" column="32" selection-start-line="89" selection-start-column="32" selection-end-line="89" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/toolbar/components/Toolbar/Toolbar.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="150">
@@ -599,8 +564,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/src/toolbar/prediction.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-372">
-          <caret line="101" column="24" selection-start-line="101" selection-start-column="24" selection-end-line="101" selection-end-column="24" />
+        <state relative-caret-position="-495">
+          <caret line="99" column="24" selection-start-line="99" selection-start-column="24" selection-end-line="99" selection-end-column="24" />
         </state>
       </provider>
     </entry>
@@ -632,6 +597,13 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/iframe/prediction.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="399">
+          <caret line="29" column="11" selection-start-line="29" selection-start-column="11" selection-end-line="29" selection-end-column="11" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/toolbar/toolbar.js">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
@@ -639,10 +611,17 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/iframe/prediction.js">
+    <entry file="file://$PROJECT_DIR$/src/toolbar/index.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="120">
-          <caret line="29" column="11" selection-start-line="29" selection-start-column="11" selection-end-line="29" selection-end-column="11" />
+        <state relative-caret-position="444">
+          <caret line="67" selection-start-line="67" selection-end-line="67" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.env">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
+          <caret column="22" selection-start-column="22" selection-end-column="22" />
         </state>
       </provider>
     </entry>

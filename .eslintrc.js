@@ -1,9 +1,6 @@
 const path = require('path');
 
 module.exports = {
-  globals: {
-    APP_MODE: true
-  },
   parser: 'babel-eslint',
   extends: ['standard', 'standard-preact', 'airbnb-base'],
   env: {

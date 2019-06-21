@@ -1,5 +1,4 @@
 import { Hooks, getLocation, wait, fetchy, query } from '@common';
-import { hostname } from 'os';
 import applicationMode from '../../application-mode';
 
 export class Prediction {
@@ -9,22 +8,15 @@ export class Prediction {
     this.hooks = new Hooks();
     this.documentHooks = [];
     this.documentLoadingHooks = [];
+    this.documents = []
     this.count = 0;
     this.retry = 0;
     this.apiEndPoint = this.buildApiEndpoint();
   }
 
   buildApiEndpoint = () => {
-    const protocol = process.env.MODE === applicationMode.DEV ? 'http' : 'https';
-    const domain = (() => {
-      switch (process.env.APP_MODE) {
-        case applicationMode.DEV: return 'wroom.test';
-        case applicationMode.PROD: return 'prismic.io';
-        case applicationMode.STAGE: return 'wroom.io';
-        default: return '';
-      }
-    })();
-    return protocol + '://' + hostname + '.' + domain + '/api';
+    const protocol = applicationMode.DEV === 'development' ? 'http' : 'https';
+    return protocol + '://' + this.client.hostname + '/api';
   }
 
   // Start predictions for this page load
@@ -46,14 +38,14 @@ export class Prediction {
   // Fetch predicted documents
   predict = () => (
     new Promise(async resolve => {
-      const { documents, queries } = await this.client.getPredictionDocs({
+      const { documentsSorted, queries } = await this.client.getPredictionDocs({
         ref: this.cookie.getRefForDomain(),
         url: window.location.pathname,
         tracker: this.cookie.getTracker(),
         location: getLocation()
       });
       const queriesInfos = await this.getDocsData(queries);
-      this.dispatch(documents, queriesInfos);
+      this.dispatch(documentsSorted, queriesInfos);
       resolve();
     })
   )
@@ -65,6 +57,11 @@ export class Prediction {
 
   // Dispatch documents to hooks
   dispatch = (documents, queries) => {
+    this.documents = documents;
+    console.log('documents', this.documents);
+    console.log('documents to dispatch', documents);
+    console.log('queries to dispatch', queries);
+    console.log('documentHooks : ', this.documentHooks);
     Object.values(this.documentHooks).forEach(hook => hook(documents, queries)); // Run the hooks
   }
 
@@ -80,8 +77,10 @@ export class Prediction {
 
   // Documents hook
   onDocuments = func => {
+    console.log("onDocuments");
     const c = this.count += 1; // Create the hook key
     this.documentHooks[c] = func; // Create the hook
+    console.log('documentHooks in OnDocuments :',this.documentHooks);
     return () => delete this.documentHooks[c]; // Alternative to removeEventListener
   }
 
@@ -96,20 +95,10 @@ export class Prediction {
   }
 
   // Get the data for each document and put it inside the json of the document
-  getDocsData = async queries => {
+  getDocsData = queries => {
     if (!queries) { return; }
-    const promiseList = [];
-    const dataList = [];
-    queries.forEach(async queryParams => {
-      const promise = this.getDataFromQuery(queryParams);
-      promiseList.push(promise);
-    });
-    await Promise.all(promiseList).then(promisesRes => {
-      promisesRes.forEach(q => {
-        dataList.push(q);
-      });
-    });
-    return dataList;
+    const promiseList = queries.map(queryParams => this.getDataFromQuery(queryParams));
+    return Promise.all(promiseList);
   }
 
   // Do one query to get documents

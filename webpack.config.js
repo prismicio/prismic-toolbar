@@ -48,7 +48,6 @@ module.exports = (_, options) => {
         'react-dom': 'preact-compat',
       }
     },
-
     plugins: [
       // Ensure working regenerator-runtime
       new webpack.ProvidePlugin({

@@ -5,9 +5,9 @@
   "license": "Apache-2.0",
   "main": "build/prismic-toolbar.js",
   "scripts": {
-    "start": "APP_MODE=development webpack --mode development --watch",
-    "build:stage": "APP_MODE=stage webpack --mode production",
-    "build:prod": "APP_MODE=production webpack --mode production",
+    "start": "webpack --mode development --watch",
+    "build:stage": "webpack --mode production",
+    "build:prod": "webpack --mode production",
     "lint": "eslint src; exit 0",
     "test": "jest"
   },
@@ -33,6 +33,7 @@
     "bluebird": "^3.5.3",
     "css-loader": "^1.0.1",
     "cssnano": "^4.1.7",
+    "dotenv-webpack": "^1.7.0",
     "es6-promise": "^4.2.5",
     "eslint": "^5.9.0",
     "eslint-config-airbnb": "^17.1.0",

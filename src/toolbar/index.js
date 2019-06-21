@@ -70,6 +70,7 @@ async function setup (rawInput) {
 
   // Validate repository
   const domain = parseEndpoint(rawInput);
+  console.log('domain in index', domain);
   const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
 
   if (!domain) return warn`
@@ -96,6 +97,8 @@ async function setup (rawInput) {
     return [await preview.setup()];
   })();
 
+  console.log('prediction :', prediction);
+  console.log('auth :', previewState.auth);
   // render toolbar
   new Toolbar({ displayPreview, auth: previewState.auth, preview, prediction, analytics });
 

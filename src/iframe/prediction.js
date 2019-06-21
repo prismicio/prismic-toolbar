@@ -1,16 +1,16 @@
 import { query, Sorter, fetchy } from '@common';
 
 export async function getDocuments({ url, ref, tracker, location }) {
-  const data = await fetchy({
+  const { documents, queries } = await fetchy({
     url: `/toolbar/predict?${query({ url, ref, tracker })}`
   }).then(res => {
     const resNormalized = res.documents.map(normalizeDocument);
     return { documents: resNormalized, queries: res.queries };
   }); // res looks like this {documents:{} , queries:{}}
 
-  const sorted = (
+  const documentsSorted = (
     // from less important to most important
-    new Sorter(data.documents)
+    new Sorter(documents)
     // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
     // .min(a => a.urls.length)
       .max(a => a.updated)
@@ -28,9 +28,8 @@ export async function getDocuments({ url, ref, tracker, location }) {
   );
 
   return ({
-    documents: sorted,
-    queries: data.queries
-  });
+    documentsSorted,
+    queries });
 }
 
 
