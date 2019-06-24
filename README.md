@@ -36,10 +36,6 @@ local.toolbar="<relative_local_path>"
 
 ## How to deploy
 
-- Deploy on stage:
-``` 
-npm run build:stage
-```
 - Deploy on prod:
 ```
 npm run build:prod

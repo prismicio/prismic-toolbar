@@ -11,23 +11,12 @@ export class DevModeCollapsible extends Component {
     this.state = { queries: props.queries };
   }
 
-
-  /* ----- TRIGGER(HEADER) FOR THE COLLAPSIBLE  ----- */
-  Trigger = ({ title, nbLinkedDoc, isOpen }) => (
-    <div className='wrapper-trigger'>
-      <h2 className='trigger-title'> {title} </h2>
-      <h3 className='trigger-subtitle'>{nbLinkedDoc} linked documents</h3>
-      <img className={isOpen ? 'trigger-triangle active' : 'trigger-triangle'} src={collapsibleArrow} />
-    </div>
-  )
-
-
   /* ----- RETURN TRIGGER INFOS ----- */
-  getTriggerInfo = /* List[Object] */query => /* Object */ {
-    if (!query) { return; }
+  getItemInfos = /* Object */query => /* Object */ {
+    if (!query) { throw new Error('Error on getItemInfos()'); }
 
     // reducer to count the custom types queried
-    const triggerInfoReducer = (acc, val) => {
+    const itemInfosReducer = (acc, val) => {
       if (acc[val.type]) {
         acc[val.type] += 1;
       } else {
@@ -37,26 +26,26 @@ export class DevModeCollapsible extends Component {
     };
 
     /*
-      expected format of triggerInfo
+      expected format of ItemInfos
       {
         type1 : ...,
         type2 : ...,
         ...
       }
     */
-    const triggerInfo = query.map(doc => {
+    const ItemInfos = query.map(doc => {
       const { type } = doc;
       return { type };
     }).reduce(
-      triggerInfoReducer,
+      itemInfosReducer,
       {}
     );
 
-    const title = this.constructTitle(triggerInfo);
+    const title = this.constructTitleOfDocument(ItemInfos);
 
     // expected format of title : (X) type 1 & (Y) type 2 ...
     const nbLinkedDoc = query
-      .map(doc => this.countLinkedDocInObject(doc.data))
+      .map(doc => this.countLinkedDocInDocument(doc.data))
       .reduce((acc, val) => acc + val);
 
     // expected to return title and number of linked docs
@@ -65,11 +54,11 @@ export class DevModeCollapsible extends Component {
 
 
   /* ----- CONSTRUCT TITLE BASED ON TYPES AND OCCURRENCES -----*/
-  constructTitle = /* Object */triggerInfo => /* String */ {
-    if (!triggerInfo) { return ''; }
+  constructTitleOfDocument = /* Object */ItemInfos => /* String */ {
+    if (!ItemInfos) { return ''; }
 
     let title = '';
-    const copyInfo = JSON.parse(JSON.stringify(triggerInfo));
+    const copyInfo = JSON.parse(JSON.stringify(ItemInfos));
 
     const keys = Object.keys(copyInfo);
     const { length } = keys;
@@ -83,7 +72,7 @@ export class DevModeCollapsible extends Component {
 
 
   /* ----- RETURN NUMBER OF LINKED DOCUMENT FOR A QUERY ----- */
-  countLinkedDocInObject = /* Object */data => /* Int */ {
+  countLinkedDocInDocument = /* Object */data => /* Int */ {
     if (!data) { return 0; } // First case data is empty or null
     if (data.link_type === 'Document' && data.id) { return 1; } // Second case there is a document, return 1 to increment the count
 
@@ -93,7 +82,7 @@ export class DevModeCollapsible extends Component {
 
     keys.forEach(key => {
       if (typeof data[key] === 'object') {
-        const newCount = this.countLinkedDocInObject(data[key]);
+        const newCount = this.countLinkedDocInDocument(data[key]);
         count += newCount;
       }
     });
@@ -109,17 +98,19 @@ export class DevModeCollapsible extends Component {
       <div>
         {
         queries.map(query => {
-          const triggerInfo = this.getTriggerInfo(query);
+          if (!query || Object.keys(query).length <= 0) { return; }
+
+          const ItemInfos = this.getItemInfos(query);
 
           return (
             <Collapsible
-              trigger={<this.Trigger
-                title={triggerInfo.title}
-                nbLinkedDoc={triggerInfo.nbLinkedDoc}
+              trigger={<DevModeItem
+                title={ItemInfos.title}
+                nbLinkedDoc={ItemInfos.nbLinkedDoc}
               />}
-              triggerWhenOpen={<this.Trigger
-                title={triggerInfo.title}
-                nbLinkedDoc={triggerInfo.nbLinkedDoc}
+              triggerWhenOpen={<DevModeItem
+                title={ItemInfos.title}
+                nbLinkedDoc={ItemInfos.nbLinkedDoc}
                 isOpen
               />}
               transitionTime={100}>
@@ -127,7 +118,7 @@ export class DevModeCollapsible extends Component {
                 <JsonView
                   json={doc}
                   maxStringSize={25}
-                  />
+                />
               )
               )}
             </Collapsible>
@@ -138,3 +129,12 @@ export class DevModeCollapsible extends Component {
     );
   }
 }
+
+/* ----- HEADER(TRIGGER) FOR THE COLLAPSIBLE  ----- */
+const DevModeItem = ({ title, nbLinkedDoc, isOpen }) => (
+  <div className='wrapper-trigger'>
+    <h2 className='trigger-title'> {title} </h2>
+    <h3 className='trigger-subtitle'>{nbLinkedDoc} linked documents</h3>
+    <img className={isOpen ? 'trigger-triangle active' : 'trigger-triangle'} src={collapsibleArrow} />
+  </div>
+);

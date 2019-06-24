@@ -41,6 +41,6 @@ export function script(src) {
       el.src = src;
       document.head.appendChild(el);
     }
-    el.addEventListener('load', resolve(el));
+    el.addEventListener('load', () => resolve(el));
   });
 }

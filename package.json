@@ -6,7 +6,6 @@
   "main": "build/prismic-toolbar.js",
   "scripts": {
     "start": "webpack --mode development --watch",
-    "build:stage": "webpack --mode production",
     "build:prod": "webpack --mode production",
     "lint": "eslint src; exit 0",
     "test": "jest"
@@ -33,7 +32,6 @@
     "bluebird": "^3.5.3",
     "css-loader": "^1.0.1",
     "cssnano": "^4.1.7",
-    "dotenv-webpack": "^1.7.0",
     "es6-promise": "^4.2.5",
     "eslint": "^5.9.0",
     "eslint-config-airbnb": "^17.1.0",
@@ -73,9 +71,7 @@
     "web-webpack-plugin": "^4.0.1",
     "webpack": "^4.25.1",
     "webpack-cli": "^3.1.2",
-    "whatwg-fetch": "^3.0.0"
-  },
-  "dependencies": {
+    "whatwg-fetch": "^3.0.0",
     "react-collapsible": "^2.6.0",
     "react-tabs": "^3.0.0",
     "react-treebeard": "^2.1.0"
