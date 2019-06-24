@@ -128,6 +128,14 @@
         &.draft {
           background: #FFDBA2;
         }
+
+        &.release {
+          background: #ead9ff;
+        }
+
+        &.experiment {
+          background: #DCE0E5;
+        }
       }
 
       /* title */

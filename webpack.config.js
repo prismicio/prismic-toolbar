@@ -11,7 +11,7 @@ const relative = path => require('path').resolve(__dirname, path);
 
 module.exports = (_, options) => {
 
-  const dev = !options || options.mode === applicationMode.DEV;
+  const dev = !options || options.mode === 'development';
 
   return {
     // Minimal console output

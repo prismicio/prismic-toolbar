@@ -22,14 +22,14 @@ export class JsonView extends Component {
 
 
   /* ----- TOGGLE FUNCTION ----- */
-  onToggle = (node, toggled) => {
+  onToggle = (/* Object */node, /* Boolean */toggled) => {
     node.toggled = toggled;
     this.setState(oldState => oldState);
   }
 
 
   /* ----- COPY JSON PATH TO CLIPBOARD AND REMOVE OLD COPY ----- */
-  copyToClipboard = node => {
+  copyToClipboard = /* Object */node => {
     const { data, metadata, nodeCopied, timeOut } = this.state;
 
     if (nodeCopied !== node) {
@@ -66,7 +66,11 @@ export class JsonView extends Component {
 
 
   /* ----- FUNCTION TO RETURN WHICH DATA TO SET ----- */
-  getWhichJsonToSet(data, metadata, keyNames) {
+  getWhichJsonToSet(
+    /* Object */data,
+    /* Object */metadata,
+    /* List[String] */keyNames
+  ) /* Object */ {
     if (!keyNames) { return; }
     if (keyNames[0] === 'data') {
       return data;
@@ -75,13 +79,21 @@ export class JsonView extends Component {
   }
 
   /* ----- FUNCTION TO MODIFY THE ISCOPIED PROPERTY OF A NODE ----- */
-  setIsCopied(json, keyNames, value) {
+  setIsCopied(
+    /* Object */json,
+    /* List[String] */keyNames,
+    /* Boolean */value
+  ) {
     // return if there is previous nodeCopied.
     if (!keyNames) { return; }
     const { length } = keyNames;
 
     // reducer to find the data we need to modify in the json
-    const reducer = (acc, key, index) => {
+    const reducer = (
+      /* Object */acc,
+      /* String */key,
+      /* Int */index
+    ) => /* Object */ {
       const nodeFound = acc.find(node => node.name === key);
       if (index === length - 1) { // return the node itself if it is the last key in the path.
         return nodeFound;
@@ -95,7 +107,11 @@ export class JsonView extends Component {
 
 
   /* ----- FUNCTION TO REMOVE THE OLD COPY ----- */
-  removeOldCopied = (data, metadata, nodeCopied) => {
+  removeOldCopied = (
+    /* Object */data,
+    /* Object */metadata,
+    /* Object */nodeCopied
+  ) => {
     const oldJsonToModify = this.getWhichJsonToSet(data, metadata, nodeCopied.path);
     this.setIsCopied(oldJsonToModify, nodeCopied.path, false);
   }
@@ -202,7 +218,7 @@ export class JsonView extends Component {
 
 
   /* ----- TRANSFORM RAW JSON TO JSON FOR TREEBEARD COMPONENT ----- */
-  turnJsonToTreeBeardJson = (json, path) => {
+  turnJsonToTreeBeardJson = (/* Object */json, /* List[String] */path) => /* Object */ {
     if (!json) { return; }
     const copyOfJson = JSON.parse(JSON.stringify(json));
     const keys = Object.keys(json);
@@ -232,7 +248,7 @@ export class JsonView extends Component {
 
 
   /* ----- CHECK IF THE NODE IS THE LAST CHILD FOR THE VERTICAL BORDER ----- */
-  isLastChild = (index, length) => {
+  isLastChild = (/* Int */index, /* Int */length) => /* Boolean */ {
     if (index === length - 1) {
       return true;
     }
@@ -241,14 +257,14 @@ export class JsonView extends Component {
 
 
   /* ----- RETURN THE DATA & METADATA FOR THE TREEBEARD----- */
-  getMetadata = json => {
+  getMetadata = /* Object */json => /* Object */ {
     const copyOfJson = JSON.parse(JSON.stringify(json));
     delete copyOfJson.data;
     const metadata = this.turnJsonToTreeBeardJson(copyOfJson, []);
     return metadata;
   }
 
-  getData = json => {
+  getData = /* Object */json => /* Object */ {
     const copyOfData = JSON.parse(JSON.stringify(json.data));
     const rawData = { data: copyOfData };
     const data = this.turnJsonToTreeBeardJson(rawData, []);
@@ -256,7 +272,7 @@ export class JsonView extends Component {
     return data;
   }
 
-  constructBannerUid = json => {
+  constructBannerUid = /* Object */json => /* String */ {
     const { type } = json;
     const uid = json.uid ? ' · ' + json.uid : '';
     return type + uid;
@@ -264,7 +280,7 @@ export class JsonView extends Component {
 
 
   /* ----- ADD ELLIPSIS IF NECESSARY TO VALUE ----- */
-  checkStringLength = string => {
+  checkStringLength = string => /* String */ {
     if (string.length >= this.maxStringSize) {
       return (string.substring(0, this.maxStringSize) + '...');
     }

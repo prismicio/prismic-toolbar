@@ -23,8 +23,8 @@ export class DevModeCollapsible extends Component {
 
 
   /* ----- RETURN TRIGGER INFOS ----- */
-  getTriggerInfo = queries => {
-    if (!queries) { return; }
+  getTriggerInfo = /* List[Object] */query => /* Object */ {
+    if (!query) { return; }
 
     // reducer to count the custom types queried
     const triggerInfoReducer = (acc, val) => {
@@ -44,7 +44,7 @@ export class DevModeCollapsible extends Component {
         ...
       }
     */
-    const triggerInfo = queries.map(doc => {
+    const triggerInfo = query.map(doc => {
       const { type } = doc;
       return { type };
     }).reduce(
@@ -55,7 +55,7 @@ export class DevModeCollapsible extends Component {
     const title = this.constructTitle(triggerInfo);
 
     // expected format of title : (X) type 1 & (Y) type 2 ...
-    const nbLinkedDoc = queries
+    const nbLinkedDoc = query
       .map(doc => this.countLinkedDocInObject(doc.data))
       .reduce((acc, val) => acc + val);
 
@@ -65,7 +65,7 @@ export class DevModeCollapsible extends Component {
 
 
   /* ----- CONSTRUCT TITLE BASED ON TYPES AND OCCURRENCES -----*/
-  constructTitle = triggerInfo => {
+  constructTitle = /* Object */triggerInfo => /* String */ {
     if (!triggerInfo) { return ''; }
 
     let title = '';
@@ -83,7 +83,7 @@ export class DevModeCollapsible extends Component {
 
 
   /* ----- RETURN NUMBER OF LINKED DOCUMENT FOR A QUERY ----- */
-  countLinkedDocInObject = data => {
+  countLinkedDocInObject = /* Object */data => /* Int */ {
     if (!data) { return 0; } // First case data is empty or null
     if (data.link_type === 'Document' && data.id) { return 1; } // Second case there is a document, return 1 to increment the count
 

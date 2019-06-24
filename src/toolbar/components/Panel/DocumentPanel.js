@@ -2,6 +2,7 @@ import { BasePanel, prismicWhiteSvg } from '.';
 import { Icon } from '../Icon';
 import { Loader } from '../Loader';
 import { NavTabs, DevModeCollapsible } from '..';
+import DocumentState from './DocumentState';
 
 export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
   if (!documents.length) return null;
@@ -19,7 +20,7 @@ export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) 
 };
 
 const panelContent = (documents, queries, onDocumentClick) => {
-  // If there is no docData then no queries was made, therefore we can't display the json.
+  // If there is no queries then, we don't display the json.
   if (queries && queries.length > 0) {
     return (
       <NavTabs
@@ -70,12 +71,22 @@ const DocumentsSummaryTab = ({ documents, onClick }) => {
 const DocumentSummary = ({ document, isMain, onClick }) => (
   <a className="document-summary" href={document.editorUrl} target="_blank" onClick={() => onClick({ isMain })}>
     <div className="wrapper-title-status">
-      <span className={document.status.toLowerCase()}>{document.status}</span>
+      <span className={document.status}>{checkDocumentState(document.status)}</span>
       <h2>{document.title}</h2>
     </div>
     <p>{document.summary || 'Our goal at Prismic is to build the future of the CMS. All our improvements and features are based on the great'}</p>
   </a>
 );
+
+function checkDocumentState(/* String */state) /* String */ {
+  switch (state) {
+    case DocumentState.LIVE: return 'Live';
+    case DocumentState.DRAFT: return 'Draft';
+    case DocumentState.RELEASE: return 'Release';
+    case DocumentState.EXPERIMENT: return 'Experiment';
+    default: return '';
+  }
+}
 
 const hasOtherDocs = otherDocs => {
   if (otherDocs && otherDocs.length) { // check if array exist and has elements

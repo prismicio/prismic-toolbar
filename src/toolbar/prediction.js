@@ -1,5 +1,4 @@
 import { Hooks, getLocation, wait, fetchy, query } from '@common';
-import applicationMode from '../../application-mode';
 
 export class Prediction {
   constructor(client, previewCookie) {
@@ -15,8 +14,8 @@ export class Prediction {
     this.apiEndPoint = this.buildApiEndpoint();
   }
 
-  buildApiEndpoint = () => {
-    const protocol = applicationMode.DEV === 'development' ? 'http' : 'https';
+  buildApiEndpoint = () /* String */ => {
+    const protocol = this.client.hostname.includes('.test') ? 'http' : 'https';
     return protocol + '://' + this.client.hostname + '/api';
   }
 
@@ -80,25 +79,15 @@ export class Prediction {
     return () => delete this.documentHooks[c]; // Alternative to removeEventListener
   }
 
-  // Get the masterRef through the api endpoint
-  getMasterRef = async apiEndPoint => {
-    const masterRef = await fetchy({
-      url: `${apiEndPoint}`,
-    }).then(res => (
-      res.refs.find(ele => ele.isMasterRef).ref
-    ));
-    return masterRef;
-  }
-
   // Get the data for each document and put it inside the json of the document
-  getDocsData = queries => {
+  getDocsData = /* List[Object] */queries => /* Promise */ {
     if (!queries) { return; }
     const promiseList = queries.map(queryParams => this.getDataFromQuery(queryParams));
     return Promise.all(promiseList);
   }
 
   // Do one query to get documents
-  getDataFromQuery = async queryParams => {
+  getDataFromQuery = async /* Object */queryParams => /* Promise */ {
     const data = await fetchy({
       url: `${this.apiEndPoint}/${queryParams.version}/documents/search?${query({
         version: queryParams.version,
