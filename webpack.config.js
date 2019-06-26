@@ -10,7 +10,6 @@ const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
 const relative = path => require('path').resolve(__dirname, path);
 
 module.exports = (_, options) => {
-
   const dev = !options || options.mode === 'development';
 
   return {
@@ -76,7 +75,7 @@ module.exports = (_, options) => {
               loader: 'postcss-loader',
               options: {
                 sourceMap: 'inline',
-                plugins: _ => [
+                plugins: () => [
                   postcssEasyImport(),
                   postcssUrl({ url: 'inline' }),
                   postcssPresetEnv({
@@ -113,5 +112,5 @@ module.exports = (_, options) => {
         },
       ],
     },
-  }
+  };
 };

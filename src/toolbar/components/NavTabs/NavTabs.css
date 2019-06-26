@@ -1,14 +1,13 @@
 .nav-tab-list {
-    list-style: none;
-    display:flex;
-    flex-wrap: nowrap;
-    width: 100%;
-    height: 60px;
-    margin: 0;
-    padding: 0;
-}
+  list-style: none;
+  display:flex;
+  flex-wrap: nowrap;
+  width: 100%;
+  height: 60px;
+  margin: 0;
+  padding: 0;
 
-.nav-tab {
+  & li.react-tabs__tab {
     /* Shape Of Tab */
     flex-basis: 50%;
     font-weight: bold;
@@ -21,14 +20,13 @@
     cursor: pointer;
     box-shadow: 0 4px 4px -4px rgba(0,0,0,0.15);
 
-
     /* Style of text */
     font-size: 16px;
     color: #293258;
     letter-spacing: 0.23px;
 
-
-   &.active {
-       box-shadow: inset 0px -6px 0px -2px #5163BA;
-   }
+    &.react-tabs__tab--selected {
+      box-shadow: inset 0px -6px 0px -2px #5163BA;
+    }
+  }
 }

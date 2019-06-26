@@ -6,19 +6,12 @@ import { Component } from 'react';
 export class NavTabs extends Component {
   constructor (props) {
     super(props);
-    this.CustomTabName.tabsRole = 'Tab';
     this.state = { activeTab: 0, tabsName: props.tabsName, tabsContent: props.tabsContent };
   }
 
-
-  CustomTabName = ({ name, isActive }) => (
-    <Tab className={isActive ? 'nav-tab active' : 'nav-tab'} > {name} </Tab>
-  )
-
-
   /* ----- RENDER FUNCTION ----- */
   render() {
-    const { activeTab, tabsName, tabsContent } = this.state;
+    const { tabsName, tabsContent } = this.state;
 
     return (
       <Tabs
@@ -26,11 +19,8 @@ export class NavTabs extends Component {
         onSelect={tabIndex => this.setState({ activeTab: tabIndex })}
         >
         <TabList className="nav-tab-list">
-          {tabsName.map((name, index) =>
-            <this.CustomTabName
-              name={name}
-              isActive={index === activeTab}
-            />
+          {tabsName.map(name =>
+            <Tab>{name}</Tab>
           )}
         </TabList>
 
