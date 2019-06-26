@@ -33,7 +33,7 @@ export class JsonView extends Component {
     const { data, metadata, nodeCopied, timeOut } = this.state;
 
     if (nodeCopied !== node) {
-      nodeCopied.path ? this.removeOldCopied(data, metadata, nodeCopied) : '';
+      nodeCopied.path ? this.removeOldCopied(data, metadata, nodeCopied) : null;
 
       const newJsonToModify = this.getWhichJsonToSet(data, metadata, node.path);
       this.setIsCopied(newJsonToModify, node.path, true);
@@ -144,7 +144,7 @@ export class JsonView extends Component {
           <span
             className="value-string"
             onClick={props.onClick}>
-            {`"${this.checkStringLength(props.node.value)}"`}
+            {`"${props.stringCheck(props.node.value)}"`}
           </span>
         );
       }
@@ -184,11 +184,14 @@ export class JsonView extends Component {
           <this.decorators.NestedBorder node={props.node} />
           <this.decorators.Icon node={props.node} onClick={props.onClick} />
           <this.decorators.Key node={props.node} onClick={props.onClick} />
-          <this.decorators.Value node={props.node} onClick={props.onClick} />
+          <this.decorators.Value
+            node={props.node}
+            onClick={props.onClick}
+            stringCheck={this.stringCheck}
+          />
           <this.decorators.Copy node={props.node} />
         </div>
       )
-
   }
 
 
@@ -220,7 +223,7 @@ export class JsonView extends Component {
   /* ----- TRANSFORM RAW JSON TO JSON FOR TREEBEARD COMPONENT ----- */
   turnJsonToTreeBeardJson = (/* Object */json, /* List[String] */path) => /* Object */ {
     if (!json) { return; }
-    const copyOfJson = JSON.parse(JSON.stringify(json));
+    const copyOfJson = Object.assign({}, json);
     const keys = Object.keys(json);
     const { length } = keys;
 
@@ -258,14 +261,14 @@ export class JsonView extends Component {
 
   /* ----- RETURN THE DATA & METADATA FOR THE TREEBEARD----- */
   getMetadata = /* Object */json => /* Object */ {
-    const copyOfJson = JSON.parse(JSON.stringify(json));
+    const copyOfJson = Object.assign({}, json);
     delete copyOfJson.data;
     const metadata = this.turnJsonToTreeBeardJson(copyOfJson, []);
     return metadata;
   }
 
   getData = /* Object */json => /* Object */ {
-    const copyOfData = JSON.parse(JSON.stringify(json.data));
+    const copyOfData = Object.assign({}, json.data);
     const rawData = { data: copyOfData };
     const data = this.turnJsonToTreeBeardJson(rawData, []);
     data[0].toggled = true; // to initially open data
@@ -280,7 +283,7 @@ export class JsonView extends Component {
 
 
   /* ----- ADD ELLIPSIS IF NECESSARY TO VALUE ----- */
-  checkStringLength = string => /* String */ {
+  stringCheck = string => /* String */ {
     if (string.length >= this.maxStringSize) {
       return (string.substring(0, this.maxStringSize) + '...');
     }

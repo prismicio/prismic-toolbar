@@ -9,7 +9,10 @@ export async function getDocuments({ url, ref, tracker, location }) {
   }); // res looks like this {documents:{} , queries:{}}
 
   const documentsSorted = (
+    // from less important to most important
     new Sorter(documents)
+      // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
+      // .min(a => a.urls.length)
       .max(a => a.updated)
       .min(a => a.queryTotal)
       .is(a => a.uid && location.hash.match(a.uid))

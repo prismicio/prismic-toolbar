@@ -1,8 +1,7 @@
 import { BasePanel, prismicWhiteSvg } from '.';
 import { Icon } from '../Icon';
 import { Loader } from '../Loader';
-import { NavTabs, DevModeCollapsible } from '..';
-import DocumentState from './DocumentState';
+import { NavTabs, EditButton, DevMode } from '..';
 
 export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
   if (!documents.length) return null;
@@ -26,72 +25,28 @@ const panelContent = (documents, queries, onDocumentClick) => {
       <NavTabs
         tabsName={['Edit Button', 'Dev Mode']}
         tabsContent={[
-          <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />,
-          <DevModeCollapsible queries={queries} />
+          <EditButton documents={documents} onClick={onDocumentClick} />,
+          <DevMode queries={queries} />
         ]}
       />
     );
   }
   return (
-    <DocumentsSummaryTab documents={documents} onClick={onDocumentClick} />
+    <EditButton documents={documents} onClick={onDocumentClick} />
   );
 };
 
 const ToolbarHeader = () => (
-  <div className="toolbar-header" >
-    <div className="wrapper-icon" >
-      <div className="background-icon" >
+  <div className="toolbar-header">
+    <div className="wrapper-icon">
+      <div className="background-icon">
         <Icon src={prismicWhiteSvg} />
       </div>
     </div>
 
-    <div className="wrapper-title" >
+    <div className="wrapper-title">
       <h2>Prismic Toolbar</h2>
       <h1>Document on this page</h1>
     </div>
   </div>
 );
-
-const DocumentsSummaryTab = ({ documents, onClick }) => {
-  const mainDoc = documents[0];
-  const otherDocs = documents.slice(1);
-
-  return (
-    <div className="documents-summary-tab">
-      <h4 className="small-title" > Main Document </h4>
-      <DocumentSummary document={mainDoc} isMain onClick={onClick} />
-      {hasOtherDocs(otherDocs)}
-      {
-    otherDocs.map(document => <DocumentSummary document={document} onClick={onClick} />)
-   }
-    </div>
-  );
-};
-
-const DocumentSummary = ({ document, isMain, onClick }) => (
-  <a className="document-summary" href={document.editorUrl} target="_blank" onClick={() => onClick({ isMain })}>
-    <div className="wrapper-title-status">
-      <span className={document.status}>{checkDocumentState(document.status)}</span>
-      <h2>{document.title}</h2>
-    </div>
-    <p>{document.summary || 'Our goal at Prismic is to build the future of the CMS. All our improvements and features are based on the great'}</p>
-  </a>
-);
-
-function checkDocumentState(/* String */state) /* String */ {
-  switch (state) {
-    case DocumentState.LIVE: return 'Live';
-    case DocumentState.DRAFT: return 'Draft';
-    case DocumentState.RELEASE: return 'Release';
-    case DocumentState.EXPERIMENT: return 'Experiment';
-    default: return '';
-  }
-}
-
-const hasOtherDocs = otherDocs => {
-  if (otherDocs && otherDocs.length) { // check if array exist and has elements
-    return (
-      <h4 className="small-title" > Other Documents</h4>
-    );
-  }
-};
