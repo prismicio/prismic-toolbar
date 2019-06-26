@@ -26,13 +26,18 @@
   
         /* status */
         & span {
+          display: inline-block;
+          padding: 2px 5px;
           font-size: 12px;
           color: #53452E;
           letter-spacing: 0;
-          padding: 3px 5px 3px 5px;
           border: 0 solid #FFFFFF;
           border-radius: 1.54px;
-  
+
+          &::first-letter {
+            text-transform: uppercase;
+          }
+
           &.live {
             background: #B0E2C9;
           }
