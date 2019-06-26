@@ -8,13 +8,6 @@ export class Toolbar extends Component {
     super(...arguments);
     this.closePreview = this.closePreview.bind(this);
 
-    this.state = {
-      page: NONE,
-      documents: prediction ? prediction.documents : [],
-      queries: prediction ? prediction.queries : [],
-      renderedPreview: this.props.preview.active,
-      documentsLoading: false
-    };
     if (prediction) {
       prediction.onDocuments((documents, queries) => {
         this.setState({ documents, queries, documentsLoading: false });
@@ -26,6 +19,14 @@ export class Toolbar extends Component {
 
       prediction.setup();
     }
+
+    this.state = {
+      page: NONE,
+      documents: prediction ? prediction.documents : [],
+      queries: prediction ? prediction.queries : [],
+      renderedPreview: this.props.preview.active,
+      documentsLoading: false
+    };
   }
 
   setPage = page => this.setState({ page });
@@ -37,7 +38,7 @@ export class Toolbar extends Component {
   render() {
     const { preview, analytics, auth } = this.props;
     const { page, documents, queries } = this.state;
-    const hasDocs = Boolean(documents.length);
+    const hasDocs = Boolean(documents && documents.length);
 
     return (
       <div className="Toolbar">

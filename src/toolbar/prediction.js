@@ -7,8 +7,6 @@ export class Prediction {
     this.hooks = new Hooks();
     this.documentHooks = [];
     this.documentLoadingHooks = [];
-    this.documents = [];
-    this.queries = [];
     this.count = 0;
     this.retry = 0;
     this.apiEndPoint = this.buildApiEndpoint();
@@ -57,8 +55,6 @@ export class Prediction {
 
   // Dispatch documents to hooks
   dispatch = (documents, queries) => {
-    this.documents = documents;
-    this.queries = queries;
     Object.values(this.documentHooks).forEach(hook => hook(documents, queries)); // Run the hooks
   }
 
