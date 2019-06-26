@@ -25,8 +25,8 @@ export class NavTabs extends Component {
         </TabList>
 
         {
-            tabsContent.map(content => <TabPanel> {content} </TabPanel>)
-          }
+          tabsContent.map(content => <TabPanel> {content} </TabPanel>)
+        }
       </Tabs>
     );
   }

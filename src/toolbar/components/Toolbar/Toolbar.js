@@ -22,8 +22,8 @@ export class Toolbar extends Component {
 
     this.state = {
       page: NONE,
-      documents: prediction ? prediction.documents : [],
-      queries: prediction ? prediction.queries : [],
+      documents: [],
+      queries: [],
       renderedPreview: this.props.preview.active,
       documentsLoading: false
     };
