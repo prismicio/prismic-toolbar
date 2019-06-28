@@ -6,7 +6,6 @@ import { NavTabs, EditButton, DevMode } from '..';
 export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
   if (!documents.length) return null;
 
-
   return (
     <BasePanel className="DocumentPanel">
       <ToolbarHeader />

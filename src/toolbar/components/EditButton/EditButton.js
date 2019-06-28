@@ -8,19 +8,33 @@ export class EditButton extends Component {
     this.state = { documents: props.documents, onClick: props.onClick };
   }
 
+  splitDocuments(documents) {
+    if (documents.length === 0) return [[], [], []];
+    if (documents.length === 1) return [documents[0], [], []];
+
+    return documents.slice(1).reduce(([main, others, links], doc) => {
+      if (doc.isDocumentLink) return [main, others, links.concat([doc])];
+      return [main, others.concat([doc]), links];
+    }, [documents[0], [], []]);
+  }
+
   /* ----- RENDER FUNCTION ----- */
   render() {
     const { documents, onClick } = this.state;
-    const mainDoc = documents[0];
-    const otherDocs = documents.slice(1);
+    const [mainDocument, otherDocuments, documentLinks] = this.splitDocuments(documents);
 
     return (
       <div className="documents-summary-tab">
         <h4 className="small-title">Main Document</h4>
-        <DocumentSummary document={mainDoc} isMain onClick={onClick} />
-        {hasOtherDocs(otherDocs)}
+        <DocumentSummary document={mainDocument} isMain onClick={onClick} />
+        {BannerOtherDocs(otherDocuments)}
         {
-            otherDocs.map(document => <DocumentSummary document={document} onClick={onClick} />)
+          otherDocuments.map(document => <DocumentSummary document={document} onClick={onClick} />)
+        }
+
+        {BannerDocumentLinks(documentLinks)}
+        {
+          documentLinks.map(document => <DocumentSummary document={document} onClick={onClick} />)
         }
       </div>
     );
@@ -37,10 +51,18 @@ const DocumentSummary = ({ document, isMain, onClick }) => (
   </a>
 );
 
-const hasOtherDocs = otherDocs => {
+const BannerOtherDocs = otherDocs => {
   if (otherDocs && otherDocs.length) { // check if array exist and has elements
     return (
       <h4 className="small-title">Other Documents</h4>
+    );
+  }
+};
+
+const BannerDocumentLinks = documentLinks => {
+  if (documentLinks && documentLinks.length) { // check if array exist and has elements
+    return (
+      <h4 className="small-title">Document Links</h4>
     );
   }
 };
