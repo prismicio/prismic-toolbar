@@ -62,7 +62,7 @@ const BannerOtherDocs = otherDocs => {
 const BannerDocumentLinks = documentLinks => {
   if (documentLinks && documentLinks.length) { // check if array exist and has elements
     return (
-      <h4 className="small-title">Document Links</h4>
+      <h4 className="small-title">Documents Linked</h4>
     );
   }
 };
