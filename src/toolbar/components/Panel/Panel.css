@@ -37,6 +37,10 @@
   }
 }
 
+.other-documents.bottom {
+  padding-bottom: 0px;
+}
+
 /* DocumentPanel Top */
 
 .DocumentPanel .top {

@@ -6,20 +6,30 @@ import React from 'react';
 
 export const DocumentPanel = ({ loading, documents, onDocumentClick }) => {
   if (!documents.length) return null;
+  const [mainDocument, otherDocuments, documentLinks] = (() => {
+    if (documents.length === 0) return [[], [], []];
+    if (documents.length === 1) return [documents[0], [], []];
+
+    return documents.slice(1).reduce(([main, others, links], doc) => {
+      if (doc.isDocumentLink) return [main, others, links.concat([doc])];
+      return [main, others.concat([doc]), links];
+    }, [documents[0], [], []]);
+  })();
   return (
     <BasePanel className="DocumentPanel">
       { loading
         ? <Loader />
-        : panelContent(documents, onDocumentClick)
+        : panelContent(mainDocument, otherDocuments, documentLinks, onDocumentClick)
       }
     </BasePanel>
   );
 };
 
-const panelContent = (documents, onDocumentClick) => (
+const panelContent = (mainDocument, otherDocuments, documentLinks, onDocumentClick) => (
   <React.Fragment>
-    <MainDocument doc={documents[0]} onClick={onDocumentClick} />
-    <OtherDocuments documents={documents.slice(1)} onClick={onDocumentClick} />
+    <MainDocument doc={mainDocument} onClick={onDocumentClick} />
+    <OtherDocuments documents={otherDocuments} onClick={onDocumentClick} />
+    <DocumentLinks documents={documentLinks} onClick={onDocumentClick} />
   </React.Fragment>
 );
 
@@ -36,10 +46,20 @@ const MainDocument = ({ doc, onClick }) => (
   </div>
 );
 
+const DocumentLinks = ({ documents, onClick }) => {
+  if (!documents.length) return null;
+  return (
+    <div className="document-links bottom">
+      <h2>Documents Links</h2>
+      <div>{documents.map(doc => <Document doc={doc} onClick={onClick} />)}</div>
+    </div>
+  );
+};
+
 const OtherDocuments = ({ documents, onClick }) => {
   if (!documents.length) return null;
   return (
-    <div className="OtherDocuments bottom">
+    <div className="other-documents bottom">
       <h2>Other documents</h2>
       <div>{documents.map(doc => <Document doc={doc} onClick={onClick} />)}</div>
     </div>
