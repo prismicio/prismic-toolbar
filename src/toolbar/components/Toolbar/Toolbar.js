@@ -1,5 +1,5 @@
-import { Panel, Menu, PreviewMenu, views } from '..';
 import { Component } from 'preact';
+import { Panel, Menu, PreviewMenu, views } from '..';
 
 const { NONE } = views;
 
