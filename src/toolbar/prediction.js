@@ -25,21 +25,22 @@ export class Prediction {
 
   // Start predictions for this URL
   start = async () => {
+    const currentTracker = this.cookie.getTracker();
+    this.cookie.refreshTracker();
     // wait for all requests to be played first (client side)
     this.dispatchLoading();
     await wait(2);
     // load prediction
-    await this.predict();
-    this.cookie.refreshTracker();
+    await this.predict(currentTracker);
   }
 
   // Fetch predicted documents
-  predict = () => (
+  predict = tracker => (
     new Promise(async resolve => {
       const { documentsSorted, queries } = await this.client.getPredictionDocs({
         ref: this.cookie.getRefForDomain(),
         url: window.location.pathname,
-        tracker: this.cookie.getTracker(),
+        tracker,
         location: getLocation()
       });
       const queriesInfos = await this.getDocsData(queries);
