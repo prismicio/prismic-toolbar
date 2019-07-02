@@ -1,4 +1,4 @@
-import { Component } from 'preact';
+import { Component } from 'react';
 import { Panel, Menu, PreviewMenu, views } from '..';
 
 const { NONE } = views;
