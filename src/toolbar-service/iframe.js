@@ -1,4 +1,5 @@
 import * as Prediction from '@iframe/prediction';
+import * as DevMode from '@iframe/devMode';
 import Preview from '@iframe/preview';
 import * as Analytics from '@iframe/analytics';
 
@@ -11,6 +12,7 @@ export function setup(portToMainWindow) {
       switch (type) {
         case Messages.PreviewState: return getPreviewState();
         case Messages.PredictionDocs: return getPredictionDocs(data);
+        case Messages.DevModeQueriesResults: return getDevModeQueriesResults(data);
         case Messages.UpdatePreview: return updatePreview();
         case Messages.ClosePreviewSession: return closePreviewSession();
         case Messages.SharePreview: return sharePreview(data);
@@ -27,8 +29,12 @@ async function getPreviewState() /* Promise<{ Object }> */ {
   return Preview.getState();
 }
 
-async function getPredictionDocs(data) /* Promise<{documents: object[], queries: object[]}> */ {
+async function getPredictionDocs(data) /* Promise<object[]> */ {
   return Prediction.getDocuments(data);
+}
+
+async function getDevModeQueriesResults({ tracker }) /* Promise<object[]> */ {
+  return DevMode.getQueriesResults(tracker);
 }
 
 async function updatePreview() /* Promise<{ reload: boolean, ref: string }> */ {

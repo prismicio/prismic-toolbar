@@ -25,8 +25,12 @@ export default class Client {
     return this._messageToPromise(Messages.PreviewState);
   }
 
-  getPredictionDocs(data) /* Promise<{documents: object[], queries: object[]}> */ {
+  getPredictionDocs(data) /* Promise<object[]> */ {
     return this._messageToPromise(Messages.PredictionDocs, data);
+  }
+
+  getDevModeQueriesResults(data) /* Promise<object[]> */ {
+    return this._messageToPromise(Messages.DevModeQueriesResults, data);
   }
 
   updatePreview() /* Promise<{ reload: boolean, ref: string }> */ {
