@@ -19,19 +19,21 @@ export class Prediction {
 
   // Set event listener
   setup = async () => {
-    await this.start();
-    this.hooks.on('historyChange', this.start);
+    const currentTracker = this.cookie.getTracker();
+    this.cookie.refreshTracker();
+    this.hooks.on('historyChange', () => this.start());
+    await this.start(currentTracker);
   }
 
   // Start predictions for this URL
-  start = async () => {
-    const currentTracker = this.cookie.getTracker();
-    this.cookie.refreshTracker();
+  start = async maybeTracker => {
     // wait for all requests to be played first (client side)
     this.dispatchLoading();
     await wait(2);
     // load prediction
-    await this.predict(currentTracker);
+    const tracker = maybeTracker || this.cookie.getTracker();
+    await this.predict(tracker);
+    this.cookie.refreshTracker();
   }
 
   // Fetch predicted documents
