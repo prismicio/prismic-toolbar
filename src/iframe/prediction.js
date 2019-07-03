@@ -3,7 +3,7 @@ import { query, Sorter, fetchy } from '@common';
 export async function getDocuments({ url, ref, tracker, location }) {
   const documents = await fetchy({
     url: `/toolbar/predict?${query({ url, ref, tracker })}`
-  }).then(res => res.documents.map(normalizeDocument));
+  }).then(res => res.map(normalizeDocument));
 
   const documentsSorted = (
     // from less important to most important
@@ -24,7 +24,7 @@ export async function getDocuments({ url, ref, tracker, location }) {
       .compute()
   );
 
-  return (documentsSorted);
+  return documentsSorted;
 }
 
 
