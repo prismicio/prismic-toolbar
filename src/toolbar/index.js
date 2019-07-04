@@ -59,7 +59,7 @@ let setupDomain = null;
 async function setup (rawInput) {
   // Imports
   const { ToolbarService } = require('@toolbar-service');
-  const { parseEndpoint } = require('./utils');
+  const { parseEndpoint, reloadOrigin } = require('./utils');
   const { Preview } = require('./preview');
   const { Prediction } = require('./prediction');
   const { Analytics } = require('./analytics');
@@ -91,11 +91,15 @@ async function setup (rawInput) {
   const analytics = previewState.auth && new Analytics(toolbarClient);
 
   // Start concurrently preview (always) and prediction (if authenticated)
-  const { displayPreview } = await preview.setup();
+  const { displayPreview, shouldReload } = await preview.setup();
 
-  // render toolbar
-  new Toolbar({ displayPreview, auth: previewState.auth, preview, prediction, analytics });
+  if (shouldReload) {
+    reloadOrigin();
+  } else {
+    // render toolbar
+    new Toolbar({ displayPreview, auth: previewState.auth, preview, prediction, analytics });
 
-  // Track initial setup of toolbar
-  if (analytics) analytics.trackToolbarSetup();
+    // Track initial setup of toolbar
+    if (analytics) analytics.trackToolbarSetup();
+  }
 }
