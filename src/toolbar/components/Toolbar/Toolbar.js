@@ -1,5 +1,5 @@
+import { Component } from 'react';
 import { Panel, Menu, PreviewMenu, views } from '..';
-import { Component } from 'preact';
 
 const { NONE } = views;
 

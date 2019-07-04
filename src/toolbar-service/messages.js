@@ -6,6 +6,7 @@ export const ToolbarServiceProtocol = {
 export const Messages = {
   PreviewState: 'preview_state',
   PredictionDocs: 'prediction_docs',
+  DevModeQueriesResults: 'dev_mode_queries_results',
   UpdatePreview: 'update_preview',
   ClosePreviewSession: 'close_preview_session',
   SharePreview: 'share_preview',

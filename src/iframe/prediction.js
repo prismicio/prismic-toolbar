@@ -1,12 +1,9 @@
 import { query, Sorter, fetchy } from '@common';
 
 export async function getDocuments({ url, ref, tracker, location }) {
-  const { documents, queries } = await fetchy({
+  const documents = await fetchy({
     url: `/toolbar/predict?${query({ url, ref, tracker })}`
-  }).then(res => {
-    const resNormalized = res.documents.map(normalizeDocument);
-    return { documents: resNormalized, queries: res.queries };
-  }); // res looks like this {documents:{} , queries:{}}
+  }).then(res => res.map(normalizeDocument));
 
   const documentsSorted = (
     // from less important to most important
@@ -27,9 +24,7 @@ export async function getDocuments({ url, ref, tracker, location }) {
       .compute()
   );
 
-  return ({
-    documentsSorted,
-    queries });
+  return documentsSorted;
 }
 
 
