@@ -1,4 +1,4 @@
-import { getLocation } from '@common';
+import { getLocation, wait } from '@common';
 import { reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
@@ -27,7 +27,7 @@ export class Preview {
 
     // We don't display the preview by default unless the start function says so
     this.watchPreviewUpdates();
-    return await this.start(this.ref) || { displayPreview: false };
+    return this.start(this.ref);
   };
 
   watchPreviewUpdates() {
@@ -49,14 +49,14 @@ export class Preview {
   async start(ref) {
     if (!ref) {
       await this.end();
-      return;
+      return { displayPreview: false, shouldReload: false };
     }
     if (ref === this.cookie.getRefForDomain()) {
-      return { displayPreview: true };
+      return { displayPreview: true, shouldReload: false };
     }
     this.cookie.upsertPreviewForDomain(ref);
     // Force to display the preview
-    reloadOrigin();
+    return { displayPreview: false, shouldReload: true };
   }
 
   // End preview
