@@ -12,17 +12,7 @@ export class DevMode extends Component {
   }
 
   /* ----- RETURN TRIGGER INFOS ----- */
-  getitemInfos = /* Object */query => /* Object */ {
-    // reducer to count the custom types queried
-    const itemInfosReducer = (acc, val) => {
-      if (acc[val]) {
-        acc[val] += 1;
-      } else {
-        acc[val] = 1;
-      }
-      return acc;
-    };
-
+  getItemInfo = /* Object */query => /* Object */ {
     /*
       expected format of itemInfos
       {
@@ -33,10 +23,14 @@ export class DevMode extends Component {
     */
     const itemInfos = query
       .map(doc => doc.type)
-      .reduce(
-        itemInfosReducer,
-        {}
-      );
+      .reduce((acc, val) => {
+        if (acc[val]) {
+          acc[val] += 1;
+        } else {
+          acc[val] = 1;
+        }
+        return acc;
+      }, {});
 
     const title = this.constructTitleOfItem(itemInfos);
 
@@ -55,13 +49,9 @@ export class DevMode extends Component {
     const copyInfo = Object.assign({}, itemInfos);
     const keys = Object.keys(copyInfo);
 
-    function titleReducer(acc, val) {
-      return acc + ' & ' + val;
-    }
-
     const title = keys
       .map(key => key + ' (' + copyInfo[key] + ')')
-      .reduce(titleReducer);
+      .reduce((acc, val) => acc + ' & ' + val);
 
     return title;
   }
@@ -72,17 +62,15 @@ export class DevMode extends Component {
     if (!data) { return 0; } // First case data is empty or null
     if (data.link_type === 'Document' && data.id) { return 1; } // Second case there is a document, return 1 to increment the count
 
-    const linkedDocReducer = (/* Int */acc, /* Object || String */key) => {
-      if (typeof data[key] === 'object') {
-        const newCount = this.countLinkedDocInDocument(data[key]);
-        return acc + newCount;
-      }
-      return acc;
-    };
-
     // Last case it is an object but not a document, so we check every object inside.
     const count = Object.keys(data)
-      .reduce(linkedDocReducer, 0);
+      .reduce((/* Int */acc, /* Object || String */key) => {
+        if (typeof data[key] === 'object') {
+          const newCount = this.countLinkedDocInDocument(data[key]);
+          return acc + newCount;
+        }
+        return acc;
+      }, 0);
 
     return count;
   }
@@ -97,7 +85,7 @@ export class DevMode extends Component {
         {
         queries.map(query => {
           if (Object.keys(query).length < 1) { return null; }
-          const itemInfos = this.getitemInfos(query);
+          const itemInfos = this.getItemInfo(query);
 
           return (
             <Collapsible

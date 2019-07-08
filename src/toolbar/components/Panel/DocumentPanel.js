@@ -4,7 +4,7 @@ import { Loader } from '../Loader';
 import { NavTabs, EditButton, DevMode } from '..';
 
 export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
-  if (!documents.length) return null;
+  if (!documents || (documents && documents.length <= 0)) return null;
 
   return (
     <BasePanel className="DocumentPanel">
@@ -24,14 +24,24 @@ const panelContent = (documents, queries, onDocumentClick) => {
       <NavTabs
         tabsName={['Edit Button', 'Dev Mode']}
         tabsContent={[
-          <EditButton documents={documents} onClick={onDocumentClick} />,
+          <EditButton
+            documents={documents}
+            maxTitleSize={35}
+            maxSummarySize={150}
+            onClick={onDocumentClick}
+          />,
           <DevMode queries={queries} />
         ]}
       />
     );
   }
   return (
-    <EditButton documents={documents} onClick={onDocumentClick} />
+    <EditButton
+      documents={documents}
+      maxTitleSize={35}
+      maxSummarySize={150}
+      onClick={onDocumentClick}
+    />
   );
 };
 

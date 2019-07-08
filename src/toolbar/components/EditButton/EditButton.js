@@ -1,10 +1,13 @@
 import './EditButton.css';
 import { Component } from 'react';
+import { stringCheck } from '@common';
 
 /* ----- BEGINNING OF CLASS ----- */
 export class EditButton extends Component {
   constructor (props) {
     super(props);
+    this.maxTitleSize = props.maxTitleSize;
+    this.maxSummarySize = props.maxSummarySize;
     this.state = { documents: props.documents, onClick: props.onClick };
   }
 
@@ -26,28 +29,48 @@ export class EditButton extends Component {
     return (
       <div className="documents-summary-tab">
         <h4 className="small-title">Main Document</h4>
-        <DocumentSummary document={mainDocument} isMain onClick={onClick} />
+        <DocumentSummary
+          document={mainDocument}
+          isMain
+          maxTitleSize={this.maxTitleSize}
+          maxSummarySize={this.maxSummarySize}
+          onClick={onClick}
+        />
         {BannerOtherDocs(otherDocuments)}
         {
-          otherDocuments.map(document => <DocumentSummary document={document} onClick={onClick} />)
+          otherDocuments.map(document =>
+            <DocumentSummary
+              document={document}
+              maxTitleSize={this.maxTitleSize}
+              maxSummarySize={this.maxSummarySize}
+              onClick={onClick}
+            />
+          )
         }
 
         {BannerDocumentLinks(documentLinks)}
         {
-          documentLinks.map(document => <DocumentSummary document={document} onClick={onClick} />)
+          documentLinks.map(document =>
+            <DocumentSummary
+              document={document}
+              maxTitleSize={this.maxTitleSize}
+              maxSummarySize={this.maxSummarySize}
+              onClick={onClick}
+            />
+          )
         }
       </div>
     );
   }
 }
 
-const DocumentSummary = ({ document, isMain, onClick }) => (
+const DocumentSummary = ({ document, isMain, maxTitleSize, maxSummarySize, onClick }) => (
   <a className="document-summary" href={document.editorUrl} target="_blank" onClick={() => onClick({ isMain })}>
     <div className="wrapper-title-status">
       <span className={document.status}>{document.status}</span>
-      <h2>{document.title}</h2>
+      <h2>{stringCheck(document.title, maxTitleSize)}</h2>
     </div>
-    <p>{document.summary || 'Our goal at Prismic is to build the future of the CMS. All our improvements and features are based on the great'}</p>
+    <p>{stringCheck(document.summary, maxSummarySize) || 'Our goal at Prismic is to build the future of the CMS. All our improvements and features are based on the great'}</p>
   </a>
 );
 

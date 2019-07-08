@@ -4,7 +4,7 @@
     background: white;
     box-shadow: 0 0 2px 0 rgba(0,0,0,0.07), 0 20px 30px 0 rgba(0,0,0,0.10);
     border-radius: 10px;
-    width: 435px;
+    width: 400px;
     height: calc(100vh - 160px);
     position: absolute;
     bottom: 100px;
@@ -122,7 +122,7 @@
   /* Copy button */
   & .copy {
     border-radius: 4px;
-    width: 92%;
+    width: 91%;
     text-align: center;
     padding: 16px;
     color: white;

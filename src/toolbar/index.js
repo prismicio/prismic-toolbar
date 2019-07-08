@@ -66,8 +66,6 @@ async function setup (rawInput) {
   const { Toolbar } = require('./toolbar');
   const { PreviewCookie } = require('./preview/cookie');
 
-  // verifier si les preview ou experiment cookie existe
-
   // Validate repository
   const domain = parseEndpoint(rawInput);
   const protocol = domain.match('.test$') ? window.location.protocol : 'https:';

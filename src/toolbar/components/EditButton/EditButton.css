@@ -16,7 +16,7 @@
     }
   
     & .document-summary {
-      padding-left: 25px;
+      padding: 0px 25px;
       border-bottom: 1px solid #E0E2EE;
   
       & .wrapper-title-status {

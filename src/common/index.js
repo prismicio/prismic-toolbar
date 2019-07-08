@@ -12,7 +12,7 @@ export {
   readyDOM,
   wait,
   delay,
-  reload,
+  stringCheck,
   disabledCookies,
   random,
   query,

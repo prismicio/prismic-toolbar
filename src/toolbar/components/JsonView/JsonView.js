@@ -1,7 +1,7 @@
 import { Component } from 'preact';
 import { Treebeard } from 'react-treebeard';
 import { minusSquare, plusSquare } from '.';
-import { copyText } from '@common';
+import { copyText, stringCheck } from '@common';
 import './JsonView.css';
 
 /* ----- BEGINNING OF CLASS ----- */
@@ -144,7 +144,7 @@ export class JsonView extends Component {
           <span
             className="value-string"
             onClick={props.onClick}>
-            {`"${props.stringCheck(props.node.value)}"`}
+            {`"${props.stringCheck(props.node.value, this.maxStringSize)}"`}
           </span>
         );
       }
@@ -187,7 +187,7 @@ export class JsonView extends Component {
           <this.decorators.Value
             node={props.node}
             onClick={props.onClick}
-            stringCheck={this.stringCheck}
+            stringCheck={stringCheck}
           />
           <this.decorators.Copy node={props.node} />
         </div>
@@ -277,17 +277,8 @@ export class JsonView extends Component {
 
   constructBannerUid = /* Object */json => /* String */ {
     const { type } = json;
-    const uid = json.uid ? ' · ' + json.uid : '';
+    const uid = json.uid ? ' · ' + stringCheck(json.uid, this.maxStringSize) : '';
     return type + uid;
-  }
-
-
-  /* ----- ADD ELLIPSIS IF NECESSARY TO VALUE ----- */
-  stringCheck = string => /* String */ {
-    if (string.length >= this.maxStringSize) {
-      return (string.substring(0, this.maxStringSize) + '...');
-    }
-    return string;
   }
 
 

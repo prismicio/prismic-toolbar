@@ -33,8 +33,13 @@ export const wait = seconds => new Promise(rs => setTimeout(rs, seconds * 1000))
 // Wait in milliseconds
 export const delay = t => new Promise(rs => setTimeout(rs, t));
 
-// Reload
-export const reload = url => window.location.reload(url);
+/* ----- ADD ELLIPSIS IF NECESSARY TO VALUE ----- */
+export const stringCheck = (string, maxStringSize) => /* String */ {
+  if (string.length >= maxStringSize) {
+    return (string.substring(0, maxStringSize) + '...');
+  }
+  return string;
+};
 
 // Cookies disabled
 export const disabledCookies = () => !navigator.cookieEnabled;

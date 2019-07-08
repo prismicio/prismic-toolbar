@@ -1,11 +1,16 @@
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
+import { stringCheck } from '@common';
 
-export const PreviewPanel = ({ onClose, preview }) => (
+export const PreviewPanel = ({ maxSummarySize, maxTitleSize, onClose, preview }) => (
   <BasePanel className="PreviewPanel">
     <Icon className="x" src={xSvg} onClick={onClose} />
-    <PreviewHeader title={preview.title} numberOfDocs={preview.documents.length} />
-    <PreviewDocuments documents={preview.documents} />
+    <PreviewHeader title={stringCheck(preview.title, maxTitleSize)} numberOfDocs={preview.documents.length} />
+    <PreviewDocuments
+      documents={preview.documents}
+      maxTitleSize={maxTitleSize}
+      maxSummarySize={maxSummarySize}
+    />
   </BasePanel>
 );
 
@@ -16,15 +21,21 @@ const PreviewHeader = ({ title, numberOfDocs }) => (
   </div>
 );
 
-const PreviewDocuments = ({ documents }) => (
+const PreviewDocuments = ({ documents, maxSummarySize, maxTitleSize }) => (
   <div className="Documents bottom">
-    {documents.map((doc, i) => <PreviewDocument doc={doc} key={i} />)}
+    {documents.map(doc =>
+      <PreviewDocument
+        doc={doc}
+        maxSummarySize={maxSummarySize}
+        maxTitleSize={maxTitleSize}
+      />
+    )}
   </div>
 );
 
-const PreviewDocument = ({ doc }) => (
+const PreviewDocument = ({ doc, maxSummarySize, maxTitleSize }) => (
   <a className="Draft" href={doc.url} target="_blank">
-    <h3>{doc.title}</h3>
-    <div>{doc.summary}</div>
+    <h3>{stringCheck(doc.title, maxTitleSize)}</h3>
+    <div>{stringCheck(doc.summary, maxSummarySize)}</div>
   </a>
 );

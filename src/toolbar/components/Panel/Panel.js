@@ -24,7 +24,12 @@ export const Panel = ({
             onClose={closePanel}
             queries={queries}
             onDocumentClick={onDocumentClick} />,
-          [DRAFTS]: <PreviewPanel preview={preview} onClose={closePanel} />,
+          [DRAFTS]: <PreviewPanel
+            maxSummarySize={150}
+            maxTitleSize={35}
+            preview={preview}
+            onClose={closePanel}
+          />,
           [SHARE]: <SharePanel preview={preview} onClose={closePanel} />,
         })
       }</Animation.SlideIn>

@@ -41,8 +41,9 @@ export class Preview {
   }
 
   async updatePreview() {
-    const { ref } = await this.client.updatePreview();
+    const { reload, ref } = await this.client.updatePreview();
     this.start(ref);
+    if (reload) { reloadOrigin(); }
   }
 
   // Start preview

@@ -6,7 +6,6 @@ const { NONE } = views;
 export class Toolbar extends Component {
   constructor({ prediction }) {
     super(...arguments);
-    this.closePreview = this.closePreview.bind(this);
 
     if (prediction) {
       prediction.onDocuments((documents, queries) => {
@@ -31,7 +30,7 @@ export class Toolbar extends Component {
 
   setPage = page => this.setState({ page });
 
-  closePreview() {
+  closePreview = () => {
     this.setState({ renderedPreview: false });
   }
 

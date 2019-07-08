@@ -1,6 +1,5 @@
 // Reload original page URL
-const { href } = window.location;
-export const reloadOrigin = () => require('@common').reload(href);
+export const reloadOrigin = () => window.location.reload();
 
 // Validate an endpoint
 const validEndpoint = repo => Boolean(repo) && !/[^-a-zA-Z0-9.]/.test(repo);
