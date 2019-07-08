@@ -5,7 +5,10 @@ import { stringCheck } from '@common';
 export const PreviewPanel = ({ maxSummarySize, maxTitleSize, onClose, preview }) => (
   <BasePanel className="PreviewPanel">
     <Icon className="x" src={xSvg} onClick={onClose} />
-    <PreviewHeader title={stringCheck(preview.title, maxTitleSize)} numberOfDocs={preview.documents.length} />
+    <PreviewHeader
+      title={stringCheck(preview.title, maxTitleSize)}
+      numberOfDocs={preview.documents.length}
+    />
     <PreviewDocuments
       documents={preview.documents}
       maxTitleSize={maxTitleSize}
