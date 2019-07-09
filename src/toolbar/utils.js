@@ -2,7 +2,7 @@
 export const reloadOrigin = () => window.location.reload();
 
 // Validate an endpoint
-const validEndpoint = repo => Boolean(repo) && !/[^-a-zA-Z0-9.]/.test(repo);
+const validEndpoint = repo => Boolean(repo) && /^(https?:\/\/)?[-a-zA-Z0-9.\/]+/.test(repo);
 
 // Get window.prismic.endpoint
 export const getLegacyEndpoint = () => {

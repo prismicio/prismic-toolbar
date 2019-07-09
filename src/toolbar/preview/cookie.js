@@ -81,7 +81,16 @@ export class PreviewCookie {
   }
 
   deletePreviewForDomain() {
-    deleteCookie(PREVIEW_COOKIE_NAME);
+    const cookie = this.get();
+    if (cookie) {
+      const updatedCookie = this.build({
+        tracker: cookie._tracker
+      });
+      setCookie(PREVIEW_COOKIE_NAME, updatedCookie);
+    } else {
+      const compliantCookie = this.build({ tracker: this.generateTracker() });
+      setCookie(PREVIEW_COOKIE_NAME, compliantCookie);
+    }
   }
 
   getRefForDomain() {
