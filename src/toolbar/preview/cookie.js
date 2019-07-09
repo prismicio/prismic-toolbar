@@ -1,4 +1,4 @@
-import { getCookie, setCookie, deleteCookie, isObject } from '@common';
+import { getCookie, setCookie, isObject } from '@common';
 import { random } from '../../common/general';
 
 const PREVIEW_COOKIE_NAME = 'io.prismic.preview';
