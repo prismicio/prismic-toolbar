@@ -1,8 +1,8 @@
-import { fetchy } from '@common';
-
 export function getQueriesResults(tracker) {
-  return fetchy({
-    url: `/toolbar/devMode?tracker=${tracker}`,
-    method: 'GET'
+  return fetch(`/toolbar/devMode?tracker=${tracker}`).then(r => {
+    if (r.status === 200) {
+      return r.json();
+    }
+    return [];
   });
 }
