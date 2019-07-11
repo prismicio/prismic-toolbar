@@ -30,7 +30,10 @@ const panelContent = (documents, queries, onDocumentClick) => {
             maxSummarySize={150}
             onClick={onDocumentClick}
           />,
-          <DevMode queries={queries} />
+          <DevMode
+            maxStringSize={35}
+            queries={queries}
+          />
         ]}
       />
     );
