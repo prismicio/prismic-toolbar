@@ -38,7 +38,12 @@ export class JsonView extends Component {
       const newJsonToModify = this.getWhichJsonToSet(data, metadata, node.path);
       this.setIsCopied(newJsonToModify, node.path, true);
 
-      const jsonPath = node.path.join('.');
+      const jsonPath = node.path.reduce((acc, val) => {
+        if (val[0] === '[' && val[val.length - 1] === ']') {
+          return acc + val;
+        }
+        return acc + '.' + val;
+      });
       copyText(jsonPath);
 
       if (timeOut > -1) {
@@ -101,7 +106,9 @@ export class JsonView extends Component {
       return nodeFound.children;
     };
 
-    const nodeToModify = keyNames.reduce(reducer, json);
+    const nodeToModify = keyNames
+      .map(key => (key[0] === '[' && key[key.length - 1] === ']') ? key.substring(1, key.length - 1) : key)
+      .reduce(reducer, json);
     nodeToModify.isCopied = value;
   }
 
@@ -229,12 +236,13 @@ export class JsonView extends Component {
 
     const res = keys.map((key, index) => {
       if (typeof copyOfJson[key] === 'object' && copyOfJson[key] != null) { // is an object
+        const newPath = Array.isArray(json) ? path.concat('[' + key + ']') : path.concat(key);
         return {
           name: key,
           toggled: false,
           isCopied: false,
-          children: this.turnJsonToTreeBeardJson(copyOfJson[key], path.concat(key)),
-          path: path.concat(key),
+          children: this.turnJsonToTreeBeardJson(copyOfJson[key], newPath),
+          path: newPath,
           isLastChild: this.isLastChild(index, length)
         };
       } // is a key : string
