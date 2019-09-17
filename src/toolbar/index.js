@@ -82,20 +82,28 @@ async function setup (rawInput) {
   // Communicate with repository
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
   const previewState = await toolbarClient.getPreviewState();
-  const previewCookie = new PreviewCookie(toolbarClient.hostname);
-  const preview = new Preview(toolbarClient, previewCookie, previewState);
+  const previewCookieHelper = new PreviewCookie(previewState.auth, toolbarClient.hostname);
+  // convert from legacy or clean the cookie if not authenticated
+  const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
 
-  const prediction = previewState.auth && new Prediction(toolbarClient, previewCookie);
+  const prediction = previewState.auth && new Prediction(toolbarClient, previewCookieHelper);
   const analytics = previewState.auth && new Analytics(toolbarClient);
 
   // Start concurrently preview (always) and prediction (if authenticated)
-  const { displayPreview, shouldReload } = await preview.setup();
+  const { initialRef, upToDate } = await preview.setup();
+  previewCookieHelper.init(initialRef);
 
-  if (shouldReload) {
+  if (!upToDate) {
     reloadOrigin();
   } else {
     // render toolbar
-    new Toolbar({ displayPreview, auth: previewState.auth, preview, prediction, analytics });
+    new Toolbar({
+      displayPreview: Boolean(initialRef),
+      auth: previewState.auth,
+      preview,
+      prediction,
+      analytics
+    });
 
     // Track initial setup of toolbar
     if (analytics) analytics.trackToolbarSetup();

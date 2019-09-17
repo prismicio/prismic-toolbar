@@ -21,13 +21,12 @@ export class Preview {
     this.updated = preview.updated;
     this.documents = preview.documents || [];
 
-    if (!this.active) {
-      this.cookie.setDefault();
-    }
-
+    const refUpToDate = preview.ref === this.cookie.getRefForDomain();
+    const displayPreview = preview.ref && refUpToDate;
     // We don't display the preview by default unless the start function says so
-    this.watchPreviewUpdates();
-    return this.start(this.ref);
+    if (displayPreview) this.watchPreviewUpdates();
+
+    return { initialRef: preview.ref, upToDate: refUpToDate };
   };
 
   watchPreviewUpdates() {
