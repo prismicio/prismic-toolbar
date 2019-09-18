@@ -49,7 +49,7 @@ export class PreviewCookie {
     const previewBlock = (() => {
       // copy previews and delete the current one before rebuilding it
       if (!preview) return;
-      if (isObject(preview)) preview;
+      if (isObject(preview)) return preview;
       return { [this.domain]: { preview } };
     })();
 
