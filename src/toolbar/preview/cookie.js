@@ -11,7 +11,11 @@ export class PreviewCookie {
   }
 
   init(ref) {
-    const value = this.build({ preview: ref });
+    const tracker = (() => {
+      const c = this.get();
+      return c && c._tracker;
+    })();
+    const value = this.build({ tracker, preview: ref });
     this.set(value);
   }
 
@@ -43,9 +47,6 @@ export class PreviewCookie {
     preview: null,
     tracker: null
   }) {
-    const cookie = this.get();
-    const currentTracker = cookie && cookie._tracker;
-
     const previewBlock = (() => {
       // copy previews and delete the current one before rebuilding it
       if (!preview) return;
@@ -55,8 +56,8 @@ export class PreviewCookie {
 
     const trackerBlock = (() => {
       if (!this.isAuthenticated) return;
-      if (!currentTracker && !tracker) return;
-      return { _tracker: tracker || currentTracker || this.generateTracker() };
+      if (!tracker) return;
+      return { _tracker: tracker || this.generateTracker() };
     })();
 
     if (previewBlock || trackerBlock)
@@ -77,7 +78,11 @@ export class PreviewCookie {
   }
 
   upsertPreviewForDomain(previewRef) {
-    const updatedCookieValue = this.build({ preview: previewRef });
+    const tracker = (() => {
+      const c = this.get();
+      return c && c._tracker;
+    })();
+    const updatedCookieValue = this.build({ tracker, preview: previewRef });
     this.set(updatedCookieValue);
   }
 
