@@ -11,12 +11,32 @@ export class PreviewCookie {
   }
 
   init(ref) {
+    const hasConvertCookie = this.makeConvertLegacy();
+    if (hasConvertCookie) return { convertedLegacy: true };
+
     const tracker = (() => {
       const c = this.get();
       return c && c._tracker;
     })();
     const value = this.build({ tracker, preview: ref });
     this.set(value);
+    return { convertedLegacy: false };
+  }
+
+  makeConvertLegacy() {
+    const cookieOpt = getCookie(PREVIEW_COOKIE_NAME);
+    if (cookieOpt) {
+      const parsedCookie = (() => {
+        try {
+          return JSON.parse(cookieOpt);
+        } catch (e) {
+          return null;
+        }
+      })();
+      if (parsedCookie) return false;
+      this.convertLegacyCookie(cookieOpt);
+      return true;
+    }
   }
 
   get() /* Object | string */ {

@@ -91,9 +91,9 @@ async function setup (rawInput) {
 
   // Start concurrently preview (always) and prediction (if authenticated)
   const { initialRef, upToDate } = await preview.setup();
-  previewCookieHelper.init(initialRef);
+  const { convertedLegacy } = previewCookieHelper.init(initialRef);
 
-  if (!upToDate) {
+  if (convertedLegacy || !upToDate) {
     reloadOrigin();
   } else {
     // render toolbar
