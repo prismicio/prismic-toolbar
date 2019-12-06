@@ -8,7 +8,7 @@ export class EditButton extends Component {
     super(props);
     this.maxTitleSize = props.maxTitleSize;
     this.maxSummarySize = props.maxSummarySize;
-    this.state = { documents: props.documents, onClick: props.onClick };
+    this.state = { documents: props.documents };
   }
 
   splitDocuments(documents) {
@@ -23,7 +23,7 @@ export class EditButton extends Component {
 
   /* ----- RENDER FUNCTION ----- */
   render() {
-    const { documents, onClick } = this.state;
+    const { documents } = this.state;
     const [mainDocument, otherDocuments, documentLinks] = this.splitDocuments(documents);
 
     return (
@@ -34,7 +34,7 @@ export class EditButton extends Component {
           isMain
           maxTitleSize={this.maxTitleSize}
           maxSummarySize={this.maxSummarySize}
-          onClick={onClick}
+          onClick={mainDocument.onClick}
         />
         {BannerOtherDocs(otherDocuments)}
         {
@@ -43,7 +43,7 @@ export class EditButton extends Component {
               document={document}
               maxTitleSize={this.maxTitleSize}
               maxSummarySize={this.maxSummarySize}
-              onClick={onClick}
+              onClick={document.onClick}
             />
           )
         }
@@ -55,7 +55,7 @@ export class EditButton extends Component {
               document={document}
               maxTitleSize={this.maxTitleSize}
               maxSummarySize={this.maxSummarySize}
-              onClick={onClick}
+              onClick={document.onClick}
             />
           )
         }

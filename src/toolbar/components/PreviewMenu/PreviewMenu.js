@@ -3,21 +3,21 @@ import { xSvg, linkSvg } from '.';
 
 const { DRAFTS, SHARE } = views;
 
-export const PreviewMenu = ({ setPage, auth, preview, in: inProp, closePreview }) => {
-  const len = preview.documents.length;
+export const PreviewMenu = ({ setPage, auth, previews, in: inProp, closePreview }) => {
+  const len = previews.documents.length;
 
   const close = () => {
     // unmount preview component
     closePreview();
     // kill the preview session
-    preview.end();
+    previews.end();
   };
 
   return (
     <Animation.SlideIn in={inProp}>
       <div className="PreviewMenu">
         <div className="top">
-          <ScrollingName className='preview-title'>{preview.title}</ScrollingName>
+          <ScrollingName className='preview-title'>{previews.title}</ScrollingName>
           {Boolean(len) && <div className="docs" onClick={() => setPage(DRAFTS)}>
             ({len} doc{len !== 1 ? 's' : ''})
           </div>}

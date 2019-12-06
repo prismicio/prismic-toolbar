@@ -10,9 +10,8 @@ export const Panel = ({
   documents,
   queries,
   documentsLoading,
-  preview,
-  page,
-  onDocumentClick
+  previews,
+  page
 }) => (
   <TransitionGroup>{
     !page || (
@@ -22,15 +21,14 @@ export const Panel = ({
             documents={documents}
             loading={documentsLoading}
             onClose={closePanel}
-            queries={queries}
-            onDocumentClick={onDocumentClick} />,
+            queries={queries} />,
           [DRAFTS]: <PreviewPanel
             maxSummarySize={150}
             maxTitleSize={35}
-            preview={preview}
+            previews={previews}
             onClose={closePanel}
           />,
-          [SHARE]: <SharePanel preview={preview} onClose={closePanel} />,
+          [SHARE]: <SharePanel previews={previews} onClose={closePanel} />,
         })
       }</Animation.SlideIn>
     )

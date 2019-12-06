@@ -1,7 +1,8 @@
 import { Hooks, getLocation, wait } from '@common';
 
 export class Prediction {
-  constructor(client, previewCookie) {
+  constructor(repoName, client, previewCookie) {
+    this.repoName = repoName;
     this.client = client;
     this.cookie = previewCookie;
     this.hooks = new Hooks();
@@ -39,7 +40,7 @@ export class Prediction {
   predict = tracker => (
     new Promise(async resolve => {
       const documentsSorted = await this.client.getPredictionDocs({
-        ref: this.cookie.getRefForDomain(),
+        ref: this.cookie.getRefForDomain(this.repoName),
         url: window.location.pathname,
         tracker,
         location: getLocation()

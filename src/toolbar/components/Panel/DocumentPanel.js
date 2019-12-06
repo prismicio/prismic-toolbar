@@ -3,7 +3,7 @@ import { Icon } from '../Icon';
 import { Loader } from '../Loader';
 import { NavTabs, EditButton, DevMode } from '..';
 
-export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
+export const DocumentPanel = ({ loading, documents, queries }) => {
   if (!documents || (documents && documents.length <= 0)) return null;
 
   return (
@@ -11,13 +11,13 @@ export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) 
       <ToolbarHeader />
       { loading
         ? <Loader />
-        : panelContent(documents, queries, onDocumentClick)
+        : panelContent(documents, queries)
       }
     </BasePanel>
   );
 };
 
-const panelContent = (documents, queries, onDocumentClick) => {
+const panelContent = (documents, queries) => {
   // If there is no queries then, we don't display the json.
   if (queries && queries.length > 0) {
     return (
@@ -28,7 +28,6 @@ const panelContent = (documents, queries, onDocumentClick) => {
             documents={documents}
             maxTitleSize={35}
             maxSummarySize={150}
-            onClick={onDocumentClick}
           />,
           <DevMode queries={queries} />
         ]}
@@ -40,7 +39,6 @@ const panelContent = (documents, queries, onDocumentClick) => {
       documents={documents}
       maxTitleSize={35}
       maxSummarySize={150}
-      onClick={onDocumentClick}
     />
   );
 };

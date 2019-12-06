@@ -2,15 +2,15 @@ import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
 import { stringCheck } from '@common';
 
-export const PreviewPanel = ({ maxSummarySize, maxTitleSize, onClose, preview }) => (
+export const PreviewPanel = ({ maxSummarySize, maxTitleSize, onClose, previews }) => (
   <BasePanel className="PreviewPanel">
     <Icon className="x" src={xSvg} onClick={onClose} />
     <PreviewHeader
-      title={stringCheck(preview.title, maxTitleSize)}
-      numberOfDocs={preview.documents.length}
+      title={stringCheck(previews.title, maxTitleSize)}
+      numberOfDocs={previews.documents.length}
     />
     <PreviewDocuments
-      documents={preview.documents}
+      documents={previews.documents}
       maxTitleSize={maxTitleSize}
       maxSummarySize={maxSummarySize}
     />

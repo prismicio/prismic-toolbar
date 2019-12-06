@@ -4,12 +4,10 @@ import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
 export class Toolbar {
-  constructor({ displayPreview, auth, preview, prediction, analytics }) {
-    this.preview = preview;
-    this.auth = auth;
-    this.prediction = prediction;
-    this.analytics = analytics;
-    this.displayPreview = displayPreview;
+  constructor({ previews, predictionByRepo, analyticsByRepo }) {
+    this.previews = previews;
+    this.predictionByRepo = predictionByRepo;
+    this.analyticsByRepo = analyticsByRepo;
     this.setup();
   }
 
@@ -32,11 +30,9 @@ export class Toolbar {
     // Render the React app
     render(
       <ToolbarComponent
-        auth={this.auth}
-        displayPreview={this.displayPreview}
-        preview={this.preview}
-        prediction={this.prediction}
-        analytics={this.analytics}
+        previews={this.previews}
+        predictionByRepo={this.predictionByRepo}
+        analyticsByRepo={this.analyticsByRepo}
       />,
       toolbar
     );

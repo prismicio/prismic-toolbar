@@ -5,25 +5,22 @@ const PREVIEW_COOKIE_NAME = 'io.prismic.preview';
 
 // Preview cookie manager for a specific repository (safe to have multiple instances)
 export class PreviewCookie {
-  constructor(isAuthenticated, domain) {
+  constructor(isAuthenticated) {
     this.isAuthenticated = isAuthenticated;
-    this.domain = domain;
   }
 
-  init(ref) {
-    const hasConvertCookie = this.makeConvertLegacy();
+  init(domain, ref) {
+    const hasConvertCookie = this.convertLegacy(domain, ref);
     if (hasConvertCookie) return { convertedLegacy: true };
 
-    const tracker = (() => {
-      const c = this.get();
-      return c && c._tracker;
-    })();
-    const value = this.build({ tracker, preview: ref });
+    const currentCookie = this.get();
+    const value = Object.assign({}, currentCookie, this.buildPreview({ [domain]: ref }));
+
     this.set(value);
     return { convertedLegacy: false };
   }
 
-  makeConvertLegacy() {
+  convertLegacy(domain, legacyValue) {
     const cookieOpt = getCookie(PREVIEW_COOKIE_NAME);
     if (cookieOpt) {
       const parsedCookie = (() => {
@@ -34,7 +31,11 @@ export class PreviewCookie {
         }
       })();
       if (parsedCookie) return false;
-      this.convertLegacyCookie(cookieOpt);
+      const cleanedCookie = this.build({
+        tracker: this.generateTracker(),
+        previewByDomain: { [domain]: legacyValue }
+      });
+      this.set(cleanedCookie);
       return true;
     }
   }
@@ -50,8 +51,7 @@ export class PreviewCookie {
         }
       })();
       if (parsedCookie) return parsedCookie;
-      const converted = this.convertLegacyCookie(cookieOpt);
-      return converted;
+      return null;
     }
   }
 
@@ -60,61 +60,59 @@ export class PreviewCookie {
     else demolishCookie(PREVIEW_COOKIE_NAME);
   }
 
+  buildPreview(previewByDomain) {
+    if (isObject(previewByDomain)) {
+      return Object.keys(previewByDomain)
+        .map(domain => ({ [domain]: { preview: previewByDomain[domain] } }))
+        .reduce((formattedPreviewByDomain, acc) => (
+          Object.assign({}, acc, formattedPreviewByDomain)
+        ), {});
+    }
+    return null;
+  }
+
   build({
-    preview,
-    tracker
+    tracker,
+    previewByDomain
   } = {
-    preview: null,
-    tracker: null
+    tracker: null,
+    previewByDomain: null
   }) {
-    const previewBlock = (() => {
-      // copy previews and delete the current one before rebuilding it
-      if (!preview) return;
-      if (isObject(preview)) return preview;
-      return { [this.domain]: { preview } };
-    })();
+    const previewBlock = this.buildPreview(previewByDomain);
 
     const trackerBlock = (() => {
       if (!this.isAuthenticated) return;
       if (!tracker) return;
-      return { _tracker: tracker || this.generateTracker() };
+      return { _tracker: tracker };
     })();
 
     if (previewBlock || trackerBlock)
       return Object.assign({}, trackerBlock || {}, previewBlock || {});
   }
 
-  convertLegacyCookie(legacyCookieValue) {
-    const cleanedCookie = this.build({
-      tracker: this.generateTracker(),
-      preview: legacyCookieValue
-    });
-    this.set(cleanedCookie);
-    return cleanedCookie;
-  }
-
   generateTracker() {
     return random(8);
   }
 
-  upsertPreviewForDomain(previewRef) {
+  upsertPreviewForDomain(domain, previewRef) {
     const tracker = (() => {
       const c = this.get();
       return c && c._tracker;
     })();
-    const updatedCookieValue = this.build({ tracker, preview: previewRef });
+    const updatedCookieValue = this.build({ tracker, previewByDomain: { [domain]: previewRef } });
     this.set(updatedCookieValue);
   }
 
-  deletePreviewForDomain() {
-    const updatedCookieValue = this.build();
-    this.set(updatedCookieValue);
+  deletePreviewForDomain(domain) {
+    const cookie = this.get();
+    delete cookie[domain];
+    this.set(cookie);
   }
 
-  getRefForDomain() {
+  getRefForDomain(domain) {
     const cookie = this.get();
     if (!cookie) return;
-    return cookie[this.domain] && cookie[this.domain].preview;
+    return cookie[domain] && cookie[domain].preview;
   }
 
   getTracker() {
@@ -124,8 +122,8 @@ export class PreviewCookie {
   }
 
   refreshTracker() {
-    const ref = this.getRefForDomain();
-    const updatedCookie = this.build({ preview: ref, tracker: this.generateTracker() });
+    const c = this.get();
+    const updatedCookie = Object.assign({}, c, { _tracker: this.generateTracker() });
     this.set(updatedCookie);
   }
 }

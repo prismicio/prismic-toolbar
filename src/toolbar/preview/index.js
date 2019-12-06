@@ -3,7 +3,8 @@ import { reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
 export class Preview {
-  constructor(client, previewCookie, previewState) {
+  constructor(repoName, client, previewCookie, previewState) {
+    this.repoName = repoName;
     this.cookie = previewCookie;
     this.client = client;
     this.state = previewState;
@@ -21,7 +22,7 @@ export class Preview {
     this.updated = preview.updated;
     this.documents = preview.documents || [];
 
-    const refUpToDate = preview.ref === this.cookie.getRefForDomain();
+    const refUpToDate = preview.ref === this.cookie.getRefForDomain(this.repoName);
     const displayPreview = preview.ref && refUpToDate;
     // We don't display the preview by default unless the start function says so
     if (displayPreview) this.watchPreviewUpdates();
@@ -48,13 +49,14 @@ export class Preview {
   // Start preview
   async start(ref) {
     if (!ref) {
-      await this.end();
+      const { shouldReload } = await this.end();
+      if (shouldReload) reloadOrigin();
       return { displayPreview: false, shouldReload: false };
     }
-    if (ref === this.cookie.getRefForDomain()) {
+    if (ref === this.cookie.getRefForDomain(this.repoName)) {
       return { displayPreview: true, shouldReload: false };
     }
-    this.cookie.upsertPreviewForDomain(ref);
+    this.cookie.upsertPreviewForDomain(this.repoName, ref);
     // Force to display the preview
     return { displayPreview: false, shouldReload: true };
   }
@@ -63,10 +65,10 @@ export class Preview {
   async end() {
     this.cancelPreviewUpdates();
     await this.client.closePreviewSession();
-    if (!this.cookie.getRefForDomain()) return;
-    this.cookie.deletePreviewForDomain();
+    if (!this.cookie.getRefForDomain(this.repoName)) return { shouldReload: false };
+    this.cookie.deletePreviewForDomain(this.repoName);
     // reload to get rid of preview data and display the live version
-    reloadOrigin();
+    return { shouldReload: true };
   }
 
   async share() {

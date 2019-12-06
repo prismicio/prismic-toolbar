@@ -30,9 +30,9 @@ window.prismic = window.PrismicToolbar = {
   }),
 };
 
-withPolyfill(() => {
+withPolyfill(async () => {
   const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
-  let repos = new Set();
+  let repoEndpoints = new Set();
 
   // Prismic variable is available
   window.dispatchEvent(new CustomEvent('prismic'));
@@ -40,72 +40,133 @@ withPolyfill(() => {
   // Auto-querystring setup
   const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
   const repoParam = scriptURL.searchParams.get('repo');
-  if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
-
+  if (repoParam !== null) repoEndpoints = new Set([...repoEndpoints, ...repoParam.split(',')]);
   // Auto-legacy setup
+  window.repoEndpoints = repoEndpoints;
   const legacyEndpoint = getLegacyEndpoint();
   if (legacyEndpoint) {
     warn`window.prismic.endpoint is deprecated.`;
-    repos.add(legacyEndpoint);
+    repoEndpoints.add(legacyEndpoint);
   }
+  repoEndpoints = Array.from(repoEndpoints);
 
-  if (!repos.size) warn`Your are not connected to a repository.`;
-
-  repos.forEach(setup);
+  if (!repoEndpoints.size) warn`Your are not connected to a repository.`;
+  const repoConfigs = await (async () => {
+    const acc = [];
+    for (let i = 0; i < repoEndpoints.length; i += 1) {
+      acc.push(await setup(repoEndpoints[i]));
+    }
+    return acc;
+  })();
+  run(repoConfigs);
 })();
 
-// Setup the Prismic Toolbar for one repository TODO support multi-repo
-let setupDomain = null;
 async function setup (rawInput) {
   // Imports
   const { ToolbarService } = require('@toolbar-service');
-  const { parseEndpoint, reloadOrigin } = require('./utils');
+  const { parseEndpoint } = require('./utils');
   const { Preview } = require('./preview');
   const { Prediction } = require('./prediction');
   const { Analytics } = require('./analytics');
-  const { Toolbar } = require('./toolbar');
   const { PreviewCookie } = require('./preview/cookie');
 
   // Validate repository
   const domain = parseEndpoint(rawInput);
   const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
-
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
 
-  // Only allow setup to be called once
-  if (setupDomain) return warn`
-    Already connected to a repository (${setupDomain}).`;
-
-  setupDomain = domain;
-
   // Communicate with repository
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
+  const repoName = toolbarClient.hostname;
   const previewState = await toolbarClient.getPreviewState();
-  const previewCookieHelper = new PreviewCookie(previewState.auth, toolbarClient.hostname);
+  const previewCookieHelper = new PreviewCookie(previewState.auth);
   // convert from legacy or clean the cookie if not authenticated
-  const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
-
-  const prediction = previewState.auth && new Prediction(toolbarClient, previewCookieHelper);
+  const preview = new Preview(repoName, toolbarClient, previewCookieHelper, previewState);
+  const prediction = previewState.auth
+    && new Prediction(repoName, toolbarClient, previewCookieHelper);
   const analytics = previewState.auth && new Analytics(toolbarClient);
 
   // Start concurrently preview (always) and prediction (if authenticated)
   const { initialRef, upToDate } = await preview.setup();
-  const { convertedLegacy } = previewCookieHelper.init(initialRef);
+  const { convertedLegacy } = previewCookieHelper.init(domain, initialRef);
 
-  if (convertedLegacy || !upToDate) {
-    reloadOrigin();
-  } else {
-    // render toolbar
-    new Toolbar({
-      displayPreview: Boolean(initialRef),
-      auth: previewState.auth,
+  return [
+    repoName,
+    {
+      previewState,
       preview,
       prediction,
-      analytics
+      analytics,
+      computed: { initialRef, upToDate, convertedLegacy }
+    }
+  ];
+}
+
+function _filterRepositoryAttribute(repositories, attributeName) {
+  return repositories.reduce((acc, [repoName, config]) => {
+    const attribute = config[attributeName];
+    return Object.assign({}, acc, attribute ? { [repoName]: attribute } : {});
+  }, {});
+}
+
+function _formatPreviews(repoConfigs, reloadOrigin) {
+  const previews = repoConfigs.map(r => r.preview);
+  return {
+    title: previews.map(p => p.title).join(' | '),
+    documents: previews.reduce((acc, p) => [...acc, ...p.documents], []),
+    active: previews.reduce((acc, p) => acc || p.active, false),
+    display: repoConfigs.reduce((acc, config) => (
+      acc || (config && Boolean(config.computed.initialRef))
+    ), false),
+    auth: repoConfigs.reduce((acc, config) => (
+      acc || (config && config.previewState.auth)
+    ), false),
+    share: async () => {
+      const results = await Promise.all(previews.map(p => p.share()));
+      if (results.length !== previews.length) return null;
+      return previews.map((preview, index) => ({ preview, url: results[index] }));
+    },
+    end: async () => {
+      const reload = await (async () => {
+        const results = await Promise.all(previews.map(p => p.end()));
+        return results.reduce((acc, { shouldReload }) => acc || shouldReload, false);
+      })();
+      if (reload) reloadOrigin();
+    },
+    raw: previews,
+  };
+}
+
+function run(repositories) {
+  if (repositories.length < 1) return;
+
+  const { reloadOrigin } = require('./utils');
+  const { Toolbar } = require('./toolbar');
+  const shouldReload = repositories.reduce((acc, [, repoConfig]) => (
+    acc || (repoConfig.computed.convertedLegacy || !repoConfig.computed.upToDate)
+  ), false);
+
+  if (shouldReload) {
+    reloadOrigin();
+  } else {
+    const previewRepos = repositories
+      .map(([, repoConfig]) => repoConfig)
+      .filter(repoConfig => Boolean(repoConfig.computed.initialRef));
+
+    const formattedPreviews = _formatPreviews(previewRepos, reloadOrigin);
+    const predictionByRepo = _filterRepositoryAttribute(repositories, 'prediction');
+    const analyticsByRepo = _filterRepositoryAttribute(repositories, 'analytics');
+    // render toolbar
+    new Toolbar({
+      previews: formattedPreviews,
+      predictionByRepo,
+      analyticsByRepo
     });
 
     // Track initial setup of toolbar
-    if (analytics) analytics.trackToolbarSetup();
+    Object.keys(analyticsByRepo).forEach(repoName => {
+      analyticsByRepo[repoName].trackToolbarSetup();
+    });
   }
 }
