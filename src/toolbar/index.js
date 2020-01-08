@@ -50,7 +50,7 @@ withPolyfill(async () => {
   }
   repoEndpoints = Array.from(repoEndpoints);
 
-  if (!repoEndpoints.size) warn`Your are not connected to a repository.`;
+  if (!repoEndpoints.size) warn`You are not connected to a repository.`;
   const repoConfigs = await (async () => {
     const acc = [];
     for (let i = 0; i < repoEndpoints.length; i += 1) {
