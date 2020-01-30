@@ -1,5 +1,7 @@
 node_modules/
 dist/
+.idea/
+build/
 
 yarn.lock
 yarn-error.log

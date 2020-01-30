@@ -13,7 +13,7 @@ export default {
     return Cookies.get(EXPERIMENT_COOKIE_KEY);
   },
   setPreviewToken(ref) {
-    Cookies.set(PREVIEW_COOKIE_KEY, ref, { path: '/' });
+    Cookies.set(PREVIEW_COOKIE_KEY, ref, { path: '/', sameSite: 'lax' });
   },
   removeExperimentToken() {
     Cookies.remove(EXPERIMENT_COOKIE_KEY);
