@@ -43,7 +43,7 @@ function toggle(iframe, mode) {
     document.body.style.overflow = 'hidden';
     document.documentElement.style.overflow = 'hidden';
   } else {
-    iframe.setAttribute('style', toolbarStyle);
+    Object.assign(iframe.style, toolbarStyle);
     document.body.style = bodyStyle;
     document.documentElement.style = htmlStyle;
   }
