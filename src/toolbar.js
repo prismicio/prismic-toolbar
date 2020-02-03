@@ -25,7 +25,7 @@ function display(iframe, dimension) {
     iframe.style.right = '20px';
   }
 
-  toolbarStyle = iframe.getAttribute('style');
+  toolbarStyle = iframe.style;
   bodyStyle = document.body.style;
   htmlStyle = document.documentElement.style;
 }
