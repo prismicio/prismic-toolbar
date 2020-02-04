@@ -168,9 +168,15 @@ export const getLocation = () => {
 };
 
 // Generate a shadow DOM
+
 export const shadow = attr => {
   const div = document.createElement('div');
-  Object.entries(attr).forEach(([key, value]) => div.setAttribute(key, value));
+  Object.entries(attr).forEach(([key, value]) => {
+    if (key === 'style') {
+      return Object.assign(div.style, value);
+    }
+    return div.setAttribute(key, value);
+  });
   const shadowRoot = document.head.attachShadow && div.attachShadow({ mode: 'open' });
   document.body.appendChild(div);
   return shadowRoot || div;
