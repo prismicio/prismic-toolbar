@@ -20,7 +20,6 @@ export class Prediction {
   // Set event listener
   setup = async () => {
     const currentTracker = this.cookie.getTracker();
-    this.cookie.refreshTracker();
     this.hooks.on('historyChange', () => this.start());
     await this.start(currentTracker);
   }

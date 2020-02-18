@@ -21,7 +21,7 @@
     cursor:pointer;
     height: 40px; /* height equal to line height x2 (2 lines of text) to make sure it is centered vertically */
     line-height: 20px;
-    width: fill-available;
+    width: stretch;
 
     & .trigger-title {
         font-size: 16px;

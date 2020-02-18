@@ -1,8 +1,8 @@
 import { Component } from 'preact';
 import { Treebeard } from 'react-treebeard';
-import { minusSquare, plusSquare } from '.';
 import { copyText, stringCheck } from '@common';
 import './JsonView.css';
+import { minusSquare, plusSquare } from '.';
 
 /* ----- BEGINNING OF CLASS ----- */
 export class JsonView extends Component {
