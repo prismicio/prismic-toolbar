@@ -1,0 +1,19 @@
+
+<svg width="18px" height="18px" viewBox="0 0 18 18" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="All-Popup-States" transform="translate(-318.000000, -843.000000)">
+            <g id="Group" transform="translate(109.000000, 805.000000)">
+                <g id="Group-49" transform="translate(80.000000, 0.000000)">
+                    <g id="ic_link_black_24px-(1)" transform="translate(129.000000, 38.000000)">
+                        <polygon id="Shape" points="2.25 2.25 15.75 2.25 15.75 15.75 2.25 15.75"></polygon>
+                        <circle id="Oval" fill="#B6C1FD" cx="9" cy="9" r="9"></circle>
+                        <path d="M4.44375,9 C4.44375,8.038125 5.225625,7.25625 6.1875,7.25625 L8.4375,7.25625 L8.4375,6.1875 L6.1875,6.1875 C4.635,6.1875 3.375,7.4475 3.375,9 C3.375,10.5525 4.635,11.8125 6.1875,11.8125 L8.4375,11.8125 L8.4375,10.74375 L6.1875,10.74375 C5.225625,10.74375 4.44375,9.961875 4.44375,9 Z M6.75,9.5625 L11.25,9.5625 L11.25,8.4375 L6.75,8.4375 L6.75,9.5625 Z M11.8125,6.1875 L9.5625,6.1875 L9.5625,7.25625 L11.8125,7.25625 C12.774375,7.25625 13.55625,8.038125 13.55625,9 C13.55625,9.961875 12.774375,10.74375 11.8125,10.74375 L9.5625,10.74375 L9.5625,11.8125 L11.8125,11.8125 C13.365,11.8125 14.625,10.5525 14.625,9 C14.625,7.4475 13.365,6.1875 11.8125,6.1875 Z" id="Shape" fill="#5163BA" fill-rule="nonzero"></path>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

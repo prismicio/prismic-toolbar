@@ -1,0 +1,36 @@
+.Toolbar a {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+.Toolbar {
+	position: fixed;
+	bottom: 30px;
+	left: 30px;
+	z-index: 1000;
+  font-family: 'SF Pro Text', 'Helvetica', 'sans-serif';
+  font-size: 13px;
+  color: #667587;
+  display: flex;
+}
+
+.Toolbar h1 {
+  font-weight: 400;
+  font-size: 24px;
+  color: #1D2230;
+  margin: 0;
+}
+
+.Toolbar h2 {
+  font-weight: 400;
+  font-size: 13px;
+  color: #9fb1c5;
+  margin: 0;
+}
+
+.Toolbar h3 {
+  font-weight: 500;
+  color: #1D2230;
+  margin: 0;
+}

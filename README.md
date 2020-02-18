@@ -1,23 +1,42 @@
-[![Build Status](https://api.travis-ci.org/prismicio/prismic-toolbar.png)](https://travis-ci.org/prismicio/prismic-toolbar)
-[![Dependency Status](https://david-dm.org/prismicio/prismic-toolbar.svg)](https://david-dm.org/prismicio/prismic-toolbar) [![Greenkeeper badge](https://badges.greenkeeper.io/prismicio/prismic-toolbar.svg)](https://greenkeeper.io/)
-
-# Prismic toolbar
-The prismic toolbar is integrated to your website for:
+# Prismic toolbar V3
+The prismic toolbar enables content writers to:
+ - Identify Prismic content on the page
  - Preview unpublished changes (drafts and releases)
- - Edit button: easy access to the corresponding document in the Prismic Backend.
- - A/B testing (experiments)
+ - Perform A/B tests (experiments)
+
+<!-- TODO add screenshots -->
 
 ## How to use it?
-In order to use the toolbar you need to include the following script on every page of your site. You need to make sure to replace `<your-repo-name>` with the url name of your Prismic repository.
+Include the following script on every page of your site (including the `404` page).
+
+Remember to replace `YOUR_REPO_NAME` with the name of your Prismic repository.
 
 ```
-<script>
-  window.prismic = {
-    endpoint: 'https://<your-repo-name>.prismic.io/api/v2'
-  };
-</script>
-<script type="text/javascript" src="//static.cdn.prismic.io/prismic.min.js"></script>
+<script src=//prismic.io/prismic.js?repo=YOUR_REPO_NAME></script>
 ```
 
-## Prismic Documentation
-More info for how to setup Previews & Edit buttons can be found in the [Prismic.io documentation](https://prismic.io/docs/javascript/beyond-the-api/in-website-preview). There are resources there for all the main technologies we support.
+## How to develop
+
+- Start your toolbar locally:
+```script
+npm start
+```
+
+- Create a symlink to the public folder of your project:
+```script
+ln -s <toolbar_path>/build/prismic.js <sample_project_path>/public
+```
+
+- Change the path of the script to point on `prismic.js` from your public folder
+
+- On the writing room, define the path of your local toolbar:
+```
+local.toolbar="<relative_local_path>"
+```
+
+## How to deploy
+
+- Deploy on prod:
+```
+npm run build:prod
+```

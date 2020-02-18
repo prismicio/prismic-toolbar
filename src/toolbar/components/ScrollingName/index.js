@@ -1,0 +1,1 @@
+export { ScrollingName } from './ScrollingName';

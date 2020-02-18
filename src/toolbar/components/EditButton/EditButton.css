@@ -1,0 +1,78 @@
+/* DocumentsSummaryTab */
+
+.documents-summary-tab {
+    border-top: 1px solid #E0E2EE;
+    background: #FFFFFF;
+  
+    & .small-title {
+      font-size: 13px;
+      color: #8091A5;
+      letter-spacing: 0;
+      line-height: 35px;
+      background: #F5F6F9;
+      margin: 0;
+      padding-left: 25px;
+      border-bottom: 1px solid #E0E2EE;
+    }
+  
+    & .document-summary {
+      padding: 0px 25px;
+      border-bottom: 1px solid #E0E2EE;
+  
+      & .wrapper-title-status {
+        padding-top: 25px;
+        display: inline-block;
+        width: 100%;
+  
+        /* status */
+        & span {
+          display: inline-block;
+          padding: 2px 5px;
+          font-size: 12px;
+          color: #53452E;
+          letter-spacing: 0;
+          border: 0 solid #FFFFFF;
+          border-radius: 1.54px;
+
+          &::first-letter {
+            text-transform: uppercase;
+          }
+
+          &.live {
+            background: #B0E2C9;
+          }
+  
+          &.draft {
+            background: #FFDBA2;
+          }
+  
+          &.release {
+            background: #ead9ff;
+          }
+  
+          &.experiment {
+            background: #DCE0E5;
+          }
+        }
+  
+        /* title */
+        & h2 {
+          padding-left: 10px;
+          font-size: 16px;
+          color: #293258;
+          letter-spacing: 0.23px;
+          line-height: 20px;
+          font-weight: bold;
+          display: inline;
+        }
+      }
+  
+      /* summary */
+      & p {
+        font-size: 14px;
+        color: #435169;
+        letter-spacing: 0;
+        line-height: 26px;
+      }
+    }
+  }
