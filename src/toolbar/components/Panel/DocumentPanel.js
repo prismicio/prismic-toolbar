@@ -29,7 +29,10 @@ const panelContent = (documents, queries) => {
             maxTitleSize={35}
             maxSummarySize={150}
           />,
-          <DevMode queries={queries} />
+          <DevMode
+            maxStringSize={35}
+            queries={queries}
+          />
         ]}
       />
     );

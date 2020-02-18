@@ -1,17 +1,22 @@
 import { Component } from 'preact';
 import { Treebeard } from 'react-treebeard';
-import { minusSquare, plusSquare } from '.';
 import { copyText, stringCheck } from '@common';
 import './JsonView.css';
+import { minusSquare, plusSquare } from '.';
 
 /* ----- BEGINNING OF CLASS ----- */
 export class JsonView extends Component {
   constructor (props) {
     super(props);
-    const data = this.getData(props.json);
-    const metadata = this.getMetadata(props.json);
+    const data = (() => {
+      if (props.isGraphql) {
+        return this.getData(props.json, props.isGraphql, props.graphqlUid);
+      }
+      return this.getData(props.json);
+    })();
+    const metadata = props.isGraphql ? null : this.getMetadata(props.json);
     this.maxStringSize = props.maxStringSize;
-    this.bannerUid = this.constructBannerUid(props.json);
+    this.bannerUid = props.graphqlUid || this.constructBannerUid(props.json);
     this.state = {
       data,
       metadata,
@@ -275,8 +280,13 @@ export class JsonView extends Component {
     return metadata;
   }
 
-  getData = /* Object */json => /* Object */ {
-    const copyOfData = Object.assign({}, json.data);
+  getData = (/* Object */json, /* Boolean */isGraphql, graphqlUid) => /* Object */ {
+    const copyOfData = (() => {
+      if (isGraphql) {
+        return Object.assign({}, { [graphqlUid]: json });
+      }
+      return Object.assign({}, json.data);
+    })();
     const rawData = { data: copyOfData };
     const data = this.turnJsonToTreeBeardJson(rawData, []);
     data[0].toggled = true; // to initially open data
@@ -294,21 +304,37 @@ export class JsonView extends Component {
   render() {
     const { data, metadata } = this.state;
 
+    if (metadata && Object.keys(metadata).length >= 1) {
+      return (
+        <div className='wrapper-json-view' >
+          <div className='banner-uid' >{this.bannerUid}</div>
+
+          <Treebeard
+            data={data}
+            onToggle={this.onToggle}
+            decorators={this.decorators}
+            style={this.style}
+          />
+
+
+          <div className='banner-metadata' > Metadata </div>
+
+          <Treebeard
+            data={metadata}
+            onToggle={this.onToggle}
+            decorators={this.decorators}
+            style={this.style}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className='wrapper-json-view' >
         <div className='banner-uid' >{this.bannerUid}</div>
 
         <Treebeard
           data={data}
-          onToggle={this.onToggle}
-          decorators={this.decorators}
-          style={this.style}
-        />
-
-        <div className='banner-metadata' > Metadata </div>
-
-        <Treebeard
-          data={metadata}
           onToggle={this.onToggle}
           decorators={this.decorators}
           style={this.style}

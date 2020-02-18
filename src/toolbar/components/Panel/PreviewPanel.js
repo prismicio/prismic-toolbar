@@ -1,6 +1,7 @@
+import { stringCheck } from '@common';
 import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
-import { stringCheck } from '@common';
+
 
 export const PreviewPanel = ({ maxSummarySize, maxTitleSize, onClose, previews }) => (
   <BasePanel className="PreviewPanel">
