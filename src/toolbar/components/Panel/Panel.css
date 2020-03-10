@@ -28,6 +28,10 @@
     flex-grow: 1;
   }
 
+  & .preview {
+    padding: 30px;
+  }
+
   & .x {
     position: absolute;
     top: 20px;

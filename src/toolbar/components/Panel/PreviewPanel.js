@@ -26,7 +26,7 @@ const PreviewHeader = ({ title, numberOfDocs }) => (
 );
 
 const PreviewDocuments = ({ documents, maxSummarySize, maxTitleSize }) => (
-  <div className="Documents bottom">
+  <div className="Documents bottom preview">
     {documents.map(doc =>
       <PreviewDocument
         doc={doc}
