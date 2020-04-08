@@ -4,7 +4,7 @@ const SESSION_ID = getCookie('io.prismic.previewSession');
 
 // Close preview session
 function closePreviewSession () /* void */{
-  demolishCookie('io.prismic.previewSession');
+  demolishCookie('io.prismic.previewSession', { sameSite: 'None' });
 }
 
 const PreviewRef = {
