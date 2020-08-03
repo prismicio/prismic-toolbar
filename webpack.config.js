@@ -5,6 +5,7 @@ const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
 const { WebPlugin } = require('web-webpack-plugin');
 const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
+const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
@@ -61,6 +62,7 @@ module.exports = (_, options) => {
         template: relative('src/iframe/index.html'),
       }),
       new SuppressChunksPlugin(['iframe']),
+      new BundleAnalyzerPlugin(),
     ],
 
     module: {
