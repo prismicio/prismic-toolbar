@@ -1,4 +1,10 @@
-const { withPolyfill } = require('@common/polyfill'); // Support IE 11 TODO
+import { ToolbarService } from '@toolbar-service';
+import { parseEndpoint, reloadOrigin, getAbsoluteURL, getLegacyEndpoint } from './utils';
+import { Preview } from './preview';
+import { Prediction } from './prediction';
+import { Analytics } from './analytics';
+import { Toolbar } from './toolbar';
+import { PreviewCookie } from './preview/cookie';
 
 const version = process.env.npm_package_version;
 
@@ -17,55 +23,43 @@ window.prismic = window.PrismicToolbar = {
   endpoint: null,
   ...window.prismic/* Legacy */,
   version,
-  setup: withPolyfill((...args) => {
+  setup: (...args) => {
     warn`window.prismic.setup is deprecated.`;
     args.forEach(setup);
-  }),
-  startExperiment/* TODO automate */: withPolyfill(expId => {
+  },
+  startExperiment/* TODO automate */: expId => {
     const { Experiment } = require('./experiment');
     new Experiment(expId);
-  }),
-  setupEditButton/* Legacy */: withPolyfill(() => {
+  },
+  setupEditButton/* Legacy */: () => {
     warn`window.prismic.setupEditButton is deprecated.`;
-  }),
+  },
 };
 
-withPolyfill(() => {
-  const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
-  let repos = new Set();
+let repos = new Set();
 
-  // Prismic variable is available
-  window.dispatchEvent(new CustomEvent('prismic'));
+// Prismic variable is available
+window.dispatchEvent(new CustomEvent('prismic'));
 
-  // Auto-querystring setup
-  const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
-  const repoParam = scriptURL.searchParams.get('repo');
-  if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
+// Auto-querystring setup
+const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
+const repoParam = scriptURL.searchParams.get('repo');
+if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
 
-  // Auto-legacy setup
-  const legacyEndpoint = getLegacyEndpoint();
-  if (legacyEndpoint) {
-    warn`window.prismic.endpoint is deprecated.`;
-    repos.add(legacyEndpoint);
-  }
+// Auto-legacy setup
+const legacyEndpoint = getLegacyEndpoint();
+if (legacyEndpoint) {
+  warn`window.prismic.endpoint is deprecated.`;
+  repos.add(legacyEndpoint);
+}
 
-  if (!repos.size) warn`Your are not connected to a repository.`;
+if (!repos.size) warn`Your are not connected to a repository.`;
 
-  repos.forEach(setup);
-})();
+repos.forEach(setup);
 
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
 let setupDomain = null;
 async function setup (rawInput) {
-  // Imports
-  const { ToolbarService } = require('@toolbar-service');
-  const { parseEndpoint, reloadOrigin } = require('./utils');
-  const { Preview } = require('./preview');
-  const { Prediction } = require('./prediction');
-  const { Analytics } = require('./analytics');
-  const { Toolbar } = require('./toolbar');
-  const { PreviewCookie } = require('./preview/cookie');
-
   // Validate repository
   const domain = parseEndpoint(rawInput);
   const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
