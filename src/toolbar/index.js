@@ -1,9 +1,9 @@
 import { ToolbarService } from '@toolbar-service';
+import { script } from '@common';
 import { parseEndpoint, reloadOrigin, getAbsoluteURL, getLegacyEndpoint } from './utils';
 import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
-import { Toolbar } from './toolbar';
 import { PreviewCookie } from './preview/cookie';
 
 const version = process.env.npm_package_version;
@@ -86,13 +86,15 @@ async function setup (rawInput) {
   // Start concurrently preview (always) and prediction (if authenticated)
   const { initialRef, upToDate } = await preview.setup();
   const { convertedLegacy } = previewCookieHelper.init(initialRef);
+  const displayPreview = Boolean(initialRef);
 
   if (convertedLegacy || !upToDate) {
     reloadOrigin();
-  } else {
-    // render toolbar
-    new Toolbar({
-      displayPreview: Boolean(initialRef),
+  } else if (displayPreview || previewState.auth) {
+    // setup toolbar if authenticated
+    await script('http://localhost:3000/toolbar.js');
+    new window.PrismicToolbarApp({
+      displayPreview,
       auth: previewState.auth,
       preview,
       prediction,

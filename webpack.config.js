@@ -26,13 +26,16 @@ module.exports = (_, options) => {
     // Don't watch node_modules
     watchOptions: { ignored: '/node_modules/' },
 
-    // Output to prismic app
-    output: { path: relative('build') },
-
     // Toolbar & iFrame
     entry: {
       iframe: relative('src/iframe'),
       prismic: relative('src/toolbar'),
+      toolbar: relative('src/toolbar/toolbar'),
+    },
+
+    // Output to prismic app
+    output: {
+      path: relative('build')
     },
 
     // Helper Functions
