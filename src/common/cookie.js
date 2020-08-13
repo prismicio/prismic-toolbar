@@ -15,7 +15,7 @@ export function deleteCookie(name) {
 }
 
 // TODO remove after we force no /preview route (url prediction)
-export function demolishCookie(name) {
+export function demolishCookie(name, options) {
   const subdomains = window.location.hostname.split('.'); // ['www','gosport','com']
   const subpaths = window.location.pathname.slice(1).split('/'); // ['my','path']
 
@@ -30,7 +30,8 @@ export function demolishCookie(name) {
     .concat('/') // root path
     .concat(null); // no path specified
 
+
   DOMAINS.forEach(domain =>
-    PATHS.forEach(path => Cookies.remove(name, { domain, path }))
+    PATHS.forEach(path => Cookies.remove(name, { ...options, domain, path }))
   );
 }
