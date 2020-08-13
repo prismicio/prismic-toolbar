@@ -50,7 +50,6 @@ module.exports = (_, options) => {
     plugins: [
       // Ensure working regenerator-runtime
       new webpack.ProvidePlugin({
-        // Promise: 'es6-promise', // Remember to build with a promise polyfill for IE
         regeneratorRuntime: 'regenerator-runtime',
         h: ['preact', 'h'],
       }),

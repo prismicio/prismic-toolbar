@@ -7,8 +7,7 @@
   "scripts": {
     "start": "webpack --mode development --watch",
     "build:prod": "webpack --mode production",
-    "lint": "eslint src; exit 0",
-    "test": "jest"
+    "lint": "eslint src"
   },
   "engines": {
     "node": ">=4.8.1",
@@ -27,12 +26,9 @@
     "@babel/preset-react": "^7.10.4",
     "@babel/preset-stage-2": "^7.8.3",
     "babel-eslint": "^10.0.1",
-    "babel-jest": "24.8.0",
     "babel-loader": "^8.0.4",
-    "bluebird": "^3.5.3",
     "css-loader": "^1.0.1",
     "cssnano": "^4.1.7",
-    "es6-promise": "^4.2.5",
     "eslint": "^5.9.0",
     "eslint-config-airbnb": "^17.1.0",
     "eslint-config-airbnb-base": "^13.1.0",
@@ -42,8 +38,8 @@
     "eslint-loader": "^2.1.2",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-jsx-a11y": "^6.1.2",
-    "eslint-plugin-node": "^8.0.0",
-    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-promise": "4.2.1",
     "eslint-plugin-react": "^7.11.1",
     "eslint-plugin-standard": "^4.0.0",
     "event-target": "^1.2.3",
@@ -52,20 +48,12 @@
     "fuse.js": "^3.3.0",
     "html2canvas": "^1.0.0-alpha.12",
     "imports-loader": "^0.8.0",
-    "jest": "24.8.0",
-    "js-cookie": "^2.2.0",
     "postcss-easy-import": "^3.0.0",
     "postcss-loader": "^3.0.0",
     "postcss-preset-env": "^6.4.0",
     "postcss-url": "^8.0.0",
-    "preact": "^8.3.1",
-    "preact-compat": "^3.18.4",
     "puppeteer": "^1.10.0",
     "raw-loader": "^0.5.1",
-    "react-collapsible": "^2.6.0",
-    "react-tabs": "^3.0.0",
-    "react-transition-group": "^2.5.0",
-    "react-treebeard": "^2.1.0",
     "regenerator-runtime": "^0.12.1",
     "rimraf": "^2.6.2",
     "style-loader": "^0.23.1",
@@ -74,7 +62,15 @@
     "web-webpack-plugin": "4.2.1",
     "webpack": "^4.25.1",
     "webpack-bundle-analyzer": "^3.8.0",
-    "webpack-cli": "^3.3.11",
-    "whatwg-fetch": "^3.0.0"
+    "webpack-cli": "^3.3.11"
+  },
+  "dependencies": {
+    "js-cookie": "^2.2.0",
+    "preact": "8.5.3",
+    "preact-compat": "3.19.0",
+    "react-collapsible": "^2.6.0",
+    "react-tabs": "^3.0.0",
+    "react-transition-group": "^2.5.0",
+    "react-treebeard": "^2.1.0"
   }
 }
