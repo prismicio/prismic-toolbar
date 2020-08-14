@@ -22,17 +22,14 @@ Remember to replace `YOUR_REPO_NAME` with the name of your Prismic repository.
 npm start
 ```
 
-- Create a symlink to the public folder of your project:
+- Serve toolbar assets:
 ```script
-ln -s <toolbar_path>/build/prismic.js <sample_project_path>/public
+npm run serve-assets
 ```
 
-- Change the path of the script to point on `prismic.js` from your public folder
+It will serve assets at `http://localhost:8081`.
 
-- On the writing room, define the path of your local toolbar:
-```
-local.toolbar="<relative_local_path>"
-```
+- Change the path of the script to point on `http://localhost:8081/prismic.js` from your public folder
 
 ## How to deploy
 

@@ -56,7 +56,7 @@ module.exports = (_, options) => {
         PRISMIC_CDN_HOST: process.env.PRISMIC_CDN_HOST ?
           JSON.stringify(process.env.PRISMIC_CDN_HOST) :
             dev ?
-              JSON.stringify('http://localhost:8080') :
+              JSON.stringify('http://localhost:8081') :
                 JSON.stringify('https://prismic.io')
       }),
       // Ensure working regenerator-runtime

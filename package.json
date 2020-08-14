@@ -7,7 +7,7 @@
   "scripts": {
     "start": "webpack --mode development --watch",
     "build:prod": "webpack --mode production",
-    "serve-assets": "http-server -p 8080 -s -g -c-1 build/",
+    "serve-assets": "http-server -p 8081 -s -g -c-1 build/",
     "lint": "eslint src"
   },
   "engines": {
