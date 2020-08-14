@@ -91,8 +91,10 @@ async function setup (rawInput) {
   if (convertedLegacy || !upToDate) {
     reloadOrigin();
   } else if (displayPreview || previewState.auth) {
-    // setup toolbar if authenticated
-    await script('http://localhost:8080/toolbar.js');
+    // eslint-disable-next-line no-undef
+    const scriptPath = PRODUCTION ? `${version}/toolbar.js` : 'toolbar.js';
+    // eslint-disable-next-line no-undef
+    await script(`${PRISMIC_CDN_HOST}/${scriptPath}`);
     new window.PrismicToolbarApp({
       displayPreview,
       auth: previewState.auth,

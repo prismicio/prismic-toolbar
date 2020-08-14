@@ -51,6 +51,14 @@ module.exports = (_, options) => {
       }
     },
     plugins: [
+      new webpack.DefinePlugin({
+        PRODUCTION: JSON.stringify(!dev),
+        PRISMIC_CDN_HOST: process.env.PRISMIC_CDN_HOST ?
+          JSON.stringify(process.env.PRISMIC_CDN_HOST) :
+            dev ?
+              JSON.stringify('http://localhost:8080') :
+                JSON.stringify('https://prismic.io')
+      }),
       // Ensure working regenerator-runtime
       new webpack.ProvidePlugin({
         regeneratorRuntime: 'regenerator-runtime',
