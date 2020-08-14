@@ -1,4 +1,4 @@
-# Prismic toolbar V3
+# Prismic toolbar
 The prismic toolbar enables content writers to:
  - Identify Prismic content on the page
  - Preview unpublished changes (drafts and releases)
