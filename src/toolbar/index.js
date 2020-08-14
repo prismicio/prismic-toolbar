@@ -92,7 +92,7 @@ async function setup (rawInput) {
     reloadOrigin();
   } else if (displayPreview || previewState.auth) {
     // setup toolbar if authenticated
-    await script('http://localhost:3000/toolbar.js');
+    await script('http://localhost:8080/toolbar.js');
     new window.PrismicToolbarApp({
       displayPreview,
       auth: previewState.auth,
