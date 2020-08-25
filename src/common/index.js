@@ -2,6 +2,7 @@
 export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
 export { Hooks } from './hooks';
 export { Sorter } from './sorter';
+export { Middleware } from './middleware';
 export {
   warn,
   err,
