@@ -1,4 +1,4 @@
-import { getLocation } from '@common';
+import { Middleware, getLocation } from '@common';
 import { reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
@@ -42,7 +42,15 @@ export class Preview {
   async updatePreview() {
     const { reload, ref } = await this.client.updatePreview();
     this.start(ref);
-    if (reload) { reloadOrigin(); }
+    if (reload) {
+      await new Middleware()
+        .use(
+          window.prismic
+          && window.prismic.middleware
+          && window.prismic.middleware.previewUpdate
+        )
+        .run(reloadOrigin);
+    }
   }
 
   // Start preview
@@ -61,12 +69,20 @@ export class Preview {
 
   // End preview
   async end() {
-    this.cancelPreviewUpdates();
-    await this.client.closePreviewSession();
-    if (!this.cookie.getRefForDomain()) return;
-    this.cookie.deletePreviewForDomain();
-    // reload to get rid of preview data and display the live version
-    reloadOrigin();
+    await new Middleware()
+      .use(
+        window.prismic
+        && window.prismic.middleware
+        && window.prismic.middleware.closePreviewSession
+      )
+      .run(async () => {
+        this.cancelPreviewUpdates();
+        await this.client.closePreviewSession();
+        if (!this.cookie.getRefForDomain()) return;
+        this.cookie.deletePreviewForDomain();
+        // reload to get rid of preview data and display the live version
+        reloadOrigin();
+      });
   }
 
   async share() {
