@@ -72,7 +72,9 @@ module.exports = (_, options) => {
         template: relative('src/iframe/index.html'),
       }),
       new SuppressChunksPlugin(['iframe']),
-      new BundleAnalyzerPlugin(),
+      new BundleAnalyzerPlugin({
+        openAnalyzer: false
+      }),
     ],
 
     module: {
