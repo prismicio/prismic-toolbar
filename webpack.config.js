@@ -5,10 +5,14 @@ const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
 const { WebPlugin } = require('web-webpack-plugin');
 const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
-const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const packagejson = require('./package.json');
 
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
+
+const targetPath = `prismic-toolbar/${packagejson.version}`
 
 module.exports = (_, options) => {
   const dev = !options || options.mode === 'development';
@@ -35,7 +39,8 @@ module.exports = (_, options) => {
 
     // Output to prismic app
     output: {
-      path: relative('build')
+      path: relative('build'),
+      filename: `${targetPath}/[name].js`,
     },
 
     // Helper Functions
@@ -52,9 +57,8 @@ module.exports = (_, options) => {
     },
     plugins: [
       new webpack.DefinePlugin({
-        PRODUCTION: JSON.stringify(!dev),
-        PRISMIC_CDN_HOST: process.env.PRISMIC_CDN_HOST ?
-          JSON.stringify(process.env.PRISMIC_CDN_HOST) :
+        CDN_HOST: process.env.CDN_HOST ?
+          JSON.stringify(process.env.CDN_HOST) :
             dev ?
               JSON.stringify('http://localhost:8081') :
                 JSON.stringify('https://prismic.io')
@@ -68,12 +72,14 @@ module.exports = (_, options) => {
       new webpack.EnvironmentPlugin(['npm_package_version']),
       // Output HTML for iFrame
       new WebPlugin({
-        filename: 'iframe.html',
+        filename: `${targetPath}/iframe.html`,
         template: relative('src/iframe/index.html'),
       }),
       new SuppressChunksPlugin(['iframe']),
+      new CleanWebpackPlugin(),
       new BundleAnalyzerPlugin({
-        openAnalyzer: false
+        openAnalyzer: false,
+        analyzerMode: 'static',
       }),
     ],
 

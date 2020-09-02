@@ -1,6 +1,6 @@
 import { ToolbarService } from '@toolbar-service';
 import { script } from '@common';
-import { parseEndpoint, reloadOrigin, getAbsoluteURL, getLegacyEndpoint } from './utils';
+import { reloadOrigin, getAbsoluteURL } from './utils';
 import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
@@ -62,7 +62,6 @@ let setupDomain = null;
 async function setup (rawInput) {
   // Validate repository
   const domain = parseEndpoint(rawInput);
-  const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
 
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
@@ -73,7 +72,7 @@ async function setup (rawInput) {
 
   setupDomain = domain;
 
-  // Communicate with repository
+  const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
   const previewState = await toolbarClient.getPreviewState();
   const previewCookieHelper = new PreviewCookie(previewState.auth, toolbarClient.hostname);
@@ -92,10 +91,8 @@ async function setup (rawInput) {
     reloadOrigin();
   } else if (displayPreview || previewState.auth) {
     // eslint-disable-next-line no-undef
-    const scriptPath = PRODUCTION ? `${version}/toolbar.js` : 'toolbar.js';
-    // eslint-disable-next-line no-undef
-    await script(`${PRISMIC_CDN_HOST}/${scriptPath}`);
-    new window.PrismicToolbarApp({
+    await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
+    new window.prismic.Toolbar({
       displayPreview,
       auth: previewState.auth,
       preview,
@@ -105,5 +102,22 @@ async function setup (rawInput) {
 
     // Track initial setup of toolbar
     if (analytics) analytics.trackToolbarSetup();
+  }
+}
+
+function parseEndpoint(repo) {
+  if (!repo) return null;
+  /* eslint-disable no-useless-escape */
+  if (!/^(https?:\/\/)?[-a-zA-Z0-9.\/]+/.test(repo)) return null;
+  // eslint-disable-next-line no-undef
+  if (!repo.includes('.')) repo = `${repo}.prismic.io`;
+  return repo;
+}
+
+function getLegacyEndpoint() {
+  try {
+    return new URL(window.prismic.endpoint).hostname.replace('.cdn', '');
+  } catch (e) {
+    return window.prismic.endpoint;
   }
 }

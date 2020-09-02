@@ -43,4 +43,4 @@ class Toolbar {
   }
 }
 
-window.PrismicToolbarApp = Toolbar;
+window.prismic.Toolbar = Toolbar;
