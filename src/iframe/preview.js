@@ -5,11 +5,6 @@ const SESSION_ID = getCookie('io.prismic.previewSession');
 // Close preview session
 function closePreviewSession () /* void */{
   demolishCookie('io.prismic.previewSession', { sameSite: 'None', secure: true });
-  // document.cookie = 'io.prismic.previewSession=;'
-  //   + 'Path=/;'
-  //   + 'Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
-  //   + 'SameSite=None;'
-  //   + 'Secure';
 }
 
 const PreviewRef = {
