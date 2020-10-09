@@ -1,4 +1,10 @@
-const { withPolyfill } = require('@common/polyfill'); // Support IE 11 TODO
+import { ToolbarService } from '@toolbar-service';
+import { script } from '@common';
+import { reloadOrigin, getAbsoluteURL } from './utils';
+import { Preview } from './preview';
+import { Prediction } from './prediction';
+import { Analytics } from './analytics';
+import { PreviewCookie } from './preview/cookie';
 
 const version = process.env.npm_package_version;
 
@@ -17,58 +23,45 @@ window.prismic = window.PrismicToolbar = {
   endpoint: null,
   ...window.prismic/* Legacy */,
   version,
-  setup: withPolyfill((...args) => {
+  setup: (...args) => {
     warn`window.prismic.setup is deprecated.`;
     args.forEach(setup);
-  }),
-  startExperiment/* TODO automate */: withPolyfill(expId => {
+  },
+  startExperiment/* TODO automate */: expId => {
     const { Experiment } = require('./experiment');
     new Experiment(expId);
-  }),
-  setupEditButton/* Legacy */: withPolyfill(() => {
+  },
+  setupEditButton/* Legacy */: () => {
     warn`window.prismic.setupEditButton is deprecated.`;
-  }),
+  },
 };
 
-withPolyfill(() => {
-  const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
-  let repos = new Set();
+let repos = new Set();
 
-  // Prismic variable is available
-  window.dispatchEvent(new CustomEvent('prismic'));
+// Prismic variable is available
+window.dispatchEvent(new CustomEvent('prismic'));
 
-  // Auto-querystring setup
-  const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
-  const repoParam = scriptURL.searchParams.get('repo');
-  if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
+// Auto-querystring setup
+const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
+const repoParam = scriptURL.searchParams.get('repo');
+if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
 
-  // Auto-legacy setup
-  const legacyEndpoint = getLegacyEndpoint();
-  if (legacyEndpoint) {
-    warn`window.prismic.endpoint is deprecated.`;
-    repos.add(legacyEndpoint);
-  }
+// Auto-legacy setup
+const legacyEndpoint = getLegacyEndpoint();
+if (legacyEndpoint) {
+  warn`window.prismic.endpoint is deprecated.`;
+  repos.add(legacyEndpoint);
+}
 
-  if (!repos.size) warn`Your are not connected to a repository.`;
+if (!repos.size) warn`Your are not connected to a repository.`;
 
-  repos.forEach(setup);
-})();
+repos.forEach(setup);
 
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
 let setupDomain = null;
 async function setup (rawInput) {
-  // Imports
-  const { ToolbarService } = require('@toolbar-service');
-  const { parseEndpoint, reloadOrigin } = require('./utils');
-  const { Preview } = require('./preview');
-  const { Prediction } = require('./prediction');
-  const { Analytics } = require('./analytics');
-  const { Toolbar } = require('./toolbar');
-  const { PreviewCookie } = require('./preview/cookie');
-
   // Validate repository
   const domain = parseEndpoint(rawInput);
-  const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
 
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
@@ -79,7 +72,7 @@ async function setup (rawInput) {
 
   setupDomain = domain;
 
-  // Communicate with repository
+  const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
   const previewState = await toolbarClient.getPreviewState();
   const previewCookieHelper = new PreviewCookie(previewState.auth, toolbarClient.hostname);
@@ -92,13 +85,15 @@ async function setup (rawInput) {
   // Start concurrently preview (always) and prediction (if authenticated)
   const { initialRef, upToDate } = await preview.setup();
   const { convertedLegacy } = previewCookieHelper.init(initialRef);
+  const displayPreview = Boolean(initialRef);
 
   if (convertedLegacy || !upToDate) {
     reloadOrigin();
-  } else {
-    // render toolbar
-    new Toolbar({
-      displayPreview: Boolean(initialRef),
+  } else if (displayPreview || previewState.auth) {
+    // eslint-disable-next-line no-undef
+    await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
+    new window.prismic.Toolbar({
+      displayPreview,
       auth: previewState.auth,
       preview,
       prediction,
@@ -107,5 +102,22 @@ async function setup (rawInput) {
 
     // Track initial setup of toolbar
     if (analytics) analytics.trackToolbarSetup();
+  }
+}
+
+function parseEndpoint(repo) {
+  if (!repo) return null;
+  /* eslint-disable no-useless-escape */
+  if (!/^(https?:\/\/)?[-a-zA-Z0-9.\/]+/.test(repo)) return null;
+  // eslint-disable-next-line no-undef
+  if (!repo.includes('.')) repo = `${repo}.prismic.io`;
+  return repo;
+}
+
+function getLegacyEndpoint() {
+  try {
+    return new URL(window.prismic.endpoint).hostname.replace('.cdn', '');
+  } catch (e) {
+    return window.prismic.endpoint;
   }
 }

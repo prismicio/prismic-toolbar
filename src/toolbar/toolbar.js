@@ -3,7 +3,7 @@ import { appendCSS, shadow, readyDOM } from '@common';
 import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
-export class Toolbar {
+class Toolbar {
   constructor({ displayPreview, auth, preview, prediction, analytics }) {
     this.preview = preview;
     this.auth = auth;
@@ -42,3 +42,5 @@ export class Toolbar {
     );
   }
 }
+
+window.prismic.Toolbar = Toolbar;

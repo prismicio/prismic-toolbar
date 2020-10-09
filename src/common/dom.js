@@ -30,17 +30,3 @@ export const appendCSS = (el, css) => {
   style.appendChild(document.createTextNode(css));
   el.appendChild(style);
 };
-
-// Load script (with a promise)
-export function script(src) {
-  return new Promise(resolve => {
-    let el = document.getElementById(src);
-    if (!el) {
-      el = document.createElement('script');
-      el.id = src;
-      el.src = src;
-      document.head.appendChild(el);
-    }
-    el.addEventListener('load', () => resolve(el));
-  });
-}
