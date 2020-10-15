@@ -1,3 +1,4 @@
+import './checkBrowser';
 import { ToolbarService } from '@toolbar-service';
 import { script } from '@common';
 import { reloadOrigin, getAbsoluteURL } from './utils';
