@@ -4,7 +4,8 @@ import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
 export class Toolbar {
-  constructor({ previews, predictionByRepo, analyticsByRepo }) {
+  constructor({ displayPreview, previews, predictionByRepo, analyticsByRepo }) {
+    this.displayPreview = displayPreview;
     this.previews = previews;
     this.predictionByRepo = predictionByRepo;
     this.analyticsByRepo = analyticsByRepo;
@@ -30,6 +31,7 @@ export class Toolbar {
     // Render the React app
     render(
       <ToolbarComponent
+        displayPreview={this.displayPreview}
         previews={this.previews}
         predictionByRepo={this.predictionByRepo}
         analyticsByRepo={this.analyticsByRepo}
@@ -38,3 +40,5 @@ export class Toolbar {
     );
   }
 }
+
+window.prismic.Toolbar = Toolbar;

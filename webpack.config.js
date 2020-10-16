@@ -5,9 +5,14 @@ const postcssEasyImport = require('postcss-easy-import');
 const postcssPresetEnv = require('postcss-preset-env');
 const { WebPlugin } = require('web-webpack-plugin');
 const SuppressChunksPlugin = require('suppress-chunks-webpack-plugin').default;
+const { BundleAnalyzerPlugin } = require('webpack-bundle-analyzer');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const packagejson = require('./package.json');
 
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
+
+const targetPath = `prismic-toolbar/${packagejson.version}`
 
 module.exports = (_, options) => {
   const dev = !options || options.mode === 'development';
@@ -25,13 +30,17 @@ module.exports = (_, options) => {
     // Don't watch node_modules
     watchOptions: { ignored: '/node_modules/' },
 
-    // Output to prismic app
-    output: { path: relative('build') },
-
     // Toolbar & iFrame
     entry: {
       iframe: relative('src/iframe'),
       prismic: relative('src/toolbar'),
+      toolbar: relative('src/toolbar/toolbar'),
+    },
+
+    // Output to prismic app
+    output: {
+      path: relative('build'),
+      filename: `${targetPath}/[name].js`,
     },
 
     // Helper Functions
@@ -47,9 +56,15 @@ module.exports = (_, options) => {
       }
     },
     plugins: [
+      new webpack.DefinePlugin({
+        CDN_HOST: process.env.CDN_HOST ?
+          JSON.stringify(process.env.CDN_HOST) :
+            dev ?
+              JSON.stringify('http://localhost:8081') :
+                JSON.stringify('https://prismic.io')
+      }),
       // Ensure working regenerator-runtime
       new webpack.ProvidePlugin({
-        // Promise: 'es6-promise', // Remember to build with a promise polyfill for IE
         regeneratorRuntime: 'regenerator-runtime',
         h: ['preact', 'h'],
       }),
@@ -57,10 +72,15 @@ module.exports = (_, options) => {
       new webpack.EnvironmentPlugin(['npm_package_version']),
       // Output HTML for iFrame
       new WebPlugin({
-        filename: 'iframe.html',
+        filename: `${targetPath}/iframe.html`,
         template: relative('src/iframe/index.html'),
       }),
       new SuppressChunksPlugin(['iframe']),
+      new CleanWebpackPlugin(),
+      new BundleAnalyzerPlugin({
+        openAnalyzer: false,
+        analyzerMode: 'static',
+      }),
     ],
 
     module: {

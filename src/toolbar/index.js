@@ -1,4 +1,10 @@
-const { withPolyfill } = require('@common/polyfill'); // Support IE 11 TODO
+import { ToolbarService } from '@toolbar-service';
+import { script } from '@common';
+import { reloadOrigin, getAbsoluteURL } from './utils';
+import { Preview } from './preview';
+import { Prediction } from './prediction';
+import { Analytics } from './analytics';
+import { PreviewCookie } from './preview/cookie';
 
 const version = process.env.npm_package_version;
 
@@ -17,74 +23,58 @@ window.prismic = window.PrismicToolbar = {
   endpoint: null,
   ...window.prismic/* Legacy */,
   version,
-  setup: withPolyfill((...args) => {
+  setup: (...args) => {
     warn`window.prismic.setup is deprecated.`;
     args.forEach(setup);
-  }),
-  startExperiment/* TODO automate */: withPolyfill(expId => {
+  },
+  startExperiment/* TODO automate */: expId => {
     const { Experiment } = require('./experiment');
     new Experiment(expId);
-  }),
-  setupEditButton/* Legacy */: withPolyfill(() => {
+  },
+  setupEditButton/* Legacy */: () => {
     warn`window.prismic.setupEditButton is deprecated.`;
-  }),
+  },
 };
 
-withPolyfill(async () => {
-  const { getAbsoluteURL, getLegacyEndpoint } = require('./utils');
-  let repoEndpoints = new Set();
+let repoEndpoints = new Set();
 
-  // Prismic variable is available
-  window.dispatchEvent(new CustomEvent('prismic'));
+// Prismic variable is available
+window.dispatchEvent(new CustomEvent('prismic'));
 
-  // Auto-querystring setup
-  const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
-  const repoParam = scriptURL.searchParams.get('repo');
-  if (repoParam !== null) repoEndpoints = new Set([...repoEndpoints, ...repoParam.split(',')]);
-  // Auto-legacy setup
-  window.repoEndpoints = repoEndpoints;
-  const legacyEndpoint = getLegacyEndpoint();
-  if (legacyEndpoint) {
-    warn`window.prismic.endpoint is deprecated.`;
-    repoEndpoints.add(legacyEndpoint);
-  }
-  repoEndpoints = Array.from(repoEndpoints);
+// Auto-querystring setup
+const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
+const repoParam = scriptURL.searchParams.get('repo');
+if (repoParam !== null) repoEndpoints = new Set([...repoEndpoints, ...repoParam.split(',')]);
 
-  if (!repoEndpoints.length) warn`You are not connected to a repository.`;
-  const repoConfigs = await (async () => {
-    const acc = [];
-    for (let i = 0; i < repoEndpoints.length; i += 1) {
-      acc.push(await setup(repoEndpoints[i]));
-    }
-    return acc;
-  })();
-  run(repoConfigs);
-})();
+// Auto-legacy setup
+window.repoEndpoints = repoEndpoints;
+const legacyEndpoint = getLegacyEndpoint();
+if (legacyEndpoint) {
+  warn`window.prismic.endpoint is deprecated.`;
+  repoEndpoints.add(legacyEndpoint);
+}
+
+if (!repoEndpoints.size) warn`You are not connected to a repository.`;
+
+repoEndpoints = [...repoEndpoints];
+Promise.all(repoEndpoints.map(setup)).then(run);
+
 
 async function setup (rawInput) {
-  // Imports
-  const { ToolbarService } = require('@toolbar-service');
-  const { parseEndpoint } = require('./utils');
-  const { Preview } = require('./preview');
-  const { Prediction } = require('./prediction');
-  const { Analytics } = require('./analytics');
-  const { PreviewCookie } = require('./preview/cookie');
-
   // Validate repository
   const domain = parseEndpoint(rawInput);
-  const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
+
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
 
-  // Communicate with repository
+  const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
-  const repoName = toolbarClient.hostname;
   const previewState = await toolbarClient.getPreviewState();
   const previewCookieHelper = new PreviewCookie(previewState.auth);
   // convert from legacy or clean the cookie if not authenticated
-  const preview = new Preview(repoName, toolbarClient, previewCookieHelper, previewState);
-  const prediction = previewState.auth
-    && new Prediction(repoName, toolbarClient, previewCookieHelper);
+  const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
+
+  const prediction = previewState.auth && new Prediction(toolbarClient, previewCookieHelper);
   const analytics = previewState.auth && new Analytics(toolbarClient);
 
   // Start concurrently preview (always) and prediction (if authenticated)
@@ -92,7 +82,7 @@ async function setup (rawInput) {
   const { convertedLegacy } = previewCookieHelper.init(domain, initialRef);
 
   return [
-    repoName,
+    toolbarClient.hostname,
     {
       previewState,
       preview,
@@ -110,7 +100,7 @@ function _filterRepositoryAttribute(repositories, attributeName) {
   }, {});
 }
 
-function _formatPreviews(repoConfigs, reloadOrigin) {
+function _formatPreviews(repoConfigs) {
   const previews = repoConfigs.map(r => r.preview);
   return {
     title: previews.map(p => p.title).join(' | '),
@@ -138,27 +128,37 @@ function _formatPreviews(repoConfigs, reloadOrigin) {
   };
 }
 
-function run(repositories) {
+async function run(repositories) {
   if (repositories.length < 1) return;
 
-  const { reloadOrigin } = require('./utils');
-  const { Toolbar } = require('./toolbar');
   const shouldReload = repositories.reduce((acc, [, repoConfig]) => (
     acc || (repoConfig.computed.convertedLegacy || !repoConfig.computed.upToDate)
   ), false);
 
+  const displayPreview = repositories.reduce((acc, [, repoConfig]) => (
+    acc || Boolean(repoConfig && repoConfig.computed.initialRef)
+  ), false);
+
+  const auth = repositories.reduce((acc, [, repoConfig]) => (
+    acc || (repoConfig && repoConfig.previewState.auth)
+  ), false);
+
   if (shouldReload) {
     reloadOrigin();
-  } else {
+  } else if (displayPreview || auth) {
     const previewRepos = repositories
       .map(([, repoConfig]) => repoConfig)
       .filter(repoConfig => Boolean(repoConfig.computed.initialRef));
 
-    const formattedPreviews = _formatPreviews(previewRepos, reloadOrigin);
+    const formattedPreviews = _formatPreviews(previewRepos);
+
     const predictionByRepo = _filterRepositoryAttribute(repositories, 'prediction');
     const analyticsByRepo = _filterRepositoryAttribute(repositories, 'analytics');
-    // render toolbar
-    new Toolbar({
+
+    // eslint-disable-next-line no-undef
+    await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
+    new window.prismic.Toolbar({
+      displayPreview,
       previews: formattedPreviews,
       predictionByRepo,
       analyticsByRepo
@@ -168,5 +168,22 @@ function run(repositories) {
     Object.keys(analyticsByRepo).forEach(repoName => {
       analyticsByRepo[repoName].trackToolbarSetup();
     });
+  }
+}
+
+function parseEndpoint(repo) {
+  if (!repo) return null;
+  /* eslint-disable no-useless-escape */
+  if (!/^(https?:\/\/)?[-a-zA-Z0-9.\/]+/.test(repo)) return null;
+  // eslint-disable-next-line no-undef
+  if (!repo.includes('.')) repo = `${repo}.prismic.io`;
+  return repo;
+}
+
+function getLegacyEndpoint() {
+  try {
+    return new URL(window.prismic.endpoint).hostname.replace('.cdn', '');
+  } catch (e) {
+    return window.prismic.endpoint;
   }
 }

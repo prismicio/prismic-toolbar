@@ -25,7 +25,6 @@ export class JsonView extends Component {
     };
   }
 
-
   /* ----- TOGGLE FUNCTION ----- */
   onToggle = (/* Object */node, /* Boolean */toggled) => {
     node.toggled = toggled;
@@ -189,21 +188,23 @@ export class JsonView extends Component {
       </span>
     ),
 
-    Container: props =>
-    // The container decorator will be applied to each node of the json (root and nested)
-      (
+    Container: props => {
+      // The container decorator will be applied to each node of the json (root and nested)
+      const { NestedBorder, Icon, Key, Value, Copy } = this.decorators;
+      return (
         <div className="json-view-container" >
-          <this.decorators.NestedBorder node={props.node} />
-          <this.decorators.Icon node={props.node} onClick={props.onClick} />
-          <this.decorators.Key node={props.node} onClick={props.onClick} />
-          <this.decorators.Value
+          <NestedBorder node={props.node} />
+          <Icon node={props.node} onClick={props.onClick} />
+          <Key node={props.node} onClick={props.onClick} />
+          <Value
             node={props.node}
             onClick={props.onClick}
             stringCheck={stringCheck}
           />
-          <this.decorators.Copy node={props.node} />
+          <Copy node={props.node} />
         </div>
-      )
+      );
+    }
   }
 
 
