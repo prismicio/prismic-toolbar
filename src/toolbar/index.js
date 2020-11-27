@@ -56,10 +56,19 @@ if (legacyEndpoint) {
 
 if (!repos.size) warn`Your are not connected to a repository.`;
 
-repos.forEach(setup);
+const toolbars = repos.map(setup).filter(toolbar => !!toolbar);
+
+window.onfocus = function () {
+  toolbars.forEach(toolbar => toolbar.preview.watchPreviewUpdates());
+};
+
+window.onblur = function () {
+  toolbars.forEach(toolbar => toolbar.preview.cancelPreviewUpdates());
+};
 
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
 let setupDomain = null;
+
 async function setup (rawInput) {
   // Validate repository
   const domain = parseEndpoint(rawInput);
@@ -93,7 +102,7 @@ async function setup (rawInput) {
   } else if (displayPreview || previewState.auth) {
     // eslint-disable-next-line no-undef
     await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
-    new window.prismic.Toolbar({
+    const toolbar = new window.prismic.Toolbar({
       displayPreview,
       auth: previewState.auth,
       preview,
@@ -103,6 +112,8 @@ async function setup (rawInput) {
 
     // Track initial setup of toolbar
     if (analytics) analytics.trackToolbarSetup();
+
+    return toolbar;
   }
 }
 
