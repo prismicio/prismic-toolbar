@@ -56,7 +56,7 @@ if (legacyEndpoint) {
 
 if (!repos.size) warn`Your are not connected to a repository.`;
 
-const toolbars = repos.map(setup).filter(toolbar => !!toolbar);
+const toolbars = Array.from(repos).map(setup).filter(toolbar => !!toolbar);
 
 window.onfocus = function () {
   toolbars.forEach(toolbar => toolbar.preview.watchPreviewUpdates());
