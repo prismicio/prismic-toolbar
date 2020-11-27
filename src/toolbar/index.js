@@ -56,15 +56,15 @@ if (legacyEndpoint) {
 
 if (!repos.size) warn`Your are not connected to a repository.`;
 
-const toolbars = Array.from(repos).map(setup).filter(toolbar => !!toolbar);
+Promise.all(Array.from(repos).map(setup)).then(toolbars => {
+  window.onfocus = function () {
+    toolbars.forEach(toolbar => toolbar && toolbar.preview.watchPreviewUpdates());
+  };
 
-window.onfocus = function () {
-  toolbars.forEach(toolbar => toolbar.preview.watchPreviewUpdates());
-};
-
-window.onblur = function () {
-  toolbars.forEach(toolbar => toolbar.preview.cancelPreviewUpdates());
-};
+  window.onblur = function () {
+    toolbars.forEach(toolbar => toolbar && toolbar.preview.cancelPreviewUpdates());
+  };
+});
 
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
 let setupDomain = null;
