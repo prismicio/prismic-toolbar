@@ -2,7 +2,7 @@ let html2canvasPromise;
 
 const screenshot = async () => {
   document.getElementById('prismic-toolbar-v2').setAttribute('data-html2canvas-ignore', true);
-  if (!html2canvasPromise) html2canvasPromise = script('https://html2canvas.hertzen.com/dist/html2canvas.min.js');
+  if (!html2canvasPromise) html2canvasPromise = script('https://unpkg.com/html2canvas@1.0.0-alpha.12/dist/html2canvas.min.js');
   await html2canvasPromise;
 
   const canvas = await window.html2canvas(document.body, {
