@@ -111,7 +111,7 @@ function parseEndpoint(repo) {
   /* eslint-disable no-useless-escape */
   if (!/^(https?:\/\/)?[-a-zA-Z0-9.\/]+/.test(repo)) return null;
   // eslint-disable-next-line no-undef
-  if (!repo.includes('.')) repo = `${repo}.prismic.io`;
+  if (!repo.includes('.')) repo = `${repo}.wroom.io`;
   return repo;
 }
 
