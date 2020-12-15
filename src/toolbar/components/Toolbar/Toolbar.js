@@ -4,26 +4,36 @@ import { Panel, Menu, PreviewMenu, views } from '..';
 const { NONE } = views;
 
 export class Toolbar extends Component {
-  constructor({ prediction }) {
+  constructor({ predictionByRepo, analyticsByRepo, previews }) {
     super(...arguments);
 
-    if (prediction) {
-      prediction.onDocuments((documents, queries) => {
-        this.setState({ documents, queries, documentsLoading: false });
-      });
+    Object.keys(predictionByRepo).forEach(repo => {
+      const prediction = predictionByRepo[repo];
+      if (prediction) {
+        prediction.onDocuments((documents, queries) => {
+          const newDocs = { [repo]: this.bindDocumentActions(repo, documents, analyticsByRepo) };
+          this.setState({
+            documentsByRepo: Object.assign(
+              {},
+              this.state.documentsByRepo, newDocs
+            ),
+            queries,
+            documentsLoading: false
+          });
+        });
 
-      prediction.onDocumentsLoading(() => {
-        this.setState({ documentsLoading: true });
-      });
+        prediction.onDocumentsLoading(() => {
+          this.setState({ documentsLoading: true });
+        });
 
-      prediction.setup();
-    }
-
+        prediction.setup();
+      }
+    });
     this.state = {
       page: NONE,
-      documents: [],
+      documentsByRepo: {},
       queries: [],
-      renderedPreview: this.props.preview.active,
+      renderedPreviews: previews.active,
       documentsLoading: false
     };
   }
@@ -31,33 +41,46 @@ export class Toolbar extends Component {
   setPage = page => this.setState({ page });
 
   closePreview = () => {
-    this.setState({ renderedPreview: false });
+    this.setState({ renderedPreviews: false });
+  }
+
+  bindDocumentActions(repo, documents, analyticsByRepo) {
+    return documents.map(d => {
+      const onClick = analyticsByRepo[repo] && analyticsByRepo[repo].trackDocumentClick;
+      if (onClick) {
+        d.onClick = onClick;
+      }
+      return d;
+    });
   }
 
   render() {
-    const { preview, analytics, auth } = this.props;
-    const { page, documents, queries } = this.state;
-    const hasDocs = Boolean(documents && documents.length);
+    const { previews } = this.props;
+
+    const { page, documentsByRepo, queries } = this.state;
+    const allDocuments = Object.keys(documentsByRepo)
+      .map(repo => documentsByRepo[repo])
+      .reduce((acc, docs) => acc.concat(docs), []);
+    const hasDocs = Boolean(allDocuments && allDocuments.length);
 
     return (
       <div className="Toolbar">
         <Panel
-          onDocumentClick={analytics && analytics.trackDocumentClick}
           closePanel={() => this.setPage(NONE)}
           documentsLoading={this.state.documentsLoading}
-          documents={documents}
+          documents={allDocuments}
           queries={queries}
-          preview={preview}
+          previews={previews}
           page={page}
         />
         <Menu setPage={this.setPage} page={page} in={hasDocs} />
-        { this.props.displayPreview && this.state.renderedPreview
+        { this.props.previews.display && this.state.renderedPreviews
           ? <PreviewMenu
-            auth={auth}
+            auth={previews.auth}
             closePreview={this.closePreview}
             setPage={this.setPage}
-            preview={preview}
-            in={preview.active} />
+            previews={previews}
+            in={this.state.renderedPreviews} />
           : null
         }
       </div>

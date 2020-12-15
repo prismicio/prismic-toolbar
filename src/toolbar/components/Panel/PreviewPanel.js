@@ -3,15 +3,15 @@ import { BasePanel, xSvg } from '.';
 import { Icon } from '..';
 
 
-export const PreviewPanel = ({ maxSummarySize, maxTitleSize, onClose, preview }) => (
+export const PreviewPanel = ({ maxSummarySize, maxTitleSize, onClose, previews }) => (
   <BasePanel className="PreviewPanel">
     <Icon className="x" src={xSvg} onClick={onClose} />
     <PreviewHeader
-      title={stringCheck(preview.title, maxTitleSize)}
-      numberOfDocs={preview.documents.length}
+      title={stringCheck(previews.title, maxTitleSize)}
+      numberOfDocs={previews.documents.length}
     />
     <PreviewDocuments
-      documents={preview.documents}
+      documents={previews.documents}
       maxTitleSize={maxTitleSize}
       maxSummarySize={maxSummarySize}
     />
@@ -26,7 +26,7 @@ const PreviewHeader = ({ title, numberOfDocs }) => (
 );
 
 const PreviewDocuments = ({ documents, maxSummarySize, maxTitleSize }) => (
-  <div className="Documents bottom">
+  <div className="Documents bottom preview">
     {documents.map(doc =>
       <PreviewDocument
         doc={doc}

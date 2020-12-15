@@ -37,7 +37,7 @@ window.prismic = window.PrismicToolbar = {
   },
 };
 
-let repos = new Set();
+let repoEndpoints = new Set();
 
 // Prismic variable is available
 window.dispatchEvent(new CustomEvent('prismic'));
@@ -45,21 +45,22 @@ window.dispatchEvent(new CustomEvent('prismic'));
 // Auto-querystring setup
 const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
 const repoParam = scriptURL.searchParams.get('repo');
-if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
+if (repoParam !== null) repoEndpoints = new Set([...repoEndpoints, ...repoParam.split(',')]);
 
 // Auto-legacy setup
+window.repoEndpoints = repoEndpoints;
 const legacyEndpoint = getLegacyEndpoint();
 if (legacyEndpoint) {
   warn`window.prismic.endpoint is deprecated.`;
-  repos.add(legacyEndpoint);
+  repoEndpoints.add(legacyEndpoint);
 }
 
-if (!repos.size) warn`Your are not connected to a repository.`;
+if (!repoEndpoints.size) warn`You are not connected to a repository.`;
 
-repos.forEach(setup);
+repoEndpoints = [...repoEndpoints];
+Promise.all(repoEndpoints.map(setup)).then(run);
 
-// Setup the Prismic Toolbar for one repository TODO support multi-repo
-let setupDomain = null;
+
 async function setup (rawInput) {
   // Validate repository
   const domain = parseEndpoint(rawInput);
@@ -67,16 +68,10 @@ async function setup (rawInput) {
   if (!domain) return warn`
     Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
 
-  // Only allow setup to be called once
-  if (setupDomain) return warn`
-    Already connected to a repository (${setupDomain}).`;
-
-  setupDomain = domain;
-
   const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
   const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
   const previewState = await toolbarClient.getPreviewState();
-  const previewCookieHelper = new PreviewCookie(previewState.auth, toolbarClient.hostname);
+  const previewCookieHelper = new PreviewCookie(previewState.auth);
   // convert from legacy or clean the cookie if not authenticated
   const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
 
@@ -85,24 +80,95 @@ async function setup (rawInput) {
 
   // Start concurrently preview (always) and prediction (if authenticated)
   const { initialRef, upToDate } = await preview.setup();
-  const { convertedLegacy } = previewCookieHelper.init(initialRef);
-  const displayPreview = Boolean(initialRef);
+  const { convertedLegacy } = previewCookieHelper.init(domain, initialRef);
 
-  if (convertedLegacy || !upToDate) {
+  return [
+    toolbarClient.hostname,
+    {
+      previewState,
+      preview,
+      prediction,
+      analytics,
+      computed: { initialRef, upToDate, convertedLegacy }
+    }
+  ];
+}
+
+function _filterRepositoryAttribute(repositories, attributeName) {
+  return repositories.reduce((acc, [repoName, config]) => {
+    const attribute = config[attributeName];
+    return Object.assign({}, acc, attribute ? { [repoName]: attribute } : {});
+  }, {});
+}
+
+function _formatPreviews(repoConfigs) {
+  const previews = repoConfigs.map(r => r.preview);
+  return {
+    title: previews.map(p => p.title).join(' | '),
+    documents: previews.reduce((acc, p) => [...acc, ...p.documents], []),
+    active: previews.reduce((acc, p) => acc || p.active, false),
+    display: repoConfigs.reduce((acc, config) => (
+      acc || (config && Boolean(config.computed.initialRef))
+    ), false),
+    auth: repoConfigs.reduce((acc, config) => (
+      acc || (config && config.previewState.auth)
+    ), false),
+    share: async () => {
+      const results = await Promise.all(previews.map(p => p.share()));
+      if (results.length !== previews.length) return null;
+      return previews.map((preview, index) => ({ preview, url: results[index] }));
+    },
+    end: async () => {
+      const reload = await (async () => {
+        const results = await Promise.all(previews.map(p => p.end()));
+        return results.reduce((acc, { shouldReload }) => acc || shouldReload, false);
+      })();
+      if (reload) reloadOrigin();
+    },
+    raw: previews,
+  };
+}
+
+async function run(repositories) {
+  if (repositories.length < 1) return;
+
+  const shouldReload = repositories.reduce((acc, [, repoConfig]) => (
+    acc || (repoConfig.computed.convertedLegacy || !repoConfig.computed.upToDate)
+  ), false);
+
+  const displayPreview = repositories.reduce((acc, [, repoConfig]) => (
+    acc || Boolean(repoConfig && repoConfig.computed.initialRef)
+  ), false);
+
+  const auth = repositories.reduce((acc, [, repoConfig]) => (
+    acc || (repoConfig && repoConfig.previewState.auth)
+  ), false);
+
+  if (shouldReload) {
     reloadOrigin();
-  } else if (displayPreview || previewState.auth) {
+  } else if (displayPreview || auth) {
+    const previewRepos = repositories
+      .map(([, repoConfig]) => repoConfig)
+      .filter(repoConfig => Boolean(repoConfig.computed.initialRef));
+
+    const formattedPreviews = _formatPreviews(previewRepos);
+
+    const predictionByRepo = _filterRepositoryAttribute(repositories, 'prediction');
+    const analyticsByRepo = _filterRepositoryAttribute(repositories, 'analytics');
+
     // eslint-disable-next-line no-undef
     await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
     new window.prismic.Toolbar({
       displayPreview,
-      auth: previewState.auth,
-      preview,
-      prediction,
-      analytics
+      previews: formattedPreviews,
+      predictionByRepo,
+      analyticsByRepo
     });
 
     // Track initial setup of toolbar
-    if (analytics) analytics.trackToolbarSetup();
+    Object.keys(analyticsByRepo).forEach(repoName => {
+      analyticsByRepo[repoName].trackToolbarSetup();
+    });
   }
 }
 

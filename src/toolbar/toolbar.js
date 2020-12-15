@@ -3,13 +3,12 @@ import { appendCSS, shadow, readyDOM } from '@common';
 import { Toolbar as ToolbarComponent } from './components';
 import shadowStyles from './index.css';
 
-class Toolbar {
-  constructor({ displayPreview, auth, preview, prediction, analytics }) {
-    this.preview = preview;
-    this.auth = auth;
-    this.prediction = prediction;
-    this.analytics = analytics;
+export class Toolbar {
+  constructor({ displayPreview, previews, predictionByRepo, analyticsByRepo }) {
     this.displayPreview = displayPreview;
+    this.previews = previews;
+    this.predictionByRepo = predictionByRepo;
+    this.analyticsByRepo = analyticsByRepo;
     this.setup();
   }
 
@@ -32,11 +31,10 @@ class Toolbar {
     // Render the React app
     render(
       <ToolbarComponent
-        auth={this.auth}
         displayPreview={this.displayPreview}
-        preview={this.preview}
-        prediction={this.prediction}
-        analytics={this.analytics}
+        previews={this.previews}
+        predictionByRepo={this.predictionByRepo}
+        analyticsByRepo={this.analyticsByRepo}
       />,
       toolbar
     );
