@@ -1,6 +1,6 @@
 {
   "name": "prismic-toolbar",
-  "version": "4.0.2",
+  "version": "4.0.3",
   "description": "Prismic Toolbar",
   "license": "Apache-2.0",
   "main": "build/prismic-toolbar.js",
