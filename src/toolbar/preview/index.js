@@ -32,7 +32,7 @@ export class Preview {
   watchPreviewUpdates() {
     if (this.active) {
       this.interval = setInterval(() => {
-        window.document.hasFocus() && this.updatePreview();
+        if (document.visibilityState === 'visible') this.updatePreview();
       }, 3000);
     }
   }
