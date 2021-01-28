@@ -15,7 +15,7 @@ const screenshot = async () => {
     console.warn('Caught html2canvas error', e);
     // sometimes html2canvas errors.  This breaks creating a link.
     // While a preview image is nice it's not essential.
-    // If html2canvas errors we create a dummy canvas and convert that to a blog.
+    // If html2canvas errors we create a dummy canvas and convert that to a blob.
     // The preview image is a black square
     // but at least we can share the image.
     const tempCanvas = document.createElement('canvas');
