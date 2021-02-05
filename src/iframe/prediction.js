@@ -12,21 +12,32 @@ export async function getDocuments({ url, ref, tracker, location }) {
       // .min(a => a.urls.length)
       .max(a => a.updated)
       .min(a => a.queryTotal)
-      .is(a => a.uid && location.hash.match(a.uid))
-      .is(a => a.uid && location.search.match(a.uid))
-      .is(a => a.uid && location.pathname.match(a.uid))
+      .is(a => a.uid && matchUIDInHash(location.hash, a.uid))
+      .is(a => a.uid && matchUIDInQS(location.search, a.uid))
+      .is(a => a.uid && matchUIDInPath(location.pathname, a.uid))
       .min(a => a.urls.length)
       .min(a => a.weight)
       .is(a => a.singleton)
-      .is(a => a.uid && location.hash.match(a.uid) && !a.singleton)
-      .is(a => a.uid && location.search.match(a.uid) && !a.singleton)
-      .is(a => a.uid && location.pathname.match(a.uid) && !a.singleton)
+      .is(a => a.uid && matchUIDInHash(location.hash, a.uid) && !a.singleton)
+      .is(a => a.uid && matchUIDInQS(location.search, a.uid) && !a.singleton)
+      .is(a => a.uid && matchUIDInPath(location.pathname, a.uid) && !a.singleton)
       .compute()
   );
 
   return documentsSorted;
 }
 
+function matchUIDInHash(path, uid) {
+  return matchUIDInPath(path, uid) ||  matchUIDInQS(path, uid);
+}
+
+function matchUIDInPath(path, uid) {
+  return path.match(new RegExp(`\/${uid}$`));
+}
+
+function matchUIDInQS(path, uid) {
+  return path.match(new RegExp(`(.+)=${uid}(&.*)?$`));
+}
 
 function normalizeDocument(doc) {
   const status = (() => {
