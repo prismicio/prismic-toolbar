@@ -28,11 +28,11 @@ export async function getDocuments({ url, ref, tracker, location }) {
 }
 
 function matchUIDInHash(path, uid) {
-  return matchUIDInPath(path, uid) ||  matchUIDInQS(path, uid);
+  return matchUIDInPath(path, uid) || matchUIDInQS(path, uid);
 }
 
 function matchUIDInPath(path, uid) {
-  return path.match(new RegExp(`\/${uid}$`));
+  return path.match(new RegExp(`/${uid}$`));
 }
 
 function matchUIDInQS(path, uid) {

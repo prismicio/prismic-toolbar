@@ -53,11 +53,12 @@ export class Toolbar extends Component {
         <Menu setPage={this.setPage} page={page} in={hasDocs} />
         { this.props.displayPreview && this.state.renderedPreview
           ? <PreviewMenu
-            auth={auth}
-            closePreview={this.closePreview}
-            setPage={this.setPage}
-            preview={preview}
-            in={preview.active} />
+              auth={auth}
+              closePreview={this.closePreview}
+              setPage={this.setPage}
+              preview={preview}
+              in={preview.active}
+            />
           : null
         }
       </div>
