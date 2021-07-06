@@ -5,7 +5,8 @@ export async function getDocuments({ url, ref, tracker, location }) {
     url: `/toolbar/predict?${query({ url, ref, tracker })}`
   }).then(res => res.documents.map(normalizeDocument));
 
-  const documentsSorted = (
+
+  const documentsSorted = ( 
     // from less important to most important
     new Sorter(documents)
       // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
@@ -16,7 +17,7 @@ export async function getDocuments({ url, ref, tracker, location }) {
       .is(a => a.uid && matchUIDInQS(location.search, a.uid))
       .is(a => a.uid && matchUIDInPath(location.pathname, a.uid))
       .min(a => a.urls.length)
-      .min(a => a.weight)
+      .max(a => a.weight)
       .is(a => a.singleton)
       .is(a => a.uid && matchUIDInHash(location.hash, a.uid) && !a.singleton)
       .is(a => a.uid && matchUIDInQS(location.search, a.uid) && !a.singleton)
