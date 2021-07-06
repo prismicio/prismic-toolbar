@@ -1,14 +1,11 @@
-import "regenerator-runtime/runtime.js";
+import 'regenerator-runtime/runtime';
 import * as Prediction from '../src/iframe/prediction';
 import * as common from '../src/common';
-import { Sorter } from '../src/common/sorter';
 
 jest.mock('../src/common', () => ({
   ...(jest.requireActual('../src/common')),
   fetchy: jest.fn(),
 }));
-
-const data = require('./data.json');
 
 function fillUrls(n) {
   return Array(n).fill('https://prismic.io/docs/technologies/how-to-query-the-api-javascript');
