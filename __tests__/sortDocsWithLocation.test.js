@@ -17,8 +17,8 @@ describe('sortDocsWithLocation', () => {
     };
     const wrongOrder = [
       {
-        editorUrl: 'https://360learning-marc.prismic.io/documents~c=published&l=en-us/XqazsRAAACQAXzrv/',
-        id: 'XqazsRAAACQAXzrv',
+        editorUrl: 'https://fsake.prismic.io/documents~c=published&l=en-us/shouldbesecond/',
+        id: 'shouldbesecond',
         isDocumentLink: false,
         queryTotal: 1,
         singleton: true,
@@ -30,8 +30,8 @@ describe('sortDocsWithLocation', () => {
         weight: 3,
       },
       {
-        editorUrl: 'https://360learning-marc.prismic.io/documents~c=published&l=en-us/XqavexAAACMAXydU/',
-        id: 'XqavexAAACMAXydU',
+        editorUrl: 'https://fake.prismic.io/documents~c=published&l=en-us/shouldbefirst/',
+        id: 'shouldbefirst',
         isDocumentLink: false,
         queryTotal: 1,
         singleton: true,
