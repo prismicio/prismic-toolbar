@@ -11,13 +11,14 @@ function fillUrls(n) {
   return Array(n).fill('https://prismic.io/docs/technologies/how-to-query-the-api-javascript');
 }
 
-function generateDoc({ weight, urls, uid }) {
+function generateDoc({ weight, urls, uid, title = 'foo' }) {
   return {
     id: 'xxxxxxxx',
     urls: fillUrls(urls),
     weight,
     uid,
     editorUrl: '/documents~c=published&l=en-us/xxxxxxxx/',
+    title,
   };
 }
 
