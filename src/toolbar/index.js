@@ -24,6 +24,8 @@ window.prismic = window.PrismicToolbar = {
   endpoint: null,
   ...window.prismic/* Legacy */,
   version,
+  // Window middleware bucket
+  middleware: window.prismic && window.prismic.middleware ? window.prismic.middleware : {},
   setup: (...args) => {
     warn`window.prismic.setup is deprecated.`;
     args.forEach(setup);
@@ -56,10 +58,11 @@ if (legacyEndpoint) {
 
 if (!repos.size) warn`Your are not connected to a repository.`;
 
-repos.forEach(setup);
-
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
 let setupDomain = null;
+
+repos.forEach(setup);
+
 async function setup (rawInput) {
   // Validate repository
   const domain = parseEndpoint(rawInput);

@@ -1,4 +1,4 @@
-import { getLocation } from '@common';
+import { middleware, createMiddleware, getLocation } from '@common';
 import { reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
@@ -44,7 +44,13 @@ export class Preview {
   async updatePreview() {
     const { reload, ref } = await this.client.updatePreview();
     this.start(ref);
-    if (reload) { reloadOrigin(); }
+    if (reload) {
+      // Create and register preview update middleware if available
+      const previewUpdateMiddleware = createMiddleware(middleware.previewUpdate);
+
+      // Run middleware and reload to get new preview data
+      previewUpdateMiddleware.run(reloadOrigin);
+    }
   }
 
   // Start preview
@@ -67,8 +73,12 @@ export class Preview {
     await this.client.closePreviewSession();
     if (!this.cookie.getRefForDomain()) return;
     this.cookie.deletePreviewForDomain();
-    // reload to get rid of preview data and display the live version
-    reloadOrigin();
+
+    // Create and register preview update middleware if available
+    const previewEndMiddleware = createMiddleware(middleware.previewEnd);
+
+    // Run middleware and reload to get rid of preview data and display the live version
+    previewEndMiddleware.run(reloadOrigin);
   }
 
   async share() {
