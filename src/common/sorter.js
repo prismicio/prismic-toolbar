@@ -101,7 +101,7 @@ export class Sorter {
         const defaults = {
           caseSensitive: false,
           maxPatternLength: 300,
-          minMatchCharLength: 4,
+//          minMatchCharLength: 4,
         };
 
         const overrides = {
@@ -111,11 +111,12 @@ export class Sorter {
   //        tokenize: true,
   //        matchAllTokens: true,
           includeScore: true,
+          ignoreLocation: true,
   //        findAllMatches: true,
   //        includeMatches: false,
         };
 
-        const fuse = new Fuse([text], Object.assign(defaults, options, overrides));
+        const fuse = new Fuse([].concat(text), Object.assign(defaults, options, overrides));
 
         // Return search results
 

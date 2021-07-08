@@ -1,11 +1,10 @@
 import { query, Sorter, fetchy } from '@common';
 
 export function sortDocsWithLocation(documents, location) {
-  return new Sorter(documents) 
-  // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
-  // .min(a => a.urls.length)
+  return new Sorter(documents)
+    // .fuzzy(a => `${a.title} ${a.summary}`, text) // Sometimes wrong
+    // .min(a => a.urls.length)
     .max(a => a.updated)
-    .fuzzy(a => a.title, location.pathname)
     .min(a => a.queryTotal)
     .is(a => a.uid && matchUIDInHash(location.hash, a.uid))
     .is(a => a.uid && matchUIDInQS(location.search, a.uid))
@@ -13,10 +12,11 @@ export function sortDocsWithLocation(documents, location) {
     .min(a => a.urls.length)
     .min(a => a.weight)
     .is(a => a.singleton)
+    .fuzzy(a => a.title, location.pathname.split('/'))
     .is(a => a.uid && matchUIDInHash(location.hash, a.uid) && !a.singleton)
     .is(a => a.uid && matchUIDInQS(location.search, a.uid) && !a.singleton)
     .is(a => a.uid && matchUIDInPath(location.pathname, a.uid) && !a.singleton)
-    .compute()
+    .compute();
 }
 
 export async function getDocuments({ url, ref, tracker, location }) {
