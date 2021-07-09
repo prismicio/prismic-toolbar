@@ -36,7 +36,7 @@ export const redirectMiddleware = {
 };
 
 // CSS selector to get Prismic script tag
-const scriptQuery = 'script[src*="static.cdn.prismic.io/prismic."]';
+const scriptQuery = 'script[src*="static.cdn.prismic.io/prismic."], script[src*="static.cdn.wroom.io/prismic."], script[src*="static.cdn.wroom.test/prismic."], script[src*="localhost:8081/prismic-toolbar/"]';
 
 export const hasRedirectMiddleware = name => {
   if (typeof window !== 'object' || typeof document !== 'object') {
