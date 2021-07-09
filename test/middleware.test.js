@@ -4,7 +4,7 @@ const dummyMiddleware = {
   flat: next => next(),
   async: async next => {
     await new Promise(res => setTimeout(res, 200));
-    await next();
+    return next();
   }
 };
 
@@ -30,11 +30,12 @@ describe('common: middleware class', () => {
   });
 
   it('runs async middleware', async () => {
-    middleware.use(dummyMiddleware.async);
     middleware.use(dummyMiddleware.flat);
+    middleware.use(dummyMiddleware.async);
+    middleware.use(dummyMiddleware.async);
     await middleware.run();
 
-    expect(dummyMiddleware.async).toHaveBeenCalledTimes(1);
+    expect(dummyMiddleware.async).toHaveBeenCalledTimes(2);
     expect(dummyMiddleware.flat).toHaveBeenCalledTimes(1);
   });
 
