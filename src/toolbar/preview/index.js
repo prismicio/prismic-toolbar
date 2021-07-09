@@ -49,7 +49,7 @@ export class Preview {
       const previewUpdateMiddleware = createMiddleware(middleware.previewUpdate);
 
       // Run middleware and reload to get new preview data
-      previewUpdateMiddleware.run(reloadOrigin);
+      await previewUpdateMiddleware.run(reloadOrigin);
     }
   }
 
@@ -78,7 +78,7 @@ export class Preview {
     const previewEndMiddleware = createMiddleware(middleware.previewEnd);
 
     // Run middleware and reload to get rid of preview data and display the live version
-    previewEndMiddleware.run(reloadOrigin);
+    await previewEndMiddleware.run(reloadOrigin);
   }
 
   async share() {
