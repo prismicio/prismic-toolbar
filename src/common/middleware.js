@@ -60,7 +60,7 @@ export const getRedirectMiddleware = name => next => {
     // This should not happen, but in case it does we explain what's going on to developers
     console.warn(error);
     console.warn('Could not retrieve Prismic toolbar script tag again. Did it change? Fallbacking gracefully to default behavior');
-    next();
+    return next();
   }
 };
 
