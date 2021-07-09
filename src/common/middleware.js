@@ -35,6 +35,7 @@ export const redirectMiddleware = {
   previewEnd: 'redirectUrlOnEnd'
 };
 
+// CSS selector to get Prismic script tag
 const scriptQuery = 'script[src*="static.cdn.prismic.io/prismic."]';
 
 export const hasRedirectMiddleware = name => {
@@ -56,6 +57,9 @@ export const getRedirectMiddleware = name => next => {
   try {
     window.location.replace(document.querySelector(scriptQuery).dataset[redirectMiddleware[name]]);
   } catch (error) {
+    // This should not happen, but in case it does we explain what's going on to developers
+    console.warn(error);
+    console.warn('Could not retrieve Prismic toolbar script tag again. Did it change? Fallbacking gracefully to default behavior');
     next();
   }
 };
