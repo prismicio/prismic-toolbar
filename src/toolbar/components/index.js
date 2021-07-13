@@ -17,3 +17,4 @@ export { NavTabs } from './NavTabs';
 export { DevMode } from './DevMode';
 export { JsonView } from './JsonView';
 export { EditButton } from './EditButton';
+export { SEOInsights } from './SEOInsights';

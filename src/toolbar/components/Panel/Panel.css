@@ -7,12 +7,30 @@
     width: 400px;
     height: calc(100vh - 160px);
     position: absolute;
+    overflow-y: auto;
     bottom: 100px;
     left: 0;
-    overflow-y: auto;
     min-height: 250px;
     max-height: 650px;
     will-change: transform;
+    display: flex;
+    flex-direction: column;
+
+  & .react-tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  & .toolbar-header, & .nav-tab-list {
+    flex: 0 0 auto;
+  }
+
+  & .react-tabs__tab-panel--selected {
+    flex: 1;
+    overflow-y: auto;
+  }
 
   & .top {
     padding: 30px;

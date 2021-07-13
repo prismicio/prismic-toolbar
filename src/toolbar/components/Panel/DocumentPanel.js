@@ -1,7 +1,7 @@
 import { BasePanel, prismicWhiteSvg } from '.';
 import { Icon } from '../Icon';
 import { Loader } from '../Loader';
-import { NavTabs, EditButton, DevMode } from '..';
+import { NavTabs, EditButton, SEOInsights, DevMode } from '..';
 
 export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
   if (!documents || (documents && documents.length <= 0)) return null;
@@ -18,32 +18,29 @@ export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) 
 };
 
 const panelContent = (documents, queries, onDocumentClick) => {
-  // If there is no queries then, we don't display the json.
-  if (queries && queries.length > 0) {
-    return (
-      <NavTabs
-        tabsName={['Edit Button', 'Dev Mode']}
-        tabsContent={[
-          <EditButton
-            documents={documents}
-            maxTitleSize={35}
-            maxSummarySize={150}
-            onClick={onDocumentClick}
-          />,
-          <DevMode
-            maxStringSize={35}
-            queries={queries}
-          />
-        ]}
-      />
-    );
-  }
-  return (
+  const tabsName = ['Edit Button', 'SEO Insights'];
+  const tabsContent = [
     <EditButton
       documents={documents}
       maxTitleSize={35}
       maxSummarySize={150}
       onClick={onDocumentClick}
+    />,
+    <SEOInsights />
+  ];
+
+  // If there is no queries then, we don't display the json.
+  if (queries && queries.length > 0) {
+    tabsName.push('Dev Mode');
+    tabsContent.push(
+      <DevMode maxStringSize={35} queries={queries} />
+    );
+  }
+
+  return (
+    <NavTabs
+      tabsName={tabsName}
+      tabsContent={tabsContent}
     />
   );
 };
