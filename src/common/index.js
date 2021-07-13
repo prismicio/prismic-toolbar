@@ -8,7 +8,6 @@ export {
   windowMiddleware,
   hasWindowMiddleware,
   getWindowMiddleware,
-  redirectMiddleware,
   createMiddleware
 } from './middleware';
 export {

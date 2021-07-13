@@ -24,8 +24,8 @@ window.prismic = window.PrismicToolbar = {
   endpoint: null,
   ...window.prismic/* Legacy */,
   version,
-  // Window middleware bucket
-  middleware: window.prismic && window.prismic.middleware ? window.prismic.middleware : {},
+  // Toolbar events
+  toolbar: window.prismic && window.prismic.toolbar ? window.prismic.toolbar : {},
   setup: (...args) => {
     warn`window.prismic.setup is deprecated.`;
     args.forEach(setup);
