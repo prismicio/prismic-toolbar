@@ -1,4 +1,4 @@
-import { middleware, createMiddleware, getLocation } from '@common';
+import { toolbarEvents, dispatchToolbarEvent, getLocation } from '@common';
 import { reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
@@ -45,11 +45,10 @@ export class Preview {
     const { reload, ref } = await this.client.updatePreview();
     this.start(ref);
     if (reload) {
-      // Create and register preview update middleware if available
-      const previewUpdateMiddleware = createMiddleware(middleware.previewUpdate);
-
-      // Run middleware and reload to get new preview data
-      await previewUpdateMiddleware.run(reloadOrigin);
+      // Dispatch the update event and hard reload if not cancelled by handlers
+      if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
+        reloadOrigin();
+      }
     }
   }
 
@@ -74,11 +73,10 @@ export class Preview {
     if (!this.cookie.getRefForDomain()) return;
     this.cookie.deletePreviewForDomain();
 
-    // Create and register preview update middleware if available
-    const previewEndMiddleware = createMiddleware(middleware.previewEnd);
-
-    // Run middleware and reload to get rid of preview data and display the live version
-    await previewEndMiddleware.run(reloadOrigin);
+    // Dispatch the end event and hard reload if not cancelled by handlers
+    if (dispatchToolbarEvent(toolbarEvents.previewEnd)) {
+      reloadOrigin();
+    }
   }
 
   async share() {

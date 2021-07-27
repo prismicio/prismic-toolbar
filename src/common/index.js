@@ -3,13 +3,9 @@ export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
 export { Hooks } from './hooks';
 export { Sorter } from './sorter';
 export {
-  Middleware,
-  middleware,
-  windowMiddleware,
-  hasWindowMiddleware,
-  getWindowMiddleware,
-  createMiddleware
-} from './middleware';
+  toolbarEvents,
+  dispatchToolbarEvent,
+} from './events';
 export {
   warn,
   err,

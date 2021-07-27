@@ -8,8 +8,7 @@
     "start": "webpack --mode development --watch",
     "build:prod": "webpack --mode production",
     "serve": "http-server -p 8081 -g -c-1 build/",
-    "lint": "eslint src",
-    "test": "jest"
+    "lint": "eslint src"
   },
   "engines": {
     "node": ">=4.8.1",
@@ -27,7 +26,6 @@
     "@babel/preset-env": "^7.11.0",
     "@babel/preset-react": "^7.10.4",
     "@babel/preset-stage-2": "^7.8.3",
-    "@types/jest": "26.0.24",
     "babel-eslint": "^10.0.1",
     "babel-loader": "^8.0.4",
     "clean-webpack-plugin": "3.0.0",
@@ -53,7 +51,6 @@
     "html2canvas": "^1.0.0-alpha.12",
     "http-server": "0.12.3",
     "imports-loader": "^0.8.0",
-    "jest": "27.0.6",
     "postcss-easy-import": "^3.0.0",
     "postcss-loader": "^3.0.0",
     "postcss-preset-env": "^6.4.0",
