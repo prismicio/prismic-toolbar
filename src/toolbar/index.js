@@ -1,6 +1,6 @@
 import './checkBrowser';
 import { ToolbarService } from '@toolbar-service';
-import { script } from '@common';
+import { toolbarEvents, dispatchToolbarEvent, script } from '@common';
 import { reloadOrigin, getAbsoluteURL } from './utils';
 import { Preview } from './preview';
 import { Prediction } from './prediction';
@@ -40,7 +40,7 @@ window.prismic = window.PrismicToolbar = {
 let repos = new Set();
 
 // Prismic variable is available
-window.dispatchEvent(new CustomEvent('prismic'));
+dispatchToolbarEvent(toolbarEvents.prismic);
 
 // Auto-querystring setup
 const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
