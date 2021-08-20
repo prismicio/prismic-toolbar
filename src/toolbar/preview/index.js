@@ -31,7 +31,9 @@ export class Preview {
 
   watchPreviewUpdates() {
     if (this.active) {
-      this.interval = setInterval(() => this.updatePreview(), 3000);
+      this.interval = setInterval(() => {
+        if (document.visibilityState === 'visible') this.updatePreview();
+      }, 3000);
     }
   }
 
