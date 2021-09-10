@@ -10,7 +10,7 @@ export function setup(portToMainWindow) {
     const { type, data } = msg.data;
     const result /* Promise<Object> */ = await (() => {
       switch (type) {
-        case Messages.PreviewState: return getPreviewState();
+        case Messages.PreviewState: return getPreviewState(); 
         case Messages.PredictionDocs: return getPredictionDocs(data);
         case Messages.DevModeQueriesResults: return getDevModeQueriesResults(data);
         case Messages.UpdatePreview: return updatePreview();
@@ -18,7 +18,7 @@ export function setup(portToMainWindow) {
         case Messages.SharePreview: return sharePreview(data);
         case Messages.TrackDocumentClick: return trackDocumentClick(data);
         case Messages.TrackToolbarSetup: return trackToolbarSetup();
-        default: return new Promise(null);
+        default: return Promise.resolve({});
       }
     })();
     portToMainWindow.postMessage({ type, data: result });
