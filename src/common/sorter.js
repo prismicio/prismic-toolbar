@@ -101,19 +101,19 @@ export class Sorter {
         const defaults = {
           caseSensitive: false,
           maxPatternLength: 300,
-//          minMatchCharLength: 4,
+          //          minMatchCharLength: 4,
         };
 
         const overrides = {
-  //        id: undefined,
-  //        keys: undefined,
-  //        shouldSort: false,
-  //        tokenize: true,
-  //        matchAllTokens: true,
+          //        id: undefined,
+          //        keys: undefined,
+          //        shouldSort: false,
+          //        tokenize: true,
+          //        matchAllTokens: true,
           includeScore: true,
           ignoreLocation: true,
-  //        findAllMatches: true,
-  //        includeMatches: false,
+          //        findAllMatches: true,
+          //        includeMatches: false,
         };
 
         const fuse = new Fuse([].concat(text), Object.assign(defaults, options, overrides));

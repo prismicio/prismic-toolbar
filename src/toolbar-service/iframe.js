@@ -10,7 +10,7 @@ export function setup(portToMainWindow) {
     const { type, data } = msg.data;
     const result /* Promise<Object> */ = await (() => {
       switch (type) {
-        case Messages.PreviewState: return getPreviewState(); 
+        case Messages.PreviewState: return getPreviewState();
         case Messages.PredictionDocs: return getPredictionDocs(data);
         case Messages.DevModeQueriesResults: return getDevModeQueriesResults(data);
         case Messages.UpdatePreview: return updatePreview();
