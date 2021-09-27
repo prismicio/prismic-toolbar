@@ -38,15 +38,15 @@ test('predict main document using urls counter', async () => {
     ref: 'xxxxxxxx',
     tracker: 'xxxxxxx',
     location: {
-      href: "https://prismic.io/docs/technologies/how-to-query-the-api-javascript",
-      origin: "https://prismic.io",
-      protocol: "https:",
-      host: "prismic.io",
-      hostname: "prismic.io",
-      port: "",
-      pathname: "/docs/technologies/how-to-query-the-api-javascript",
-      search: "",
-      hash: ""
+      href: 'https://prismic.io/docs/technologies/how-to-query-the-api-javascript',
+      origin: 'https://prismic.io',
+      protocol: 'https:',
+      host: 'prismic.io',
+      hostname: 'prismic.io',
+      port: '',
+      pathname: '/docs/technologies/how-to-query-the-api-javascript',
+      search: '',
+      hash: ''
     }
   });
 
@@ -69,15 +69,15 @@ test('predict main document using uid in the path name', async () => {
     ref: 'xxxxxxxx',
     tracker: 'xxxxxxx',
     location: {
-      href: "https://prismic.io/docs/technologies/how-to-query-the-api-javascript",
-      origin: "https://prismic.io",
-      protocol: "https:",
-      host: "prismic.io",
-      hostname: "prismic.io",
-      port: "",
-      pathname: "/docs/technologies/how-to-query-the-api-javascript",
-      search: "",
-      hash: ""
+      href: 'https://prismic.io/docs/technologies/how-to-query-the-api-javascript',
+      origin: 'https://prismic.io',
+      protocol: 'https:',
+      host: 'prismic.io',
+      hostname: 'prismic.io',
+      port: '',
+      pathname: '/docs/technologies/how-to-query-the-api-javascript',
+      search: '',
+      hash: ''
     }
   });
 
@@ -100,15 +100,15 @@ test('predict main document using uid in the hash', async () => {
     ref: 'xxxxxxxx',
     tracker: 'xxxxxxx',
     location: {
-      href: "https://prismic.io/#/docs/technologies/how-to-query-the-api-javascript",
-      origin: "https://prismic.io",
-      protocol: "https:",
-      host: "prismic.io",
-      hostname: "prismic.io",
-      port: "",
-      pathname: "",
-      search: "",
-      hash: "#/docs/technologies/how-to-query-the-api-javascript"
+      href: 'https://prismic.io/#/docs/technologies/how-to-query-the-api-javascript',
+      origin: 'https://prismic.io',
+      protocol: 'https:',
+      host: 'prismic.io',
+      hostname: 'prismic.io',
+      port: '',
+      pathname: '',
+      search: '',
+      hash: '#/docs/technologies/how-to-query-the-api-javascript'
     }
   });
 
@@ -131,15 +131,15 @@ test('predict main document using uid in the hash but as a querystring', async (
     ref: 'xxxxxxxx',
     tracker: 'xxxxxxx',
     location: {
-      href: "https://prismic.io/#/docs/technologies?uid=how-to-query-the-api-javascript",
-      origin: "https://prismic.io",
-      protocol: "https:",
-      host: "prismic.io",
-      hostname: "prismic.io",
-      port: "",
-      pathname: "",
-      search: "",
-      hash: "#/docs/technologies?uid=how-to-query-the-api-javascript"
+      href: 'https://prismic.io/#/docs/technologies?uid=how-to-query-the-api-javascript',
+      origin: 'https://prismic.io',
+      protocol: 'https:',
+      host: 'prismic.io',
+      hostname: 'prismic.io',
+      port: '',
+      pathname: '',
+      search: '',
+      hash: '#/docs/technologies?uid=how-to-query-the-api-javascript'
     }
   });
 
@@ -162,17 +162,50 @@ test('predict main document using uid in the querystring', async () => {
     ref: 'xxxxxxxx',
     tracker: 'xxxxxxx',
     location: {
-      href: "https://prismic.io/docs/technologies?uid=how-to-query-the-api-javascript",
-      origin: "https://prismic.io",
-      protocol: "https:",
-      host: "prismic.io",
-      hostname: "prismic.io",
-      port: "",
-      pathname: "https://prismic.io/docs/technologies",
-      search: "?uid=how-to-query-the-api-javascript",
-      hash: ""
+      href: 'https://prismic.io/docs/technologies?uid=how-to-query-the-api-javascript',
+      origin: 'https://prismic.io',
+      protocol: 'https:',
+      host: 'prismic.io',
+      hostname: 'prismic.io',
+      port: '',
+      pathname: 'https://prismic.io/docs/technologies',
+      search: '?uid=how-to-query-the-api-javascript',
+      hash: ''
     }
   });
 
   expect(documents[0].uid).toBe('how-to-query-the-api-javascript');
+});
+
+
+describe('Priority checks', () => {
+  test('exact uid matches over title matches', async () => {
+    const mainDocument = generateDoc({ weight: 1, urls: 1, uid: 'foo-bar', title: 'uid' });
+    const docs = [
+      generateDoc({ weight: 1, urls: 1, uid: '', title: 'foo-bar' }),
+      mainDocument,
+    ];
+
+    common.fetchy.mockResolvedValue({ documents: docs });
+
+    const location = {
+      href: 'https://prismic.io/docs/technologies/foo-bar',
+      origin: 'https://prismic.io',
+      protocol: 'https:',
+      host: 'prismic.io',
+      hostname: 'prismic.io',
+      port: '',
+      pathname: '/docs/technologies/foo-bar',
+      hash: '',
+      search: '',
+    };
+
+    const documents = await Prediction.getDocuments({
+      url: 'xxxxxxxx',
+      ref: 'xxxxxxxx',
+      tracker: 'xxxxxxx',
+      location,
+    });
+    expect(documents[0].title).toBe('uid');
+  });
 });

@@ -923,6 +923,5 @@ describe('sortDocsWithLocation', () => {
     const result = sortDocsWithLocation(docs, location);
 
     expect(result[0].title).toBe('Sidebar - Next.js');
-
   });
 });
