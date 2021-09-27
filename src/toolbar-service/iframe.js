@@ -18,7 +18,7 @@ export function setup(portToMainWindow) {
         case Messages.SharePreview: return sharePreview(data);
         case Messages.TrackDocumentClick: return trackDocumentClick(data);
         case Messages.TrackToolbarSetup: return trackToolbarSetup();
-        default: return new Promise(null);
+        default: return Promise.resolve({});
       }
     })();
     portToMainWindow.postMessage({ type, data: result });

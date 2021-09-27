@@ -12,7 +12,7 @@ const packagejson = require('./package.json');
 // Make relative path
 const relative = path => require('path').resolve(__dirname, path);
 
-const targetPath = `prismic-toolbar/${packagejson.version}`
+const targetPath = `prismic-toolbar/${packagejson.version}`;
 
 module.exports = (_, options) => {
   const dev = !options || options.mode === 'development';

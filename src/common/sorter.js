@@ -1,5 +1,5 @@
-// import Fuse from 'fuse.js'; // uncomment to use fuzzy find
-/* global Fuse */
+import Fuse from 'fuse.js'; // uncomment to use fuzzy find
+// global Fuse */
 
 const transpose = matrix => matrix[0].map((col, i) => matrix.map(row => row[i]));
 
@@ -101,23 +101,25 @@ export class Sorter {
         const defaults = {
           caseSensitive: false,
           maxPatternLength: 300,
-          minMatchCharLength: 4,
+          //          minMatchCharLength: 4,
         };
 
         const overrides = {
-          id: undefined,
-          keys: undefined,
-          shouldSort: false,
-          tokenize: true,
-          matchAllTokens: true,
+          //        id: undefined,
+          //        keys: undefined,
+          //        shouldSort: false,
+          //        tokenize: true,
+          //        matchAllTokens: true,
           includeScore: true,
-          findAllMatches: true,
-          includeMatches: false,
+          ignoreLocation: true,
+          //        findAllMatches: true,
+          //        includeMatches: false,
         };
 
-        const fuse = new Fuse([text], Object.assign(defaults, options, overrides));
+        const fuse = new Fuse([].concat(text), Object.assign(defaults, options, overrides));
 
         // Return search results
+
         return values
           .map(value => fuse.search(value.slice(0, 300).trim())[0] || { score: 1 })
           .map(x => x.score);
