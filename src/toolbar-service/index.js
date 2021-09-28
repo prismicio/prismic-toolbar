@@ -63,7 +63,8 @@ const Iframe = {
 
   initialisationMessageHandler(/* MessageEvent */message) /* void */ {
     if (message.data === ToolbarServiceProtocol.SetupPort) {
-      // Checking for `initialized` has a quicker effect than removing the listener because we can check for it after
+      // Checking for `initialized` has a quicker effect than removing the listener
+      // because we can check for it after
       Iframe.initialized = true;
 
       window.removeEventListener('message', msg => Iframe.initialisationMessageHandler(msg));
@@ -80,7 +81,8 @@ const Iframe = {
         console.info('%cPrismic toolbar initialized successfully! This message only appears when unexpected messages were received by the iframe during Prismic toolbar setup.\n', 'color: #52b256;');
       }
     } else if (!Iframe.initialized) {
-      // Setting a timeout allows to buffer first few messages the iframe might receive when waiting for its own init message
+      // Setting a timeout allows to buffer first few messages the iframe might receive
+      // when waiting for its own init message
       Iframe.initializationDelayedTimeouts.push(setTimeout(() => {
         // If timeout is reached, then iframe had been delayed and may not be initialized
         Iframe.initializationDelayed = true;
