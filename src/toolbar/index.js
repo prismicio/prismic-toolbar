@@ -1,6 +1,6 @@
 import './checkBrowser';
 import { ToolbarService } from '@toolbar-service';
-import { script } from '@common';
+import { toolbarEvents, dispatchToolbarEvent, script } from '@common';
 import { reloadOrigin, getAbsoluteURL } from './utils';
 import { Preview } from './preview';
 import { Prediction } from './prediction';
@@ -40,7 +40,7 @@ window.prismic = window.PrismicToolbar = {
 let repos = new Set();
 
 // Prismic variable is available
-window.dispatchEvent(new CustomEvent('prismic'));
+dispatchToolbarEvent(toolbarEvents.prismic);
 
 // Auto-querystring setup
 const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
@@ -56,10 +56,11 @@ if (legacyEndpoint) {
 
 if (!repos.size) warn`Your are not connected to a repository.`;
 
-repos.forEach(setup);
-
 // Setup the Prismic Toolbar for one repository TODO support multi-repo
 let setupDomain = null;
+
+repos.forEach(setup);
+
 async function setup (rawInput) {
   // Validate repository
   const domain = parseEndpoint(rawInput);

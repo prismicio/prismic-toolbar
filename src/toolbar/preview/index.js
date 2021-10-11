@@ -1,4 +1,4 @@
-import { getLocation } from '@common';
+import { toolbarEvents, dispatchToolbarEvent, getLocation } from '@common';
 import { reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
@@ -44,7 +44,12 @@ export class Preview {
   async updatePreview() {
     const { reload, ref } = await this.client.updatePreview();
     this.start(ref);
-    if (reload) { reloadOrigin(); }
+    if (reload) {
+      // Dispatch the update event and hard reload if not cancelled by handlers
+      if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
+        reloadOrigin();
+      }
+    }
   }
 
   // Start preview
@@ -67,8 +72,11 @@ export class Preview {
     await this.client.closePreviewSession();
     if (!this.cookie.getRefForDomain()) return;
     this.cookie.deletePreviewForDomain();
-    // reload to get rid of preview data and display the live version
-    reloadOrigin();
+
+    // Dispatch the end event and hard reload if not cancelled by handlers
+    if (dispatchToolbarEvent(toolbarEvents.previewEnd)) {
+      reloadOrigin();
+    }
   }
 
   async share() {

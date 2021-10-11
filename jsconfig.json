@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@common": ["./src/common"],
+      "@common/*": ["./src/common/*"],
+    }
+  },
+  "exclude": ["node_modules", "build"]
+}

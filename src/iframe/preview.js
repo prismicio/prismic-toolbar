@@ -1,4 +1,4 @@
-import { fetchy, query, getCookie, demolishCookie, throttle, memoize, once } from '@common';
+import { fetchy, query, getCookie, demolishCookie, throttle, memoize } from '@common';
 
 const SESSION_ID = getCookie('io.prismic.previewSession');
 
@@ -11,7 +11,14 @@ const PreviewRef = {
   getCurrent: throttle(async () => {
     const s = await State.get();
     const ref = encodeURIComponent(s.preview.ref);
-    return fetchy({ url: `/previews/${SESSION_ID}/ping?ref=${ref}` });
+    const current = await fetchy({ url: `/previews/${SESSION_ID}/ping?ref=${ref}` });
+
+    if (typeof s.preview === 'object') {
+      s.preview.ref = current.ref;
+      State.set(s);
+    }
+
+    return current;
   }, 2000)
 };
 
@@ -65,12 +72,30 @@ const Share = {
 const State = {
   liveStateNeeded: Boolean(getCookie('is-logged-in')) || Boolean(getCookie('io.prismic.previewSession')),
 
-  get: once(async () => {
-    if (!State.liveStateNeeded) return State.normalize();
-    return fetchy({
-      url: '/toolbar/state',
-    }).then(State.normalize);
-  }),
+  state: null,
+
+  get: async () => {
+    if (!State.state) {
+      await State.insert();
+    }
+    return State.state;
+  },
+
+  set: (newState = {}) => {
+    State.state = newState;
+  },
+
+  setNormalized: (newState = {}) => {
+    State.set(State.normalize(newState));
+  },
+
+  insert: async () => {
+    if (!State.liveStateNeeded) {
+      State.setNormalized();
+    } else {
+      State.setNormalized(await fetchy({ url: '/toolbar/state' }));
+    }
+  },
 
   normalize: (_state = {}) => (
     Object.assign({}, {

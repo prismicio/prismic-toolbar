@@ -3,6 +3,10 @@ export { getCookie, setCookie, deleteCookie, demolishCookie } from './cookie';
 export { Hooks } from './hooks';
 export { Sorter } from './sorter';
 export {
+  toolbarEvents,
+  dispatchToolbarEvent,
+} from './events';
+export {
   warn,
   err,
   isObject,
