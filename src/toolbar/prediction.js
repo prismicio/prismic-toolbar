@@ -115,9 +115,9 @@ export class Prediction {
         tracker,
         location: getLocation(),
       });
-      queriesResults = await this.client.getDevModeQueriesResults({
+      queriesResults = (await this.client.getDevModeQueriesResults({
         tracker,
-      });
+      })).filter(Boolean);
 
       // Tamper with automatic prediction if user used meta tags-based prediction
       if (docIDs) {
