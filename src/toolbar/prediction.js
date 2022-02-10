@@ -76,7 +76,7 @@ export class Prediction {
     this.dispatchLoading();
     // Wait less when using meta tags-based prediction since we'll have to query anyway after,
     // this allow for the edit button to be snappier
-    await wait(this.getDocumentIDsFromMeta(true) ? 0.5 : 2);
+    await wait(this.getDocumentIDsFromMeta(true) ? 1 : 2);
 
     // load prediction
     const tracker = maybeTracker || this.cookie.getTracker();
@@ -128,7 +128,6 @@ export class Prediction {
 
         // All ids queried
         const ids = [docIDs.main, ...docIDs.subs].filter(Boolean);
-
         // Find the query made above in query results
         const allIDsQueryIndex = queriesResults.findIndex(query =>
           query.length === ids.length
@@ -137,19 +136,33 @@ export class Prediction {
 
         // If we found the query
         if (allIDsQueryIndex !== -1) {
-          if (queriesResults.length === 1) {
-            // If only the above query was made, improve the query results by grouping documents,
-            // sorting the main one at top
-            queriesResults = Object.values(queriesResults[allIDsQueryIndex].reduce((acc, doc) => {
-              (acc[doc.type] ||= []).push(doc);
+          // Group results by type
+          queriesResults = Object.values(
+            queriesResults
+              // queriesResults is a nested array of documents
+              .flat()
+              // Filter unique documents
+              .filter((doc1, index, arr) => arr.findIndex(doc2 => doc2.id === doc1.id) === index)
+              // Group by type
+              .reduce((acc, doc) => {
+                (acc[doc.type] ||= []).push(doc);
 
-              return acc;
-            }, {})).sort((a, _b) => a.some(doc => doc.id === docIDs.main) ? -1 : 1);
-          } else {
-            // Else filter queries from the above query
-            queriesResults = [
-              ...queriesResults.filter((_query, index) => index !== allIDsQueryIndex)
-            ];
+                return acc;
+              }, {})
+          );
+
+          if (docIDs.main) {
+            queriesResults = queriesResults
+              // Sort main document type group at top
+              .sort((a, _b) => a.some(doc => doc.id === docIDs.main) ? -1 : 1)
+              // Sort main document at top of first group
+              .map((docs, index) => {
+                if (index === 0) {
+                  return docs.sort((a, _b) => a.id === docIDs.main ? -1 : 1);
+                }
+
+                return docs;
+              });
           }
         }
       }
