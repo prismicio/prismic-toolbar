@@ -1,6 +1,9 @@
 import { Hooks, getLocation, wait } from '@common';
 import { createClient, ForbiddenError } from '@prismicio/client';
 
+const PRISMIC_MAIN_DOCUMENT = 'prismic-main-document';
+const PRISMIC_DOCUMENTS = 'prismic-documents';
+
 export class Prediction {
   constructor(client, previewCookie) {
     this.client = client;
@@ -21,7 +24,37 @@ export class Prediction {
   // Set event listener
   setup = async () => {
     const currentTracker = this.cookie.getTracker();
+
+    // Update preduction on history change
     this.hooks.on('historyChange', () => this.start());
+
+    // Update prediction on meta change
+    const $head = document.querySelector('head');
+    if ($head) {
+      const observer = new MutationObserver(async mutationsList => {
+        for (let i = 0; i < mutationsList.length; i++) {
+          const nodes = [
+            mutationsList[i].target,
+            ...mutationsList[i].addedNodes,
+            ...mutationsList[i].removedNodes
+          ];
+
+          // If some nodes are Prismic meta tags...
+          if (nodes.some(node => [PRISMIC_MAIN_DOCUMENT, PRISMIC_DOCUMENTS].includes(node.name))) {
+            // ...update prediction
+            this.dispatchLoading();
+            await this.predict(this.cookie.getTracker());
+            this.cookie.refreshTracker();
+
+            break;
+          }
+        }
+      });
+
+      observer.observe($head, { attributes: true, childList: true, attributeFilter: ['name', 'content'], subtree: true });
+    }
+
+    // Start prediction
     await this.start(currentTracker);
   };
 
@@ -29,10 +62,10 @@ export class Prediction {
   getDocumentIDsFromMeta = (silent = false) => {
     // Get `prismic-main-document` meta tags
     const $main = document.querySelectorAll(
-      'meta[name="prismic-main-document"]'
+      `meta[name="${PRISMIC_MAIN_DOCUMENT}"]`
     );
     // Get `prismic-documents` meta tags
-    const $subs = document.querySelectorAll('meta[name="prismic-documents"]');
+    const $subs = document.querySelectorAll(`meta[name="${PRISMIC_DOCUMENTS}"]`);
 
     // If page uses meta tags
     if ($main.length || $subs.length) {
