@@ -1,5 +1,5 @@
 import { Hooks, getLocation, wait } from '@common';
-import { getDocumentIDsFromMeta, watchHead, forceDocumentTracking, tamperDocumentsAndQueries } from './metaPrediction';
+import { throttle, getDocumentIDsFromMeta, onPrismicMetaChange, forceDocumentTracking, tamperDocumentsAndQueries } from './metaPrediction';
 
 export class Prediction {
   constructor(client, previewCookie) {
@@ -26,11 +26,11 @@ export class Prediction {
     this.hooks.on('historyChange', () => this.start());
 
     // Update prediction on meta change
-    watchHead(async () => {
+    onPrismicMetaChange(throttle(async () => {
       this.dispatchLoading();
       await this.predict(this.cookie.getTracker());
       this.cookie.refreshTracker();
-    });
+    }, 500));
 
     // Start prediction
     await this.start(currentTracker);
@@ -57,7 +57,7 @@ export class Prediction {
 
       // Force querying documents from meta tags-based prediction
       const docIDs = getDocumentIDsFromMeta();
-      if (docIDs) await forceDocumentTracking(docIDs);
+      if (docIDs) await forceDocumentTracking(docIDs, this.apiEndPoint);
 
       // Run prediction
       documentsSorted = await this.client.getPredictionDocs({

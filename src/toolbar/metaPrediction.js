@@ -3,6 +3,29 @@ import { createClient, ForbiddenError } from '@prismicio/client';
 const PRISMIC_MAIN_DOCUMENT = 'prismic-main-document';
 const PRISMIC_DOCUMENTS = 'prismic-documents';
 
+export const throttle = (fn, delay = 16) => {
+  let lastExec = 0;
+  let timer = null;
+
+  return function (...args) {
+    const now = Date.now();
+    const delta = now - lastExec;
+
+    if (delta >= delay) {
+      fn.apply(this, args);
+      lastExec = now;
+    } else {
+      if (timer) {
+        clearTimeout(timer);
+      }
+      timer = setTimeout(() => {
+        fn.apply(this, args);
+        lastExec = Date.now();
+      }, delay - delta);
+    }
+  };
+};
+
 // Get main and sub documents IDs from meta
 export const getDocumentIDsFromMeta = (silent = false) => {
   // Get `prismic-main-document` meta tags
@@ -48,10 +71,11 @@ export const getDocumentIDsFromMeta = (silent = false) => {
   return null;
 };
 
-export const watchHead = callback => {
+export const onPrismicMetaChange = callback => {
   const $head = document.querySelector('head');
   if ($head) {
     const observer = new MutationObserver(async mutationsList => {
+      // eslint-disable-next-line no-plusplus
       for (let i = 0; i < mutationsList.length; i++) {
         const nodes = [
           mutationsList[i].target,
@@ -73,9 +97,9 @@ export const watchHead = callback => {
   }
 };
 
-export const forceDocumentTracking = async docIDs => {
+export const forceDocumentTracking = async (docIDs, apiEndpoint) => {
   // Create client
-  const client = createClient(`${this.apiEndPoint}/api/v2`);
+  const client = createClient(`${apiEndpoint}/api/v2`);
 
   // Query main and sub documents
   try {
