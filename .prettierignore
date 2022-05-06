@@ -1,7 +1,10 @@
 # custom
+CHANGELOG.md
+
+# .gitignore copy
+
+# custom
 build
-examples/**/package-lock.json
-s3.sh
 
 # os
 .DS_Store

@@ -1,7 +1,8 @@
+# .gitignore copy
+
 # custom
-build
+dist
 examples/**/package-lock.json
-s3.sh
 
 # os
 .DS_Store
