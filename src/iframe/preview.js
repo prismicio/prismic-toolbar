@@ -37,11 +37,15 @@ const PreviewRef = {
 const Share = {
 	run: memoize(
 		async (location, blob) => {
-			const imageId =
-				location.pathname.slice(1) + location.hash + SESSION_ID + ".jpg";
+			const imageId = `${
+				location.pathname.slice(1) + location.hash + SESSION_ID
+			}.jpg`;
 			const imageName = imageId;
 			const session = await Share.getSession({ location, imageName });
-			if (!session.hasPreviewImage) Share.uploadScreenshot(imageName, blob);
+			if (!session.hasPreviewImage) {
+				Share.uploadScreenshot(imageName, blob);
+			}
+
 			return session.url;
 		},
 		({ href }) => href,
@@ -96,6 +100,7 @@ const State = {
 		if (!State.state) {
 			await State.insert();
 		}
+
 		return State.state;
 	},
 

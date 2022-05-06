@@ -10,18 +10,24 @@ export class ScrollingName extends Component {
 	}
 
 	animate() {
-		if (!this.mounted) return;
+		if (!this.mounted) {
+			return;
+		}
 
 		const hiddenWidth = this.inner.scrollWidth - this.inner.offsetWidth;
 		const scrollTime = hiddenWidth / 100;
 
-		if (hiddenWidth <= 0) return;
+		if (hiddenWidth <= 0) {
+			return;
+		}
 		this.inner.style.transition = `transform ${scrollTime}s linear`;
 		this.inner.style.transform = `translateX(-${hiddenWidth}px)`;
 	}
 
 	reset() {
-		if (!this.mounted) return;
+		if (!this.mounted) {
+			return;
+		}
 
 		this.inner.style.transition = "";
 		this.inner.style.transform = "";
@@ -33,6 +39,7 @@ export class ScrollingName extends Component {
 
 	render() {
 		const { children, ...other } = this.props;
+
 		return (
 			<div {...other}>
 				<div>{children}</div>

@@ -12,6 +12,7 @@ const Client = {
 
 		const loadedIframe = await eventToPromise(iframe, "load", () => iframe);
 		const portToIframe = await Client.establishConnection(loadedIframe);
+
 		return new ToolbarServiceClient(portToIframe, hostname);
 	},
 
@@ -19,16 +20,19 @@ const Client = {
 		const ifr = document.createElement("iframe");
 		ifr.src = src;
 		ifr.style.cssText = "display:none!important";
+
 		return ifr;
 	},
 
 	documentBodyReady() /* Promise<HTMLIFrameElement> */ {
 		return new Promise(async (resolve) => {
-			if (document.body) resolve(document.body);
-			else
+			if (document.body) {
+				resolve(document.body);
+			} else {
 				document.addEventListener("DOMContentLoaded", () =>
 					resolve(document.body),
 				);
+			}
 		});
 	},
 
@@ -40,21 +44,24 @@ const Client = {
 				new MessageChannel();
 
 			portToIframe.onmessage = /* MessageEvent */ (message) => {
-				if (message.data === ToolbarServiceProtocol.Ready)
+				if (message.data === ToolbarServiceProtocol.Ready) {
 					resolve(portToIframe);
-				else
+				} else {
 					throw new Error(
 						`Unexpected message received before iframe ready: ${message.data}`,
 					);
+				}
 			};
 
-			if (iframe.contentWindow)
+			if (iframe.contentWindow) {
 				iframe.contentWindow.postMessage(
 					ToolbarServiceProtocol.SetupPort,
 					"*",
 					[portToMainWindow],
 				);
-			else throw Error("Unable to post a message the the toolbar iframe.");
+			} else {
+				throw Error("Unable to post a message the the toolbar iframe.");
+			}
 		});
 	},
 };

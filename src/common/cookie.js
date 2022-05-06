@@ -6,6 +6,7 @@ export function getCookie(name) {
 
 export function setCookie(name, value, expires = Infinity /* days */) {
 	const path = "/";
+
 	return Cookies.set(name, value, { path, expires, sameSite: "lax" });
 }
 

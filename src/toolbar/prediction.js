@@ -14,7 +14,8 @@ export class Prediction {
 
 	buildApiEndpoint = () /* String */ => {
 		const protocol = this.client.hostname.includes(".test") ? "http" : "https";
-		return protocol + "://" + this.client.hostname;
+
+		return `${protocol}://${this.client.hostname}`;
 	};
 
 	// Set event listener
@@ -70,6 +71,7 @@ export class Prediction {
 	onDocumentsLoading = (func) => {
 		const c = (this.count += 1); // Create the hook key
 		this.documentLoadingHooks[c] = func; // Create the hook
+
 		return () => delete this.documentLoadingHooks[c]; // Alternative to removeEventListener
 	};
 
@@ -77,6 +79,7 @@ export class Prediction {
 	onDocuments = (func) => {
 		const c = (this.count += 1); // Create the hook key
 		this.documentHooks[c] = func; // Create the hook
+
 		return () => delete this.documentHooks[c]; // Alternative to removeEventListener
 	};
 }

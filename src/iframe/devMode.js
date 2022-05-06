@@ -3,6 +3,7 @@ export function getQueriesResults(tracker) {
 		if (r.status === 200) {
 			return r.json();
 		}
+
 		return [];
 	});
 }

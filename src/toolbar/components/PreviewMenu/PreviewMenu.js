@@ -43,6 +43,7 @@ export const PreviewMenu = ({
 						className="powered-prismic"
 						target="_blank"
 						href="http://prismic.io/pages/powered-by-prismic"
+						rel="noreferrer"
 					>
 						Powered by Prismic
 					</a>

@@ -15,6 +15,7 @@ export class SharePanel extends Component {
 	render() {
 		const { onClose, preview } = this.props;
 		const { url, loading } = this.state;
+
 		return (
 			<BasePanel className="SharePanel">
 				<Icon className="x" src={xSvg} onClick={onClose} />
@@ -45,6 +46,7 @@ class Share extends Component {
 	render() {
 		const { url, loading } = this.props;
 		const { copied } = this.state;
+
 		return (
 			<div className="Share bottom">
 				<h2>Share this preview via public share link</h2>

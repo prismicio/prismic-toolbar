@@ -10,24 +10,33 @@ export class Experiment {
 	}
 
 	async setup() {
-		if (disabledCookies()) return;
+		if (disabledCookies()) {
+			return;
+		}
 		await script(
 			`//www.google-analytics.com/cx/api.js?experiment=${this.expId}`,
 		);
 		this.variation = window.cxApi.chooseVariation();
-		if (this.variation === window.cxApi.NOT_PARTICIPATING) this.end();
-		else this.start();
+		if (this.variation === window.cxApi.NOT_PARTICIPATING) {
+			this.end();
+		} else {
+			this.start();
+		}
 	}
 
 	async start() {
 		const old = this.cookie.get();
 		this.cookie.set(this.expId, this.variation);
-		if (this.cookie.get() !== old) reloadOrigin();
+		if (this.cookie.get() !== old) {
+			reloadOrigin();
+		}
 	}
 
 	end() {
 		const old = this.cookie.get();
 		this.cookie.delete();
-		if (this.cookie.get() !== old) reloadOrigin();
+		if (this.cookie.get() !== old) {
+			reloadOrigin();
+		}
 	}
 }

@@ -9,7 +9,9 @@ export const DocumentPanel = ({
 	queries,
 	onDocumentClick,
 }) => {
-	if (!documents || (documents && documents.length <= 0)) return null;
+	if (!documents || (documents && documents.length <= 0)) {
+		return null;
+	}
 
 	return (
 		<BasePanel className="DocumentPanel">
@@ -37,6 +39,7 @@ const panelContent = (documents, queries, onDocumentClick) => {
 			/>
 		);
 	}
+
 	return (
 		<EditButton
 			documents={documents}

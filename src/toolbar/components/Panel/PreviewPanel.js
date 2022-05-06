@@ -44,7 +44,7 @@ const PreviewDocuments = ({ documents, maxSummarySize, maxTitleSize }) => (
 );
 
 const PreviewDocument = ({ doc, maxSummarySize, maxTitleSize }) => (
-	<a className="Draft" href={doc.url} target="_blank">
+	<a className="Draft" href={doc.url} target="_blank" rel="noreferrer">
 		<h3>{stringCheck(doc.title, maxTitleSize)}</h3>
 		<div>{stringCheck(doc.summary, maxSummarySize)}</div>
 	</a>

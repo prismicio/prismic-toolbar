@@ -12,12 +12,19 @@ export class EditButton extends Component {
 	}
 
 	splitDocuments(documents) {
-		if (documents.length === 0) return [[], [], []];
-		if (documents.length === 1) return [documents[0], [], []];
+		if (documents.length === 0) {
+			return [[], [], []];
+		}
+		if (documents.length === 1) {
+			return [documents[0], [], []];
+		}
 
 		return documents.slice(1).reduce(
 			([main, others, links], doc) => {
-				if (doc.isDocumentLink) return [main, others, links.concat([doc])];
+				if (doc.isDocumentLink) {
+					return [main, others, links.concat([doc])];
+				}
+
 				return [main, others.concat([doc]), links];
 			},
 			[documents[0], [], []],
@@ -76,6 +83,7 @@ const DocumentSummary = ({
 		href={document.editorUrl}
 		target="_blank"
 		onClick={() => onClick({ isMain })}
+		rel="noreferrer"
 	>
 		<div className="wrapper-title-status">
 			<span className={document.status}>{document.status}</span>

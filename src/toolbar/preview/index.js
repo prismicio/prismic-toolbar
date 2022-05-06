@@ -24,7 +24,9 @@ export class Preview {
 		const refUpToDate = preview.ref === this.cookie.getRefForDomain();
 		const displayPreview = preview.ref && refUpToDate;
 		// We don't display the preview by default unless the start function says so
-		if (displayPreview) this.watchPreviewUpdates();
+		if (displayPreview) {
+			this.watchPreviewUpdates();
+		}
 
 		return { initialRef: preview.ref, upToDate: refUpToDate };
 	};
@@ -32,13 +34,17 @@ export class Preview {
 	watchPreviewUpdates() {
 		if (this.active) {
 			this.interval = setInterval(() => {
-				if (document.visibilityState === "visible") this.updatePreview();
+				if (document.visibilityState === "visible") {
+					this.updatePreview();
+				}
 			}, 3000);
 		}
 	}
 
 	cancelPreviewUpdates() {
-		if (this.interval) clearInterval(this.interval);
+		if (this.interval) {
+			clearInterval(this.interval);
+		}
 	}
 
 	async updatePreview() {
@@ -56,12 +62,14 @@ export class Preview {
 	async start(ref) {
 		if (!ref) {
 			await this.end();
+
 			return { displayPreview: false, shouldReload: false };
 		}
 		if (ref === this.cookie.getRefForDomain()) {
 			return { displayPreview: true, shouldReload: false };
 		}
 		this.cookie.upsertPreviewForDomain(ref);
+
 		// Force to display the preview
 		return { displayPreview: false, shouldReload: true };
 	}
@@ -70,7 +78,9 @@ export class Preview {
 	async end() {
 		this.cancelPreviewUpdates();
 		await this.client.closePreviewSession();
-		if (!this.cookie.getRefForDomain()) return;
+		if (!this.cookie.getRefForDomain()) {
+			return;
+		}
 		this.cookie.deletePreviewForDomain();
 
 		// Dispatch the end event and hard reload if not cancelled by handlers
@@ -81,6 +91,7 @@ export class Preview {
 
 	async share() {
 		const screenBlob = await screenshot();
+
 		return this.client.sharePreview(getLocation(), screenBlob);
 	}
 }

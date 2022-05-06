@@ -4,10 +4,11 @@ const screenshot = async () => {
 	document
 		.getElementById("prismic-toolbar-v2")
 		.setAttribute("data-html2canvas-ignore", true);
-	if (!html2canvasPromise)
+	if (!html2canvasPromise) {
 		html2canvasPromise = script(
 			"https://html2canvas.hertzen.com/dist/html2canvas.min.js",
 		);
+	}
 	await html2canvasPromise;
 	try {
 		const canvas = await window.html2canvas(document.body, {
@@ -15,6 +16,7 @@ const screenshot = async () => {
 			width: "100%",
 			height: window.innerHeight,
 		});
+
 		return new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.6));
 	} catch (e) {
 		console.warn("Caught html2canvas error", e);
@@ -24,6 +26,7 @@ const screenshot = async () => {
 		// The preview image is a black square
 		// but at least we can share the image.
 		const tempCanvas = document.createElement("canvas");
+
 		return new Promise((resolve) =>
 			tempCanvas.toBlob(resolve, "image/jpeg", 0.6),
 		);

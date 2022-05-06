@@ -8,14 +8,17 @@ export const div = (id, options = {}) => {
 	}
 	Object.assign(el.style, style);
 	Object.assign(el, otherOpts, { id });
+
 	return el;
 };
 
 // Shadow DOM
 export const shadow = (id, options) => {
 	let _shadow = div(id, options);
-	if (document.head.attachShadow)
+	if (document.head.attachShadow) {
 		_shadow = _shadow.attachShadow({ mode: "open" });
+	}
+
 	return _shadow;
 };
 

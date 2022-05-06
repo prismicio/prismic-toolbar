@@ -12,6 +12,7 @@ export class JsonView extends Component {
 			if (props.isGraphql) {
 				return this.getData(props.json, props.isGraphql, props.graphqlUid);
 			}
+
 			return this.getData(props.json);
 		})();
 		const metadata = props.isGraphql ? null : this.getMetadata(props.json);
@@ -45,7 +46,8 @@ export class JsonView extends Component {
 				if (val[0] === "[" && val[val.length - 1] === "]") {
 					return acc + val;
 				}
-				return acc + "." + val;
+
+				return `${acc}.${val}`;
 			});
 			copyText(jsonPath);
 
@@ -84,6 +86,7 @@ export class JsonView extends Component {
 		if (keyNames[0] === "data") {
 			return data;
 		}
+
 		return metadata;
 	}
 
@@ -110,6 +113,7 @@ export class JsonView extends Component {
 				// return the node itself if it is the last key in the path.
 				return nodeFound;
 			} // return the children if it is not the last key in the path
+
 			return nodeFound.children;
 		};
 
@@ -191,6 +195,7 @@ export class JsonView extends Component {
 						/>
 					);
 				}
+
 				return (
 					<div
 						className={
@@ -215,6 +220,7 @@ export class JsonView extends Component {
 		Container: (props) => {
 			// The container decorator will be applied to each node of the json (root and nested)
 			const { NestedBorder, Icon, Key, Value, Copy } = this.decorators;
+
 			return (
 				<div className="json-view-container">
 					<NestedBorder node={props.node} />
@@ -271,8 +277,9 @@ export class JsonView extends Component {
 			if (typeof copyOfJson[key] === "object" && copyOfJson[key] != null) {
 				// is an object
 				const newPath = Array.isArray(json)
-					? path.concat("[" + key + "]")
+					? path.concat(`[${key}]`)
 					: path.concat(key);
+
 				return {
 					name: key,
 					toggled: false,
@@ -282,6 +289,7 @@ export class JsonView extends Component {
 					isLastChild: this.isLastChild(index, length),
 				};
 			} // is a key : string
+
 			return {
 				name: key,
 				value: copyOfJson[key] || "null",
@@ -290,6 +298,7 @@ export class JsonView extends Component {
 				isLastChild: this.isLastChild(index, length),
 			};
 		});
+
 		return res;
 	};
 
@@ -298,6 +307,7 @@ export class JsonView extends Component {
 		if (index === length - 1) {
 			return true;
 		}
+
 		return false;
 	};
 
@@ -306,6 +316,7 @@ export class JsonView extends Component {
 		const copyOfJson = Object.assign({}, json);
 		delete copyOfJson.data;
 		const metadata = this.turnJsonToTreeBeardJson(copyOfJson, []);
+
 		return metadata;
 	};
 
@@ -318,19 +329,22 @@ export class JsonView extends Component {
 			if (isGraphql) {
 				return Object.assign({}, { [graphqlUid]: json });
 			}
+
 			return Object.assign({}, json.data);
 		})();
 		const rawData = { data: copyOfData };
 		const data = this.turnJsonToTreeBeardJson(rawData, []);
 		data[0].toggled = true; // to initially open data
+
 		return data;
 	};
 
 	constructBannerUid = /* Object */ (json) => /* String */ {
 		const { type } = json;
 		const uid = json.uid
-			? " · " + stringCheck(json.uid, this.maxStringSize)
+			? ` · ${stringCheck(json.uid, this.maxStringSize)}`
 			: "";
+
 		return type + uid;
 	};
 

@@ -29,13 +29,18 @@ export class Hooks {
 	on = (type, callback) => {
 		window.addEventListener(type, callback);
 		this.hooks.push({ type, callback });
+
 		return callback;
 	};
 
 	off = (type, callback) => {
-		if (type && callback) this._removeHook(type, callback);
-		else if (type) this._removeType(type);
-		else this._removeAll();
+		if (type && callback) {
+			this._removeHook(type, callback);
+		} else if (type) {
+			this._removeType(type);
+		} else {
+			this._removeAll();
+		}
 	};
 }
 
@@ -48,20 +53,25 @@ function event(type, detail = null) {
 // Fetch hook
 const oldFetch = window.fetch;
 window.fetch = async (...args) => {
-	if (args[1] && args[1].emitEvents === false) return oldFetch(...args);
+	if (args[1] && args[1].emitEvents === false) {
+		return oldFetch(...args);
+	}
 	event("beforeRequest", args);
 	const response = await oldFetch(...args);
 	event("afterRequest", args);
+
 	return response;
 };
 
 // History hook
 const wrapHistory = function (type) {
 	const orig = window.history[type];
+
 	return function () {
 		const rv = orig.apply(this, arguments);
 		const e = new CustomEvent("historyChange", { detail: arguments });
 		window.dispatchEvent(e);
+
 		return rv;
 	};
 };

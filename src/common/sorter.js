@@ -13,22 +13,28 @@ export class Sorter {
 
 	addFilter(computeValues, compare) {
 		this.filters.push({ computeValues, compare });
+
 		return this;
 	}
 
 	compareData() {
 		const computedValues = this.filters.map((f) => f.computeValues(this.data));
+
 		return transpose(computedValues).map((nodes, index) => ({ nodes, index }));
 	}
 
 	compareFunction() {
 		const comparers = this.filters.map((f) => f.compare);
+
 		return function (a, b) {
 			let result = 0;
 			for (let i = 0; i < comparers.length; i += 1) {
 				const { didFirstWin, tie } = comparers[i](a.nodes[i], b.nodes[i]);
-				if (!tie) result = didFirstWin ? -1 : 1;
+				if (!tie) {
+					result = didFirstWin ? -1 : 1;
+				}
 			}
+
 			return result;
 		};
 	}
@@ -138,6 +144,7 @@ export class Sorter {
 
 	compute() {
 		const result = stableSort(this.compareData(), this.compareFunction());
+
 		return result.map((r) => this.data[r.index]);
 	}
 }

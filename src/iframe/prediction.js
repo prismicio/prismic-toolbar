@@ -28,10 +28,19 @@ export async function getDocuments({ url, ref, tracker, location }) {
 
 function normalizeDocument(doc) {
 	const status = (() => {
-		if (doc.editorUrl.includes("c=unclassified")) return "draft";
-		if (doc.editorUrl.includes("c=release")) return "release";
-		if (doc.editorUrl.includes("c=variation")) return "experiment";
-		if (doc.editorUrl.includes("c=published")) return "live";
+		if (doc.editorUrl.includes("c=unclassified")) {
+			return "draft";
+		}
+		if (doc.editorUrl.includes("c=release")) {
+			return "release";
+		}
+		if (doc.editorUrl.includes("c=variation")) {
+			return "experiment";
+		}
+		if (doc.editorUrl.includes("c=published")) {
+			return "live";
+		}
+
 		return null;
 	})();
 

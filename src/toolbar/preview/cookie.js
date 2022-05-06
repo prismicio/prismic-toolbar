@@ -12,14 +12,18 @@ export class PreviewCookie {
 
 	init(ref) {
 		const hasConvertCookie = this.makeConvertLegacy();
-		if (hasConvertCookie) return { convertedLegacy: true };
+		if (hasConvertCookie) {
+			return { convertedLegacy: true };
+		}
 
 		const tracker = (() => {
 			const c = this.get();
+
 			return c && c._tracker;
 		})();
 		const value = this.build({ tracker, preview: ref });
 		this.set(value);
+
 		return { convertedLegacy: false };
 	}
 
@@ -33,8 +37,11 @@ export class PreviewCookie {
 					return null;
 				}
 			})();
-			if (parsedCookie) return false;
+			if (parsedCookie) {
+				return false;
+			}
 			this.convertLegacyCookie(cookieOpt);
+
 			return true;
 		}
 	}
@@ -49,15 +56,21 @@ export class PreviewCookie {
 					return null;
 				}
 			})();
-			if (parsedCookie) return parsedCookie;
+			if (parsedCookie) {
+				return parsedCookie;
+			}
 			const converted = this.convertLegacyCookie(cookieOpt);
+
 			return converted;
 		}
 	}
 
 	set(value) {
-		if (value) setCookie(PREVIEW_COOKIE_NAME, value);
-		else demolishCookie(PREVIEW_COOKIE_NAME);
+		if (value) {
+			setCookie(PREVIEW_COOKIE_NAME, value);
+		} else {
+			demolishCookie(PREVIEW_COOKIE_NAME);
+		}
 	}
 
 	build(
@@ -68,19 +81,30 @@ export class PreviewCookie {
 	) {
 		const previewBlock = (() => {
 			// copy previews and delete the current one before rebuilding it
-			if (!preview) return;
-			if (isObject(preview)) return preview;
+			if (!preview) {
+				return;
+			}
+			if (isObject(preview)) {
+				return preview;
+			}
+
 			return { [this.domain]: { preview } };
 		})();
 
 		const trackerBlock = (() => {
-			if (!this.isAuthenticated) return;
-			if (!tracker) return;
+			if (!this.isAuthenticated) {
+				return;
+			}
+			if (!tracker) {
+				return;
+			}
+
 			return { _tracker: tracker || this.generateTracker() };
 		})();
 
-		if (previewBlock || trackerBlock)
+		if (previewBlock || trackerBlock) {
 			return Object.assign({}, trackerBlock || {}, previewBlock || {});
+		}
 	}
 
 	convertLegacyCookie(legacyCookieValue) {
@@ -89,6 +113,7 @@ export class PreviewCookie {
 			preview: legacyCookieValue,
 		});
 		this.set(cleanedCookie);
+
 		return cleanedCookie;
 	}
 
@@ -99,6 +124,7 @@ export class PreviewCookie {
 	upsertPreviewForDomain(previewRef) {
 		const tracker = (() => {
 			const c = this.get();
+
 			return c && c._tracker;
 		})();
 		const updatedCookieValue = this.build({ tracker, preview: previewRef });
@@ -112,13 +138,19 @@ export class PreviewCookie {
 
 	getRefForDomain() {
 		const cookie = this.get();
-		if (!cookie) return;
+		if (!cookie) {
+			return;
+		}
+
 		return cookie[this.domain] && cookie[this.domain].preview;
 	}
 
 	getTracker() {
 		const cookie = this.get();
-		if (!cookie) return;
+		if (!cookie) {
+			return;
+		}
+
 		return cookie._tracker;
 	}
 

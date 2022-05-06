@@ -17,7 +17,7 @@ export class DevMode extends Component {
 		const entries = Object.entries(query);
 		const title = entries
 			.map((e) => e[0])
-			.reduce((acc, val) => acc + " & " + val);
+			.reduce((acc, val) => `${acc} & ${val}`);
 
 		// return only the title for a graphql query
 		return { title };
@@ -41,6 +41,7 @@ export class DevMode extends Component {
 				} else {
 					acc[val] = 1;
 				}
+
 				return acc;
 			}, {});
 
@@ -61,8 +62,8 @@ export class DevMode extends Component {
 		const keys = Object.keys(copyInfo);
 
 		const title = keys
-			.map((key) => key + " (" + copyInfo[key] + ")")
-			.reduce((acc, val) => acc + " & " + val);
+			.map((key) => `${key} (${copyInfo[key]})`)
+			.reduce((acc, val) => `${acc} & ${val}`);
 
 		return title;
 	}
@@ -81,8 +82,10 @@ export class DevMode extends Component {
 			(/* Int */ acc, /* Object || String */ key) => {
 				if (typeof data[key] === "object") {
 					const newCount = this.countLinkedDocInDocument(data[key]);
+
 					return acc + newCount;
 				}
+
 				return acc;
 			},
 			0,
@@ -103,6 +106,7 @@ export class DevMode extends Component {
 					// it's an api query
 					acc.apiQueries.push(val);
 				}
+
 				return acc;
 			},
 			{ apiQueries: [], graphqlApiQueries: [] },
@@ -204,7 +208,7 @@ const DevModeItem = ({
 	<div className="wrapper-trigger">
 		<h2 className="trigger-title"> {stringCheck(title, maxStringSize)} </h2>
 		<h3 className="trigger-subtitle">
-			{isGraphql ? "[Graphql Query]" : nbLinkedDoc + " linked documents"}
+			{isGraphql ? "[Graphql Query]" : `${nbLinkedDoc} linked documents`}
 		</h3>
 		<img
 			className={isOpen ? "trigger-triangle active" : "trigger-triangle"}
