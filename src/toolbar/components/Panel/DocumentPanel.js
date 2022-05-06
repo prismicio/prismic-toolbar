@@ -1,64 +1,63 @@
-import { BasePanel, prismicWhiteSvg } from '.';
-import { Icon } from '../Icon';
-import { Loader } from '../Loader';
-import { NavTabs, EditButton, DevMode } from '..';
+import { BasePanel, prismicWhiteSvg } from ".";
+import { Icon } from "../Icon";
+import { Loader } from "../Loader";
+import { NavTabs, EditButton, DevMode } from "..";
 
-export const DocumentPanel = ({ loading, documents, queries, onDocumentClick }) => {
-  if (!documents || (documents && documents.length <= 0)) return null;
+export const DocumentPanel = ({
+	loading,
+	documents,
+	queries,
+	onDocumentClick,
+}) => {
+	if (!documents || (documents && documents.length <= 0)) return null;
 
-  return (
-    <BasePanel className="DocumentPanel">
-      <ToolbarHeader />
-      { loading
-        ? <Loader />
-        : panelContent(documents, queries, onDocumentClick)
-      }
-    </BasePanel>
-  );
+	return (
+		<BasePanel className="DocumentPanel">
+			<ToolbarHeader />
+			{loading ? <Loader /> : panelContent(documents, queries, onDocumentClick)}
+		</BasePanel>
+	);
 };
 
 const panelContent = (documents, queries, onDocumentClick) => {
-  // If there is no queries then, we don't display the json.
-  if (queries && queries.length > 0) {
-    return (
-      <NavTabs
-        tabsName={['Edit Button', 'Dev Mode']}
-        tabsContent={[
-          <EditButton
-            documents={documents}
-            maxTitleSize={35}
-            maxSummarySize={150}
-            onClick={onDocumentClick}
-          />,
-          <DevMode
-            maxStringSize={35}
-            queries={queries}
-          />
-        ]}
-      />
-    );
-  }
-  return (
-    <EditButton
-      documents={documents}
-      maxTitleSize={35}
-      maxSummarySize={150}
-      onClick={onDocumentClick}
-    />
-  );
+	// If there is no queries then, we don't display the json.
+	if (queries && queries.length > 0) {
+		return (
+			<NavTabs
+				tabsName={["Edit Button", "Dev Mode"]}
+				tabsContent={[
+					<EditButton
+						documents={documents}
+						maxTitleSize={35}
+						maxSummarySize={150}
+						onClick={onDocumentClick}
+					/>,
+					<DevMode maxStringSize={35} queries={queries} />,
+				]}
+			/>
+		);
+	}
+	return (
+		<EditButton
+			documents={documents}
+			maxTitleSize={35}
+			maxSummarySize={150}
+			onClick={onDocumentClick}
+		/>
+	);
 };
 
 const ToolbarHeader = () => (
-  <div className="toolbar-header">
-    <div className="wrapper-icon">
-      <div className="background-icon">
-        <Icon src={prismicWhiteSvg} />
-      </div>
-    </div>
+	<div className="toolbar-header">
+		<div className="wrapper-icon">
+			<div className="background-icon">
+				<Icon src={prismicWhiteSvg} />
+			</div>
+		</div>
 
-    <div className="wrapper-title">
-      <h2>Prismic Toolbar</h2>
-      <h1>Document on this page</h1>
-    </div>
-  </div>
+		<div className="wrapper-title">
+			<h2>Prismic Toolbar</h2>
+			<h1>Document on this page</h1>
+		</div>
+	</div>
 );

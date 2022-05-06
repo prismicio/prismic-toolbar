@@ -4,11 +4,23 @@ module.exports = {
 		browser: true,
 		node: true,
 	},
+	parserOptions: {
+		parser: "@typescript-eslint/parser",
+		ecmaVersion: 2020,
+	},
+	settings: {
+		// Required since `eslint-config-preact` assumes Jest is
+		// installed. This lets ESLint run even if Jest is not
+		// installed.
+		jest: { version: 1 },
+	},
 	extends: [
-		"eslint:recommended",
+		"plugin:@typescript-eslint/eslint-recommended",
+		"plugin:@typescript-eslint/recommended",
 		"plugin:prettier/recommended",
-		"plugin:react/recommended",
+		"preact",
 	],
+	plugins: ["eslint-plugin-tsdoc"],
 	rules: {
 		"no-console": ["warn", { allow: ["info", "warn", "error"] }],
 		"no-debugger": "warn",
@@ -19,5 +31,14 @@ module.exports = {
 			"error",
 			{ blankLine: "always", prev: "*", next: "return" },
 		],
+		"@typescript-eslint/no-unused-vars": [
+			"error",
+			{
+				argsIgnorePattern: "^_",
+				varsIgnorePattern: "^_",
+			},
+		],
+		"@typescript-eslint/no-var-requires": "off",
+		"tsdoc/syntax": "warn",
 	},
 };

@@ -1,1 +1,1 @@
-export { ScrollingName } from './ScrollingName';
+export { ScrollingName } from "./ScrollingName";

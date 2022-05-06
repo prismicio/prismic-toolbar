@@ -1,51 +1,51 @@
 .Collapsible {
-    border-bottom: 1px solid #E0E2EE;
+	border-bottom: 1px solid #e0e2ee;
 }
 
 .Collapsible__trigger {
-    padding-left:25px;
-    height: 70px;
-    display: flex;
-    align-items: center;
+	padding-left: 25px;
+	height: 70px;
+	display: flex;
+	align-items: center;
 
-    &.is-open {
-      border-bottom: 1px solid #E0E2EE;
-    }
+	&.is-open {
+		border-bottom: 1px solid #e0e2ee;
+	}
 }
 
 .Collapsible__contentOuter {
-    background: #F5F6F9;
+	background: #f5f6f9;
 }
 
 .wrapper-trigger {
-    cursor:pointer;
-    height: 40px; /* height equal to line height x2 (2 lines of text) to make sure it is centered vertically */
-    line-height: 20px;
-    width: stretch;
+	cursor: pointer;
+	height: 40px; /* height equal to line height x2 (2 lines of text) to make sure it is centered vertically */
+	line-height: 20px;
+	width: stretch;
 
-    & .trigger-title {
-        font-size: 16px;
-        color: #293258;
-        letter-spacing: 0.23px;
-        font-weight: bold;
-    }
+	& .trigger-title {
+		font-size: 16px;
+		color: #293258;
+		letter-spacing: 0.23px;
+		font-weight: bold;
+	}
 
-    & .trigger-subtitle {
-        font-size: 13px;
-        color: #435169;
-        letter-spacing: 0.19px;
-    }
+	& .trigger-subtitle {
+		font-size: 13px;
+		color: #435169;
+		letter-spacing: 0.19px;
+	}
 
-    & .trigger-triangle {
-        position: relative;
-        float: right;
-        right: 25px;
-        bottom: 33px;
-        color: #3F4A56;
-        transition: all 0.2s ease;
+	& .trigger-triangle {
+		position: relative;
+		float: right;
+		right: 25px;
+		bottom: 33px;
+		color: #3f4a56;
+		transition: all 0.2s ease;
 
-        &.active {
-           transform: rotate(90deg);
-        }
-    }
+		&.active {
+			transform: rotate(90deg);
+		}
+	}
 }

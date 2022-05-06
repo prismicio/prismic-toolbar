@@ -1,3 +1,3 @@
-export const BasePanel = ({ children, className = '' }) => (
-  <div className={`BasePanel ${className}`}>{children}</div>
+export const BasePanel = ({ children, className = "" }) => (
+	<div className={`BasePanel ${className}`}>{children}</div>
 );

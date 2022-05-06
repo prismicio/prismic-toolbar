@@ -1,8 +1,7 @@
 # .gitignore copy
 
 # custom
-dist
-examples/**/package-lock.json
+build
 
 # os
 .DS_Store

@@ -1,12 +1,15 @@
 # Prismic toolbar
+
 The prismic toolbar enables content writers to:
- - Identify Prismic content on the page
- - Preview unpublished changes (drafts and releases)
- - Perform A/B tests (experiments)
+
+- Identify Prismic content on the page
+- Preview unpublished changes (drafts and releases)
+- Perform A/B tests (experiments)
 
 <!-- TODO add screenshots -->
 
 ## How to use it?
+
 Include the following script on every page of your site (including the `404` page).
 
 Remember to replace `YOUR_REPO_NAME` with the name of your Prismic repository.
@@ -18,11 +21,13 @@ Remember to replace `YOUR_REPO_NAME` with the name of your Prismic repository.
 ## How to develop
 
 - Start your toolbar locally:
+
 ```script
 npm start
 ```
 
 - Serve toolbar assets:
+
 ```script
 npm run serve
 ```
@@ -41,6 +46,7 @@ If you are using a proxy in front of the development server, you must set the
 `CDN_HOST` environment variable, so the script will be loaded through the proxy.
 
 Example:
+
 ```script
 CDN_HOST=http://wroom.test npm start
 ```
@@ -57,6 +63,7 @@ communication to work.
 ## How to deploy
 
 - Deploy on prod:
+
 ```
 npm run build:prod
 ```

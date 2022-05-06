@@ -1,3 +1,3 @@
-import { ToolbarService } from '@toolbar-service';
+import { ToolbarService } from "@toolbar-service";
 
 ToolbarService.setupIframe();

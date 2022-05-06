@@ -1,67 +1,67 @@
 .PreviewMenu {
-  position: relative;
-  color: white;
+	position: relative;
+	color: white;
 	border-radius: 6px;
 	width: 395px;
-  padding: 15px 22px;
-  background: #5163BA;
-  will-change: transform;
+	padding: 15px 22px;
+	background: #5163ba;
+	will-change: transform;
 
-  & .top {
-    height: 20px;
-    margin-bottom: 3px;
-    display: flex;
-    align-items: center;
+	& .top {
+		height: 20px;
+		margin-bottom: 3px;
+		display: flex;
+		align-items: center;
 
-    & .preview-title {
-      color: white;
-      font-size: 16px;
-      font-weight: 500;
-      white-space: nowrap;
-      overflow: hidden;
-      cursor: default;
-      will-change: transform;
-    }
+		& .preview-title {
+			color: white;
+			font-size: 16px;
+			font-weight: 500;
+			white-space: nowrap;
+			overflow: hidden;
+			cursor: default;
+			will-change: transform;
+		}
 
-    & .docs {
-      text-decoration: underline;
-      cursor: pointer;
-      display: inline;
-      font-size: 12px;
-      margin-left: 5px;
-      white-space: nowrap;
-      margin-right: 35px;
-    }
-  }
+		& .docs {
+			text-decoration: underline;
+			cursor: pointer;
+			display: inline;
+			font-size: 12px;
+			margin-left: 5px;
+			white-space: nowrap;
+			margin-right: 35px;
+		}
+	}
 
-  & a.powered-prismic {
-    color: #F5F6F9;
-    font-size: 12px;
-  }
+	& a.powered-prismic {
+		color: #f5f6f9;
+		font-size: 12px;
+	}
 
-  & .share {
-    color: #B6C1FD;
-    text-decoration: underline;
-    cursor: pointer;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-  }
+	& .share {
+		color: #b6c1fd;
+		text-decoration: underline;
+		cursor: pointer;
+		font-size: 12px;
+		display: flex;
+		align-items: center;
+	}
 
-  & .x {
-    position: absolute;
-    right: 22px;
-    top: calc(50% - 9px);
-    cursor: pointer;
-    user-select: none;
-    transition: all .2s;
+	& .x {
+		position: absolute;
+		right: 22px;
+		top: calc(50% - 9px);
+		cursor: pointer;
+		user-select: none;
+		transition: all 0.2s;
 
-    &:hover {
-      transform: scale(.9);
-    }
-  }
+		&:hover {
+			transform: scale(0.9);
+		}
+	}
 
-  & .link {
-    margin-left: 5px;
-  }
+	& .link {
+		margin-left: 5px;
+	}
 }
