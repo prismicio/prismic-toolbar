@@ -103,27 +103,38 @@ Already connected to a repository (${setupDomain}).`;
 	const analytics = previewState.auth && new Analytics(toolbarClient);
 
 	// Start concurrently preview (always) and prediction (if authenticated)
-	const { initialRef, upToDate } = await preview.setup();
+	const { initialRef, upToDate, isActive } = await preview.setup();
 	const { convertedLegacy } = previewCookieHelper.init(initialRef);
-	const displayPreview = Boolean(initialRef);
 
-	if (convertedLegacy || !upToDate) {
-		reloadOrigin();
-	} else if (displayPreview || previewState.auth) {
-		// eslint-disable-next-line no-undef
-		await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
-		new window.prismic.Toolbar({
-			displayPreview,
-			auth: previewState.auth,
-			preview,
-			prediction,
-			analytics,
-		});
+	if (isActive) {
+		if (convertedLegacy || !upToDate) {
+			reloadOrigin();
 
-		// Track initial setup of toolbar
-		if (analytics) {
-			analytics.trackToolbarSetup();
+			return;
 		}
+
+		if (previewState.auth) {
+			// eslint-disable-next-line no-undef
+			await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
+			new window.prismic.Toolbar({
+				displayPreview: isActive,
+				auth: previewState.auth,
+				preview,
+				prediction,
+				analytics,
+			});
+
+			// Track initial setup of toolbar
+			if (analytics) {
+				analytics.trackToolbarSetup();
+			}
+		}
+	} else {
+		if (previewCookieHelper.getRefForDomain()) {
+			previewCookieHelper.deletePreviewForDomain();
+		}
+
+		await toolbarClient.closePreviewSession();
 	}
 }
 

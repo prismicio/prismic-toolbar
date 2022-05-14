@@ -22,20 +22,28 @@ export class Preview {
 		this.documents = preview.documents || [];
 
 		const refUpToDate = preview.ref === this.cookie.getRefForDomain();
-		const displayPreview = preview.ref && refUpToDate;
+		const displayPreview = this.active && refUpToDate;
 		// We don't display the preview by default unless the start function says so
 		if (displayPreview) {
 			this.watchPreviewUpdates();
 		}
 
-		return { initialRef: preview.ref, upToDate: refUpToDate };
+		return {
+			isActive: this.active,
+			initialRef: preview.ref,
+			upToDate: refUpToDate,
+		};
 	};
 
 	watchPreviewUpdates() {
 		if (this.active) {
 			this.interval = setInterval(() => {
 				if (document.visibilityState === "visible") {
-					this.updatePreview();
+					if (this.cookie.getRefForDomain()) {
+						this.updatePreview();
+					} else {
+						this.end();
+					}
 				}
 			}, 3000);
 		}
@@ -51,6 +59,8 @@ export class Preview {
 		const { reload, ref } = await this.client.updatePreview();
 		this.start(ref);
 		if (reload) {
+			this.cancelPreviewUpdates();
+
 			// Dispatch the update event and hard reload if not cancelled by handlers
 			if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
 				reloadOrigin();
@@ -65,11 +75,12 @@ export class Preview {
 
 			return { displayPreview: false, shouldReload: false };
 		}
+
 		if (ref === this.cookie.getRefForDomain()) {
 			return { displayPreview: true, shouldReload: false };
 		}
-		this.cookie.upsertPreviewForDomain(ref);
 
+		this.cookie.upsertPreviewForDomain(ref);
 		// Force to display the preview
 		return { displayPreview: false, shouldReload: true };
 	}
@@ -78,9 +89,6 @@ export class Preview {
 	async end() {
 		this.cancelPreviewUpdates();
 		await this.client.closePreviewSession();
-		if (!this.cookie.getRefForDomain()) {
-			return;
-		}
 		this.cookie.deletePreviewForDomain();
 
 		// Dispatch the end event and hard reload if not cancelled by handlers
