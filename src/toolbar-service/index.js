@@ -25,7 +25,7 @@ const Client = {
 	},
 
 	documentBodyReady() /* Promise<HTMLIFrameElement> */ {
-		return new Promise(async (resolve) => {
+		return new Promise((resolve) => {
 			if (document.body) {
 				resolve(document.body);
 			} else {

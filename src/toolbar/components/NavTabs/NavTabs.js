@@ -24,12 +24,12 @@ export class NavTabs extends Component {
 			>
 				<TabList className="nav-tab-list">
 					{tabsName.map((name) => (
-						<Tab>{name}</Tab>
+						<Tab key={name}>{name}</Tab>
 					))}
 				</TabList>
 
-				{tabsContent.map((content) => (
-					<TabPanel> {content} </TabPanel>
+				{tabsContent.map((content, i) => (
+					<TabPanel key={i}> {content} </TabPanel>
 				))}
 			</Tabs>
 		);

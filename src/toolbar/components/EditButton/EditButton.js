@@ -50,6 +50,7 @@ export class EditButton extends Component {
 				{BannerOtherDocs(otherDocuments)}
 				{otherDocuments.map((document) => (
 					<DocumentSummary
+						key={document.id}
 						document={document}
 						maxTitleSize={this.maxTitleSize}
 						maxSummarySize={this.maxSummarySize}
@@ -60,6 +61,7 @@ export class EditButton extends Component {
 				{BannerDocumentLinks(documentLinks)}
 				{documentLinks.map((document) => (
 					<DocumentSummary
+						key={document.id}
 						document={document}
 						maxTitleSize={this.maxTitleSize}
 						maxSummarySize={this.maxSummarySize}

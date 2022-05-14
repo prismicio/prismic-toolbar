@@ -35,6 +35,7 @@ const PreviewDocuments = ({ documents, maxSummarySize, maxTitleSize }) => (
 	<div className="Documents bottom">
 		{documents.map((doc) => (
 			<PreviewDocument
+				key={doc.id}
 				doc={doc}
 				maxSummarySize={maxSummarySize}
 				maxTitleSize={maxTitleSize}

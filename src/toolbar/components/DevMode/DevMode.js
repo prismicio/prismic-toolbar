@@ -120,7 +120,7 @@ export class DevMode extends Component {
 
 		return (
 			<div>
-				{apiQueries.map((query) => {
+				{apiQueries.map((query, i) => {
 					// apiQuery : [Object]
 					if (Object.keys(query).length < 1) {
 						return null;
@@ -129,6 +129,7 @@ export class DevMode extends Component {
 
 					return (
 						<Collapsible
+							key={i}
 							trigger={
 								<DevModeItem
 									nbLinkedDoc={itemInfos.nbLinkedDoc}
@@ -145,13 +146,13 @@ export class DevMode extends Component {
 							transitionTime={100}
 						>
 							{query.map((doc) => (
-								<JsonView json={doc} maxStringSize={25} />
+								<JsonView key={doc.id} json={doc} maxStringSize={25} />
 							))}
 						</Collapsible>
 					);
 				})}
 
-				{graphqlApiQueries.map((query) => {
+				{graphqlApiQueries.map((query, i) => {
 					// graphqlQuery : {data: Object}
 					if (!query.data || Object.keys(query.data).length < 1) {
 						return null;
@@ -160,6 +161,7 @@ export class DevMode extends Component {
 
 					return (
 						<Collapsible
+							key={i}
 							trigger={
 								<DevModeItem
 									isGraphql
@@ -182,6 +184,7 @@ export class DevMode extends Component {
 									e, // e : [ key, value ]
 								) => (
 									<JsonView
+										key={e[0]}
 										graphqlUid={e[0]}
 										isGraphql
 										json={e[1]}

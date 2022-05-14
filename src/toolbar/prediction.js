@@ -37,20 +37,20 @@ export class Prediction {
 	};
 
 	// Fetch predicted documents
-	predict = (tracker) =>
-		new Promise(async (resolve) => {
-			const documentsSorted = await this.client.getPredictionDocs({
-				ref: this.cookie.getRefForDomain(),
-				url: window.location.pathname,
-				tracker,
-				location: getLocation(),
-			});
-			const queriesResults = await this.client.getDevModeQueriesResults({
-				tracker,
-			});
-			this.dispatch(documentsSorted, queriesResults);
-			resolve();
+	predict = async (tracker) => {
+		const documentsSorted = await this.client.getPredictionDocs({
+			ref: this.cookie.getRefForDomain(),
+			url: window.location.pathname,
+			tracker,
+			location: getLocation(),
 		});
+
+		const queriesResults = await this.client.getDevModeQueriesResults({
+			tracker,
+		});
+
+		this.dispatch(documentsSorted, queriesResults);
+	};
 
 	retryPrediction = () => {
 		const nextRetryMs = this.retry * 1000; // 1s / 2s / 3s

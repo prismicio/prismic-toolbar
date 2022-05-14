@@ -29,12 +29,17 @@ const panelContent = (documents, queries, onDocumentClick) => {
 				tabsName={["Edit Button", "Dev Mode"]}
 				tabsContent={[
 					<EditButton
+						key="edit-button"
 						documents={documents}
 						maxTitleSize={35}
 						maxSummarySize={150}
 						onClick={onDocumentClick}
 					/>,
-					<DevMode maxStringSize={35} queries={queries} />,
+					<DevMode
+						key="dev-mode-button"
+						maxStringSize={35}
+						queries={queries}
+					/>,
 				]}
 			/>
 		);
