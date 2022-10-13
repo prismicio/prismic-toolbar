@@ -55,10 +55,9 @@ export class Preview {
     const { reload, ref } = await this.client.updatePreview();
     this.start(ref);
     if (reload) {
-      this.cancelPreviewUpdates();
-
       // Dispatch the update event and hard reload if not cancelled by handlers
       if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
+        this.cancelPreviewUpdates();
         reloadOrigin();
       }
     }
