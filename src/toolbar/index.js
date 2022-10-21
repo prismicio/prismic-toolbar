@@ -88,27 +88,27 @@ async function setup (rawInput) {
   const { initialRef, upToDate, isActive } = await preview.setup();
   const { convertedLegacy } = previewCookieHelper.init(initialRef);
 
-  if (isActive) {
-    if (convertedLegacy || !upToDate) {
-      reloadOrigin();
-      return;
-    }
+  if (convertedLegacy || !upToDate) {
+    reloadOrigin();
+    return;
+  }
 
-    if (previewState.auth) {
-      // eslint-disable-next-line no-undef
-      await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
-      new window.prismic.Toolbar({
-        displayPreview: isActive,
-        auth: previewState.auth,
-        preview,
-        prediction,
-        analytics
-      });
+  if (isActive || previewState.auth) {
+    // eslint-disable-next-line no-undef
+    await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
+    new window.prismic.Toolbar({
+      displayPreview: isActive,
+      auth: previewState.auth,
+      preview,
+      prediction,
+      analytics
+    });
 
-      // Track initial setup of toolbar
-      if (analytics) analytics.trackToolbarSetup();
-    }
-  } else {
+    // Track initial setup of toolbar
+    if (analytics) analytics.trackToolbarSetup();
+  }
+
+  if (!isActive) {
     if (previewCookieHelper.getRefForDomain())
       previewCookieHelper.deletePreviewForDomain();
 
