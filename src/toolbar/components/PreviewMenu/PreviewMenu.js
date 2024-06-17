@@ -28,7 +28,7 @@ export const PreviewMenu = ({ setPage, auth, preview, in: inProp, closePreview }
             <span>Get a shareable link</span>
             <Icon className="link" src={linkSvg} />
           </div>
-          : <a className="powered-prismic" target="_blank" href="http://prismic.io/pages/powered-by-prismic">Powered by Prismic</a>
+          : <a className="homepage-prismic" target="_blank" href="https://prismic.io">Powered by Prismic</a>
         }
 
         <Icon className="x" src={xSvg} onClick={close} />
