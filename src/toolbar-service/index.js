@@ -19,6 +19,8 @@ const Client = {
     const ifr = document.createElement('iframe');
     ifr.src = src;
     ifr.style.cssText = 'display:none!important';
+    ifr.tabIndex = -1;
+    ifr.ariaHidden = true;
     return ifr;
   },
 
