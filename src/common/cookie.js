@@ -6,7 +6,11 @@ export function getCookie(name) {
 
 export function setCookie(name, value, expires = Infinity /* days */) {
   const path = '/';
-  return Cookies.set(name, value, { path, expires, sameSite: 'lax' });
+  return Cookies.set(name, value, {
+    path,
+    expires,
+    ...getSameSiteAttributes(),
+  });
 }
 
 export function deleteCookie(name) {
@@ -34,4 +38,12 @@ export function demolishCookie(name, options) {
   DOMAINS.forEach(domain =>
     PATHS.forEach(path => Cookies.remove(name, { ...options, domain, path }))
   );
+}
+
+function getSameSiteAttributes() {
+  if (window.self !== window.top && window.location.protocol === 'https:') {
+    return { sameSite: 'none', secure: true };
+  }
+
+  return { sameSite: 'lax' };
 }

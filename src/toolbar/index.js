@@ -6,11 +6,12 @@ import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
 import { PreviewCookie } from './preview/cookie';
+import { isEmbeddedPreview, setupEmbeddedPreview } from './embedded-preview';
 
 const version = process.env.npm_package_version;
 const IS_EMBEDDED = window.self !== window.top;
 
-if (!IS_EMBEDDED) {
+if (!IS_EMBEDDED || isEmbeddedPreview()) {
   const warn = (...message) => require('@common').warn`
   ${String.raw(...message)}
 
@@ -77,6 +78,15 @@ if (!IS_EMBEDDED) {
 
     setupDomain = domain;
 
+    if (isEmbeddedPreview()) {
+      const previewCookieHelper = new PreviewCookie(false, domain);
+      const preview = new Preview({
+        closePreviewSession: async () => {},
+      }, previewCookieHelper, {});
+      setupEmbeddedPreview({ preview });
+      return;
+    }
+
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
     const previewState = await toolbarClient.getPreviewState();
@@ -90,6 +100,7 @@ if (!IS_EMBEDDED) {
     // Start concurrently preview (always) and prediction (if authenticated)
     const { initialRef, upToDate, isActive } = await preview.setup();
     const { convertedLegacy } = previewCookieHelper.init(initialRef);
+    setupEmbeddedPreview({ preview });
 
     if (convertedLegacy || !upToDate) {
       reloadOrigin();
