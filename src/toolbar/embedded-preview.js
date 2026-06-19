@@ -5,7 +5,7 @@ const readyMessageType = 'prismic:embedded-preview:ready';
 
 const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?prismic\.io$/,
-  /^https:\/\/([^/]+\.)?wroom\.com$/,
+  /^https:\/\/([^/]+\.)?wroom\.io$/,
   'https://marketing-tools-wroom.com',
   'http://localhost:5173',
 ];
@@ -47,8 +47,6 @@ function isSetRefMessage(data) {
     && typeof data === 'object'
     && data.type === setRefMessageType
     && typeof data.token === 'string'
-    && typeof data.documentId === 'string'
-    && typeof data.versionId === 'string'
     && typeof data.refreshId === 'string'
   );
 }

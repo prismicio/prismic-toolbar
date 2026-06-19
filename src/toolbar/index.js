@@ -100,7 +100,6 @@ if (!IS_EMBEDDED || isEmbeddedPreview()) {
     // Start concurrently preview (always) and prediction (if authenticated)
     const { initialRef, upToDate, isActive } = await preview.setup();
     const { convertedLegacy } = previewCookieHelper.init(initialRef);
-    setupEmbeddedPreview({ preview });
 
     if (convertedLegacy || !upToDate) {
       reloadOrigin();
