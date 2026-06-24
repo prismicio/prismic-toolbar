@@ -6,8 +6,13 @@ const readyMessageType = 'prismic:embedded-preview:ready';
 const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?prismic\.io$/,
   /^https:\/\/([^/]+\.)?wroom\.io$/,
-  'https://marketing-tools-wroom.com',
-  'http://localhost:5173',
+  /^https:\/\/([^/]+\.)?vercel\.app$/,
+  /^https:\/\/([^/]+\.)?dev-tools-wroom\.com$/,
+  /^https:\/\/([^/]+\.)?marketing-tools-wroom\.com$/,
+  /^https:\/\/([^/]+\.)?platform-wroom\.com$/,
+  /^https:\/\/([^/]+\.)?devops-wroom\.com$/,
+  /^http:\/\/localhost:\d+$/,
+  /^http:\/\/127\.0\.0\.1:\d+$/,
 ];
 
 export function isEmbeddedPreview() {
@@ -20,14 +25,9 @@ export function isEmbeddedPreview() {
 export function setupEmbeddedPreview({ preview }) {
   if (!isEmbeddedPreview()) return;
 
-  let lastRefreshId;
-
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
     if (!isSetRefMessage(event.data)) return;
-
-    if (lastRefreshId === event.data.refreshId) return;
-    lastRefreshId = event.data.refreshId;
 
     preview.updateFromRef(event.data.token).catch(error => {
       console.error('Failed to update embedded preview ref.', error);
@@ -47,7 +47,6 @@ function isSetRefMessage(data) {
     && typeof data === 'object'
     && data.type === setRefMessageType
     && typeof data.token === 'string'
-    && typeof data.refreshId === 'string'
   );
 }
 
