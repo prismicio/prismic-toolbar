@@ -6,11 +6,13 @@ const readyMessageType = 'prismic:embedded-preview:ready';
 const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?prismic\.io$/,
   /^https:\/\/([^/]+\.)?wroom\.io$/,
-  /^https:\/\/([^/]+\.)?vercel\.app$/,
   /^https:\/\/([^/]+\.)?dev-tools-wroom\.com$/,
   /^https:\/\/([^/]+\.)?marketing-tools-wroom\.com$/,
   /^https:\/\/([^/]+\.)?platform-wroom\.com$/,
   /^https:\/\/([^/]+\.)?devops-wroom\.com$/,
+];
+
+const devParentOrigins = [
   /^http:\/\/localhost:\d+$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
 ];
@@ -28,6 +30,8 @@ export function setupEmbeddedPreview({ preview }) {
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
     if (!isSetRefMessage(event.data)) return;
+    // An empty token would end the session and hard-reload the iframe
+    if (!event.data.token) return;
 
     preview.updateFromRef(event.data.token).catch(error => {
       console.error('Failed to update embedded preview ref.', error);
@@ -37,6 +41,8 @@ export function setupEmbeddedPreview({ preview }) {
   announceReady();
 
   function announceReady() {
+    // Safe to broadcast to '*': no data in this message, and both sides
+    // validate origins on the ref messages that follow.
     window.parent.postMessage({ type: readyMessageType }, '*');
   }
 }
@@ -53,8 +59,14 @@ function isSetRefMessage(data) {
 function isAllowedParentOrigin(origin) {
   if (!origin) return false;
 
-  return allowedParentOrigins.some(allowedOrigin => {
-    if (typeof allowedOrigin === 'string') return allowedOrigin === origin;
-    return allowedOrigin.test(origin);
-  });
+  const isLocalToolbar = isLocalOrigin(window.location.origin);
+  const allowed = isLocalToolbar
+    ? [...allowedParentOrigins, ...devParentOrigins]
+    : allowedParentOrigins;
+
+  return allowed.some(allowedOrigin => allowedOrigin.test(origin));
+}
+
+function isLocalOrigin(origin) {
+  return devParentOrigins.some(devOrigin => devOrigin.test(origin));
 }

@@ -79,7 +79,8 @@ if (!IS_EMBEDDED || isEmbeddedPreview()) {
     setupDomain = domain;
 
     if (isEmbeddedPreview()) {
-      const previewCookieHelper = new PreviewCookie(false, domain);
+      // Refs arrive via set-ref messages; the stub client only guards Preview.end()
+      const previewCookieHelper = new PreviewCookie(/* auth */ false, domain);
       const preview = new Preview({
         closePreviewSession: async () => {},
       }, previewCookieHelper, {});
