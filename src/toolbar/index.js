@@ -9,9 +9,12 @@ import { PreviewCookie } from './preview/cookie';
 import { isEmbeddedPreview, setupEmbeddedPreview } from './embedded-preview';
 
 const version = process.env.npm_package_version;
-const IS_EMBEDDED = window.self !== window.top;
+const isTopLevel = window.self === window.top;
 
-if (!IS_EMBEDDED || isEmbeddedPreview()) {
+// Run at the top level, or inside the editor's embedded preview iframe
+const shouldRunToolbar = isTopLevel || isEmbeddedPreview();
+
+if (shouldRunToolbar) {
   const warn = (...message) => require('@common').warn`
   ${String.raw(...message)}
 
