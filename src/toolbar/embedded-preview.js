@@ -10,6 +10,7 @@ const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?marketing-tools-wroom\.com$/,
   /^https:\/\/([^/]+\.)?platform-wroom\.com$/,
   /^https:\/\/([^/]+\.)?devops-wroom\.com$/,
+  /^https:\/\/[a-z0-9-]+-prismic\.vercel\.app$/,
 ];
 
 const devParentOrigins = [
