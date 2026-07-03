@@ -27,7 +27,7 @@ const Share = {
     const imageId = location.pathname.slice(1) + location.hash + SESSION_ID + '.jpg';
     const imageName = imageId;
     const session = await Share.getSession({ location, imageName });
-    if (!session.hasPreviewImage) Share.uploadScreenshot(imageName, blob);
+    if (!session.hasPreviewImage) Share.uploadScreenshot(imageName, blob).catch(() => {});
     return session.url;
   }, ({ href }) => href),
 
@@ -48,24 +48,27 @@ const Share = {
   },
 
   async uploadScreenshot(imageName, blob) {
-    const acl = await fetchy({
-      url: `/previews/${SESSION_ID}/acl`,
+    const uploadTarget = await fetchy({
+      url: `/v2/previews/${SESSION_ID}/upload-url`,
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        filename: imageName,
+        contentType: blob.type || 'image/jpeg'
+      })
     });
 
-    // Form
-    const body = new FormData();
-    body.append('key', `${acl.directory}/${imageName}`);
-    body.append('AWSAccessKeyId', acl.key);
-    body.append('acl', 'public-read');
-    body.append('policy', acl.policy);
-    body.append('signature', acl.signature);
-    body.append('Content-Type', 'image/png');
-    body.append('Cache-Control', 'max-age=315360000');
-    body.append('Content-Disposition', `inline; filename=${imageName}`);
-    body.append('file', blob);
+    const response = await fetch(uploadTarget.uploadUrl, {
+      method: uploadTarget.method,
+      headers: uploadTarget.headers,
+      body: blob
+    });
 
-    // Upload
-    return fetch(acl.url, { method: 'POST', body });
+    if (!response.ok) throw new Error('Unable to upload preview screenshot');
+
+    return response;
   }
 };
 
