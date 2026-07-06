@@ -36,7 +36,9 @@ export function demolishCookie(name, options) {
 
 
   DOMAINS.forEach(domain =>
-    PATHS.forEach(path => Cookies.remove(name, { ...options, domain, path }))
+    PATHS.forEach(path =>
+      Cookies.remove(name, { ...getSameSiteAttributes(), ...options, domain, path })
+    )
   );
 }
 
