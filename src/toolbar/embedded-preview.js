@@ -26,26 +26,18 @@ export function isEmbeddedPreview() {
 }
 
 export function setupEmbeddedPreview({ preview }) {
-  if (!isEmbeddedPreview()) return;
-
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
     if (!isSetRefMessage(event.data)) return;
-    // An empty token would end the session and hard-reload the iframe
-    if (!event.data.token) return;
 
     preview.updateFromRef(event.data.token).catch(error => {
       console.error('Failed to update embedded preview ref.', error);
     });
   });
 
-  announceReady();
-
-  function announceReady() {
-    // Safe to broadcast to '*': no data in this message, and both sides
-    // validate origins on the ref messages that follow.
-    window.parent.postMessage({ type: readyMessageType }, '*');
-  }
+  // Safe to broadcast to '*': no data in this message, and both sides
+  // validate origins on the ref messages that follow.
+  window.parent.postMessage({ type: readyMessageType }, '*');
 }
 
 function isSetRefMessage(data) {
@@ -54,6 +46,7 @@ function isSetRefMessage(data) {
     && typeof data === 'object'
     && data.type === setRefMessageType
     && typeof data.token === 'string'
+    && data.token.length > 0
   );
 }
 
