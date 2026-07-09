@@ -53,14 +53,10 @@ function isSetRefMessage(data) {
 function isAllowedParentOrigin(origin) {
   if (!origin) return false;
 
-  const isLocalToolbar = isLocalOrigin(window.location.origin);
-  const allowed = isLocalToolbar
-    ? [...allowedParentOrigins, ...devParentOrigins]
-    : allowedParentOrigins;
+  const allowed = [
+    ...allowedParentOrigins,
+    ...(isEmbeddedPreview() ? devParentOrigins : []),
+  ];
 
   return allowed.some(allowedOrigin => allowedOrigin.test(origin));
-}
-
-function isLocalOrigin(origin) {
-  return devParentOrigins.some(devOrigin => devOrigin.test(origin));
 }
