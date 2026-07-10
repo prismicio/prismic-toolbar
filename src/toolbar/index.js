@@ -6,11 +6,15 @@ import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
 import { PreviewCookie } from './preview/cookie';
+import { isEmbeddedPreview, setupEmbeddedPreview } from './embedded-preview';
 
 const version = process.env.npm_package_version;
-const IS_EMBEDDED = window.self !== window.top;
+const isTopLevel = window.self === window.top;
 
-if (!IS_EMBEDDED) {
+// Run at the top level, or inside the editor's embedded preview iframe
+const shouldRunToolbar = isTopLevel || isEmbeddedPreview();
+
+if (shouldRunToolbar) {
   const warn = (...message) => require('@common').warn`
   ${String.raw(...message)}
 
@@ -76,6 +80,16 @@ if (!IS_EMBEDDED) {
     Already connected to a repository (${setupDomain}).`;
 
     setupDomain = domain;
+
+    if (isEmbeddedPreview()) {
+      // Refs arrive via set-ref messages; the stub client only guards Preview.end()
+      const previewCookieHelper = new PreviewCookie(/* auth */ false, domain);
+      const preview = new Preview({
+        closePreviewSession: async () => {},
+      }, previewCookieHelper, {});
+      setupEmbeddedPreview({ preview });
+      return;
+    }
 
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);

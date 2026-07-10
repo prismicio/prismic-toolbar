@@ -54,12 +54,20 @@ export class Preview {
   async updatePreview() {
     const { reload, ref } = await this.client.updatePreview();
     this.start(ref);
-    if (reload) {
-      // Dispatch the update event and hard reload if not cancelled by handlers
-      if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
-        this.cancelPreviewUpdates();
-        reloadOrigin();
-      }
+    if (reload) this.reloadPreview(ref);
+  }
+
+  async updateFromRef(ref) {
+    const { shouldReload } = await this.start(ref);
+
+    if (shouldReload) this.reloadPreview(ref);
+  }
+
+  reloadPreview(ref) {
+    // Dispatch the update event and hard reload if not cancelled by handlers
+    if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
+      this.cancelPreviewUpdates();
+      reloadOrigin();
     }
   }
 
