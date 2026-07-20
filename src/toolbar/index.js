@@ -6,7 +6,7 @@ import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
 import { PreviewCookie } from './preview/cookie';
-import { isEmbeddedPreview, setupEmbeddedPreview } from './embedded-preview';
+import { isEmbeddedPreview } from './embedded-preview';
 
 const version = process.env.npm_package_version;
 const isTopLevel = window.self === window.top;
@@ -49,9 +49,15 @@ if (shouldRunToolbar) {
   dispatchToolbarEvent(toolbarEvents.prismic);
 
   // Auto-querystring setup
-  const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
-  const repoParam = scriptURL.searchParams.get('repo');
-  if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
+  // next/script (and other async injectors) leave document.currentScript null.
+  const bootstrapScript = document.currentScript
+    || document.querySelector('script[src*="prismic.js"]');
+  const scriptSrc = bootstrapScript && (bootstrapScript.src || bootstrapScript.getAttribute('src'));
+  if (scriptSrc) {
+    const scriptURL = new URL(getAbsoluteURL(scriptSrc));
+    const repoParam = scriptURL.searchParams.get('repo');
+    if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
+  }
 
   // Auto-legacy setup
   const legacyEndpoint = getLegacyEndpoint();
@@ -81,16 +87,7 @@ if (shouldRunToolbar) {
 
     setupDomain = domain;
 
-    if (isEmbeddedPreview()) {
-      // Refs arrive via set-ref messages; the stub client only guards Preview.end()
-      const previewCookieHelper = new PreviewCookie(/* auth */ false, domain);
-      const preview = new Preview({
-        closePreviewSession: async () => {},
-      }, previewCookieHelper, {});
-      setupEmbeddedPreview({ preview });
-      return;
-    }
-
+    const embedded = isEmbeddedPreview();
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
     const previewState = await toolbarClient.getPreviewState();
@@ -98,10 +95,7 @@ if (shouldRunToolbar) {
     // convert from legacy or clean the cookie if not authenticated
     const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
 
-    const prediction = previewState.auth && new Prediction(toolbarClient, previewCookieHelper);
-    const analytics = previewState.auth && new Analytics(toolbarClient);
-
-    // Start concurrently preview (always) and prediction (if authenticated)
+    // Initialize the preview state and synchronize its cookie.
     const { initialRef, upToDate, isActive } = await preview.setup();
     const { convertedLegacy } = previewCookieHelper.init(initialRef);
 
@@ -110,8 +104,12 @@ if (shouldRunToolbar) {
       return;
     }
 
-    if (isActive || previewState.auth) {
-    // eslint-disable-next-line no-undef
+    if (!embedded && (isActive || previewState.auth)) {
+      const prediction = previewState.auth
+        && new Prediction(toolbarClient, previewCookieHelper);
+      const analytics = previewState.auth && new Analytics(toolbarClient);
+
+      // eslint-disable-next-line no-undef
       await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
       new window.prismic.Toolbar({
         displayPreview: isActive,

@@ -1,6 +1,9 @@
 import { toolbarEvents, dispatchToolbarEvent, getLocation } from '@common';
 import { reloadOrigin } from '../utils';
+import { isEmbeddedPreview } from '../embedded-preview';
 import screenshot from './screenshot';
+
+const previewUpdateInterval = 3000;
 
 export class Preview {
   constructor(client, previewCookie, previewState) {
@@ -34,37 +37,37 @@ export class Preview {
   };
 
   watchPreviewUpdates() {
-    if (this.active) {
-      this.interval = setInterval(() => {
-        if (document.visibilityState === 'visible') {
-          if (this.cookie.getRefForDomain()) {
-            this.updatePreview();
-          } else {
-            this.end();
-          }
-        }
-      }, 3000);
-    }
+    if (!this.active || this.interval) return;
+
+    this.interval = setInterval(() => {
+      // Embed iframes often report visibilityState "hidden" even when shown in
+      // the Page Builder; still poll there.
+      if (document.visibilityState !== 'visible' && !isEmbeddedPreview()) return;
+
+      if (this.cookie.getRefForDomain()) {
+        this.updatePreview();
+      } else {
+        this.end();
+      }
+    }, previewUpdateInterval);
   }
 
   cancelPreviewUpdates() {
-    if (this.interval) clearInterval(this.interval);
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
   }
 
   async updatePreview() {
     const { reload, ref } = await this.client.updatePreview();
-    this.start(ref);
-    if (reload) this.reloadPreview(ref);
-  }
-
-  async updateFromRef(ref) {
     const { shouldReload } = await this.start(ref);
-
-    if (shouldReload) this.reloadPreview(ref);
+    if (reload || shouldReload) this.reloadPreview(ref);
   }
 
   reloadPreview(ref) {
-    // Dispatch the update event and hard reload if not cancelled by handlers
+    // Framework integrations can cancel the hard reload and update in place.
+    // @prismicio/next does this with router.refresh().
     if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
       this.cancelPreviewUpdates();
       reloadOrigin();
