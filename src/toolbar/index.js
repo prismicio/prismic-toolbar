@@ -6,7 +6,11 @@ import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
 import { PreviewCookie } from './preview/cookie';
-import { isEmbeddedPreview, setupEmbeddedPreview } from './embedded-preview';
+import {
+  EmbeddedPreviewCookie,
+  isEmbeddedPreview,
+  setupEmbeddedPreview,
+} from './embedded-preview';
 
 const version = process.env.npm_package_version;
 const isTopLevel = window.self === window.top;
@@ -83,7 +87,7 @@ if (shouldRunToolbar) {
 
     if (isEmbeddedPreview()) {
       // Refs arrive via set-ref messages; the stub client only guards Preview.end()
-      const previewCookieHelper = new PreviewCookie(/* auth */ false, domain);
+      const previewCookieHelper = new EmbeddedPreviewCookie();
       const preview = new Preview({
         closePreviewSession: async () => {},
       }, previewCookieHelper, {});

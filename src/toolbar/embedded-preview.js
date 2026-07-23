@@ -1,4 +1,7 @@
-const markerParam = 'prismic_embed_preview';
+import { deleteCookie, getCookie, setCookie } from '@common';
+
+const markerWindowName = 'prismic:embedded-preview';
+const previewCookieName = 'io.prismic.preview';
 
 const setRefMessageType = 'prismic:embedded-preview:set-ref';
 const readyMessageType = 'prismic:embedded-preview:ready';
@@ -21,8 +24,22 @@ const devParentOrigins = [
 export function isEmbeddedPreview() {
   return (
     window.self !== window.top
-    && new URLSearchParams(window.location.search).get(markerParam) === 'true'
+    && window.name === markerWindowName
   );
+}
+
+export class EmbeddedPreviewCookie {
+  getRefForDomain() {
+    return getCookie(previewCookieName);
+  }
+
+  upsertPreviewForDomain(ref) {
+    setCookie(previewCookieName, ref);
+  }
+
+  deletePreviewForDomain() {
+    deleteCookie(previewCookieName);
+  }
 }
 
 export function setupEmbeddedPreview({ preview }) {
