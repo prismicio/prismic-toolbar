@@ -8,15 +8,19 @@ import { Analytics } from './analytics';
 import { PreviewCookie } from './preview/cookie';
 import {
   EmbeddedPreviewCookie,
-  isEmbeddedPreview,
-  setupEmbeddedPreview,
+  getEmbeddedPreviewMode,
+  setupEmbeddedPreviewPush,
 } from './embedded-preview';
 
 const version = process.env.npm_package_version;
 const isTopLevel = window.self === window.top;
+const embeddedPreviewMode = getEmbeddedPreviewMode();
+const isEmbeddedPushPreview = embeddedPreviewMode === 'push';
+const isEmbeddedPollPreview = embeddedPreviewMode === 'poll';
+const isRegularToolbar = embeddedPreviewMode === undefined;
 
 // Run at the top level, or inside the editor's embedded preview iframe
-const shouldRunToolbar = isTopLevel || isEmbeddedPreview();
+const shouldRunToolbar = isTopLevel || Boolean(embeddedPreviewMode);
 
 if (shouldRunToolbar) {
   const warn = (...message) => require('@common').warn`
@@ -85,27 +89,24 @@ if (shouldRunToolbar) {
 
     setupDomain = domain;
 
-    if (isEmbeddedPreview()) {
-      // Refs arrive via set-ref messages; the stub client only guards Preview.end()
+    if (isEmbeddedPushPreview) {
       const previewCookieHelper = new EmbeddedPreviewCookie();
       const preview = new Preview({
         closePreviewSession: async () => {},
       }, previewCookieHelper, {});
-      setupEmbeddedPreview({ preview });
+      setupEmbeddedPreviewPush({ preview });
       return;
     }
 
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
     const previewState = await toolbarClient.getPreviewState();
-    const previewCookieHelper = new PreviewCookie(previewState.auth, toolbarClient.hostname);
-    // convert from legacy or clean the cookie if not authenticated
+    const previewCookieHelper = isEmbeddedPollPreview
+      ? new EmbeddedPreviewCookie()
+      : new PreviewCookie(previewState.auth, toolbarClient.hostname);
     const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
 
-    const prediction = previewState.auth && new Prediction(toolbarClient, previewCookieHelper);
-    const analytics = previewState.auth && new Analytics(toolbarClient);
-
-    // Start concurrently preview (always) and prediction (if authenticated)
+    // Initialize preview state before reconciling its cookie.
     const { initialRef, upToDate, isActive } = await preview.setup();
     const { convertedLegacy } = previewCookieHelper.init(initialRef);
 
@@ -114,8 +115,15 @@ if (shouldRunToolbar) {
       return;
     }
 
-    if (isActive || previewState.auth) {
-    // eslint-disable-next-line no-undef
+    if (isRegularToolbar && (isActive || previewState.auth)) {
+      const prediction = previewState.auth
+        ? new Prediction(toolbarClient, previewCookieHelper)
+        : undefined;
+      const analytics = previewState.auth
+        ? new Analytics(toolbarClient)
+        : undefined;
+
+      // eslint-disable-next-line no-undef
       await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
       new window.prismic.Toolbar({
         displayPreview: isActive,

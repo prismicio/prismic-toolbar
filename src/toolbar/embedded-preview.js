@@ -1,6 +1,7 @@
 import { deleteCookie, getCookie, setCookie } from '@common';
 
-const markerWindowName = 'prismic:embedded-preview';
+const pushMarkerWindowName = 'prismic:embedded-preview';
+const pollMarkerWindowName = 'prismic:embedded-preview:poll';
 const previewCookieName = 'io.prismic.preview';
 
 const setRefMessageType = 'prismic:embedded-preview:set-ref';
@@ -22,13 +23,25 @@ const devParentOrigins = [
 ];
 
 export function isEmbeddedPreview() {
-  return (
-    window.self !== window.top
-    && window.name === markerWindowName
-  );
+  return Boolean(getEmbeddedPreviewMode());
+}
+
+export function getEmbeddedPreviewMode() {
+  if (window.self === window.top) return;
+  if (window.name === pushMarkerWindowName) return 'push';
+  if (window.name === pollMarkerWindowName) return 'poll';
 }
 
 export class EmbeddedPreviewCookie {
+  init(ref) {
+    if (ref === this.getRefForDomain()) return { convertedLegacy: false };
+
+    if (ref) this.upsertPreviewForDomain(ref);
+    else this.deletePreviewForDomain();
+
+    return { convertedLegacy: false };
+  }
+
   getRefForDomain() {
     return getCookie(previewCookieName);
   }
@@ -42,9 +55,10 @@ export class EmbeddedPreviewCookie {
   }
 }
 
-export function setupEmbeddedPreview({ preview }) {
+export function setupEmbeddedPreviewPush({ preview }) {
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
+    if (event.source !== window.parent) return;
     if (!isSetRefMessage(event.data)) return;
 
     preview.updateFromRef(event.data.token).catch(error => {
