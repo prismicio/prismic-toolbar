@@ -65,6 +65,7 @@ function start(parentOrigin) {
       if (viewportDrivenGrowths >= maxViewportDrivenGrowths) {
         isViewportDriven = true;
         setPageScrolling(true);
+        heightToPost = undefined;
         post(null);
         return;
       }
