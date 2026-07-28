@@ -10,30 +10,23 @@ export class PreviewCookie {
     this.domain = domain;
   }
 
-  init(ref) {
-    const hasConvertCookie = this.makeConvertLegacy();
-    if (hasConvertCookie) return { convertedLegacy: true };
+  // Align the site cookie with `ref`. Returns true when the page should reload.
+  sync(ref) {
+    if (this.convertLegacyCookieIfNeeded()) return true;
 
-    const tracker = (() => {
-      const c = this.get();
-      return c && c._tracker;
-    })();
-    const value = this.build({ tracker, preview: ref });
-    this.set(value);
-    return { convertedLegacy: false };
+    const upToDate = ref === this.getRefForDomain();
+    this.upsertPreviewForDomain(ref);
+    return !upToDate;
   }
 
-  makeConvertLegacy() {
+  convertLegacyCookieIfNeeded() {
     const cookieOpt = getCookie(PREVIEW_COOKIE_NAME);
-    if (cookieOpt) {
-      const parsedCookie = (() => {
-        try {
-          return JSON.parse(cookieOpt);
-        } catch (e) {
-          return null;
-        }
-      })();
-      if (parsedCookie) return false;
+    if (!cookieOpt) return false;
+
+    try {
+      JSON.parse(cookieOpt);
+      return false;
+    } catch (e) {
       this.convertLegacyCookie(cookieOpt);
       return true;
     }

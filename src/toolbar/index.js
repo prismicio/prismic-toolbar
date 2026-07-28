@@ -106,11 +106,10 @@ if (shouldRunToolbar) {
       : new PreviewCookie(previewState.auth, toolbarClient.hostname);
     const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
 
-    // Initialize preview state before reconciling its cookie.
-    const { initialRef, upToDate, isActive } = await preview.setup();
-    const { convertedLegacy } = previewCookieHelper.init(initialRef);
+    const { initialRef, isActive } = await preview.setup();
 
-    if (convertedLegacy || !upToDate) {
+    // Skip cookie sync when inactive so we don't clear a preview owned by another tab.
+    if (isActive && previewCookieHelper.sync(initialRef)) {
       reloadOrigin();
       return;
     }
@@ -138,9 +137,6 @@ if (shouldRunToolbar) {
     }
 
     if (!isActive) {
-      if (previewCookieHelper.getRefForDomain())
-        previewCookieHelper.deletePreviewForDomain();
-
       await toolbarClient.closePreviewSession();
     }
   }

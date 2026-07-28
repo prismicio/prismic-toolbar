@@ -33,13 +33,14 @@ export function getEmbeddedPreviewMode() {
 }
 
 export class EmbeddedPreviewCookie {
-  init(ref) {
-    if (ref === this.getRefForDomain()) return { convertedLegacy: false };
+  // Align the site cookie with `ref`. Returns true when the page should reload.
+  sync(ref) {
+    if (ref === this.getRefForDomain()) return false;
 
     if (ref) this.upsertPreviewForDomain(ref);
     else this.deletePreviewForDomain();
 
-    return { convertedLegacy: false };
+    return true;
   }
 
   getRefForDomain() {
