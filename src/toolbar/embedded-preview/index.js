@@ -1,3 +1,6 @@
+import { once } from '@common';
+import { startDocumentHeightReporting } from './document-height';
+
 const markerParam = 'prismic_embed_preview';
 
 const setRefMessageType = 'prismic:embedded-preview:set-ref';
@@ -26,6 +29,8 @@ export function isEmbeddedPreview() {
 }
 
 export function setupEmbeddedPreview({ preview }) {
+  const startHeightReporting = once(parentOrigin => startDocumentHeightReporting({ parentOrigin }));
+
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
     if (!isSetRefMessage(event.data)) return;
@@ -33,6 +38,9 @@ export function setupEmbeddedPreview({ preview }) {
     preview.updateFromRef(event.data.token).catch(error => {
       console.error('Failed to update embedded preview ref.', error);
     });
+
+    // The parent origin is only known once it has posted a valid message to us.
+    startHeightReporting(event.origin);
   });
 
   // Safe to broadcast to '*': no data in this message, and both sides
