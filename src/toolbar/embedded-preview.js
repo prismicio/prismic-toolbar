@@ -7,6 +7,7 @@ const previewCookieName = 'io.prismic.preview';
 const setRefMessageType = 'prismic:embedded-preview:set-ref';
 const readyMessageType = 'prismic:embedded-preview:ready';
 
+// Only used by the push message handler (embedded previews).
 const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?prismic\.io$/,
   /^https:\/\/([^/]+\.)?wroom\.io$/,
@@ -15,16 +16,9 @@ const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?platform-wroom\.com$/,
   /^https:\/\/([^/]+\.)?devops-wroom\.com$/,
   /^https:\/\/[a-z0-9-]+-prismic\.vercel\.app$/,
-];
-
-const devParentOrigins = [
   /^http:\/\/localhost:\d+$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
 ];
-
-export function isEmbeddedPreview() {
-  return Boolean(getEmbeddedPreviewMode());
-}
 
 export function getEmbeddedPreviewMode() {
   if (window.self === window.top) return;
@@ -84,11 +78,5 @@ function isSetRefMessage(data) {
 
 function isAllowedParentOrigin(origin) {
   if (!origin) return false;
-
-  const allowed = [
-    ...allowedParentOrigins,
-    ...(isEmbeddedPreview() ? devParentOrigins : []),
-  ];
-
-  return allowed.some(allowedOrigin => allowedOrigin.test(origin));
+  return allowedParentOrigins.some(allowedOrigin => allowedOrigin.test(origin));
 }
