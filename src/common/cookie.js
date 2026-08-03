@@ -15,7 +15,7 @@ export function setCookie(name, value, expires = Infinity /* days */) {
 
 export function deleteCookie(name) {
   const path = '/';
-  Cookies.remove(name, { path });
+  Cookies.remove(name, { path, ...getSameSiteAttributes() });
 }
 
 // TODO remove after we force no /preview route (url prediction)
