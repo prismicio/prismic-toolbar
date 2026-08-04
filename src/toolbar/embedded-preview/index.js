@@ -52,50 +52,34 @@ export class EmbeddedPreviewCookie {
 }
 
 export function setupEmbeddedPreviewPush({ preview }) {
-  const startHeightReporting = onceStartDocumentHeightReporting();
-
-  listenToParent(event => {
+  connectToParent(event => {
     if (!isSetRefMessage(event.data)) return;
 
     preview.updateFromRef(event.data.token).catch(error => {
       console.error('Failed to update embedded preview ref.', error);
     });
-
-    startHeightReporting(event.origin);
   });
-
-  postReadyMessage();
 }
 
-// Poll mode gets its ref on its own, so the editor only replies to say it's
-// there, which is what reveals its origin to us.
 export function setupEmbeddedPreviewPoll() {
-  const startHeightReporting = onceStartDocumentHeightReporting();
-
-  listenToParent(event => {
-    if (!isTypedMessage(event.data, ackMessageType)) return;
-
-    startHeightReporting(event.origin);
-  });
-
-  postReadyMessage();
+  connectToParent();
 }
 
-function onceStartDocumentHeightReporting() {
-  // The parent origin is only known once it has posted a valid message to us.
-  return once(parentOrigin => startDocumentHeightReporting({ parentOrigin }));
-}
+function connectToParent(handleMessage = () => {}) {
+  const startHeightReporting = once(parentOrigin => startDocumentHeightReporting({ parentOrigin }));
 
-function listenToParent(handler) {
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
     if (event.source !== window.parent) return;
 
-    handler(event);
-  });
-}
+    if (isTypedMessage(event.data, ackMessageType)) {
+      startHeightReporting(event.origin);
+      return;
+    }
 
-function postReadyMessage() {
+    handleMessage(event);
+  });
+
   // Safe to broadcast to '*': no data in this message, and both sides
   // validate origins on the messages that follow.
   window.parent.postMessage({ type: readyMessageType }, '*');
