@@ -21,7 +21,6 @@ function start(parentOrigin) {
   let heightToPost;
   let viewportDrivenGrowths = 0;
   let isViewportDriven = false;
-  setPageScrolling(false);
 
   const post = height =>
     window.parent.postMessage(
@@ -64,7 +63,6 @@ function start(parentOrigin) {
 
       if (viewportDrivenGrowths >= maxViewportDrivenGrowths) {
         isViewportDriven = true;
-        setPageScrolling(true);
         heightToPost = undefined;
         post(null);
         return;
@@ -85,12 +83,6 @@ function start(parentOrigin) {
   if (document.fonts) document.fonts.ready.then(measure);
 
   measure();
-}
-
-function setPageScrolling(enabled) {
-  const overflow = enabled ? '' : 'hidden';
-  document.documentElement.style.overflow = overflow;
-  document.body.style.overflow = overflow;
 }
 
 function measureDocumentHeight() {
