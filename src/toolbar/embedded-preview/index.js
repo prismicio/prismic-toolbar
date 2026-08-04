@@ -7,8 +7,8 @@ const previewCookieName = 'io.prismic.preview';
 
 const setRefMessageType = 'prismic:embedded-preview:set-ref';
 const readyMessageType = 'prismic:embedded-preview:ready';
+const ackMessageType = 'prismic:embedded-preview:ack';
 
-// Only used by the push message handler (embedded previews).
 const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?prismic\.io$/,
   /^https:\/\/([^/]+\.)?wroom\.io$/,
@@ -52,40 +52,65 @@ export class EmbeddedPreviewCookie {
 }
 
 export function setupEmbeddedPreviewPush({ preview }) {
-  const startHeightReporting = once(parentOrigin => startDocumentHeightReporting({ parentOrigin }));
+  const startHeightReporting = onceStartDocumentHeightReporting();
 
-  window.addEventListener('message', event => {
-    if (!isAllowedParentOrigin(event.origin)) return;
-    if (event.source !== window.parent) return;
+  listenToParent(event => {
     if (!isSetRefMessage(event.data)) return;
 
     preview.updateFromRef(event.data.token).catch(error => {
       console.error('Failed to update embedded preview ref.', error);
     });
 
-    // The parent origin is only known once it has posted a valid message to us.
     startHeightReporting(event.origin);
   });
 
-  // Safe to broadcast to '*': no data in this message, and both sides
-  // validate origins on the ref messages that follow.
-  window.parent.postMessage({ type: readyMessageType }, '*');
+  postReadyMessage();
 }
 
+// Poll mode gets its ref on its own, so the editor only replies to say it's
+// there, which is what reveals its origin to us.
 export function setupEmbeddedPreviewPoll() {
-  // Poll mode never receives a message from the parent, so its origin is
-  // unknown. Broadcasting is safe here: the message only carries a height.
-  startDocumentHeightReporting({ parentOrigin: '*' });
+  const startHeightReporting = onceStartDocumentHeightReporting();
+
+  listenToParent(event => {
+    if (!isTypedMessage(event.data, ackMessageType)) return;
+
+    startHeightReporting(event.origin);
+  });
+
+  postReadyMessage();
+}
+
+function onceStartDocumentHeightReporting() {
+  // The parent origin is only known once it has posted a valid message to us.
+  return once(parentOrigin => startDocumentHeightReporting({ parentOrigin }));
+}
+
+function listenToParent(handler) {
+  window.addEventListener('message', event => {
+    if (!isAllowedParentOrigin(event.origin)) return;
+    if (event.source !== window.parent) return;
+
+    handler(event);
+  });
+}
+
+function postReadyMessage() {
+  // Safe to broadcast to '*': no data in this message, and both sides
+  // validate origins on the messages that follow.
+  window.parent.postMessage({ type: readyMessageType }, '*');
 }
 
 function isSetRefMessage(data) {
   return (
-    data
-    && typeof data === 'object'
-    && data.type === setRefMessageType
+    isTypedMessage(data, setRefMessageType)
     && typeof data.token === 'string'
     && data.token.length > 0
   );
+}
+
+function isTypedMessage(data, type) {
+  return Boolean(data) && typeof data === 'object' && data.type === type;
 }
 
 function isAllowedParentOrigin(origin) {

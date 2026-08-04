@@ -99,6 +99,8 @@ if (shouldRunToolbar) {
       return;
     }
 
+    if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll();
+
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
     const previewState = await toolbarClient.getPreviewState();
@@ -114,8 +116,6 @@ if (shouldRunToolbar) {
       reloadOrigin();
       return;
     }
-
-    if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll();
 
     if (isRegularToolbar && (isActive || previewState.auth)) {
       const prediction = previewState.auth
