@@ -22,27 +22,20 @@ export class Preview {
     this.documents = preview.documents || [];
 
     const refUpToDate = preview.ref === this.cookie.getRefForDomain();
-    const displayPreview = this.active && refUpToDate;
-    // We don't display the preview by default unless the start function says so
-    if (displayPreview) this.watchPreviewUpdates();
+    // Start polling only when the cookie already matches; otherwise sync + reload will.
+    if (this.active && refUpToDate) this.watchPreviewUpdates();
 
     return {
       isActive: this.active,
       initialRef: preview.ref,
-      upToDate: refUpToDate
     };
   };
 
   watchPreviewUpdates() {
     if (this.active) {
       this.interval = setInterval(() => {
-        if (document.visibilityState === 'visible') {
-          if (this.cookie.getRefForDomain()) {
-            this.updatePreview();
-          } else {
-            this.end();
-          }
-        }
+        // End only on a falsy ping ref (via start → end), not a missing site cookie.
+        if (document.visibilityState === 'visible') this.updatePreview();
       }, 3000);
     }
   }

@@ -1,11 +1,14 @@
-import { once } from '@common';
+import { deleteCookie, getCookie, once, setCookie } from '@common';
 import { startDocumentHeightReporting } from './document-height';
 
-const markerParam = 'prismic_embed_preview';
+const pushMarkerWindowName = 'prismic:embedded-preview';
+const pollMarkerWindowName = 'prismic:embedded-preview:poll';
+const previewCookieName = 'io.prismic.preview';
 
 const setRefMessageType = 'prismic:embedded-preview:set-ref';
 const readyMessageType = 'prismic:embedded-preview:ready';
 
+// Only used by the push message handler (embedded previews).
 const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?prismic\.io$/,
   /^https:\/\/([^/]+\.)?wroom\.io$/,
@@ -14,25 +17,46 @@ const allowedParentOrigins = [
   /^https:\/\/([^/]+\.)?platform-wroom\.com$/,
   /^https:\/\/([^/]+\.)?devops-wroom\.com$/,
   /^https:\/\/[a-z0-9-]+-prismic\.vercel\.app$/,
-];
-
-const devParentOrigins = [
   /^http:\/\/localhost:\d+$/,
   /^http:\/\/127\.0\.0\.1:\d+$/,
 ];
 
-export function isEmbeddedPreview() {
-  return (
-    window.self !== window.top
-    && new URLSearchParams(window.location.search).get(markerParam) === 'true'
-  );
+export function getEmbeddedPreviewMode() {
+  if (window.self === window.top) return;
+  if (window.name === pushMarkerWindowName) return 'push';
+  if (window.name === pollMarkerWindowName) return 'poll';
 }
 
-export function setupEmbeddedPreview({ preview }) {
+export class EmbeddedPreviewCookie {
+  // Align the site cookie with `ref`. Returns true when the page should reload.
+  sync(ref) {
+    if (ref === this.getRefForDomain()) return false;
+
+    if (ref) this.upsertPreviewForDomain(ref);
+    else this.deletePreviewForDomain();
+
+    return true;
+  }
+
+  getRefForDomain() {
+    return getCookie(previewCookieName);
+  }
+
+  upsertPreviewForDomain(ref) {
+    setCookie(previewCookieName, ref);
+  }
+
+  deletePreviewForDomain() {
+    deleteCookie(previewCookieName);
+  }
+}
+
+export function setupEmbeddedPreviewPush({ preview }) {
   const startHeightReporting = once(parentOrigin => startDocumentHeightReporting({ parentOrigin }));
 
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
+    if (event.source !== window.parent) return;
     if (!isSetRefMessage(event.data)) return;
 
     preview.updateFromRef(event.data.token).catch(error => {
@@ -48,6 +72,12 @@ export function setupEmbeddedPreview({ preview }) {
   window.parent.postMessage({ type: readyMessageType }, '*');
 }
 
+export function setupEmbeddedPreviewPoll() {
+  // Poll mode never receives a message from the parent, so its origin is
+  // unknown. Broadcasting is safe here: the message only carries a height.
+  startDocumentHeightReporting({ parentOrigin: '*' });
+}
+
 function isSetRefMessage(data) {
   return (
     data
@@ -60,11 +90,5 @@ function isSetRefMessage(data) {
 
 function isAllowedParentOrigin(origin) {
   if (!origin) return false;
-
-  const allowed = [
-    ...allowedParentOrigins,
-    ...(isEmbeddedPreview() ? devParentOrigins : []),
-  ];
-
-  return allowed.some(allowedOrigin => allowedOrigin.test(origin));
+  return allowedParentOrigins.some(allowedOrigin => allowedOrigin.test(origin));
 }
