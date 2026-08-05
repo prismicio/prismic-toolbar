@@ -9,6 +9,7 @@ import { PreviewCookie } from './preview/cookie';
 import {
   EmbeddedPreviewCookie,
   getEmbeddedPreviewMode,
+  setupEmbeddedPreviewPoll,
   setupEmbeddedPreviewPush,
 } from './embedded-preview';
 
@@ -97,6 +98,8 @@ if (shouldRunToolbar) {
       setupEmbeddedPreviewPush({ preview });
       return;
     }
+
+    if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll();
 
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
