@@ -6,6 +6,7 @@ const pollMarkerWindowName = 'prismic:embedded-preview:poll';
 const previewCookieName = 'io.prismic.preview';
 
 const setRefMessageType = 'prismic:embedded-preview:set-ref';
+const reloadMessageType = 'prismic:embedded-preview:reload';
 const readyMessageType = 'prismic:embedded-preview:ready';
 const ackMessageType = 'prismic:embedded-preview:ack';
 
@@ -53,11 +54,22 @@ export class EmbeddedPreviewCookie {
 
 export function setupEmbeddedPreviewPush({ preview }) {
   connectToParent(event => {
-    if (!isSetRefMessage(event.data)) return;
+    if (isSetRefMessage(event.data)) {
+      preview.updateFromRef(event.data.token).catch(error => {
+        console.error('Failed to update embedded preview ref.', error);
+      });
+      return;
+    }
 
-    preview.updateFromRef(event.data.token).catch(error => {
-      console.error('Failed to update embedded preview ref.', error);
-    });
+    // `set-ref` only reloads when the ref itself changes, because `start` treats an
+    // unchanged ref as "already previewing this". That holds when every new snapshot
+    // gets its own ref, but not when a preview session keeps one stable ref for its
+    // whole life and the content behind it is what moves. In that case a repeated
+    // `set-ref` is a no-op and the page keeps rendering the snapshot it loaded with.
+    // This message lets the parent say "same ref, new content" explicitly.
+    if (isTypedMessage(event.data, reloadMessageType)) {
+      preview.reloadEmbeddedPreview();
+    }
   });
 }
 
