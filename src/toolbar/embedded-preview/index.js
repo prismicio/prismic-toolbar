@@ -58,16 +58,8 @@ export function setupEmbeddedPreviewPush({ preview }) {
       preview.updateFromRef(event.data.token).catch(error => {
         console.error('Failed to update embedded preview ref.', error);
       });
-      return;
-    }
-
-    // `set-ref` only reloads when the ref itself changes, because `start` treats an
-    // unchanged ref as "already previewing this". That holds when every new snapshot
-    // gets its own ref, but not when a preview session keeps one stable ref for its
-    // whole life and the content behind it is what moves. In that case a repeated
-    // `set-ref` is a no-op and the page keeps rendering the snapshot it loaded with.
-    // This message lets the parent say "same ref, new content" explicitly.
-    if (isTypedMessage(event.data, reloadMessageType)) {
+    } else if (isTypedMessage(event.data, reloadMessageType)) {
+      // Reload when the content behind a stable preview ref changes.
       preview.reloadEmbeddedPreview();
     }
   });

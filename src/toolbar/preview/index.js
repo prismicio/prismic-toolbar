@@ -56,9 +56,6 @@ export class Preview {
     if (shouldReload) this.reloadPreview(ref);
   }
 
-  // Reload on the ref we are already previewing. Used when the content behind a
-  // stable ref changed, which `updateFromRef` cannot detect. No-op when no preview
-  // cookie is set, so a stray message cannot reload a page that isn't previewing.
   reloadEmbeddedPreview() {
     const ref = this.cookie.getRefForDomain();
 
