@@ -1,0 +1,98 @@
+:host {
+  --prismic-overlay-pin-size: 32px;
+  --prismic-overlay-ui-scale: 1;
+
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  pointer-events: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.placement-layer {
+  position: fixed;
+  inset: 0;
+}
+
+.surface,
+.pins {
+  pointer-events: none;
+}
+
+.surface {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+.pins {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+}
+
+.placement-layer {
+  z-index: 1;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: none;
+  pointer-events: auto;
+}
+
+.pin {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  width: var(--prismic-overlay-pin-size);
+  height: var(--prismic-overlay-pin-size);
+  margin: 0;
+  padding: 4px;
+  place-items: center;
+  overflow: hidden;
+  color: #666;
+  background: white;
+  border: 0;
+  border-radius: 2px 50% 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 4%), 0 2px 6px rgb(0 0 0 / 8%), 0 8px 26px rgb(0 0 0 / 12%);
+  cursor: pointer;
+  pointer-events: auto;
+  transform: scale(var(--prismic-overlay-ui-scale));
+  transform-origin: top left;
+}
+
+.pin-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  color: #666;
+  background: #eee;
+  border-radius: 50%;
+}
+
+.pin-avatar-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pin-avatar-fallback {
+  font-size: 8px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.cursor-pin {
+  position: fixed;
+  z-index: 3;
+  pointer-events: none;
+}
