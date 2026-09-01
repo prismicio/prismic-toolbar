@@ -162,9 +162,10 @@ export class EmbeddedPreviewOverlay {
       }));
     });
 
-    if (this.commentState.draftPin) {
+    if (this.commentState.draftPin && this.commentState.draftAuthor) {
       this.pins.appendChild(this.createPin({
         ...this.commentState.draftPin,
+        author: this.commentState.draftAuthor,
         selected: true,
         type: 'draft',
       }));
@@ -235,13 +236,13 @@ export class EmbeddedPreviewOverlay {
   }
 
   renderCursorPin(event) {
-    if (!this.commentState.placementAuthor || !this.root) return;
+    if (!this.commentState.draftAuthor || !this.root) return;
 
     if (!this.cursorPin) {
       this.cursorPin = this.createPin({
         xRatio: 0,
         yRatio: 0,
-        author: this.commentState.placementAuthor,
+        author: this.commentState.draftAuthor,
         selected: false,
         type: 'draft',
       });
@@ -351,7 +352,7 @@ function emptyCommentOverlayState() {
   return {
     placementEnabled: false,
     pins: [],
-    placementAuthor: undefined,
+    draftAuthor: undefined,
     selectedThreadId: undefined,
     draftPin: undefined,
   };
@@ -361,7 +362,7 @@ function normalizeCommentOverlayState(data) {
   return {
     placementEnabled: data.placementEnabled,
     pins: data.pins,
-    placementAuthor: data.placementAuthor,
+    draftAuthor: data.draftAuthor,
     selectedThreadId: data.selectedThreadId,
     draftPin: data.draftPin,
   };
@@ -390,9 +391,12 @@ function isCommentOverlayMessage(data) {
     && typeof data.placementEnabled === 'boolean'
     && Array.isArray(data.pins)
     && data.pins.every(isThreadPin)
-    && isOptionalAuthor(data.placementAuthor)
+    && isOptionalAuthor(data.draftAuthor)
     && isOptionalString(data.selectedThreadId)
-    && (data.draftPin === undefined || isPositionedAuthor(data.draftPin));
+    && (
+      data.draftPin === undefined
+      || (isPositioned(data.draftPin) && isAuthor(data.draftAuthor))
+    );
 }
 
 function isScrollToPinMessage(data) {
@@ -409,10 +413,14 @@ function isThreadPin(pin) {
 }
 
 function isPositionedAuthor(value) {
+  return isPositioned(value)
+    && isAuthor(value.author);
+}
+
+function isPositioned(value) {
   return isObject(value)
     && isRatio(value.xRatio)
-    && isRatio(value.yRatio)
-    && isAuthor(value.author);
+    && isRatio(value.yRatio);
 }
 
 function isOptionalAuthor(author) {
