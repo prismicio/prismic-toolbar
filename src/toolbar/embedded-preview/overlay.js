@@ -5,7 +5,8 @@ import {
 } from '@common';
 import overlayStyles from './overlay.css';
 
-const setOverlayMessageType = 'prismic:embedded-preview:set-overlay';
+const setOverlayScaleMessageType = 'prismic:embedded-preview:set-overlay-scale';
+const setCommentOverlayMessageType = 'prismic:embedded-preview:set-comment-overlay';
 const scrollToPinMessageType = 'prismic:embedded-preview:scroll-to-pin';
 
 const placeCommentMessageType = 'prismic:embedded-preview:place-comment';
@@ -18,7 +19,8 @@ const boundaryPadding = 4;
 export class EmbeddedPreviewOverlay {
   constructor({ parentOrigin }) {
     this.parentOrigin = parentOrigin;
-    this.state = emptyState();
+    this.uiScale = 1;
+    this.commentState = emptyCommentOverlayState();
     this.lastPositionMessage = undefined;
     this.scrollToThreadId = undefined;
     this.root = undefined;
@@ -50,10 +52,18 @@ export class EmbeddedPreviewOverlay {
   }
 
   handleMessage(data) {
-    if (isOverlayMessage(data)) {
-      const nextState = normalizeOverlayState(data);
-      const selectedPinChanged = selectedPinKey(this.state) !== selectedPinKey(nextState);
-      this.state = nextState;
+    if (isOverlayScaleMessage(data)) {
+      if (this.uiScale === data.uiScale) return;
+      this.uiScale = data.uiScale;
+      this.applyOverlayScale();
+      return;
+    }
+
+    if (isCommentOverlayMessage(data)) {
+      const nextState = normalizeCommentOverlayState(data);
+      const previousSelectedPin = selectedPinKey(this.commentState);
+      const selectedPinChanged = previousSelectedPin !== selectedPinKey(nextState);
+      this.commentState = nextState;
       if (selectedPinChanged) {
         this.lastPositionMessage = undefined;
       }
@@ -85,6 +95,7 @@ export class EmbeddedPreviewOverlay {
       },
     });
     this.host = this.root.host || this.root;
+    this.applyOverlayScale();
     appendCSS(this.root, overlayStyles);
 
     this.surface = document.createElement('div');
@@ -114,7 +125,6 @@ export class EmbeddedPreviewOverlay {
 
     this.renderPlacementLayer();
     this.renderPins();
-    this.renderCursorPinScale();
     this.scrollSelectedPinIntoView();
     this.reportSelectedPinPositionSoon();
   }
@@ -122,7 +132,7 @@ export class EmbeddedPreviewOverlay {
   renderPlacementLayer() {
     const existingLayer = this.surface.querySelector('.placement-layer');
 
-    if (!this.state.placementEnabled) {
+    if (!this.commentState.placementEnabled) {
       if (existingLayer) existingLayer.remove();
       this.removeCursorPin();
       return;
@@ -144,17 +154,17 @@ export class EmbeddedPreviewOverlay {
   renderPins() {
     this.pins.textContent = '';
 
-    this.state.pins.forEach(pin => {
+    this.commentState.pins.forEach(pin => {
       this.pins.appendChild(this.createPin({
         ...pin,
-        selected: pin.threadId === this.state.selectedThreadId,
+        selected: pin.threadId === this.commentState.selectedThreadId,
         type: 'thread',
       }));
     });
 
-    if (this.state.draftPin) {
+    if (this.commentState.draftPin) {
       this.pins.appendChild(this.createPin({
-        ...this.state.draftPin,
+        ...this.commentState.draftPin,
         selected: true,
         type: 'draft',
       }));
@@ -168,7 +178,7 @@ export class EmbeddedPreviewOverlay {
       positionPin(pin, {
         xRatio: Number(pin.dataset.xRatio),
         yRatio: Number(pin.dataset.yRatio),
-      }, this.state.uiScale, this.host);
+      }, this.uiScale, this.host);
     });
   }
 
@@ -199,15 +209,14 @@ export class EmbeddedPreviewOverlay {
     }
 
     button.appendChild(createPinContent(pin.author));
-    setPinScale(button, this.state.uiScale);
-    positionPin(button, pin, this.state.uiScale, this.host);
+    positionPin(button, pin, this.uiScale, this.host);
     return button;
   }
 
   placeComment(event) {
     event.stopPropagation();
 
-    if (this.state.draftPin) {
+    if (this.commentState.draftPin) {
       this.post({
         type: deselectPinMessageType,
         pin: { type: 'draft' },
@@ -226,13 +235,13 @@ export class EmbeddedPreviewOverlay {
   }
 
   renderCursorPin(event) {
-    if (!this.state.placementAuthor || !this.root) return;
+    if (!this.commentState.placementAuthor || !this.root) return;
 
     if (!this.cursorPin) {
       this.cursorPin = this.createPin({
         xRatio: 0,
         yRatio: 0,
-        author: this.state.placementAuthor,
+        author: this.commentState.placementAuthor,
         selected: false,
         type: 'draft',
       });
@@ -244,21 +253,27 @@ export class EmbeddedPreviewOverlay {
     this.cursorPin.style.top = `${event.clientY}px`;
   }
 
-  renderCursorPinScale() {
-    if (!this.cursorPin) return;
-    setPinScale(this.cursorPin, this.state.uiScale);
-  }
-
   removeCursorPin() {
     if (!this.cursorPin) return;
     this.cursorPin.remove();
     this.cursorPin = undefined;
   }
 
-  handleDocumentClick() {
-    if (this.state.placementEnabled) return;
+  applyOverlayScale() {
+    if (!this.host) return;
 
-    const pin = selectedPinIdentity(this.state);
+    this.host.style.setProperty(
+      '--prismic-overlay-ui-scale',
+      String(this.uiScale),
+    );
+    this.renderPinPositions();
+    this.reportSelectedPinPositionSoon();
+  }
+
+  handleDocumentClick() {
+    if (this.commentState.placementEnabled) return;
+
+    const pin = selectedPinIdentity(this.commentState);
     if (!pin) return;
 
     this.post({ type: deselectPinMessageType, pin });
@@ -267,7 +282,7 @@ export class EmbeddedPreviewOverlay {
   scrollSelectedPinIntoView() {
     if (!this.pins || !this.scrollToThreadId) return;
 
-    const pinState = this.state.pins.find(
+    const pinState = this.commentState.pins.find(
       candidate => candidate.threadId === this.scrollToThreadId,
     );
     const pin = Array.from(this.pins.querySelectorAll('.pin')).find(
@@ -317,13 +332,13 @@ export class EmbeddedPreviewOverlay {
   getSelectedPin() {
     if (!this.pins) return undefined;
 
-    if (this.state.draftPin) {
+    if (this.commentState.draftPin) {
       return this.pins.querySelector('[data-pin-type="draft"]');
     }
 
-    if (!this.state.selectedThreadId) return undefined;
+    if (!this.commentState.selectedThreadId) return undefined;
     return Array.from(this.pins.querySelectorAll('[data-pin-type="thread"]')).find(
-      pin => pin.dataset.threadId === this.state.selectedThreadId,
+      pin => pin.dataset.threadId === this.commentState.selectedThreadId,
     );
   }
 
@@ -332,10 +347,9 @@ export class EmbeddedPreviewOverlay {
   }
 }
 
-function emptyState() {
+function emptyCommentOverlayState() {
   return {
     placementEnabled: false,
-    uiScale: 1,
     pins: [],
     placementAuthor: undefined,
     selectedThreadId: undefined,
@@ -343,10 +357,9 @@ function emptyState() {
   };
 }
 
-function normalizeOverlayState(data) {
+function normalizeCommentOverlayState(data) {
   return {
     placementEnabled: data.placementEnabled,
-    uiScale: data.uiScale,
     pins: data.pins,
     placementAuthor: data.placementAuthor,
     selectedThreadId: data.selectedThreadId,
@@ -365,11 +378,16 @@ function selectedPinIdentity(state) {
   return { type: 'thread', threadId: state.selectedThreadId };
 }
 
-function isOverlayMessage(data) {
+function isOverlayScaleMessage(data) {
   return isObject(data)
-    && data.type === setOverlayMessageType
+    && data.type === setOverlayScaleMessageType
+    && isPositiveNumber(data.uiScale);
+}
+
+function isCommentOverlayMessage(data) {
+  return isObject(data)
+    && data.type === setCommentOverlayMessageType
     && typeof data.placementEnabled === 'boolean'
-    && isPositiveNumber(data.uiScale)
     && Array.isArray(data.pins)
     && data.pins.every(isThreadPin)
     && isOptionalAuthor(data.placementAuthor)
@@ -458,10 +476,6 @@ function getInitials(name) {
     .filter((part, index) => part && (index === 0 || parts.length > 1))
     .map(part => part.charAt(0).toLocaleUpperCase())
     .join('');
-}
-
-function setPinScale(pin, uiScale) {
-  pin.style.setProperty('--prismic-overlay-ui-scale', String(uiScale));
 }
 
 function positionPin(pin, position, uiScale, host) {
