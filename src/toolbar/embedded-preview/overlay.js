@@ -9,9 +9,9 @@ const setOverlayMessageType = 'prismic:embedded-preview:set-overlay';
 const scrollToPinMessageType = 'prismic:embedded-preview:scroll-to-pin';
 
 const placeCommentMessageType = 'prismic:embedded-preview:place-comment';
-const pinClickedMessageType = 'prismic:embedded-preview:pin-clicked';
-const selectedPinPositionMessageType = 'prismic:embedded-preview:selected-pin-position';
-const dismissCommentMessageType = 'prismic:embedded-preview:dismiss-comment';
+const selectPinMessageType = 'prismic:embedded-preview:select-pin';
+const deselectPinMessageType = 'prismic:embedded-preview:deselect-pin';
+const reportSelectedPinPositionMessageType = 'prismic:embedded-preview:report-selected-pin-position';
 
 const boundaryPadding = 4;
 
@@ -189,7 +189,10 @@ export class EmbeddedPreviewOverlay {
       button.dataset.threadId = pin.threadId;
       button.addEventListener('click', event => {
         event.stopPropagation();
-        this.post({ type: pinClickedMessageType, threadId: pin.threadId });
+        this.post({
+          type: pin.selected ? deselectPinMessageType : selectPinMessageType,
+          pin: { type: 'thread', threadId: pin.threadId },
+        });
       });
     } else {
       button.disabled = true;
@@ -203,6 +206,14 @@ export class EmbeddedPreviewOverlay {
 
   placeComment(event) {
     event.stopPropagation();
+
+    if (this.state.draftPin) {
+      this.post({
+        type: deselectPinMessageType,
+        pin: { type: 'draft' },
+      });
+      return;
+    }
 
     const { width, height } = measureDocument();
     if (width === 0 || height === 0) return;
@@ -246,9 +257,11 @@ export class EmbeddedPreviewOverlay {
 
   handleDocumentClick() {
     if (this.state.placementEnabled) return;
-    if (!this.state.selectedThreadId && !this.state.draftPin) return;
 
-    this.post({ type: dismissCommentMessageType });
+    const pin = selectedPinIdentity(this.state);
+    if (!pin) return;
+
+    this.post({ type: deselectPinMessageType, pin });
   }
 
   scrollSelectedPinIntoView() {
@@ -284,7 +297,7 @@ export class EmbeddedPreviewOverlay {
     const visible = isVisible(pin);
 
     const message = {
-      type: selectedPinPositionMessageType,
+      type: reportSelectedPinPositionMessageType,
       pin: pin.dataset.pinType === 'thread'
         ? { type: 'thread', threadId: pin.dataset.threadId }
         : { type: 'draft' },
@@ -344,6 +357,12 @@ function normalizeOverlayState(data) {
 function selectedPinKey(state) {
   if (state.draftPin) return 'draft';
   return state.selectedThreadId;
+}
+
+function selectedPinIdentity(state) {
+  if (state.draftPin) return { type: 'draft' };
+  if (!state.selectedThreadId) return;
+  return { type: 'thread', threadId: state.selectedThreadId };
 }
 
 function isOverlayMessage(data) {
