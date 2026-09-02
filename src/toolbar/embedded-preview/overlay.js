@@ -200,10 +200,18 @@ export class EmbeddedPreviewOverlay {
       button.dataset.threadId = pin.threadId;
       button.addEventListener('click', event => {
         event.stopPropagation();
-        this.post({
-          type: pin.selected ? deselectPinMessageType : selectPinMessageType,
-          pin: { type: 'thread', threadId: pin.threadId },
-        });
+        if (pin.selected) {
+          this.post({
+            type: deselectPinMessageType,
+            pin: { type: 'thread', threadId: pin.threadId },
+          });
+        } else {
+          this.post({
+            type: selectPinMessageType,
+            pin: { type: 'thread', threadId: pin.threadId },
+            rect: getPinRect(button),
+          });
+        }
       });
     } else {
       button.disabled = true;
@@ -228,10 +236,15 @@ export class EmbeddedPreviewOverlay {
     const { width, height } = measureDocument();
     if (width === 0 || height === 0) return;
 
-    this.post({
-      type: placeCommentMessageType,
+    const position = {
       xRatio: clamp(event.pageX / width),
       yRatio: clamp(event.pageY / height),
+    };
+
+    this.post({
+      type: placeCommentMessageType,
+      ...position,
+      rect: getPinRectFromPosition(position, this.uiScale),
     });
   }
 
@@ -309,19 +322,13 @@ export class EmbeddedPreviewOverlay {
     const pin = this.getSelectedPin();
     if (!pin) return;
 
-    const rect = pin.getBoundingClientRect();
-    const visible = isVisible(pin);
-
     const message = {
       type: reportSelectedPinPositionMessageType,
       pin: pin.dataset.pinType === 'thread'
         ? { type: 'thread', threadId: pin.dataset.threadId }
         : { type: 'draft' },
-      xRatio: rect.left / window.innerWidth,
-      yRatio: rect.top / window.innerHeight,
-      widthRatio: rect.width / window.innerWidth,
-      heightRatio: rect.height / window.innerHeight,
-      visible,
+      rect: getPinRect(pin),
+      visible: isVisible(pin),
     };
     const serializedMessage = JSON.stringify(message);
     if (serializedMessage === this.lastPositionMessage) return;
@@ -487,17 +494,38 @@ function getInitials(name) {
 }
 
 function positionPin(pin, position, uiScale, host) {
-  const { width, height } = measureDocument();
+  const { left, top } = getPinDocumentPosition(position, uiScale);
   const hostRect = host.getBoundingClientRect();
   const hostDocumentLeft = hostRect.left + window.scrollX;
   const hostDocumentTop = hostRect.top + window.scrollY;
+  pin.style.left = `${left - hostDocumentLeft}px`;
+  pin.style.top = `${top - hostDocumentTop}px`;
+}
+
+function getPinDocumentPosition(position, uiScale) {
+  const { width, height } = measureDocument();
   const renderedPinSize = pinSize() * uiScale;
   const maxLeft = Math.max(boundaryPadding, width - renderedPinSize - boundaryPadding);
   const maxTop = Math.max(boundaryPadding, height - renderedPinSize - boundaryPadding);
-  const documentLeft = clamp(position.xRatio * width, boundaryPadding, maxLeft);
-  const documentTop = clamp(position.yRatio * height, boundaryPadding, maxTop);
-  pin.style.left = `${documentLeft - hostDocumentLeft}px`;
-  pin.style.top = `${documentTop - hostDocumentTop}px`;
+
+  return {
+    left: clamp(position.xRatio * width, boundaryPadding, maxLeft),
+    top: clamp(position.yRatio * height, boundaryPadding, maxTop),
+  };
+}
+
+// Lets a pin be measured before it is rendered, so placing a comment can report
+// the draft pin's rectangle without waiting for a round trip through the Editor.
+function getPinRectFromPosition(position, uiScale) {
+  const { left, top } = getPinDocumentPosition(position, uiScale);
+  const renderedPinSize = pinSize() * uiScale;
+
+  return toPinRect({
+    left: left - window.scrollX,
+    top: top - window.scrollY,
+    width: renderedPinSize,
+    height: renderedPinSize,
+  });
 }
 
 function pinSize() {
@@ -533,6 +561,19 @@ function isVisible(element) {
     && rect.right > 0
     && rect.top < window.innerHeight
     && rect.left < window.innerWidth;
+}
+
+function getPinRect(element) {
+  return toPinRect(element.getBoundingClientRect());
+}
+
+function toPinRect(rect) {
+  return {
+    xRatio: rect.left / window.innerWidth,
+    yRatio: rect.top / window.innerHeight,
+    widthRatio: rect.width / window.innerWidth,
+    heightRatio: rect.height / window.innerHeight,
+  };
 }
 
 function clamp(value, min = 0, max = 1) {
