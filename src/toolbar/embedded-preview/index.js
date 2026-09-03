@@ -55,7 +55,7 @@ export function setupEmbeddedPreviewPush({ preview }) {
   connectToParent(event => {
     if (!isSetRefMessage(event.data)) return;
 
-    preview.updateFromRef(event.data.token).catch(error => {
+    preview.updateFromRef(event.data.token, event.data.reload).catch(error => {
       console.error('Failed to update embedded preview ref.', error);
     });
   });

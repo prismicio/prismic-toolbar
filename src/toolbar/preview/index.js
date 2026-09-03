@@ -1,5 +1,5 @@
 import { toolbarEvents, dispatchToolbarEvent, getLocation } from '@common';
-import { reloadOrigin } from '../utils';
+import { isCompositePreviewRef, reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
 export class Preview {
@@ -20,10 +20,6 @@ export class Preview {
     this.title = preview.title;
     this.updated = preview.updated;
     this.documents = preview.documents || [];
-
-    const refUpToDate = preview.ref === this.cookie.getRefForDomain();
-    // Start polling only when the cookie already matches; otherwise sync + reload will.
-    if (this.active && refUpToDate) this.watchPreviewUpdates();
 
     return {
       isActive: this.active,
@@ -50,15 +46,18 @@ export class Preview {
     if (reload) this.reloadPreview(ref);
   }
 
-  async updateFromRef(ref) {
+  async updateFromRef(ref, reload) {
     const { shouldReload } = await this.start(ref);
+    const skipHardReload = reload === false || isCompositePreviewRef(ref);
 
-    if (shouldReload) this.reloadPreview(ref);
+    // reload: false or m-*:p-* : cookie already upserted; notify, never remount.
+    // Missing/undefined reload keeps the legacy mismatch → location.reload() path.
+    if (shouldReload || skipHardReload) this.reloadPreview(ref, reload);
   }
 
-  reloadPreview(ref) {
-    // Dispatch the update event and hard reload if not cancelled by handlers
+  reloadPreview(ref, reload) {
     if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
+      if (reload === false || isCompositePreviewRef(ref)) return;
       this.cancelPreviewUpdates();
       reloadOrigin();
     }

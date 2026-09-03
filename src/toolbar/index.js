@@ -1,7 +1,7 @@
 import './checkBrowser';
 import { ToolbarService } from '@toolbar-service';
 import { toolbarEvents, dispatchToolbarEvent, script } from '@common';
-import { reloadOrigin, getAbsoluteURL } from './utils';
+import { reloadOrigin, getAbsoluteURL, isCompositePreviewRef } from './utils';
 import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
@@ -112,10 +112,18 @@ if (shouldRunToolbar) {
     const { initialRef, isActive } = await preview.setup();
 
     // Skip cookie sync when inactive so we don't clear a preview owned by another tab.
-    if (isActive && previewCookieHelper.sync(initialRef)) {
+    // Composite m-*:p-* refs must not location.reload() — that remounts a spent
+    // /api/preview Wroom URL. Cookie is already upserted by sync().
+    if (
+      isActive
+      && previewCookieHelper.sync(initialRef)
+      && !isCompositePreviewRef(initialRef)
+    ) {
       reloadOrigin();
       return;
     }
+
+    if (isActive) preview.watchPreviewUpdates();
 
     if (isRegularToolbar && (isActive || previewState.auth)) {
       const prediction = previewState.auth
