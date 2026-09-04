@@ -1,4 +1,5 @@
 import { deleteCookie, getCookie, once, setCookie } from '@common';
+import { clearDirectPreviewRef, markDirectPreviewRefUpdated } from '../direct-preview-watch';
 import { startDocumentHeightReporting } from './document-height';
 
 const pushMarkerWindowName = 'prismic:embedded-preview';
@@ -51,13 +52,23 @@ export class EmbeddedPreviewCookie {
   }
 }
 
-export function setupEmbeddedPreviewPush({ preview }) {
+export function setupEmbeddedPreviewPush({ preview, repository }) {
   connectToParent(event => {
     if (!isSetRefMessage(event.data)) return;
 
-    preview.updateFromRef(event.data.token).catch(error => {
-      console.error('Failed to update embedded preview ref.', error);
-    });
+    // Claim before writing the raw cookie: regular tabs must already see the
+    // matching metadata as soon as the new ref becomes visible. The marker
+    // only takes effect when its opaque ref matches the actual cookie.
+    if (event.data.reload === false) {
+      markDirectPreviewRefUpdated({ repository, ref: event.data.token });
+    } else {
+      clearDirectPreviewRef();
+    }
+
+    preview.updateFromRef(event.data.token, event.data.reload)
+      .catch(error => {
+        console.error('Failed to update embedded preview ref.', error);
+      });
   });
 }
 

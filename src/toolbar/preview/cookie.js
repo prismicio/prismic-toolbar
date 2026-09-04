@@ -1,5 +1,6 @@
 import { getCookie, setCookie, demolishCookie, isObject } from '@common';
 import { random } from '../../common/general';
+import { clearDirectPreviewRef, getDirectPreviewState } from '../direct-preview-watch';
 
 const PREVIEW_COOKIE_NAME = 'io.prismic.preview';
 
@@ -12,6 +13,7 @@ export class PreviewCookie {
 
   // Align the site cookie with `ref`. Returns true when the page should reload.
   sync(ref) {
+    if (this.isControlledByEditor()) return false;
     if (this.convertLegacyCookieIfNeeded()) return true;
 
     const upToDate = ref === this.getRefForDomain();
@@ -33,6 +35,13 @@ export class PreviewCookie {
   }
 
   get() /* Object | string */ {
+    const directPreview = getDirectPreviewState();
+    if (directPreview) {
+      // Present the regular cookie API without converting the shared raw cookie
+      // or downgrading its cross-site attributes from an authenticated site tab.
+      return { [directPreview.repository]: { preview: directPreview.ref } };
+    }
+
     const cookieOpt = getCookie(PREVIEW_COOKIE_NAME);
     if (cookieOpt) {
       const parsedCookie = (() => {
@@ -49,6 +58,7 @@ export class PreviewCookie {
   }
 
   set(value) {
+    if (this.isControlledByEditor()) return;
     if (value) setCookie(PREVIEW_COOKIE_NAME, value);
     else demolishCookie(PREVIEW_COOKIE_NAME);
   }
@@ -100,6 +110,11 @@ export class PreviewCookie {
   }
 
   deletePreviewForDomain() {
+    const directPreview = getDirectPreviewState();
+    if (directPreview) {
+      if (directPreview.repository !== this.domain) return;
+      clearDirectPreviewRef();
+    }
     const updatedCookieValue = this.build();
     this.set(updatedCookieValue);
   }
@@ -114,6 +129,10 @@ export class PreviewCookie {
     const cookie = this.get();
     if (!cookie) return;
     return cookie._tracker;
+  }
+
+  isControlledByEditor() {
+    return Boolean(getDirectPreviewState());
   }
 
   refreshTracker() {
