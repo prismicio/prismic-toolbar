@@ -1,5 +1,6 @@
 import { deleteCookie, getCookie, once, setCookie } from '@common';
 import { startDocumentHeightReporting } from './document-height';
+import { EmbeddedPreviewOverlay } from './overlay';
 
 const pushMarkerWindowName = 'prismic:embedded-preview';
 const pollMarkerWindowName = 'prismic:embedded-preview:poll';
@@ -66,17 +67,22 @@ export function setupEmbeddedPreviewPoll() {
 }
 
 function connectToParent(handleMessage = () => {}) {
-  const startHeightReporting = once(parentOrigin => startDocumentHeightReporting({ parentOrigin }));
+  let overlay;
+  const connect = once(parentOrigin => {
+    startDocumentHeightReporting({ parentOrigin });
+    overlay = new EmbeddedPreviewOverlay({ parentOrigin });
+  });
 
   window.addEventListener('message', event => {
     if (!isAllowedParentOrigin(event.origin)) return;
     if (event.source !== window.parent) return;
 
     if (isTypedMessage(event.data, ackMessageType)) {
-      startHeightReporting(event.origin);
+      connect(event.origin);
       return;
     }
 
+    if (overlay) overlay.handleMessage(event.data);
     handleMessage(event);
   });
 
