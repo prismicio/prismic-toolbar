@@ -200,7 +200,10 @@ export class EmbeddedPreviewOverlay {
       button.dataset.threadId = pin.threadId;
       button.addEventListener('click', event => {
         event.stopPropagation();
-        if (pin.selected) {
+        const selected = button.dataset.selected === 'true';
+        button.dataset.selected = String(!selected);
+
+        if (selected) {
           this.post({
             type: deselectPinMessageType,
             pin: { type: 'thread', threadId: pin.threadId },
