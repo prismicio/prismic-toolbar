@@ -1,5 +1,5 @@
 import { toolbarEvents, dispatchToolbarEvent, getLocation } from '@common';
-import { isCompositePreviewRef, reloadOrigin } from '../utils';
+import { reloadOrigin } from '../utils';
 import screenshot from './screenshot';
 
 export class Preview {
@@ -7,6 +7,7 @@ export class Preview {
     this.cookie = previewCookie;
     this.client = client;
     this.state = previewState;
+    this.lastRefFromPush = null;
 
     this.end = this.end.bind(this);
     this.share = this.share.bind(this);
@@ -47,17 +48,19 @@ export class Preview {
   }
 
   async updateFromRef(ref, reload) {
-    const { shouldReload } = await this.start(ref);
-    const skipHardReload = reload === false || isCompositePreviewRef(ref);
+    if (ref === this.lastRefFromPush && ref === this.cookie.getRefForDomain()) return;
 
-    // reload: false or m-*:p-* : cookie already upserted; notify, never remount.
+    const { shouldReload } = await this.start(ref);
+    this.lastRefFromPush = ref;
+
+    // reload: false: cookie already upserted; notify, never remount.
     // Missing/undefined reload keeps the legacy mismatch → location.reload() path.
-    if (shouldReload || skipHardReload) this.reloadPreview(ref, reload);
+    if (reload === false || shouldReload) this.reloadPreview(ref, reload);
   }
 
   reloadPreview(ref, reload) {
     if (dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })) {
-      if (reload === false || isCompositePreviewRef(ref)) return;
+      if (reload === false) return;
       this.cancelPreviewUpdates();
       reloadOrigin();
     }

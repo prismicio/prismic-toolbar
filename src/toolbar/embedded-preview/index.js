@@ -1,4 +1,5 @@
 import { deleteCookie, getCookie, once, setCookie } from '@common';
+import { markDirectPreviewRefUpdated } from '../direct-preview-watch';
 import { startDocumentHeightReporting } from './document-height';
 
 const pushMarkerWindowName = 'prismic:embedded-preview';
@@ -55,9 +56,11 @@ export function setupEmbeddedPreviewPush({ preview }) {
   connectToParent(event => {
     if (!isSetRefMessage(event.data)) return;
 
-    preview.updateFromRef(event.data.token, event.data.reload).catch(error => {
-      console.error('Failed to update embedded preview ref.', error);
-    });
+    preview.updateFromRef(event.data.token, event.data.reload)
+      .then(markDirectPreviewRefUpdated)
+      .catch(error => {
+        console.error('Failed to update embedded preview ref.', error);
+      });
   });
 }
 
