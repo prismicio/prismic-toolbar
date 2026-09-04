@@ -43,9 +43,20 @@ export function demolishCookie(name, options) {
 }
 
 function getSameSiteAttributes() {
-  if (window.self !== window.top && window.location.protocol === 'https:') {
+  if (window.self !== window.top && (window.location.protocol === 'https:' || isLoopbackHost())) {
     return { sameSite: 'none', secure: true };
   }
 
   return { sameSite: 'lax' };
+}
+
+function isLoopbackHost() {
+  const { hostname } = window.location;
+
+  return (
+    hostname === 'localhost'
+    || hostname === '::1'
+    || hostname === '[::1]'
+    || /^127(?:\.\d{1,3}){3}$/.test(hostname)
+  );
 }
