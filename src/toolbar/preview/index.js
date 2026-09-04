@@ -29,7 +29,7 @@ export class Preview {
   };
 
   watchPreviewUpdates() {
-    if (this.active) {
+    if (this.active && !this.interval) {
       this.interval = setInterval(() => {
         // End only on a falsy ping ref (via start → end), not a missing site cookie.
         if (document.visibilityState === 'visible') this.updatePreview();
@@ -39,12 +39,20 @@ export class Preview {
 
   cancelPreviewUpdates() {
     if (this.interval) clearInterval(this.interval);
+    this.interval = null;
   }
 
   async updatePreview() {
+    if (this.isControlledByEditor()) return;
     const { reload, ref } = await this.client.updatePreview();
-    this.start(ref);
-    if (reload) this.reloadPreview(ref);
+    // A push can take ownership while a legacy ping is still in flight.
+    if (this.isControlledByEditor()) return;
+    await this.start(ref);
+    if (ref && reload && !this.isControlledByEditor()) this.reloadPreview(ref);
+  }
+
+  isControlledByEditor() {
+    return this.cookie.isControlledByEditor && this.cookie.isControlledByEditor();
   }
 
   async updateFromRef(ref, reload) {
@@ -82,8 +90,16 @@ export class Preview {
 
   // End preview
   async end() {
+    const controlledAtStart = this.isControlledByEditor();
     this.cancelPreviewUpdates();
     await this.client.closePreviewSession();
+    // Closing the remote legacy session yields too. Do not clear a newer
+    // editor ref that arrived while that close request was pending.
+    if (!controlledAtStart && this.isControlledByEditor()) {
+      this.watchPreviewUpdates();
+      return;
+    }
+    this.active = false;
     this.cookie.deletePreviewForDomain();
 
     // Dispatch the end event and hard reload if not cancelled by handlers

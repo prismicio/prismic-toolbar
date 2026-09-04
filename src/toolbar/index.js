@@ -96,11 +96,14 @@ if (shouldRunToolbar) {
       const preview = new Preview({
         closePreviewSession: async () => {},
       }, previewCookieHelper, {});
-      setupEmbeddedPreviewPush({ preview });
+      setupEmbeddedPreviewPush({ preview, repository: domain });
       return;
     }
 
     if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll();
+    // Observe before the remote toolbar bootstrap so edits during startup are
+    // not mistaken for the ref already rendered by this page.
+    if (isRegularToolbar) setupDirectPreviewRefWatcher({ repository: domain });
 
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
@@ -119,7 +122,6 @@ if (shouldRunToolbar) {
     }
 
     if (isActive) preview.watchPreviewUpdates();
-    else if (isRegularToolbar) setupDirectPreviewRefWatcher();
 
     if (isRegularToolbar && (isActive || previewState.auth)) {
       const prediction = previewState.auth
