@@ -189,6 +189,7 @@ export class EmbeddedPreviewOverlay {
     button.className = 'pin';
     button.dataset.pinType = pin.type;
     button.dataset.selected = String(pin.selected);
+    button.dataset.resolved = String(Boolean(pin.resolved));
     button.dataset.xRatio = String(pin.xRatio);
     button.dataset.yRatio = String(pin.yRatio);
     button.setAttribute(
@@ -419,7 +420,8 @@ function isScrollToPinMessage(data) {
 function isThreadPin(pin) {
   return isPositionedAuthor(pin)
     && typeof pin.threadId === 'string'
-    && pin.threadId.length > 0;
+    && pin.threadId.length > 0
+    && typeof pin.resolved === 'boolean';
 }
 
 function isPositionedAuthor(value) {

@@ -66,6 +66,10 @@
   transform-origin: top left;
 }
 
+.pin[data-resolved="true"]:not([data-selected="true"]) {
+  opacity: 0.4;
+}
+
 .pin-avatar {
   display: flex;
   align-items: center;
