@@ -21,9 +21,13 @@ export const fetchy = ({ url, ...other }) => fetch(url, other).then(r => r.json(
 export const ellipsis = (text, cutoff) =>
   text.length > cutoff ? text.substring(0, cutoff - 1) + '…' : text;
 
-// ReadyDOM - DOM Listener is useless (await X is already asynchronous)
+// Wait until the parsed DOM, including document.body, is available.
 export const readyDOM = async () => {
-  if (document.readyState !== 'complete') await wait(0);
+  if (!document.body) {
+    await new Promise(resolve => {
+      document.addEventListener('DOMContentLoaded', resolve, { once: true });
+    });
+  }
   return true;
 };
 
