@@ -8,7 +8,8 @@
     "start": "webpack --mode development --watch",
     "build:prod": "webpack --mode production",
     "serve": "http-server -p 8081 -g -c-1 build/",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "test": "node tests/preview.test.cjs"
   },
   "engines": {
     "node": ">=4.8.1",
