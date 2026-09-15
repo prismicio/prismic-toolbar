@@ -236,6 +236,15 @@ test('editor ownership prevents legacy startup sync and polling from overwriting
   assert.strictEqual(h.cookies[cookieName], 'editor');
 });
 
+test('a legacy cookie converts silently and reloads only when the session ref differs', () => {
+  const h = harness({ cookies: { [cookieName]: 'legacy' } });
+  const cookie = h.previewCookie();
+  assert.strictEqual(cookie.sync('legacy'), false);
+  assert.deepStrictEqual(JSON.parse(h.cookies[cookieName]), { _tracker: 'tracker', [repository]: { preview: 'legacy' } });
+  h.cookies[cookieName] = 'legacy';
+  assert.strictEqual(cookie.sync('newer'), true);
+});
+
 test('a legacy ping already in flight is discarded after editor takeover', async () => {
   const h = harness();
   let finishPing;
