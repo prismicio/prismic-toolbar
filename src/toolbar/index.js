@@ -116,7 +116,8 @@ if (shouldRunToolbar) {
     const { initialRef, isActive } = await preview.setup();
 
     // Skip cookie sync when inactive so we don't clear a preview owned by another tab.
-    if (isActive && previewCookieHelper.sync(initialRef)) {
+    if (isActive && previewCookieHelper.sync(initialRef)
+      && dispatchToolbarEvent(toolbarEvents.previewStart, { ref: initialRef })) {
       reloadOrigin();
       return;
     }

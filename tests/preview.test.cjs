@@ -434,6 +434,26 @@ test('standalone watcher starts before remote toolbar bootstrap can swallow an e
   await flush();
 });
 
+test('a stale cookie at startup emits a start event and reloads only when nothing cancels it', async () => {
+  const boot = async cancelEvents => {
+    const h = harness({
+      cancelEvents,
+      previewState: { preview: { ref: 'session' } },
+      cookies: { [cookieName]: JSON.stringify({ [repository]: { preview: 'stale' } }) },
+    });
+    h.window.prismic = { Toolbar: class {} };
+    h.load('src/toolbar/index.js');
+    await flush();
+    return h;
+  };
+  const handled = await boot(true);
+  assert.deepStrictEqual(handled.events.filter(e => e.type === 'prismicPreviewStart').map(e => e.detail.ref), ['session']);
+  assert.strictEqual(JSON.parse(handled.cookies[cookieName])[repository].preview, 'session');
+  assert.strictEqual(handled.reloads, 0);
+  const unhandled = await boot(false);
+  assert.strictEqual(unhandled.reloads, 1);
+});
+
 test('legacy standalone keeps its three-second poll alongside the direct watcher', async () => {
   const h = harness({
     previewState: { preview: { ref: 'legacy' } },
