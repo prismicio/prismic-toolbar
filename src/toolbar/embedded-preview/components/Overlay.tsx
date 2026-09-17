@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "preact/hooks"
+import { useCallback, useLayoutEffect, useRef, useState } from "preact/hooks"
 
 import {
 	isCommentOverlayMessage,
@@ -33,7 +33,7 @@ export function Overlay({ parentOrigin, subscribeToMessages }: OverlayProps) {
 	const [commentState, setCommentState] = useState(emptyCommentState)
 	const [scrollToPinRequest, setScrollToPinRequest] = useState<ScrollToPinRequest>()
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		return subscribeToMessages((data) => {
 			if (isOverlayScaleMessage(data)) {
 				setUIScale(data.uiScale)

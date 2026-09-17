@@ -56,15 +56,19 @@ function receive(
 }
 
 describe("embedded preview connection", () => {
-	it("announces readiness and initializes only once after an allowed parent acknowledgement", async () => {
+	it("loads the overlay before announcing readiness and initializes once after acknowledgement", async () => {
 		setupEmbeddedPreviewPush({
 			preview: { updateFromRef: vi.fn().mockResolvedValue(undefined) },
 			overlayURL,
 		})
-		expect(window.parent.postMessage).toHaveBeenCalledWith(
-			{ type: "prismic:embedded-preview:ready" },
-			"*",
-		)
+		expect(mocks.loadScript).toHaveBeenCalledExactlyOnceWith(overlayURL)
+		expect(window.parent.postMessage).not.toHaveBeenCalled()
+		await vi.waitFor(() => {
+			expect(window.parent.postMessage).toHaveBeenCalledWith(
+				{ type: "prismic:embedded-preview:ready" },
+				"*",
+			)
+		})
 		const ack = { type: "prismic:embedded-preview:ack" }
 		receive(ack, "https://prismic.io.evil.example")
 		receive(ack, "http://localhost:5173", null)
@@ -79,13 +83,18 @@ describe("embedded preview connection", () => {
 			})
 			expect(mocks.message).toHaveBeenCalledWith(message)
 		})
-		expect(mocks.loadScript).toHaveBeenCalledExactlyOnceWith(overlayURL)
 		expect(mocks.height).toHaveBeenCalledTimes(1)
 	})
 
-	it("accepts valid ref updates only from the allowed parent", () => {
+	it("accepts valid ref updates only from the allowed parent", async () => {
 		const updateFromRef = vi.fn().mockResolvedValue(undefined)
 		setupEmbeddedPreviewPush({ preview: { updateFromRef }, overlayURL })
+		await vi.waitFor(() => {
+			expect(window.parent.postMessage).toHaveBeenCalledWith(
+				{ type: "prismic:embedded-preview:ready" },
+				"*",
+			)
+		})
 		const ref = { type: "prismic:embedded-preview:set-ref", token: "preview-token" }
 		receive(ref, "https://attacker.example")
 		receive(ref, "http://localhost:5173", null)

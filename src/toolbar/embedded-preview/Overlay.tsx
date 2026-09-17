@@ -1,4 +1,4 @@
-import { appendCSS, readyDOM, shadow } from "@common"
+import { appendCSS, shadow } from "@common"
 import { render } from "preact"
 
 import { Overlay } from "./components/Overlay"
@@ -22,8 +22,7 @@ export class EmbeddedPreviewOverlay {
 		this.setup()
 	}
 
-	private async setup() {
-		await readyDOM()
+	private setup() {
 		const root = shadow({
 			id: "prismic-embedded-preview-overlay",
 			style: {

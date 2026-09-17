@@ -1,4 +1,4 @@
-import { deleteCookie, getCookie, once, script, setCookie } from "@common"
+import { deleteCookie, getCookie, once, readyDOM, script, setCookie } from "@common"
 
 import { startDocumentHeightReporting } from "./document-height"
 import type { SubscribeToOverlayMessages } from "./overlay-messages"
@@ -60,7 +60,7 @@ export function setupEmbeddedPreviewPush({
 	preview: { updateFromRef(ref: string): Promise<void> }
 	overlayURL: string
 }) {
-	connectToParent({
+	void connectToParent({
 		overlayURL,
 		handleMessage: (event) => {
 			if (!isSetRefMessage(event.data)) return
@@ -73,41 +73,41 @@ export function setupEmbeddedPreviewPush({
 }
 
 export function setupEmbeddedPreviewPoll({ overlayURL }: { overlayURL: string }) {
-	connectToParent({ overlayURL })
+	void connectToParent({ overlayURL })
 }
 
-function connectToParent({
+async function connectToParent({
 	overlayURL,
 	handleMessage = () => {},
 }: {
 	overlayURL: string
 	handleMessage?: (event: MessageEvent<unknown>) => void
 }) {
-	let publishOverlayMessage: ((data: unknown) => void) | undefined
-	const connect = once(async (parentOrigin: string) => {
-		const messages = createOverlayMessageBuffer()
-		publishOverlayMessage = messages.publish
+	try {
+		await Promise.all([script(overlayURL), readyDOM()])
+	} catch (error) {
+		console.error("Failed to load embedded preview overlay.", error)
+		return
+	}
+
+	const EmbeddedPreviewOverlay = window.prismic?.EmbeddedPreviewOverlay
+	if (!EmbeddedPreviewOverlay) {
+		console.error("Failed to load embedded preview overlay.")
+		return
+	}
+
+	let handleOverlayMessage: ((data: unknown) => void) | undefined
+	const subscribeToMessages: SubscribeToOverlayMessages = (nextHandleMessage) => {
+		handleOverlayMessage = nextHandleMessage
+		return () => {
+			if (handleOverlayMessage === nextHandleMessage) handleOverlayMessage = undefined
+		}
+	}
+	const connect = once((parentOrigin: string) => {
 		startDocumentHeightReporting({ parentOrigin })
-		try {
-			await script(overlayURL)
-		} catch (error) {
-			publishOverlayMessage = undefined
-			messages.clear()
-			console.error("Failed to load embedded preview overlay.", error)
-			return
-		}
-
-		const EmbeddedPreviewOverlay = window.prismic?.EmbeddedPreviewOverlay
-		if (!EmbeddedPreviewOverlay) {
-			publishOverlayMessage = undefined
-			messages.clear()
-			console.error("Failed to load embedded preview overlay.")
-			return
-		}
-
 		new EmbeddedPreviewOverlay({
 			parentOrigin,
-			subscribeToMessages: messages.subscribe,
+			subscribeToMessages,
 		})
 	})
 
@@ -120,39 +120,13 @@ function connectToParent({
 			return
 		}
 
-		publishOverlayMessage?.(event.data)
+		handleOverlayMessage?.(event.data)
 		handleMessage(event)
 	})
 
 	// Safe to broadcast to '*': no data in this message, and both sides
 	// validate origins on the messages that follow.
 	window.parent.postMessage({ type: readyMessageType }, "*")
-}
-
-function createOverlayMessageBuffer() {
-	const pendingMessages: unknown[] = []
-	let handleMessage: ((data: unknown) => void) | undefined
-
-	const subscribe: SubscribeToOverlayMessages = (nextHandleMessage) => {
-		handleMessage = nextHandleMessage
-		for (const message of pendingMessages.splice(0)) nextHandleMessage(message)
-
-		return () => {
-			if (handleMessage === nextHandleMessage) handleMessage = undefined
-		}
-	}
-
-	return {
-		publish(data: unknown) {
-			if (handleMessage) handleMessage(data)
-			else pendingMessages.push(data)
-		},
-		subscribe,
-		clear() {
-			handleMessage = undefined
-			pendingMessages.length = 0
-		},
-	}
 }
 
 function isSetRefMessage(data: unknown): data is { type: typeof setRefMessageType; token: string } {
