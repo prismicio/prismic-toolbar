@@ -30,8 +30,6 @@ export const fetchy = ({ url, ...other }) => fetch(url, other).then((r) => r.jso
 export const ellipsis = (text, cutoff) =>
 	text.length > cutoff ? text.substring(0, cutoff - 1) + "…" : text
 
-export { readyDOM, shadow, appendCSS } from "./dom"
-
 // Wait in seconds
 export const wait = (seconds) => new Promise((rs) => setTimeout(rs, seconds * 1000))
 
@@ -97,9 +95,6 @@ const fallbackCopyText = (text) => {
 	document.body.removeChild(textArea)
 	return Promise.resolve(true)
 }
-
-export { throttle, once } from "./timing"
-
 // Memoize (can have a custom memoizer)
 export const memoize = (func, memoizer) => {
 	const memory = new Map()

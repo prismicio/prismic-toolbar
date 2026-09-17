@@ -3,6 +3,8 @@ export { getCookie, setCookie, deleteCookie, demolishCookie } from "./cookie"
 export { Hooks } from "./hooks"
 export { Sorter } from "./sorter"
 export { toolbarEvents, dispatchToolbarEvent } from "./events"
+export { readyDOM, shadow, appendCSS } from "./dom"
+export { throttle, once } from "./timing"
 export {
 	warn,
 	err,
@@ -10,7 +12,6 @@ export {
 	switchy,
 	fetchy,
 	ellipsis,
-	readyDOM,
 	wait,
 	delay,
 	stringCheck,
@@ -19,13 +20,9 @@ export {
 	query,
 	parseQuery,
 	copyText,
-	throttle,
 	memoize,
-	once,
 	localStorage,
 	getLocation,
-	shadow,
 	deleteNodes,
-	appendCSS,
 	script,
 } from "./general"
