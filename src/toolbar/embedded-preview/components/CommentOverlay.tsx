@@ -22,6 +22,7 @@ import type {
 	CommentOverlayState,
 	OverlayEvent,
 	PinIdentity,
+	Positioned,
 	RenderedPin,
 } from "../overlay-messages"
 import type { ScrollToPinRequest } from "./Overlay"
@@ -39,7 +40,6 @@ export function CommentOverlay(props: CommentOverlayProps) {
 
 	const pinsRef = useRef<HTMLDivElement>(null)
 	const documentSize = useDocumentSize()
-	const [cursorPosition, setCursorPosition] = useState<{ left: number; top: number }>()
 
 	const reportSelectedPinPosition = useCallback(() => {
 		const pin = getSelectedPin(state, pinsRef.current)
@@ -60,10 +60,6 @@ export function CommentOverlay(props: CommentOverlayProps) {
 		window.addEventListener("scroll", reportSelectedPinPosition)
 		return () => window.removeEventListener("scroll", reportSelectedPinPosition)
 	}, [reportSelectedPinPosition])
-
-	useEffect(() => {
-		if (!state.placementEnabled) setCursorPosition(undefined)
-	}, [state.placementEnabled])
 
 	useEffect(() => {
 		const handleDocumentClick = () => {
@@ -113,43 +109,14 @@ export function CommentOverlay(props: CommentOverlayProps) {
 		state.pins,
 	])
 
-	function placeComment(event: TargetedMouseEvent<HTMLButtonElement>) {
-		event.stopPropagation()
-
-		if (state.draftPin) {
-			onEvent({ type: deselectPinMessageType, pin: { type: "draft" } })
-			return
-		}
-
-		const { width, height } = measureDocument()
-		if (width === 0 || height === 0) return
-
-		const position = {
-			xRatio: clamp(event.pageX / width),
-			yRatio: clamp(event.pageY / height),
-		}
-		onEvent({
-			type: placeCommentMessageType,
-			...position,
-			rect: getPinRectFromPosition(position, uiScale),
-		})
-	}
-
-	function updateCursorPosition(event: TargetedMouseEvent<HTMLButtonElement>) {
-		setCursorPosition({ left: event.clientX, top: event.clientY })
-	}
-
 	return (
 		<div className="comment-overlay">
 			{state.placementEnabled && (
-				<button
-					type="button"
-					className="placement-layer"
-					aria-label="Place a comment here"
-					onClick={placeComment}
-					onMouseMove={updateCursorPosition}
-					onMouseEnter={updateCursorPosition}
-					onMouseLeave={() => setCursorPosition(undefined)}
+				<CommentPlacement
+					draftAuthor={state.draftAuthor}
+					draftPin={state.draftPin}
+					uiScale={uiScale}
+					onEvent={onEvent}
 				/>
 			)}
 			<div className="comment-pins" ref={pinsRef}>
@@ -181,15 +148,68 @@ export function CommentOverlay(props: CommentOverlayProps) {
 					/>
 				)}
 			</div>
-			{state.placementEnabled && cursorPosition && state.draftAuthor && (
+		</div>
+	)
+}
+
+interface CommentPlacementProps {
+	draftAuthor: Author | undefined
+	draftPin: Positioned | undefined
+	uiScale: number
+	onEvent: (event: OverlayEvent) => void
+}
+
+function CommentPlacement(props: CommentPlacementProps) {
+	const { draftAuthor, draftPin, uiScale, onEvent } = props
+
+	const [cursorPosition, setCursorPosition] = useState<{ left: number; top: number }>()
+
+	function placeComment(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+
+		if (draftPin) {
+			onEvent({ type: deselectPinMessageType, pin: { type: "draft" } })
+			return
+		}
+
+		const { width, height } = measureDocument()
+		if (width === 0 || height === 0) return
+
+		const position = {
+			xRatio: clamp(event.pageX / width),
+			yRatio: clamp(event.pageY / height),
+		}
+		onEvent({
+			type: placeCommentMessageType,
+			...position,
+			rect: getPinRectFromPosition(position, uiScale),
+		})
+	}
+
+	function updateCursorPosition(event: TargetedMouseEvent<HTMLButtonElement>) {
+		setCursorPosition({ left: event.clientX, top: event.clientY })
+	}
+
+	return (
+		<>
+			<button
+				type="button"
+				className="placement-layer"
+				aria-label="Place a comment here"
+				onClick={placeComment}
+				onMouseMove={updateCursorPosition}
+				onMouseEnter={updateCursorPosition}
+				onMouseLeave={() => setCursorPosition(undefined)}
+			/>
+			{cursorPosition && draftAuthor && (
 				<div
 					className="pin cursor-pin"
 					style={`left: ${cursorPosition.left}px; top: ${cursorPosition.top}px`}
 				>
-					<PinAvatar author={state.draftAuthor} />
+					<PinAvatar author={draftAuthor} />
 				</div>
 			)}
-		</div>
+		</>
 	)
 }
 
