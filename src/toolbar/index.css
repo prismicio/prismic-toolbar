@@ -1,1 +1,10 @@
-@import "./components/**/*.css"
+@import "./components/DevMode/DevMode.css";
+@import "./components/EditButton/EditButton.css";
+@import "./components/JsonView/JsonView.css";
+@import "./components/Loader/loader.css";
+@import "./components/Menu/Menu.css";
+@import "./components/NavTabs/NavTabs.css";
+@import "./components/Panel/Panel.css";
+@import "./components/PreviewMenu/PreviewMenu.css";
+@import "./components/Toolbar/Toolbar.css";
+@import "./components/animation.css";

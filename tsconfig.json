@@ -1,0 +1,28 @@
+{
+	"compilerOptions": {
+		"target": "ES2020",
+		"lib": ["ES2020", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"isolatedModules": true,
+		"strict": true,
+		"allowJs": true,
+		"checkJs": false,
+		"noEmit": true,
+		"jsx": "react-jsx",
+		"jsxImportSource": "preact",
+		"resolveJsonModule": true,
+		"types": ["vite/client"],
+		"paths": {
+			"@common": ["./src/common/index.js"],
+			"@common/*": ["./src/common/*"],
+			"@toolbar/*": ["./src/toolbar/*"],
+			"@toolbar-service": ["./src/toolbar-service/index.js"],
+			"@iframe/*": ["./src/iframe/*"],
+			"react": ["./node_modules/preact/compat"],
+			"react-dom": ["./node_modules/preact/compat"]
+		},
+		"skipLibCheck": true
+	},
+	"include": ["src", "tests/unit"]
+}

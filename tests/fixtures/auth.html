@@ -1,0 +1,15 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Auth iframe fixture</title>
+<iframe src="/prismic-toolbar/__VERSION__/iframe.html"></iframe>
+<output id="state">Waiting for iframe</output>
+<script>
+	document.querySelector("iframe").onload = (event) => {
+		const channel = new MessageChannel()
+		channel.port1.onmessage = (message) => {
+			if (message.data === "ready") channel.port1.postMessage({ type: "preview_state" })
+			else document.querySelector("#state").textContent = JSON.stringify(message.data)
+		}
+		event.target.contentWindow.postMessage("setup_port", "*", [channel.port2])
+	}
+</script>

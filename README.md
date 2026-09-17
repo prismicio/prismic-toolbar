@@ -1,62 +1,103 @@
 # Prismic toolbar
-The prismic toolbar enables content writers to:
- - Identify Prismic content on the page
- - Preview unpublished changes (drafts and releases)
- - Perform A/B tests (experiments)
+
+The Prismic toolbar enables content writers to:
+
+- Identify Prismic content on the page
+- Preview unpublished changes (drafts and releases)
+- Perform A/B tests (experiments)
 
 <!-- TODO add screenshots -->
 
 ## How to use it?
+
 Include the following script on every page of your site (including the `404` page).
 
-Remember to replace `YOUR_REPO_NAME` with the name of your Prismic repository.
+Replace `YOUR_REPO_NAME` with the name of your Prismic repository.
 
-```
-<script src=//prismic.io/prismic.js?repo=YOUR_REPO_NAME></script>
+```html
+<script src="//prismic.io/prismic.js?repo=YOUR_REPO_NAME"></script>
 ```
 
 ## How to develop
 
-- Start your toolbar locally:
-```script
-npm start
+Use Node.js 24 or later (see `.nvmrc`):
+
+```sh
+nvm install
+nvm use
+npm ci
 ```
 
-- Serve toolbar assets:
-```script
+In two terminals:
+
+```sh
+npm start
 npm run serve
 ```
 
-It will serve assets at `http://localhost:8081/prismic-toolbar/[version]`. Where
-version is current `package.json` version.
+Assets are served at `http://localhost:8081/prismic-toolbar/[version]`, where
+`[version]` is the current `package.json` version. Point your site script at:
 
-- Change the path of the script to point to `http://localhost:8081/prismic-toolbar/[version]/prismic.js` from your public folder
+```html
+<script src="http://localhost:8081/prismic-toolbar/[version]/prismic.js?repo=YOUR_REPO_NAME"></script>
+```
 
-By default the toolbar will communicate with `prismic.io` so the local
-`[version]` must match the version served by prismic.
+`npm start` rebuilds the classic `prismic.js`, `toolbar.js`, and `iframe.html`
+artifacts. Reload the customer page after a rebuild. Restart the watcher after
+build config changes.
+
+By default the toolbar talks to `prismic.io`, so the local `[version]` must match
+the version Prismic serves.
 
 ### With a proxy
 
-If you are using a proxy in front of the development server, you must set the
-`CDN_HOST` environment variable, so the script will be loaded through the proxy.
+Set `CDN_HOST` so the lazy-loaded toolbar script goes through your proxy:
 
-Example:
-```script
+```sh
 CDN_HOST=http://wroom.test npm start
 ```
 
-Then from your project, load the prismic script like this:
-
-```
-<script src=//wroom.test/prismic-toolbar/[version]/prismic.js?repo=repo_name.wroom.test></script>
+```html
+<script src="//wroom.test/prismic-toolbar/[version]/prismic.js?repo=repo_name.wroom.test"></script>
 ```
 
-Note that the repo name should be qualified with your proxy domain for the
-communication to work.
+Qualify the repo name with your proxy domain so communication works.
+
+## Tests
+
+Unit tests: `npm test`.
+
+Browser tests need Chromium once, a production build, then Playwright:
+
+```sh
+npx playwright install chromium
+npm run build
+npm run test:browser
+```
+
+Fixtures are served on port 8082 (no Prismic account). For manual inspection after
+a build:
+
+```sh
+node tests/fixtures/server.mjs
+```
+
+Then open `http://localhost:8082/toolbar.html` or `http://localhost:8082/overlay.html`.
+
+## Checks
+
+```sh
+npm run typecheck
+npm run lint
+npm run format:check
+npm test
+npm run build
+npm run bundlewatch
+npm run test:browser
+```
 
 ## How to deploy
 
-- Deploy on prod:
-```
-npm run build:prod
+```sh
+npm run build
 ```
