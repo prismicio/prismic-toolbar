@@ -28,10 +28,13 @@ beforeEach(() => {
 		startExperiment: () => {},
 		setupEditButton: () => {},
 		EmbeddedPreviewOverlay: class {
-			constructor(options: { parentOrigin: string }) {
-				mocks.setup(options)
+			constructor(options: {
+				parentOrigin: string
+				subscribeToMessages(handleMessage: (data: unknown) => void): () => void
+			}) {
+				mocks.setup({ parentOrigin: options.parentOrigin })
+				options.subscribeToMessages(mocks.message)
 			}
-			handleMessage = mocks.message
 		},
 	}
 	listeners = vi.spyOn(window, "addEventListener")

@@ -1,6 +1,7 @@
 import { deleteCookie, getCookie, once, script, setCookie } from "@common"
 
 import { startDocumentHeightReporting } from "./document-height"
+import type { SubscribeToOverlayMessages } from "./overlay-messages"
 
 const pushMarkerWindowName = "prismic:embedded-preview"
 const pollMarkerWindowName = "prismic:embedded-preview:poll"
@@ -82,33 +83,32 @@ function connectToParent({
 	overlayURL: string
 	handleMessage?: (event: MessageEvent<unknown>) => void
 }) {
-	let overlay: { handleMessage(data: unknown): void } | undefined
-	let isConnecting = false
-	const pendingMessages: unknown[] = []
+	let publishOverlayMessage: ((data: unknown) => void) | undefined
 	const connect = once(async (parentOrigin: string) => {
-		isConnecting = true
+		const messages = createOverlayMessageBuffer()
+		publishOverlayMessage = messages.publish
 		startDocumentHeightReporting({ parentOrigin })
 		try {
 			await script(overlayURL)
 		} catch (error) {
-			isConnecting = false
-			pendingMessages.length = 0
+			publishOverlayMessage = undefined
+			messages.clear()
 			console.error("Failed to load embedded preview overlay.", error)
 			return
 		}
 
 		const EmbeddedPreviewOverlay = window.prismic?.EmbeddedPreviewOverlay
 		if (!EmbeddedPreviewOverlay) {
-			isConnecting = false
-			pendingMessages.length = 0
+			publishOverlayMessage = undefined
+			messages.clear()
 			console.error("Failed to load embedded preview overlay.")
 			return
 		}
 
-		overlay = new EmbeddedPreviewOverlay({ parentOrigin })
-		isConnecting = false
-		pendingMessages.forEach((data) => overlay?.handleMessage(data))
-		pendingMessages.length = 0
+		new EmbeddedPreviewOverlay({
+			parentOrigin,
+			subscribeToMessages: messages.subscribe,
+		})
 	})
 
 	window.addEventListener("message", (event: MessageEvent<unknown>) => {
@@ -120,14 +120,39 @@ function connectToParent({
 			return
 		}
 
-		if (overlay) overlay.handleMessage(event.data)
-		else if (isConnecting) pendingMessages.push(event.data)
+		publishOverlayMessage?.(event.data)
 		handleMessage(event)
 	})
 
 	// Safe to broadcast to '*': no data in this message, and both sides
 	// validate origins on the messages that follow.
 	window.parent.postMessage({ type: readyMessageType }, "*")
+}
+
+function createOverlayMessageBuffer() {
+	const pendingMessages: unknown[] = []
+	let handleMessage: ((data: unknown) => void) | undefined
+
+	const subscribe: SubscribeToOverlayMessages = (nextHandleMessage) => {
+		handleMessage = nextHandleMessage
+		for (const message of pendingMessages.splice(0)) nextHandleMessage(message)
+
+		return () => {
+			if (handleMessage === nextHandleMessage) handleMessage = undefined
+		}
+	}
+
+	return {
+		publish(data: unknown) {
+			if (handleMessage) handleMessage(data)
+			else pendingMessages.push(data)
+		},
+		subscribe,
+		clear() {
+			handleMessage = undefined
+			pendingMessages.length = 0
+		},
+	}
 }
 
 function isSetRefMessage(data: unknown): data is { type: typeof setRefMessageType; token: string } {

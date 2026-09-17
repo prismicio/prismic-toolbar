@@ -8,6 +8,8 @@ export const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
 export const reportSelectedPinPositionMessageType =
 	"prismic:embedded-preview:report-selected-pin-position"
 
+export type SubscribeToOverlayMessages = (handleMessage: (data: unknown) => void) => () => void
+
 export interface Author {
 	id: string
 	name?: string

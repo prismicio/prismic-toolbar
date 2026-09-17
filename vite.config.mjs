@@ -12,7 +12,7 @@ const browserTargets = browserslistToEsbuild(undefined, { path: relative(".") })
 
 export const entries = {
 	prismic: relative("src/toolbar/index.js"),
-	overlay: relative("src/toolbar/embedded-preview/overlay.ts"),
+	overlay: relative("src/toolbar/embedded-preview/Overlay.tsx"),
 	toolbar: relative("src/toolbar/toolbar.jsx"),
 	iframe: relative("src/iframe/index.js"),
 }
