@@ -10,6 +10,10 @@
 			"maxSize": "40KB"
 		},
 		{
+			"path": "./build/prismic-toolbar/*/overlay.js",
+			"maxSize": "30KB"
+		},
+		{
 			"path": "./build/prismic-toolbar/*/toolbar.js",
 			"maxSize": "340KB"
 		},

@@ -60,6 +60,7 @@ if (shouldRunToolbar) {
 
 	// Auto-querystring setup
 	const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute("src")))
+	const overlayURL = `${CDN_HOST}/prismic-toolbar/${version}/overlay.js`
 	const repoParam = scriptURL.searchParams.get("repo")
 	if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(",")])
 
@@ -102,11 +103,11 @@ if (shouldRunToolbar) {
 				previewCookieHelper,
 				{},
 			)
-			setupEmbeddedPreviewPush({ preview })
+			setupEmbeddedPreviewPush({ preview, overlayURL })
 			return
 		}
 
-		if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll()
+		if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll({ overlayURL })
 
 		const protocol = domain.match(".test$") ? window.location.protocol : "https:"
 		const toolbarClient = await ToolbarService.getClient(

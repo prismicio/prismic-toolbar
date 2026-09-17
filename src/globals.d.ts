@@ -11,6 +11,9 @@ interface PrismicToolbarAPI {
 		prediction: unknown
 		analytics: unknown
 	}) => object
+	EmbeddedPreviewOverlay?: new (options: { parentOrigin: string }) => {
+		handleMessage(data: unknown): void
+	}
 }
 
 interface Window {

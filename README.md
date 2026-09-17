@@ -42,9 +42,9 @@ Assets are served at `http://localhost:8081/prismic-toolbar/[version]`, where
 <script src="http://localhost:8081/prismic-toolbar/[version]/prismic.js?repo=YOUR_REPO_NAME"></script>
 ```
 
-`npm start` rebuilds the classic `prismic.js`, `toolbar.js`, and `iframe.html`
-artifacts. Reload the customer page after a rebuild. Restart the watcher after
-build config changes.
+`npm start` rebuilds the classic `prismic.js`, `overlay.js`, `toolbar.js`, and
+`iframe.html` artifacts. Reload the customer page after a rebuild. Restart the
+watcher after build config changes.
 
 By default the toolbar talks to `prismic.io`, so the local `[version]` must match
 the version Prismic serves.
@@ -67,11 +67,10 @@ Qualify the repo name with your proxy domain so communication works.
 
 Unit tests: `npm test`.
 
-Browser tests need Chromium once, a production build, then Playwright:
+Browser tests need Chromium once, then Playwright:
 
 ```sh
 npx playwright install chromium
-npm run build
 npm run test:browser
 ```
 

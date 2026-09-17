@@ -144,14 +144,17 @@ export const deleteNodes = (cssQuery) => {
 
 // Load script
 export function script(src) {
-	return new Promise((resolve) => {
+	return new Promise((resolve, reject) => {
 		let el = document.getElementById(src)
 		if (!el) {
 			el = document.createElement("script")
 			el.id = src
 			el.src = src
-			document.head.appendChild(el)
 		}
-		el.addEventListener("load", () => resolve(el))
+		el.addEventListener("load", () => resolve(el), { once: true })
+		el.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), {
+			once: true,
+		})
+		if (!el.isConnected) document.head.appendChild(el)
 	})
 }

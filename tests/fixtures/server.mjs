@@ -6,7 +6,7 @@ import { version } from "../../vite.config.mjs"
 
 const fixtures = new URL("./", import.meta.url)
 const artifactRoot = process.env.TOOLBAR_BUILD_DIR || resolve(`build/prismic-toolbar/${version}`)
-const artifacts = ["prismic.js", "toolbar.js", "iframe.html"]
+const artifacts = ["prismic.js", "overlay.js", "toolbar.js", "iframe.html"]
 
 for (const name of artifacts) {
 	try {

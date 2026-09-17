@@ -16,18 +16,20 @@
 	inset: 0;
 }
 
-.surface,
-.pins {
+.overlay,
+.comment-overlay,
+.comment-pins {
 	pointer-events: none;
 }
 
-.surface {
+.overlay,
+.comment-overlay {
 	position: relative;
 	width: 0;
 	height: 0;
 }
 
-.pins {
+.comment-pins {
 	position: absolute;
 	top: 0;
 	left: 0;

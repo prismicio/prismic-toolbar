@@ -4,7 +4,7 @@ import {
 	clamp,
 	getPinDocumentPosition,
 	getPinRectFromPosition,
-} from "../../src/toolbar/embedded-preview/overlay"
+} from "../../src/toolbar/embedded-preview/comment-overlay-geometry"
 
 beforeEach(() => {
 	vi.spyOn(document.documentElement, "clientWidth", "get").mockReturnValue(1000)

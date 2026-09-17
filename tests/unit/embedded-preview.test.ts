@@ -2,22 +2,38 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { EmbeddedPreviewCookie, setupEmbeddedPreviewPush } from "../../src/toolbar/embedded-preview"
 
-const mocks = vi.hoisted(() => ({ setup: vi.fn(), message: vi.fn(), height: vi.fn() }))
-vi.mock("../../src/toolbar/embedded-preview/overlay", () => ({
-	EmbeddedPreviewOverlay: class {
-		constructor(options: { parentOrigin: string }) {
-			mocks.setup(options)
-		}
-		handleMessage = mocks.message
-	},
+const mocks = vi.hoisted(() => ({
+	setup: vi.fn(),
+	message: vi.fn(),
+	height: vi.fn(),
+	loadScript: vi.fn(),
+}))
+vi.mock("@common", async (importOriginal) => ({
+	...(await importOriginal()),
+	script: mocks.loadScript,
 }))
 vi.mock("../../src/toolbar/embedded-preview/document-height", () => ({
 	startDocumentHeightReporting: mocks.height,
 }))
 
+const overlayURL = "https://static.cdn.prismic.io/prismic-toolbar/test/overlay.js"
 let listeners: ReturnType<typeof vi.spyOn>
 beforeEach(() => {
 	vi.clearAllMocks()
+	mocks.loadScript.mockResolvedValue(undefined)
+	window.prismic = {
+		endpoint: null,
+		version: "test",
+		setup: () => {},
+		startExperiment: () => {},
+		setupEditButton: () => {},
+		EmbeddedPreviewOverlay: class {
+			constructor(options: { parentOrigin: string }) {
+				mocks.setup(options)
+			}
+			handleMessage = mocks.message
+		},
+	}
 	listeners = vi.spyOn(window, "addEventListener")
 	vi.spyOn(window.parent, "postMessage").mockImplementation(() => {})
 })
@@ -37,8 +53,11 @@ function receive(
 }
 
 describe("embedded preview connection", () => {
-	it("announces readiness and initializes only once after an allowed parent acknowledgement", () => {
-		setupEmbeddedPreviewPush({ preview: { updateFromRef: vi.fn().mockResolvedValue(undefined) } })
+	it("announces readiness and initializes only once after an allowed parent acknowledgement", async () => {
+		setupEmbeddedPreviewPush({
+			preview: { updateFromRef: vi.fn().mockResolvedValue(undefined) },
+			overlayURL,
+		})
 		expect(window.parent.postMessage).toHaveBeenCalledWith(
 			{ type: "prismic:embedded-preview:ready" },
 			"*",
@@ -49,16 +68,21 @@ describe("embedded preview connection", () => {
 		expect(mocks.setup).not.toHaveBeenCalled()
 		receive(ack)
 		receive(ack)
-		expect(mocks.setup).toHaveBeenCalledExactlyOnceWith({ parentOrigin: "http://localhost:5173" })
-		expect(mocks.height).toHaveBeenCalledTimes(1)
 		const message = { type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 }
 		receive(message)
-		expect(mocks.message).toHaveBeenCalledWith(message)
+		await vi.waitFor(() => {
+			expect(mocks.setup).toHaveBeenCalledExactlyOnceWith({
+				parentOrigin: "http://localhost:5173",
+			})
+			expect(mocks.message).toHaveBeenCalledWith(message)
+		})
+		expect(mocks.loadScript).toHaveBeenCalledExactlyOnceWith(overlayURL)
+		expect(mocks.height).toHaveBeenCalledTimes(1)
 	})
 
 	it("accepts valid ref updates only from the allowed parent", () => {
 		const updateFromRef = vi.fn().mockResolvedValue(undefined)
-		setupEmbeddedPreviewPush({ preview: { updateFromRef } })
+		setupEmbeddedPreviewPush({ preview: { updateFromRef }, overlayURL })
 		const ref = { type: "prismic:embedded-preview:set-ref", token: "preview-token" }
 		receive(ref, "https://attacker.example")
 		receive(ref, "http://localhost:5173", null)
