@@ -30,24 +30,20 @@ interface CommentOverlayProps {
 	state: CommentOverlayState
 	uiScale: number
 	scrollToPinRequest: ScrollToPinRequest | undefined
+	onScrollToPinHandled: () => void
 	onEvent: (event: OverlayEvent) => void
 }
 
 export function CommentOverlay(props: CommentOverlayProps) {
-	const { state, uiScale, scrollToPinRequest, onEvent } = props
+	const { state, uiScale, scrollToPinRequest, onScrollToPinHandled, onEvent } = props
 
 	const pinsRef = useRef<HTMLDivElement>(null)
-	const lastPositionMessageRef = useRef<string>()
-	const handledScrollRequestRef = useRef<number>()
 	const documentSize = useDocumentSize()
 	const [cursorPosition, setCursorPosition] = useState<{ left: number; top: number }>()
 
 	const reportSelectedPinPosition = useCallback(() => {
 		const pin = getSelectedPin(state, pinsRef.current)
-		if (!pin) {
-			lastPositionMessageRef.current = undefined
-			return
-		}
+		if (!pin) return
 
 		const event: OverlayEvent = {
 			type: reportSelectedPinPositionMessageType,
@@ -55,18 +51,14 @@ export function CommentOverlay(props: CommentOverlayProps) {
 			rect: getPinRect(pin),
 			visible: isVisible(pin),
 		}
-		const serializedEvent = JSON.stringify(event)
-		if (serializedEvent === lastPositionMessageRef.current) return
-
-		lastPositionMessageRef.current = serializedEvent
 		onEvent(event)
 	}, [onEvent, state])
 
 	useLayoutEffect(reportSelectedPinPosition, [documentSize, reportSelectedPinPosition, uiScale])
 
 	useEffect(() => {
-		window.addEventListener("scroll", reportSelectedPinPosition, true)
-		return () => window.removeEventListener("scroll", reportSelectedPinPosition, true)
+		window.addEventListener("scroll", reportSelectedPinPosition)
+		return () => window.removeEventListener("scroll", reportSelectedPinPosition)
 	}, [reportSelectedPinPosition])
 
 	useEffect(() => {
@@ -87,7 +79,6 @@ export function CommentOverlay(props: CommentOverlayProps) {
 	useLayoutEffect(() => {
 		if (
 			!scrollToPinRequest ||
-			handledScrollRequestRef.current === scrollToPinRequest.id ||
 			!pinsRef.current ||
 			documentSize.width === 0 ||
 			documentSize.height === 0
@@ -103,7 +94,7 @@ export function CommentOverlay(props: CommentOverlayProps) {
 		).find((candidate) => candidate.dataset.threadId === scrollToPinRequest.threadId)
 		if (!pin || !pinState) return
 
-		handledScrollRequestRef.current = scrollToPinRequest.id
+		onScrollToPinHandled()
 		if (isFullyVisible(pin)) {
 			reportSelectedPinPosition()
 			return
@@ -114,7 +105,13 @@ export function CommentOverlay(props: CommentOverlayProps) {
 			left: Math.max(0, pinState.xRatio * documentSize.width - window.innerWidth / 2),
 			behavior: "smooth",
 		})
-	}, [documentSize, reportSelectedPinPosition, scrollToPinRequest, state.pins])
+	}, [
+		documentSize,
+		onScrollToPinHandled,
+		reportSelectedPinPosition,
+		scrollToPinRequest,
+		state.pins,
+	])
 
 	function placeComment(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()

@@ -13,7 +13,6 @@ import type {
 import { CommentOverlay } from "./CommentOverlay"
 
 export interface ScrollToPinRequest {
-	id: number
 	threadId: string
 }
 
@@ -41,10 +40,7 @@ export function Overlay(props: OverlayProps) {
 			} else if (isCommentOverlayMessage(data)) {
 				setCommentState(data)
 			} else if (isScrollToPinMessage(data)) {
-				setScrollToPinRequest((request) => ({
-					id: (request?.id ?? 0) + 1,
-					threadId: data.threadId,
-				}))
+				setScrollToPinRequest({ threadId: data.threadId })
 			}
 		})
 	}, [subscribeToMessages])
@@ -53,6 +49,7 @@ export function Overlay(props: OverlayProps) {
 		(event: OverlayEvent) => window.parent.postMessage(event, parentOrigin),
 		[parentOrigin],
 	)
+	const clearScrollToPinRequest = useCallback(() => setScrollToPinRequest(undefined), [])
 
 	return (
 		<div className="overlay" style={`--prismic-overlay-ui-scale: ${uiScale}`}>
@@ -60,6 +57,7 @@ export function Overlay(props: OverlayProps) {
 				state={commentState}
 				uiScale={uiScale}
 				scrollToPinRequest={scrollToPinRequest}
+				onScrollToPinHandled={clearScrollToPinRequest}
 				onEvent={post}
 			/>
 		</div>
