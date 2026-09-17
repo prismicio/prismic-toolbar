@@ -1,23 +1,23 @@
 .Menu {
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 100px;
-  width: 70px;
-  height: 70px;
-  user-select: none;
-  cursor: pointer;
-  margin-right: 30px;
-  background: #5163BA;
-  will-change: transform;
+	color: white;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 100px;
+	width: 70px;
+	height: 70px;
+	user-select: none;
+	cursor: pointer;
+	margin-right: 30px;
+	background: #5163ba;
+	will-change: transform;
 
-  & .Icon {
-    transition: all .2s;
-    will-change: transform;
+	& .Icon {
+		transition: all 0.2s;
+		will-change: transform;
 
-    &.x {
-      transform: rotate(-90deg);
-    }
-  }
+		&.x {
+			transform: rotate(-90deg);
+		}
+	}
 }

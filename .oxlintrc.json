@@ -1,0 +1,61 @@
+{
+	"$schema": "./node_modules/oxlint/configuration_schema.json",
+	"plugins": ["unicorn", "typescript", "oxc", "jsdoc", "react"],
+	"env": {
+		"browser": true,
+		"node": true
+	},
+	"globals": {
+		"CDN_HOST": "readonly"
+	},
+	"rules": {
+		"no-undef": "error",
+		"no-useless-assignment": "error",
+		"no-console": [
+			"warn",
+			{
+				"allow": ["info", "warn", "error"]
+			}
+		],
+		"no-unused-vars": [
+			"error",
+			{
+				"argsIgnorePattern": "^_",
+				"varsIgnorePattern": "^_",
+				"caughtErrorsIgnorePattern": "^_"
+			}
+		],
+		"typescript/consistent-type-imports": "error",
+		"typescript/no-explicit-any": "error",
+		"typescript/ban-ts-comment": "error",
+		"jsdoc/check-tag-names": [
+			"warn",
+			{
+				"definedTags": ["typeParam", "remarks", "defaultValue", "experimental"]
+			}
+		],
+		"no-unused-expressions": [
+			"error",
+			{
+				"allowTaggedTemplates": true
+			}
+		],
+		"react/rules-of-hooks": "error",
+		"react/exhaustive-deps": "warn"
+	},
+	"overrides": [
+		{
+			"files": ["**/*.ts", "**/*.tsx"],
+			"rules": {
+				"no-undef": "off",
+				"prefer-const": "error"
+			}
+		},
+		{
+			"files": ["src/toolbar-service/index.js", "src/toolbar/prediction.js"],
+			"rules": {
+				"no-async-promise-executor": "off"
+			}
+		}
+	]
+}

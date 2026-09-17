@@ -1,26 +1,41 @@
 @keyframes growIn {
-  from  { transform: scale(.8) }
-  50%  { transform: scale(1.03) }
-  75%  { transform: scale(.98) }
+	from {
+		transform: scale(0.8);
+	}
+	50% {
+		transform: scale(1.03);
+	}
+	75% {
+		transform: scale(0.98);
+	}
 }
 
-.growIn-enter-active, .growIn-appear-active {
-  animation: 300ms ease growIn both;
+.growIn-enter-active,
+.growIn-appear-active {
+	animation: 300ms ease growIn both;
 }
 
-.growIn-exit, .growIn-active-exit {
-  animation: 300ms ease reverse growIn both;
+.growIn-exit,
+.growIn-active-exit {
+	animation: 300ms ease reverse growIn both;
 }
 
 @keyframes slideIn {
-  from { opacity: 0; transform: translateY(18px); }
-  40% { opacity: 1; }
+	from {
+		opacity: 0;
+		transform: translateY(18px);
+	}
+	40% {
+		opacity: 1;
+	}
 }
 
-.slideIn-enter-active, .slideIn-appear-active {
-  animation: 200ms ease-out slideIn both;
+.slideIn-enter-active,
+.slideIn-appear-active {
+	animation: 200ms ease-out slideIn both;
 }
 
-.slideIn-exit, .slideIn-active-exit {
-  animation: 200ms ease-out reverse slideIn both;
+.slideIn-exit,
+.slideIn-active-exit {
+	animation: 200ms ease-out reverse slideIn both;
 }
