@@ -12,6 +12,7 @@ const browserTargets = browserslistToEsbuild(undefined, { path: relative(".") })
 
 export const entries = {
 	prismic: relative("src/toolbar/index.js"),
+	overlay: relative("src/toolbar/embedded-preview/Overlay.tsx"),
 	toolbar: relative("src/toolbar/toolbar.jsx"),
 	iframe: relative("src/iframe/index.js"),
 }
@@ -80,6 +81,7 @@ export function entryConfig(entry, development = false) {
 						if (output.type !== "chunk") continue
 						if (
 							entry !== "toolbar" &&
+							entry !== "overlay" &&
 							Object.keys(output.modules).some((id) => /\/node_modules\/preact\//.test(id))
 						) {
 							throw new Error(`Preact must not be included in ${entry}`)

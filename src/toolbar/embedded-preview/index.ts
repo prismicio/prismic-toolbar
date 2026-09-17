@@ -1,7 +1,7 @@
-import { deleteCookie, getCookie, once, setCookie } from "@common"
+import { deleteCookie, getCookie, once, readyDOM, script, setCookie } from "@common"
 
 import { startDocumentHeightReporting } from "./document-height"
-import { EmbeddedPreviewOverlay } from "./overlay"
+import type { SubscribeToOverlayMessages } from "./overlay-messages"
 
 const pushMarkerWindowName = "prismic:embedded-preview"
 const pollMarkerWindowName = "prismic:embedded-preview:poll"
@@ -55,27 +55,60 @@ export class EmbeddedPreviewCookie {
 
 export function setupEmbeddedPreviewPush({
 	preview,
+	overlayURL,
 }: {
 	preview: { updateFromRef(ref: string): Promise<void> }
+	overlayURL: string
 }) {
-	connectToParent((event) => {
-		if (!isSetRefMessage(event.data)) return
+	void connectToParent({
+		overlayURL,
+		handleMessage: (event) => {
+			if (!isSetRefMessage(event.data)) return
 
-		preview.updateFromRef(event.data.token).catch((error) => {
-			console.error("Failed to update embedded preview ref.", error)
-		})
+			preview.updateFromRef(event.data.token).catch((error) => {
+				console.error("Failed to update embedded preview ref.", error)
+			})
+		},
 	})
 }
 
-export function setupEmbeddedPreviewPoll() {
-	connectToParent()
+export function setupEmbeddedPreviewPoll({ overlayURL }: { overlayURL: string }) {
+	void connectToParent({ overlayURL })
 }
 
-function connectToParent(handleMessage: (event: MessageEvent<unknown>) => void = () => {}) {
-	let overlay: EmbeddedPreviewOverlay | undefined
+async function connectToParent({
+	overlayURL,
+	handleMessage = () => {},
+}: {
+	overlayURL: string
+	handleMessage?: (event: MessageEvent<unknown>) => void
+}) {
+	try {
+		await Promise.all([script(overlayURL), readyDOM()])
+	} catch (error) {
+		console.error("Failed to load embedded preview overlay.", error)
+		return
+	}
+
+	const EmbeddedPreviewOverlay = window.prismic?.EmbeddedPreviewOverlay
+	if (!EmbeddedPreviewOverlay) {
+		console.error("Failed to load embedded preview overlay.")
+		return
+	}
+
+	let handleOverlayMessage: ((data: unknown) => void) | undefined
+	const subscribeToMessages: SubscribeToOverlayMessages = (nextHandleMessage) => {
+		handleOverlayMessage = nextHandleMessage
+		return () => {
+			if (handleOverlayMessage === nextHandleMessage) handleOverlayMessage = undefined
+		}
+	}
 	const connect = once((parentOrigin: string) => {
 		startDocumentHeightReporting({ parentOrigin })
-		overlay = new EmbeddedPreviewOverlay({ parentOrigin })
+		new EmbeddedPreviewOverlay({
+			parentOrigin,
+			subscribeToMessages,
+		})
 	})
 
 	window.addEventListener("message", (event: MessageEvent<unknown>) => {
@@ -87,7 +120,7 @@ function connectToParent(handleMessage: (event: MessageEvent<unknown>) => void =
 			return
 		}
 
-		if (overlay) overlay.handleMessage(event.data)
+		handleOverlayMessage?.(event.data)
 		handleMessage(event)
 	})
 
