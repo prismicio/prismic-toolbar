@@ -11,6 +11,7 @@ import type {
 	SubscribeToOverlayMessages,
 } from "../overlay-messages"
 import { CommentOverlay } from "./CommentOverlay"
+import { SliceOverlay } from "./SliceOverlay"
 
 export interface ScrollToPinRequest {
 	threadId: string
@@ -53,6 +54,7 @@ export function Overlay(props: OverlayProps) {
 
 	return (
 		<div className="overlay" style={`--prismic-overlay-ui-scale: ${uiScale}`}>
+			<SliceOverlay />
 			<CommentOverlay
 				state={commentState}
 				uiScale={uiScale}
