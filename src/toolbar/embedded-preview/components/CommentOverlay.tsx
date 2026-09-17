@@ -1,15 +1,16 @@
-import type { RefObject, TargetedMouseEvent } from "preact"
+import type { TargetedMouseEvent } from "preact"
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "preact/hooks"
 
 import {
 	clamp,
+	getPinDocumentPosition,
 	getPinRect,
 	getPinRectFromPosition,
 	isFullyVisible,
 	isVisible,
 	measureDocument,
-	positionPin,
 } from "../comment-overlay-geometry"
+import type { DocumentSize } from "../comment-overlay-geometry"
 import {
 	deselectPinMessageType,
 	placeCommentMessageType,
@@ -26,32 +27,27 @@ import type {
 import type { ScrollToPinRequest } from "./Overlay"
 
 interface CommentOverlayProps {
-	rootRef: RefObject<HTMLDivElement>
 	state: CommentOverlayState
 	uiScale: number
 	scrollToPinRequest: ScrollToPinRequest | undefined
 	onEvent: (event: OverlayEvent) => void
 }
 
-export function CommentOverlay({
-	rootRef,
-	state,
-	uiScale,
-	scrollToPinRequest,
-	onEvent,
-}: CommentOverlayProps) {
+export function CommentOverlay(props: CommentOverlayProps) {
+	const { state, uiScale, scrollToPinRequest, onEvent } = props
+
 	const pinsRef = useRef<HTMLDivElement>(null)
-	const positionReportFrameRef = useRef<number>()
-	const reportSelectedPinPositionRef = useRef<() => void>(() => {})
 	const lastPositionMessageRef = useRef<string>()
 	const handledScrollRequestRef = useRef<number>()
-	const [layoutVersion, setLayoutVersion] = useState(0)
+	const documentSize = useDocumentSize()
 	const [cursorPosition, setCursorPosition] = useState<{ left: number; top: number }>()
-	const selectedPinKey = getSelectedPinKey(state)
 
 	const reportSelectedPinPosition = useCallback(() => {
 		const pin = getSelectedPin(state, pinsRef.current)
-		if (!pin) return
+		if (!pin) {
+			lastPositionMessageRef.current = undefined
+			return
+		}
 
 		const event: OverlayEvent = {
 			type: reportSelectedPinPositionMessageType,
@@ -66,57 +62,16 @@ export function CommentOverlay({
 		onEvent(event)
 	}, [onEvent, state])
 
-	useLayoutEffect(() => {
-		reportSelectedPinPositionRef.current = reportSelectedPinPosition
+	useLayoutEffect(reportSelectedPinPosition, [documentSize, reportSelectedPinPosition, uiScale])
+
+	useEffect(() => {
+		window.addEventListener("scroll", reportSelectedPinPosition, true)
+		return () => window.removeEventListener("scroll", reportSelectedPinPosition, true)
 	}, [reportSelectedPinPosition])
-
-	const reportSelectedPinPositionSoon = useCallback(() => {
-		if (positionReportFrameRef.current !== undefined) return
-
-		positionReportFrameRef.current = window.requestAnimationFrame(() => {
-			positionReportFrameRef.current = undefined
-			reportSelectedPinPositionRef.current()
-		})
-	}, [])
-
-	useEffect(() => {
-		return () => {
-			if (positionReportFrameRef.current !== undefined) {
-				window.cancelAnimationFrame(positionReportFrameRef.current)
-			}
-		}
-	}, [])
-
-	useEffect(() => {
-		lastPositionMessageRef.current = undefined
-		reportSelectedPinPositionSoon()
-	}, [reportSelectedPinPositionSoon, selectedPinKey])
 
 	useEffect(() => {
 		if (!state.placementEnabled) setCursorPosition(undefined)
 	}, [state.placementEnabled])
-
-	useEffect(() => {
-		reportSelectedPinPositionSoon()
-	}, [layoutVersion, reportSelectedPinPositionSoon, state, uiScale])
-
-	useEffect(() => {
-		const handleResize = () => {
-			setLayoutVersion((version) => version + 1)
-			reportSelectedPinPositionSoon()
-		}
-		const resizeObserver = new ResizeObserver(handleResize)
-		resizeObserver.observe(document.documentElement)
-		resizeObserver.observe(document.body)
-		window.addEventListener("scroll", reportSelectedPinPositionSoon, true)
-		window.addEventListener("resize", handleResize)
-
-		return () => {
-			resizeObserver.disconnect()
-			window.removeEventListener("scroll", reportSelectedPinPositionSoon, true)
-			window.removeEventListener("resize", handleResize)
-		}
-	}, [reportSelectedPinPositionSoon])
 
 	useEffect(() => {
 		const handleDocumentClick = () => {
@@ -133,7 +88,9 @@ export function CommentOverlay({
 		if (
 			!scrollToPinRequest ||
 			handledScrollRequestRef.current === scrollToPinRequest.id ||
-			!pinsRef.current
+			!pinsRef.current ||
+			documentSize.width === 0 ||
+			documentSize.height === 0
 		) {
 			return
 		}
@@ -148,17 +105,16 @@ export function CommentOverlay({
 
 		handledScrollRequestRef.current = scrollToPinRequest.id
 		if (isFullyVisible(pin)) {
-			reportSelectedPinPositionSoon()
+			reportSelectedPinPosition()
 			return
 		}
 
-		const { width, height } = measureDocument()
 		window.scrollTo({
-			top: Math.max(0, pinState.yRatio * height - window.innerHeight / 2),
-			left: Math.max(0, pinState.xRatio * width - window.innerWidth / 2),
+			top: Math.max(0, pinState.yRatio * documentSize.height - window.innerHeight / 2),
+			left: Math.max(0, pinState.xRatio * documentSize.width - window.innerWidth / 2),
 			behavior: "smooth",
 		})
-	}, [layoutVersion, reportSelectedPinPositionSoon, scrollToPinRequest, state.pins, uiScale])
+	}, [documentSize, reportSelectedPinPosition, scrollToPinRequest, state.pins])
 
 	function placeComment(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
@@ -203,29 +159,27 @@ export function CommentOverlay({
 				{state.pins.map((pin) => (
 					<Pin
 						key={pin.threadId}
-						rootRef={rootRef}
 						pin={{
 							...pin,
 							selected: pin.threadId === state.selectedThreadId,
 							type: "thread",
 						}}
+						documentSize={documentSize}
 						uiScale={uiScale}
-						layoutVersion={layoutVersion}
 						onEvent={onEvent}
 					/>
 				))}
 				{state.draftPin && state.draftAuthor && (
 					<Pin
 						key="draft"
-						rootRef={rootRef}
 						pin={{
 							...state.draftPin,
 							author: state.draftAuthor,
 							selected: true,
 							type: "draft",
 						}}
+						documentSize={documentSize}
 						uiScale={uiScale}
-						layoutVersion={layoutVersion}
 						onEvent={onEvent}
 					/>
 				)}
@@ -243,20 +197,16 @@ export function CommentOverlay({
 }
 
 interface PinProps {
-	rootRef: RefObject<HTMLDivElement>
 	pin: RenderedPin
+	documentSize: DocumentSize
 	uiScale: number
-	layoutVersion: number
 	onEvent: (event: OverlayEvent) => void
 }
 
-function Pin({ rootRef, pin, uiScale, layoutVersion, onEvent }: PinProps) {
-	const pinRef = useRef<HTMLButtonElement>(null)
+function Pin(props: PinProps) {
+	const { pin, documentSize, uiScale, onEvent } = props
 
-	useLayoutEffect(() => {
-		if (!pinRef.current || !rootRef.current) return
-		positionPin(pinRef.current, pin, uiScale, rootRef.current)
-	}, [layoutVersion, pin, rootRef, uiScale])
+	const { left, top } = getPinDocumentPosition(pin, uiScale, documentSize)
 
 	function handleClick(event: TargetedMouseEvent<HTMLButtonElement>) {
 		if (pin.type !== "thread") return
@@ -282,15 +232,13 @@ function Pin({ rootRef, pin, uiScale, layoutVersion, onEvent }: PinProps) {
 
 	return (
 		<button
-			ref={pinRef}
 			type="button"
 			className="pin"
+			style={`left: ${left}px; top: ${top}px`}
 			data-pin-type={pin.type}
 			data-thread-id={pin.type === "thread" ? pin.threadId : undefined}
 			data-selected={String(pin.selected)}
 			data-resolved={String(Boolean(pin.resolved))}
-			data-x-ratio={String(pin.xRatio)}
-			data-y-ratio={String(pin.yRatio)}
 			aria-label={
 				pin.type === "thread" ? `Open comment by ${pin.author.name || "author"}` : "New comment"
 			}
@@ -302,7 +250,13 @@ function Pin({ rootRef, pin, uiScale, layoutVersion, onEvent }: PinProps) {
 	)
 }
 
-function PinAvatar({ author }: { author: Author }) {
+interface PinAvatarProps {
+	author: Author
+}
+
+function PinAvatar(props: PinAvatarProps) {
+	const { author } = props
+
 	const [failedAvatarURL, setFailedAvatarURL] = useState<string>()
 
 	return (
@@ -319,6 +273,38 @@ function PinAvatar({ author }: { author: Author }) {
 			)}
 		</span>
 	)
+}
+
+function useDocumentSize() {
+	const [documentSize, setDocumentSize] = useState<DocumentSize>({ width: 0, height: 0 })
+
+	useLayoutEffect(() => {
+		const updateDocumentSize = () => {
+			const nextDocumentSize = measureDocument()
+			setDocumentSize((currentDocumentSize) => {
+				if (
+					currentDocumentSize.width === nextDocumentSize.width &&
+					currentDocumentSize.height === nextDocumentSize.height
+				) {
+					return currentDocumentSize
+				}
+				return nextDocumentSize
+			})
+		}
+		const resizeObserver = new ResizeObserver(updateDocumentSize)
+
+		updateDocumentSize()
+		resizeObserver.observe(document.documentElement)
+		resizeObserver.observe(document.body)
+		window.addEventListener("resize", updateDocumentSize)
+
+		return () => {
+			resizeObserver.disconnect()
+			window.removeEventListener("resize", updateDocumentSize)
+		}
+	}, [])
+
+	return documentSize
 }
 
 function getSelectedPin(state: CommentOverlayState, pins: HTMLDivElement | null) {
@@ -344,11 +330,6 @@ function getPinIdentity(pin: HTMLButtonElement): PinIdentity {
 function getSelectedPinIdentity(state: CommentOverlayState): PinIdentity | undefined {
 	if (state.draftPin) return { type: "draft" }
 	if (state.selectedThreadId) return { type: "thread", threadId: state.selectedThreadId }
-}
-
-function getSelectedPinKey(state: CommentOverlayState) {
-	if (state.draftPin) return "draft"
-	return state.selectedThreadId
 }
 
 function getInitials(name: string) {

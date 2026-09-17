@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from "preact/hooks"
+import { useCallback, useLayoutEffect, useState } from "preact/hooks"
 
 import {
 	isCommentOverlayMessage,
@@ -27,8 +27,9 @@ interface OverlayProps {
 	subscribeToMessages: SubscribeToOverlayMessages
 }
 
-export function Overlay({ parentOrigin, subscribeToMessages }: OverlayProps) {
-	const rootRef = useRef<HTMLDivElement>(null)
+export function Overlay(props: OverlayProps) {
+	const { parentOrigin, subscribeToMessages } = props
+
 	const [uiScale, setUIScale] = useState(1)
 	const [commentState, setCommentState] = useState(emptyCommentState)
 	const [scrollToPinRequest, setScrollToPinRequest] = useState<ScrollToPinRequest>()
@@ -54,9 +55,8 @@ export function Overlay({ parentOrigin, subscribeToMessages }: OverlayProps) {
 	)
 
 	return (
-		<div className="overlay" ref={rootRef} style={`--prismic-overlay-ui-scale: ${uiScale}`}>
+		<div className="overlay" style={`--prismic-overlay-ui-scale: ${uiScale}`}>
 			<CommentOverlay
-				rootRef={rootRef}
 				state={commentState}
 				uiScale={uiScale}
 				scrollToPinRequest={scrollToPinRequest}

@@ -3,22 +3,16 @@ import type { PinRect, Positioned } from "./overlay-messages"
 const boundaryPadding = 4
 const pinSize = 32
 
-export function positionPin(
-	pin: HTMLElement,
-	position: Positioned,
-	uiScale: number,
-	anchor: HTMLElement,
-) {
-	const { left, top } = getPinDocumentPosition(position, uiScale)
-	const anchorRect = anchor.getBoundingClientRect()
-	const anchorDocumentLeft = anchorRect.left + window.scrollX
-	const anchorDocumentTop = anchorRect.top + window.scrollY
-	pin.style.left = `${left - anchorDocumentLeft}px`
-	pin.style.top = `${top - anchorDocumentTop}px`
+export interface DocumentSize {
+	width: number
+	height: number
 }
 
-export function getPinDocumentPosition(position: Positioned, uiScale: number) {
-	const { width, height } = measureDocument()
+export function getPinDocumentPosition(
+	position: Positioned,
+	uiScale: number,
+	{ width, height } = measureDocument(),
+) {
 	const renderedPinSize = pinSize * uiScale
 	const maxLeft = Math.max(boundaryPadding, width - renderedPinSize - boundaryPadding)
 	const maxTop = Math.max(boundaryPadding, height - renderedPinSize - boundaryPadding)
