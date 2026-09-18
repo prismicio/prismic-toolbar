@@ -5,6 +5,7 @@ export const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
 export const placeCommentMessageType = "prismic:embedded-preview:place-comment"
 export const selectPinMessageType = "prismic:embedded-preview:select-pin"
 export const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
+export const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 export const reportSelectedPinPositionMessageType =
 	"prismic:embedded-preview:report-selected-pin-position"
 
@@ -47,6 +48,7 @@ export type OverlayEvent =
 	| ({ type: typeof placeCommentMessageType; rect: PinRect } & Positioned)
 	| { type: typeof selectPinMessageType; pin: PinIdentity; rect: PinRect }
 	| { type: typeof deselectPinMessageType; pin: PinIdentity }
+	| { type: typeof selectSliceMessageType; sliceId: string }
 	| {
 			type: typeof reportSelectedPinPositionMessageType
 			pin: PinIdentity

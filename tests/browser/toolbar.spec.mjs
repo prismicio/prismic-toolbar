@@ -56,6 +56,48 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	await expect(pin).toBeVisible()
 	await expect(pin).toHaveText("TA") // broken avatar falls back to initials
 	await expect(site.locator('[data-thread-id="last"]')).toHaveCSS("opacity", "0.4")
+	const highlight = site.locator("#prismic-embedded-preview-overlay").locator(".slice-highlight")
+	const firstSlice = site.locator("#first-slice")
+	await firstSlice.hover({ position: { x: 400, y: 200 } })
+	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
+	const badge = highlight.locator(".slice-highlight-badge")
+	await expect(badge).toHaveText("first-slice")
+	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
+	await expect(highlight).toHaveCSS("border-width", "2px")
+	await expect(highlight).toHaveCSS("border-radius", "12px")
+	await firstSlice.click()
+	await expect
+		.poll(() =>
+			page.evaluate(() =>
+				window.fixture.messages.some(
+					(message) =>
+						message.type === "prismic:embedded-preview:select-slice" &&
+						message.sliceId === "first-slice",
+				),
+			),
+		)
+		.toBe(true)
+	await page.evaluate(() => {
+		const frame = document.querySelector("iframe")
+		frame.contentWindow.postMessage(
+			{ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 },
+			location.origin,
+		)
+	})
+	await expect(highlight).toHaveCSS("border-width", "4px")
+	await expect(highlight).toHaveCSS("border-radius", "24px")
+	await expect(badge).toHaveCSS("font-size", "20px")
+	const firstSliceBox = await firstSlice.boundingBox()
+	const firstHighlightBox = await highlight.boundingBox()
+	expect(firstHighlightBox).toEqual(firstSliceBox)
+	await firstSlice.evaluate(() => window.scrollBy(0, 50))
+	await expect
+		.poll(async () => (await highlight.boundingBox())?.y)
+		.toBe((firstHighlightBox?.y ?? 0) - 50)
+	await site.locator("#outside-slices").hover()
+	await expect(highlight).toHaveCount(0)
+	await site.locator("#second-slice").hover()
+	await expect(highlight).toHaveAttribute("data-slice-id", "second-slice")
 	await pin.click()
 	await expect(pin).toHaveAttribute("data-selected", "true")
 	await expect
@@ -67,7 +109,6 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 			),
 		)
 		.toBe(true)
-	await page.getByRole("button", { name: "Scale overlay" }).click()
 	await expect(pin).toHaveCSS("transform", "matrix(2, 0, 0, 2, 0, 0)")
 	await page.getByRole("button", { name: "Place comment", exact: true }).click()
 	await site
