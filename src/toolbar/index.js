@@ -6,6 +6,7 @@ import { Preview } from './preview';
 import { Prediction } from './prediction';
 import { Analytics } from './analytics';
 import { PreviewCookie } from './preview/cookie';
+import { setupDirectPreviewRefWatcher } from './direct-preview-watch';
 import {
   EmbeddedPreviewCookie,
   getEmbeddedPreviewMode,
@@ -95,11 +96,14 @@ if (shouldRunToolbar) {
       const preview = new Preview({
         closePreviewSession: async () => {},
       }, previewCookieHelper, {});
-      setupEmbeddedPreviewPush({ preview });
+      setupEmbeddedPreviewPush({ preview, repository: domain });
       return;
     }
 
     if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll();
+    // Observe before the remote toolbar bootstrap so edits during startup are
+    // not mistaken for the ref already rendered by this page.
+    if (isRegularToolbar) setupDirectPreviewRefWatcher({ repository: domain });
 
     const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
     const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
@@ -112,10 +116,13 @@ if (shouldRunToolbar) {
     const { initialRef, isActive } = await preview.setup();
 
     // Skip cookie sync when inactive so we don't clear a preview owned by another tab.
-    if (isActive && previewCookieHelper.sync(initialRef)) {
+    if (isActive && previewCookieHelper.sync(initialRef)
+      && dispatchToolbarEvent(toolbarEvents.previewStart, { ref: initialRef })) {
       reloadOrigin();
       return;
     }
+
+    if (isActive) preview.watchPreviewUpdates();
 
     if (isRegularToolbar && (isActive || previewState.auth)) {
       const prediction = previewState.auth
