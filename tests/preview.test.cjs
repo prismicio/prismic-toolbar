@@ -236,6 +236,15 @@ test('editor ownership prevents legacy startup sync and polling from overwriting
   assert.strictEqual(h.cookies[cookieName], 'editor');
 });
 
+test('a legacy cookie converts silently and reloads only when the session ref differs', () => {
+  const h = harness({ cookies: { [cookieName]: 'legacy' } });
+  const cookie = h.previewCookie();
+  assert.strictEqual(cookie.sync('legacy'), false);
+  assert.deepStrictEqual(JSON.parse(h.cookies[cookieName]), { _tracker: 'tracker', [repository]: { preview: 'legacy' } });
+  h.cookies[cookieName] = 'legacy';
+  assert.strictEqual(cookie.sync('newer'), true);
+});
+
 test('a legacy ping already in flight is discarded after editor takeover', async () => {
   const h = harness();
   let finishPing;
@@ -423,6 +432,26 @@ test('standalone watcher starts before remote toolbar bootstrap can swallow an e
   assert.strictEqual(h.events.filter(event => event.type === 'prismicPreviewUpdate').length, 1);
   resolveService();
   await flush();
+});
+
+test('a stale cookie at startup emits a start event and reloads only when nothing cancels it', async () => {
+  const boot = async cancelEvents => {
+    const h = harness({
+      cancelEvents,
+      previewState: { preview: { ref: 'session' } },
+      cookies: { [cookieName]: JSON.stringify({ [repository]: { preview: 'stale' } }) },
+    });
+    h.window.prismic = { Toolbar: class {} };
+    h.load('src/toolbar/index.js');
+    await flush();
+    return h;
+  };
+  const handled = await boot(true);
+  assert.deepStrictEqual(handled.events.filter(e => e.type === 'prismicPreviewStart').map(e => e.detail.ref), ['session']);
+  assert.strictEqual(JSON.parse(handled.cookies[cookieName])[repository].preview, 'session');
+  assert.strictEqual(handled.reloads, 0);
+  const unhandled = await boot(false);
+  assert.strictEqual(unhandled.reloads, 1);
 });
 
 test('legacy standalone keeps its three-second poll alongside the direct watcher', async () => {

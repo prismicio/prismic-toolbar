@@ -14,7 +14,7 @@ export class PreviewCookie {
   // Align the site cookie with `ref`. Returns true when the page should reload.
   sync(ref) {
     if (this.isControlledByEditor()) return false;
-    if (this.convertLegacyCookieIfNeeded()) return true;
+    this.convertLegacyCookieIfNeeded();
 
     const upToDate = ref === this.getRefForDomain();
     this.upsertPreviewForDomain(ref);

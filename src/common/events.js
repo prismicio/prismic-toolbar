@@ -1,5 +1,6 @@
 export const toolbarEvents = {
   prismic: 'prismic',
+  previewStart: 'prismicPreviewStart',
   previewUpdate: 'prismicPreviewUpdate',
   previewEnd: 'prismicPreviewEnd'
 };
