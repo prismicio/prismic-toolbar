@@ -142,7 +142,7 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 
 		document.addEventListener("pointermove", handlePointerMove, { passive: true })
 		document.addEventListener("pointerover", handlePointerOver, { passive: true })
-		document.addEventListener("click", handleClick, true)
+		document.addEventListener("click", handleClick)
 		document.documentElement.addEventListener("pointerleave", clearHoveredRange)
 		window.addEventListener("blur", clearHoveredRange)
 		window.addEventListener("scroll", updateHoveredRangeSoon, true)
@@ -152,7 +152,7 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 			if (animationFrame !== undefined) cancelAnimationFrame(animationFrame)
 			document.removeEventListener("pointermove", handlePointerMove)
 			document.removeEventListener("pointerover", handlePointerOver)
-			document.removeEventListener("click", handleClick, true)
+			document.removeEventListener("click", handleClick)
 			document.documentElement.removeEventListener("pointerleave", clearHoveredRange)
 			window.removeEventListener("blur", clearHoveredRange)
 			window.removeEventListener("scroll", updateHoveredRangeSoon, true)
