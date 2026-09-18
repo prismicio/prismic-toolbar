@@ -8,16 +8,28 @@ import {
 } from "../slice-overlay"
 import type { SliceMarkerRange, SliceRect } from "../slice-overlay"
 
-export function SliceOverlay() {
+interface SliceOverlayProps {
+	onSelectSlice: (sliceId: string) => void
+}
+
+export function SliceOverlay(props: SliceOverlayProps) {
+	const { onSelectSlice } = props
+
 	const ranges = useSliceMarkerRanges()
-	const hoveredRange = useHoveredSliceMarkerRange(ranges)
+	const hoveredRange = useHoveredSliceMarkerRange({ ranges, onSelectSlice })
 
 	return (
 		<div className="slice-overlay">{hoveredRange && <SliceHighlight range={hoveredRange} />}</div>
 	)
 }
 
-function SliceHighlight({ range }: { range: SliceMarkerRange }) {
+interface SliceHighlightProps {
+	range: SliceMarkerRange
+}
+
+function SliceHighlight(props: SliceHighlightProps) {
+	const { range } = props
+
 	const [rect, setRect] = useState<SliceRect>()
 
 	const updateRect = useCallback(() => {
@@ -69,7 +81,14 @@ function useSliceMarkerRanges() {
 	return ranges
 }
 
-function useHoveredSliceMarkerRange(ranges: SliceMarkerRange[]) {
+interface UseHoveredSliceMarkerRangeArgs {
+	ranges: SliceMarkerRange[]
+	onSelectSlice: (sliceId: string) => void
+}
+
+function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
+	const { ranges, onSelectSlice } = args
+
 	const pointerRef = useRef<{ x: number; y: number }>()
 	const [hoveredRange, setHoveredRange] = useState<SliceMarkerRange>()
 	const rangeLookup = useMemo(() => createSliceMarkerRangeLookup(ranges), [ranges])
@@ -100,6 +119,15 @@ function useHoveredSliceMarkerRange(ranges: SliceMarkerRange[]) {
 			pointerRef.current = { x: event.clientX, y: event.clientY }
 			setHoveredRangeAtElement(event.target instanceof Element ? event.target : null)
 		}
+		const handleClick = (event: MouseEvent) => {
+			const target = event.target instanceof Element ? event.target : null
+			const range = target ? findSliceMarkerRangeAtElement(rangeLookup, target) : undefined
+			if (!range) return
+
+			event.preventDefault()
+			event.stopPropagation()
+			onSelectSlice(range.sliceId)
+		}
 		const updateHoveredRangeSoon = () => {
 			if (animationFrame !== undefined) return
 			animationFrame = requestAnimationFrame(() => {
@@ -114,6 +142,7 @@ function useHoveredSliceMarkerRange(ranges: SliceMarkerRange[]) {
 
 		document.addEventListener("pointermove", handlePointerMove, { passive: true })
 		document.addEventListener("pointerover", handlePointerOver, { passive: true })
+		document.addEventListener("click", handleClick, true)
 		document.documentElement.addEventListener("pointerleave", clearHoveredRange)
 		window.addEventListener("blur", clearHoveredRange)
 		window.addEventListener("scroll", updateHoveredRangeSoon, true)
@@ -123,12 +152,13 @@ function useHoveredSliceMarkerRange(ranges: SliceMarkerRange[]) {
 			if (animationFrame !== undefined) cancelAnimationFrame(animationFrame)
 			document.removeEventListener("pointermove", handlePointerMove)
 			document.removeEventListener("pointerover", handlePointerOver)
+			document.removeEventListener("click", handleClick, true)
 			document.documentElement.removeEventListener("pointerleave", clearHoveredRange)
 			window.removeEventListener("blur", clearHoveredRange)
 			window.removeEventListener("scroll", updateHoveredRangeSoon, true)
 			window.removeEventListener("resize", updateHoveredRangeSoon)
 		}
-	}, [setHoveredRangeAtElement, updateHoveredRange])
+	}, [onSelectSlice, rangeLookup, setHoveredRangeAtElement, updateHoveredRange])
 
 	return hoveredRange
 }

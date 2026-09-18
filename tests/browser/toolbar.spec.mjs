@@ -65,6 +65,18 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
 	await expect(highlight).toHaveCSS("border-width", "2px")
 	await expect(highlight).toHaveCSS("border-radius", "12px")
+	await firstSlice.click()
+	await expect
+		.poll(() =>
+			page.evaluate(() =>
+				window.fixture.messages.some(
+					(message) =>
+						message.type === "prismic:embedded-preview:select-slice" &&
+						message.sliceId === "first-slice",
+				),
+			),
+		)
+		.toBe(true)
 	await page.evaluate(() => {
 		const frame = document.querySelector("iframe")
 		frame.contentWindow.postMessage(

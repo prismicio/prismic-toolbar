@@ -4,6 +4,7 @@ import {
 	isCommentOverlayMessage,
 	isOverlayScaleMessage,
 	isScrollToPinMessage,
+	selectSliceMessageType,
 } from "../overlay-messages"
 import type {
 	CommentOverlayState,
@@ -51,10 +52,14 @@ export function Overlay(props: OverlayProps) {
 		[parentOrigin],
 	)
 	const clearScrollToPinRequest = useCallback(() => setScrollToPinRequest(undefined), [])
+	const selectSlice = useCallback(
+		(sliceId: string) => post({ type: selectSliceMessageType, sliceId }),
+		[post],
+	)
 
 	return (
 		<div className="overlay" style={`--prismic-overlay-ui-scale: ${uiScale}`}>
-			<SliceOverlay />
+			<SliceOverlay onSelectSlice={selectSlice} />
 			<CommentOverlay
 				state={commentState}
 				uiScale={uiScale}
