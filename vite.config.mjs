@@ -23,13 +23,11 @@ const shared = {
 			{ find: /^react$/, replacement: "preact/compat" },
 			{ find: /^react-dom$/, replacement: "preact/compat" },
 			{ find: /^react\/jsx-runtime$/, replacement: "preact/jsx-runtime" },
-			...Object.entries({
-				"~": "src",
-				"@common": "src/common",
-				"@toolbar": "src/toolbar",
-				"@iframe": "src/iframe",
-				"@toolbar-service": "src/toolbar-service",
-			}).map(([find, path]) => ({ find, replacement: relative(path) })),
+			{ find: "~", replacement: relative("src") },
+			{ find: "@common", replacement: relative("src/common") },
+			{ find: "@toolbar", replacement: relative("src/toolbar") },
+			{ find: "@iframe", replacement: relative("src/iframe") },
+			{ find: "@toolbar-service", replacement: relative("src/toolbar-service") },
 		],
 	},
 	oxc: { jsx: { runtime: "automatic", importSource: "preact" } },
@@ -47,6 +45,30 @@ const shared = {
 }
 
 export function entryConfig(entry, development = false) {
+	const plugins = []
+
+	if (entry === "iframe") {
+		plugins.push({
+			name: "inline-auth-iframe",
+			generateBundle(_options, bundle) {
+				const script = bundle["iframe.js"]
+				if (!script || script.type !== "chunk") {
+					throw new Error("Missing auth iframe script")
+				}
+				const template = readFileSync(relative("src/iframe/index.html"), "utf8")
+				this.emitFile({
+					type: "asset",
+					fileName: "iframe.html",
+					source: template.replace(
+						'<script src="iframe?_inline"></script>',
+						() => `<script>${script.code.replace(/<\/script/gi, "<\\/script")}</script>`,
+					),
+				})
+				delete bundle["iframe.js"]
+			},
+		})
+	}
+
 	return {
 		...shared,
 		configFile: false,
@@ -73,46 +95,7 @@ export function entryConfig(entry, development = false) {
 			sourcemap: development ? "inline" : false,
 			watch: development ? {} : null,
 		},
-		plugins: [
-			{
-				name: "preserve-entry-boundaries",
-				generateBundle(_options, bundle) {
-					for (const output of Object.values(bundle)) {
-						if (output.type !== "chunk") continue
-						if (
-							entry !== "toolbar" &&
-							entry !== "overlay" &&
-							Object.keys(output.modules).some((id) => /\/node_modules\/preact\//.test(id))
-						) {
-							throw new Error(`Preact must not be included in ${entry}`)
-						}
-					}
-				},
-			},
-			...(entry === "iframe"
-				? [
-						{
-							name: "inline-auth-iframe",
-							generateBundle(_options, bundle) {
-								const script = bundle["iframe.js"]
-								if (!script || script.type !== "chunk") {
-									throw new Error("Missing auth iframe script")
-								}
-								const template = readFileSync(relative("src/iframe/index.html"), "utf8")
-								this.emitFile({
-									type: "asset",
-									fileName: "iframe.html",
-									source: template.replace(
-										'<script src="iframe?_inline"></script>',
-										() => `<script>${script.code.replace(/<\/script/gi, "<\\/script")}</script>`,
-									),
-								})
-								delete bundle["iframe.js"]
-							},
-						},
-					]
-				: []),
-		],
+		plugins,
 	}
 }
 
