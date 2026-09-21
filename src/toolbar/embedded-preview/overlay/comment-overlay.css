@@ -1,28 +1,9 @@
+@import "./avatar.css";
+
 :host {
 	--prismic-overlay-pin-size: 32px;
-	--prismic-overlay-ui-scale: 1;
-
-	display: block;
-	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-	pointer-events: none;
 }
 
-* {
-	box-sizing: border-box;
-}
-
-.placement-layer {
-	position: fixed;
-	inset: 0;
-}
-
-.overlay,
-.comment-overlay,
-.comment-pins {
-	pointer-events: none;
-}
-
-.overlay,
 .comment-overlay {
 	position: relative;
 	width: 0;
@@ -38,7 +19,8 @@
 }
 
 .placement-layer {
-	z-index: 1;
+	position: fixed;
+	inset: 0;
 	margin: 0;
 	padding: 0;
 	background: transparent;
@@ -50,7 +32,6 @@
 
 .pin {
 	position: absolute;
-	z-index: 2;
 	display: grid;
 	width: var(--prismic-overlay-pin-size);
 	height: var(--prismic-overlay-pin-size);
@@ -76,33 +57,7 @@
 	opacity: 0.4;
 }
 
-.pin-avatar {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 100%;
-	height: 100%;
-	overflow: hidden;
-	color: #666;
-	background: #eee;
-	border-radius: 50%;
-}
-
-.pin-avatar-image {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-
-.pin-avatar-fallback {
-	font-size: 8px;
-	font-weight: 500;
-	line-height: 1;
-	white-space: nowrap;
-}
-
 .cursor-pin {
 	position: fixed;
-	z-index: 3;
 	pointer-events: none;
 }

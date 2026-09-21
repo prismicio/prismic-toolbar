@@ -3,16 +3,12 @@ import { toolbarEvents, dispatchToolbarEvent, script, warn as warnToolbar } from
 import { ToolbarService } from "@toolbar-service"
 
 import { Analytics } from "./analytics"
-import {
-	EmbeddedPreviewCookie,
-	getEmbeddedPreviewMode,
-	setupEmbeddedPreviewPoll,
-	setupEmbeddedPreviewPush,
-} from "./embedded-preview"
+import { getEmbeddedPreviewMode, loadEmbeddedPreview } from "./embedded-preview/bootstrap"
 import { Experiment } from "./experiment"
 import { Prediction } from "./prediction"
 import { Preview } from "./preview"
 import { PreviewCookie } from "./preview/cookie"
+import { EmbeddedPreviewCookie } from "./preview/embedded-cookie"
 import { reloadOrigin, getAbsoluteURL } from "./utils"
 
 const version = process.env.npm_package_version
@@ -60,7 +56,7 @@ if (shouldRunToolbar) {
 
 	// Auto-querystring setup
 	const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute("src")))
-	const overlayURL = `${CDN_HOST}/prismic-toolbar/${version}/overlay.js`
+	const embeddedPreviewURL = `${CDN_HOST}/prismic-toolbar/${version}/embedded-preview.js`
 	const repoParam = scriptURL.searchParams.get("repo")
 	if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(",")])
 
@@ -103,11 +99,14 @@ if (shouldRunToolbar) {
 				previewCookieHelper,
 				{},
 			)
-			setupEmbeddedPreviewPush({ preview, overlayURL })
+			void loadEmbeddedPreview({
+				url: embeddedPreviewURL,
+				onRef: (ref) => preview.updateFromRef(ref),
+			})
 			return
 		}
 
-		if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll({ overlayURL })
+		if (isEmbeddedPollPreview) void loadEmbeddedPreview({ url: embeddedPreviewURL })
 
 		const protocol = domain.match(".test$") ? window.location.protocol : "https:"
 		const toolbarClient = await ToolbarService.getClient(

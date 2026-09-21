@@ -1,42 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { EmbeddedPreviewCookie, setupEmbeddedPreviewPush } from "./index"
+import { setupEmbeddedPreview } from "./index"
+import type { PostMessage, SubscribeToMessages } from "./message-protocol"
 
 const mocks = vi.hoisted(() => ({
 	setup: vi.fn(),
 	message: vi.fn(),
-	height: vi.fn(),
-	loadScript: vi.fn(),
+	subscribe: vi.fn(),
 }))
-vi.mock("@common", async (importOriginal) => ({
-	...(await importOriginal()),
-	script: mocks.loadScript,
-}))
-vi.mock("./document-height", () => ({
-	startDocumentHeightReporting: mocks.height,
+vi.mock("./overlay", () => ({
+	EmbeddedPreviewOverlay: class {
+		constructor(options: { postMessage: PostMessage; subscribeToMessages: SubscribeToMessages }) {
+			mocks.setup({ postMessage: options.postMessage })
+			mocks.subscribe(options.subscribeToMessages)
+			options.subscribeToMessages(mocks.message)
+		}
+	},
 }))
 
-const overlayURL = "https://static.cdn.prismic.io/prismic-toolbar/test/overlay.js"
 let listeners: ReturnType<typeof vi.spyOn>
 beforeEach(() => {
 	vi.clearAllMocks()
-	mocks.loadScript.mockResolvedValue(undefined)
-	window.prismic = {
-		endpoint: null,
-		version: "test",
-		setup: () => {},
-		startExperiment: () => {},
-		setupEditButton: () => {},
-		EmbeddedPreviewOverlay: class {
-			constructor(options: {
-				parentOrigin: string
-				subscribeToMessages(handleMessage: (data: unknown) => void): () => void
-			}) {
-				mocks.setup({ parentOrigin: options.parentOrigin })
-				options.subscribeToMessages(mocks.message)
-			}
-		},
-	}
 	listeners = vi.spyOn(window, "addEventListener")
 	vi.spyOn(window.parent, "postMessage").mockImplementation(() => {})
 })
@@ -44,7 +28,6 @@ afterEach(() => {
 	for (const [type, listener] of listeners.mock.calls) {
 		if (type === "message") window.removeEventListener(type, listener as EventListener)
 	}
-	new EmbeddedPreviewCookie().deletePreviewForDomain()
 })
 
 function receive(
@@ -52,23 +35,58 @@ function receive(
 	origin = "http://localhost:5173",
 	source: MessageEventSource | null = window.parent,
 ) {
-	window.dispatchEvent(new MessageEvent("message", { data, origin, source }))
+	const event = new MessageEvent("message", { data, origin, source })
+	window.dispatchEvent(event)
+	return event
 }
 
 describe("embedded preview connection", () => {
-	it("loads the overlay before announcing readiness and initializes once after acknowledgement", async () => {
-		setupEmbeddedPreviewPush({
-			preview: { updateFromRef: vi.fn().mockResolvedValue(undefined) },
-			overlayURL,
-		})
-		expect(mocks.loadScript).toHaveBeenCalledExactlyOnceWith(overlayURL)
+	it("delivers trusted messages to every subscriber and unsubscribes them independently", async () => {
+		const onRef = vi.fn().mockResolvedValue(undefined)
+		await setupEmbeddedPreview({ onRef })
+		const ack = receive({ type: "prismic:embedded-preview:ack" })
+		expect(mocks.message).toHaveBeenCalledExactlyOnceWith(ack)
+		mocks.message.mockClear()
+		const subscribe: SubscribeToMessages = mocks.subscribe.mock.calls[0][0]
+		const first = vi.fn()
+		const second = vi.fn()
+		const unsubscribeFirst = subscribe(first)
+		subscribe(second)
+		const ref = { type: "prismic:embedded-preview:set-ref", token: "first" }
+
+		receive(ref, "https://attacker.example")
+		receive(ref, "http://localhost:5173", null)
+		for (const handler of [first, second, mocks.message, onRef]) {
+			expect(handler).not.toHaveBeenCalled()
+		}
+
+		const event = receive(ref)
+		for (const handler of [first, second, mocks.message]) {
+			expect(handler).toHaveBeenCalledExactlyOnceWith(event)
+			expect(handler.mock.calls[0][0]).toBe(event)
+		}
+		expect(onRef).toHaveBeenCalledExactlyOnceWith("first")
+
+		unsubscribeFirst()
+		const nextRef = { ...ref, token: "second" }
+		const nextEvent = receive(nextRef)
+		expect(first).toHaveBeenCalledTimes(1)
+		for (const handler of [second, mocks.message]) {
+			expect(handler).toHaveBeenCalledTimes(2)
+			expect(handler).toHaveBeenLastCalledWith(nextEvent)
+		}
+		expect(onRef).toHaveBeenCalledTimes(2)
+		expect(onRef).toHaveBeenLastCalledWith("second")
+	})
+
+	it("announces readiness and initializes once after a valid acknowledgement", async () => {
+		const setup = setupEmbeddedPreview()
 		expect(window.parent.postMessage).not.toHaveBeenCalled()
-		await vi.waitFor(() => {
-			expect(window.parent.postMessage).toHaveBeenCalledWith(
-				{ type: "prismic:embedded-preview:ready" },
-				"*",
-			)
-		})
+		await setup
+		expect(window.parent.postMessage).toHaveBeenCalledWith(
+			{ type: "prismic:embedded-preview:ready" },
+			"*",
+		)
 		const ack = { type: "prismic:embedded-preview:ack" }
 		receive(ack, "https://prismic.io.evil.example")
 		receive(ack, "http://localhost:5173", null)
@@ -76,19 +94,39 @@ describe("embedded preview connection", () => {
 		receive(ack)
 		receive(ack)
 		const message = { type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 }
-		receive(message)
+		const event = receive(message)
 		await vi.waitFor(() => {
 			expect(mocks.setup).toHaveBeenCalledExactlyOnceWith({
-				parentOrigin: "http://localhost:5173",
+				postMessage: expect.any(Function),
 			})
-			expect(mocks.message).toHaveBeenCalledWith(message)
+			expect(mocks.message).toHaveBeenCalledWith(event)
 		})
-		expect(mocks.height).toHaveBeenCalledTimes(1)
+	})
+
+	it("binds the overlay sender to the first acknowledged origin and broadcasts later ACK events", async () => {
+		await setupEmbeddedPreview()
+		const firstAck = receive({ type: "prismic:embedded-preview:ack" }, "https://example.prismic.io")
+		const { postMessage }: { postMessage: PostMessage } = mocks.setup.mock.calls[0][0]
+		const ack = receive({ type: "prismic:embedded-preview:ack" }, "http://localhost:5173")
+		expect(mocks.message).toHaveBeenCalledTimes(2)
+		expect(mocks.message).toHaveBeenNthCalledWith(1, firstAck)
+		expect(mocks.message).toHaveBeenNthCalledWith(2, ack)
+		expect(mocks.setup).toHaveBeenCalledTimes(1)
+
+		const message = {
+			type: "prismic:embedded-preview:deselect-pin" as const,
+			pin: { type: "draft" as const },
+		}
+		postMessage(message)
+		expect(window.parent.postMessage).toHaveBeenLastCalledWith(
+			message,
+			"https://example.prismic.io",
+		)
 	})
 
 	it("accepts valid ref updates only from the allowed parent", async () => {
 		const updateFromRef = vi.fn().mockResolvedValue(undefined)
-		setupEmbeddedPreviewPush({ preview: { updateFromRef }, overlayURL })
+		await setupEmbeddedPreview({ onRef: updateFromRef })
 		await vi.waitFor(() => {
 			expect(window.parent.postMessage).toHaveBeenCalledWith(
 				{ type: "prismic:embedded-preview:ready" },
@@ -105,14 +143,24 @@ describe("embedded preview connection", () => {
 		expect(updateFromRef).toHaveBeenCalledExactlyOnceWith("preview-token")
 	})
 
-	it("changes the preview cookie only when the ref changes", () => {
-		const cookie = new EmbeddedPreviewCookie()
-		expect(cookie.sync(undefined)).toBe(false)
-		expect(cookie.sync("first")).toBe(true)
-		expect(cookie.getRefForDomain()).toBe("first")
-		expect(cookie.sync("first")).toBe(false)
-		expect(cookie.sync("second")).toBe(true)
-		expect(cookie.sync(undefined)).toBe(true)
-		expect(cookie.getRefForDomain()).toBeUndefined()
+	it("installs the listener before ready, so immediate acknowledgement and state are handled", async () => {
+		const message = { type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 }
+		let event: MessageEvent<unknown> | undefined
+		vi.mocked(window.parent.postMessage).mockImplementation(() => {
+			receive({ type: "prismic:embedded-preview:ack" })
+			event = receive(message)
+		})
+		await setupEmbeddedPreview()
+		expect(mocks.message).toHaveBeenCalledWith(event)
+	})
+
+	it("reports ref update failures", async () => {
+		const error = new Error("preview update failed")
+		const report = vi.spyOn(console, "error").mockImplementation(() => {})
+		await setupEmbeddedPreview({ onRef: vi.fn().mockRejectedValue(error) })
+		receive({ type: "prismic:embedded-preview:set-ref", token: "ref" })
+		await vi.waitFor(() => {
+			expect(report).toHaveBeenCalledWith("Failed to update embedded preview ref.", error)
+		})
 	})
 })

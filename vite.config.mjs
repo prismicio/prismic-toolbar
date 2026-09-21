@@ -12,7 +12,7 @@ const browserTargets = browserslistToEsbuild(undefined, { path: relative(".") })
 
 export const entries = {
 	prismic: relative("src/toolbar/index.js"),
-	overlay: relative("src/toolbar/embedded-preview/Overlay.tsx"),
+	"embedded-preview": relative("src/toolbar/embedded-preview/index.ts"),
 	toolbar: relative("src/toolbar/toolbar.jsx"),
 	iframe: relative("src/iframe/index.js"),
 }
@@ -86,7 +86,7 @@ export function entryConfig(entry, development = false) {
 			lib: {
 				entry: entries[entry],
 				formats: ["iife"],
-				name: `Prismic${entry}`,
+				name: entry === "embedded-preview" ? "PrismicEmbeddedPreview" : `Prismic${entry}`,
 				fileName: () => `${entry}.js`,
 			},
 			target: browserTargets,

@@ -42,7 +42,7 @@ Assets are served at `http://localhost:8081/prismic-toolbar/[version]`, where
 <script src="http://localhost:8081/prismic-toolbar/[version]/prismic.js?repo=YOUR_REPO_NAME"></script>
 ```
 
-`npm start` rebuilds the classic `prismic.js`, `overlay.js`, `toolbar.js`, and
+`npm start` rebuilds the classic `prismic.js`, `embedded-preview.js`, `toolbar.js`, and
 `iframe.html` artifacts. Reload the customer page after a rebuild. Restart the
 watcher after build config changes.
 

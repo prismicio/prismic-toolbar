@@ -1,15 +1,64 @@
-import { deleteCookie, getCookie, once, readyDOM, script, setCookie } from "@common"
+import { once, readyDOM } from "@common"
 
-import { startDocumentHeightReporting } from "./document-height"
-import type { SubscribeToOverlayMessages } from "./overlay-messages"
+import { isAckMessage, isSetRefMessage, readyMessage } from "./message-protocol"
+import type { MessageHandler, PostMessage } from "./message-protocol"
+import { EmbeddedPreviewOverlay } from "./overlay"
 
-const pushMarkerWindowName = "prismic:embedded-preview"
-const pollMarkerWindowName = "prismic:embedded-preview:poll"
-const previewCookieName = "io.prismic.preview"
+export interface EmbeddedPreviewOptions {
+	onRef?: (ref: string) => Promise<void>
+}
 
-const setRefMessageType = "prismic:embedded-preview:set-ref"
-const readyMessageType = "prismic:embedded-preview:ready"
-const ackMessageType = "prismic:embedded-preview:ack"
+export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {}) {
+	await readyDOM()
+
+	const subscribers = new Set<MessageHandler>()
+
+	function subscribeToMessages(handler: MessageHandler) {
+		subscribers.add(handler)
+		return () => {
+			subscribers.delete(handler)
+		}
+	}
+
+	if (onRef) {
+		subscribeToMessages(({ data }) => {
+			if (!isSetRefMessage(data)) return
+
+			onRef(data.token).catch((error) => {
+				console.error("Failed to update embedded preview ref.", error)
+			})
+		})
+	}
+
+	const connect = once((event: MessageEvent<unknown>) => {
+		const postMessage: PostMessage = (message) => window.parent.postMessage(message, event.origin)
+
+		new EmbeddedPreviewOverlay({
+			postMessage,
+			subscribeToMessages,
+		})
+	})
+
+	subscribeToMessages((event) => {
+		if (isAckMessage(event.data)) connect(event)
+	})
+
+	const handleMessage = (event: MessageEvent<unknown>) => {
+		if (!isAllowedParentOrigin(event.origin)) return
+		if (event.source !== window.parent) return
+
+		for (const subscriber of subscribers) subscriber(event)
+	}
+
+	window.addEventListener("message", handleMessage)
+
+	// Safe to broadcast to '*': no data in this message
+	window.parent.postMessage(readyMessage, "*")
+}
+
+if (window.prismic) {
+	window.prismic.setupEmbeddedPreview = setupEmbeddedPreview
+}
 
 const allowedParentOrigins = [
 	/^https:\/\/([^/]+\.)?prismic\.io$/,
@@ -22,124 +71,6 @@ const allowedParentOrigins = [
 	/^http:\/\/localhost:\d+$/,
 	/^http:\/\/127\.0\.0\.1:\d+$/,
 ]
-
-export function getEmbeddedPreviewMode() {
-	if (window.self === window.top) return
-	if (window.name === pushMarkerWindowName) return "push"
-	if (window.name === pollMarkerWindowName) return "poll"
-}
-
-export class EmbeddedPreviewCookie {
-	// Align the site cookie with `ref`. Returns true when the page should reload.
-	sync(ref: string | undefined) {
-		if (ref === this.getRefForDomain()) return false
-
-		if (ref) this.upsertPreviewForDomain(ref)
-		else this.deletePreviewForDomain()
-
-		return true
-	}
-
-	getRefForDomain() {
-		return getCookie(previewCookieName)
-	}
-
-	upsertPreviewForDomain(ref: string) {
-		setCookie(previewCookieName, ref)
-	}
-
-	deletePreviewForDomain() {
-		deleteCookie(previewCookieName)
-	}
-}
-
-export function setupEmbeddedPreviewPush({
-	preview,
-	overlayURL,
-}: {
-	preview: { updateFromRef(ref: string): Promise<void> }
-	overlayURL: string
-}) {
-	void connectToParent({
-		overlayURL,
-		handleMessage: (event) => {
-			if (!isSetRefMessage(event.data)) return
-
-			preview.updateFromRef(event.data.token).catch((error) => {
-				console.error("Failed to update embedded preview ref.", error)
-			})
-		},
-	})
-}
-
-export function setupEmbeddedPreviewPoll({ overlayURL }: { overlayURL: string }) {
-	void connectToParent({ overlayURL })
-}
-
-async function connectToParent({
-	overlayURL,
-	handleMessage = () => {},
-}: {
-	overlayURL: string
-	handleMessage?: (event: MessageEvent<unknown>) => void
-}) {
-	try {
-		await Promise.all([script(overlayURL), readyDOM()])
-	} catch (error) {
-		console.error("Failed to load embedded preview overlay.", error)
-		return
-	}
-
-	const EmbeddedPreviewOverlay = window.prismic?.EmbeddedPreviewOverlay
-	if (!EmbeddedPreviewOverlay) {
-		console.error("Failed to load embedded preview overlay.")
-		return
-	}
-
-	let handleOverlayMessage: ((data: unknown) => void) | undefined
-	const subscribeToMessages: SubscribeToOverlayMessages = (nextHandleMessage) => {
-		handleOverlayMessage = nextHandleMessage
-		return () => {
-			if (handleOverlayMessage === nextHandleMessage) handleOverlayMessage = undefined
-		}
-	}
-	const connect = once((parentOrigin: string) => {
-		startDocumentHeightReporting({ parentOrigin })
-		new EmbeddedPreviewOverlay({
-			parentOrigin,
-			subscribeToMessages,
-		})
-	})
-
-	window.addEventListener("message", (event: MessageEvent<unknown>) => {
-		if (!isAllowedParentOrigin(event.origin)) return
-		if (event.source !== window.parent) return
-
-		if (isTypedMessage(event.data, ackMessageType)) {
-			connect(event.origin)
-			return
-		}
-
-		handleOverlayMessage?.(event.data)
-		handleMessage(event)
-	})
-
-	// Safe to broadcast to '*': no data in this message, and both sides
-	// validate origins on the messages that follow.
-	window.parent.postMessage({ type: readyMessageType }, "*")
-}
-
-function isSetRefMessage(data: unknown): data is { type: typeof setRefMessageType; token: string } {
-	return (
-		isTypedMessage(data, setRefMessageType) &&
-		typeof data.token === "string" &&
-		data.token.length > 0
-	)
-}
-
-function isTypedMessage(data: unknown, type: string): data is Record<string, unknown> {
-	return data !== null && typeof data === "object" && "type" in data && data.type === type
-}
 
 function isAllowedParentOrigin(origin: string) {
 	if (!origin) return false

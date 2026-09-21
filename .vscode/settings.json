@@ -3,6 +3,7 @@
 	"editor.formatOnSave": true,
 	"editor.formatOnSaveMode": "file",
 	"editor.codeActionsOnSave": {
+		"source.removeUnusedImports": "always",
 		"source.fixAll.oxc": "always"
 	},
 	"typescript.tsdk": "node_modules/typescript/lib",

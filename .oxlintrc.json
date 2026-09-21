@@ -22,7 +22,10 @@
 			{
 				"argsIgnorePattern": "^_",
 				"varsIgnorePattern": "^_",
-				"caughtErrorsIgnorePattern": "^_"
+				"caughtErrorsIgnorePattern": "^_",
+				"fix": {
+					"imports": "safe-fix"
+				}
 			}
 		],
 		"typescript/consistent-type-imports": "error",
