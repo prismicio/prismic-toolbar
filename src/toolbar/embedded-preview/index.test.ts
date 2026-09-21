@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { EmbeddedPreviewCookie, setupEmbeddedPreviewPush } from "../../src/toolbar/embedded-preview"
+import { EmbeddedPreviewCookie, setupEmbeddedPreviewPush } from "./index"
 
 const mocks = vi.hoisted(() => ({ setup: vi.fn(), message: vi.fn(), height: vi.fn() }))
-vi.mock("../../src/toolbar/embedded-preview/overlay", () => ({
+vi.mock("./overlay", () => ({
 	EmbeddedPreviewOverlay: class {
 		constructor(options: { parentOrigin: string }) {
 			mocks.setup(options)
@@ -11,7 +11,7 @@ vi.mock("../../src/toolbar/embedded-preview/overlay", () => ({
 		handleMessage = mocks.message
 	},
 }))
-vi.mock("../../src/toolbar/embedded-preview/document-height", () => ({
+vi.mock("./document-height", () => ({
 	startDocumentHeightReporting: mocks.height,
 }))
 

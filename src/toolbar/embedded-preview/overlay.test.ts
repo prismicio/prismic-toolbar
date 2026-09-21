@@ -1,10 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import {
-	clamp,
-	getPinDocumentPosition,
-	getPinRectFromPosition,
-} from "../../src/toolbar/embedded-preview/overlay"
+import { clamp, getPinDocumentPosition, getPinRectFromPosition } from "./overlay"
 
 beforeEach(() => {
 	vi.spyOn(document.documentElement, "clientWidth", "get").mockReturnValue(1000)

@@ -4,7 +4,7 @@ import {
 	isCommentOverlayMessage,
 	isOverlayScaleMessage,
 	isScrollToPinMessage,
-} from "../../src/toolbar/embedded-preview/overlay-messages"
+} from "./overlay-messages"
 
 const author = { id: "author", name: "Test Author" }
 const message = {
