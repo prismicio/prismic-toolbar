@@ -1,9 +1,9 @@
 import { afterEach, expect, it, vi } from "vitest"
 
-import { ToolbarService } from "../../src/toolbar-service"
-import { setup } from "../../src/toolbar-service/iframe"
+import { setup } from "./iframe"
+import { ToolbarService } from "./index"
 
-vi.mock("../../src/toolbar-service/iframe", () => ({ setup: vi.fn() }))
+vi.mock("./iframe", () => ({ setup: vi.fn() }))
 
 const listeners = vi.spyOn(window, "addEventListener")
 

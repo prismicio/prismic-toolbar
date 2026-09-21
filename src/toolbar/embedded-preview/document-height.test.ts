@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { startDocumentHeightReporting } from "../../src/toolbar/embedded-preview/document-height"
+import { startDocumentHeightReporting } from "./document-height"
 
 let resize: () => void
 let height = 1000

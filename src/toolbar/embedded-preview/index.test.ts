@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { EmbeddedPreviewCookie, setupEmbeddedPreviewPush } from "../../src/toolbar/embedded-preview"
+import { EmbeddedPreviewCookie, setupEmbeddedPreviewPush } from "./index"
 
 const mocks = vi.hoisted(() => ({
 	setup: vi.fn(),
@@ -12,7 +12,7 @@ vi.mock("@common", async (importOriginal) => ({
 	...(await importOriginal()),
 	script: mocks.loadScript,
 }))
-vi.mock("../../src/toolbar/embedded-preview/document-height", () => ({
+vi.mock("./document-height", () => ({
 	startDocumentHeightReporting: mocks.height,
 }))
 
