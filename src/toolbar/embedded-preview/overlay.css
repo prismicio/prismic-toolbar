@@ -41,8 +41,8 @@
 
 .slice-highlight-badge {
 	position: absolute;
-	top: 0;
-	left: 0;
+	top: 8px;
+	left: 8px;
 	max-width: 100%;
 	padding: calc(2px * var(--prismic-overlay-ui-scale)) calc(4px * var(--prismic-overlay-ui-scale));
 	overflow: hidden;
@@ -52,6 +52,7 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 	background: #6e56cf;
+	border-radius: 8px;
 }
 
 .comment-pins {
