@@ -89,6 +89,27 @@ describe("comment message subscriptions", () => {
 		expect(window.scrollTo).not.toHaveBeenCalled()
 	})
 
+	it("waits for scrolling before reporting an off-screen pin", () => {
+		act(() => receive(commentState))
+		const pin = container.querySelector<HTMLButtonElement>('[data-thread-id="thread"]')!
+		const bounds = vi.spyOn(pin, "getBoundingClientRect")
+		bounds.mockReturnValue(new DOMRect(600, 1800, 32, 32))
+		postMessage.mockClear()
+
+		act(() => receive(scrollMessage))
+		expect(window.scrollTo).toHaveBeenCalledOnce()
+		expect(postMessage).not.toHaveBeenCalled()
+
+		bounds.mockReturnValue(new DOMRect(600, 400, 32, 32))
+		window.dispatchEvent(new Event("scroll"))
+		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
+			type: "prismic:embedded-preview:report-selected-pin-position",
+			pin: { type: "thread", threadId: "thread" },
+			rect: { xRatio: 0.6, yRatio: 0.5, widthRatio: 0.032, heightRatio: 0.04 },
+			visible: true,
+		})
+	})
+
 	it("ignores scroll requests for removed pins", () => {
 		act(() => receive(commentState))
 		act(() => receive({ ...commentState, pins: [] }))

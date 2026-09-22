@@ -374,13 +374,15 @@ function PinPositionReporter(props: PinPositionReporterProps) {
 			if (
 				isScrollToPinMessage(data) &&
 				identity.type === "thread" &&
-				data.threadId === identity.threadId
+				data.threadId === identity.threadId &&
+				pinRef.current &&
+				isFullyVisible(pinRef.current)
 			) {
 				// An already-visible pin will not produce a browser scroll event.
 				reportPosition()
 			}
 		})
-	}, [identity, reportPosition, subscribeToMessages])
+	}, [identity, pinRef, reportPosition, subscribeToMessages])
 
 	return null
 }
