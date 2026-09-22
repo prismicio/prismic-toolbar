@@ -199,7 +199,14 @@ function ThreadPin(props: ThreadPinProps) {
 				onClick={handleClick}
 			/>
 			{selected && (
-				<PinPositionReporter pinRef={pinRef} identity={identity} postMessage={postMessage} />
+				<PinPositionReporter
+					pinRef={pinRef}
+					identity={identity}
+					position={pin}
+					documentSize={documentSize}
+					uiScale={uiScale}
+					postMessage={postMessage}
+				/>
 			)}
 		</>
 	)
@@ -229,7 +236,14 @@ function DraftPin(props: DraftPinProps) {
 				aria-label="New comment"
 				disabled
 			/>
-			<PinPositionReporter pinRef={pinRef} identity={draftPinIdentity} postMessage={postMessage} />
+			<PinPositionReporter
+				pinRef={pinRef}
+				identity={draftPinIdentity}
+				position={position}
+				documentSize={documentSize}
+				uiScale={uiScale}
+				postMessage={postMessage}
+			/>
 		</>
 	)
 }
@@ -335,11 +349,14 @@ function useScrollToThreadPin(
 interface PinPositionReporterProps {
 	pinRef: RefObject<HTMLButtonElement>
 	identity: PinIdentity
+	position: PinPosition
+	documentSize: DocumentSize
+	uiScale: number
 	postMessage: PostMessage
 }
 
 function PinPositionReporter(props: PinPositionReporterProps) {
-	const { pinRef, identity, postMessage } = props
+	const { pinRef, identity, position, documentSize, uiScale, postMessage } = props
 
 	const reportPosition = useCallback(() => {
 		if (!pinRef.current) return
@@ -353,8 +370,14 @@ function PinPositionReporter(props: PinPositionReporterProps) {
 		)
 	}, [identity, pinRef, postMessage])
 
-	// Read the committed pin geometry after scale, coordinates or document size change.
-	useLayoutEffect(reportPosition)
+	useLayoutEffect(reportPosition, [
+		reportPosition,
+		position.xRatio,
+		position.yRatio,
+		documentSize.width,
+		documentSize.height,
+		uiScale,
+	])
 
 	useLayoutEffect(() => {
 		window.addEventListener("scroll", reportPosition, true)

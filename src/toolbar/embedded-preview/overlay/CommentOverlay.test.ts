@@ -250,6 +250,19 @@ describe("pin selection", () => {
 })
 
 describe("selected pin position reporting", () => {
+	it("does not report unchanged geometry when unrelated overlay state changes", () => {
+		act(() => receive(commentState))
+		postMessage.mockClear()
+		act(() =>
+			receive({
+				...commentState,
+				placementEnabled: true,
+				pins: [{ ...commentState.pins[0], author: { id: "author", name: "Updated name" } }],
+			}),
+		)
+		expect(postMessage).not.toHaveBeenCalled()
+	})
+
 	it("reports viewport-only resizing even when document dimensions stay unchanged", () => {
 		act(() => receive(commentState))
 		const pin = container.querySelector<HTMLButtonElement>('[data-thread-id="thread"]')!
