@@ -199,12 +199,7 @@ function ThreadPin(props: ThreadPinProps) {
 				onClick={handleClick}
 			/>
 			{selected && (
-				<PinPositionReporter
-					pinRef={pinRef}
-					identity={identity}
-					postMessage={postMessage}
-					subscribeToMessages={subscribeToMessages}
-				/>
+				<PinPositionReporter pinRef={pinRef} identity={identity} postMessage={postMessage} />
 			)}
 		</>
 	)
@@ -341,11 +336,10 @@ interface PinPositionReporterProps {
 	pinRef: RefObject<HTMLButtonElement>
 	identity: PinIdentity
 	postMessage: PostMessage
-	subscribeToMessages?: SubscribeToMessages
 }
 
 function PinPositionReporter(props: PinPositionReporterProps) {
-	const { pinRef, identity, postMessage, subscribeToMessages } = props
+	const { pinRef, identity, postMessage } = props
 
 	const reportPosition = useCallback(() => {
 		if (!pinRef.current) return
@@ -368,21 +362,6 @@ function PinPositionReporter(props: PinPositionReporterProps) {
 			window.removeEventListener("scroll", reportPosition, true)
 		}
 	}, [reportPosition])
-
-	useLayoutEffect(() => {
-		return subscribeToMessages?.(({ data }) => {
-			if (
-				isScrollToPinMessage(data) &&
-				identity.type === "thread" &&
-				data.threadId === identity.threadId &&
-				pinRef.current &&
-				isFullyVisible(pinRef.current)
-			) {
-				// An already-visible pin will not produce a browser scroll event.
-				reportPosition()
-			}
-		})
-	}, [identity, pinRef, reportPosition, subscribeToMessages])
 
 	return null
 }

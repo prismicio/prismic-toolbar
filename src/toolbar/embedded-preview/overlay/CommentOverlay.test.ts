@@ -117,8 +117,8 @@ describe("comment message subscriptions", () => {
 		expect(window.scrollTo).not.toHaveBeenCalled()
 	})
 
-	it("reports an already-visible selected pin directly for every scroll message", () => {
-		act(() => receive(commentState))
+	it("reports an already-visible pin when selected before the scroll request", () => {
+		act(() => receive({ ...commentState, selectedThreadId: undefined }))
 		const pin = container.querySelector<HTMLButtonElement>('[data-thread-id="thread"]')!
 		vi.spyOn(pin, "getBoundingClientRect").mockReturnValue({
 			x: 20,
@@ -133,16 +133,15 @@ describe("comment message subscriptions", () => {
 		})
 		postMessage.mockClear()
 		act(() => {
-			receive(scrollMessage)
-			receive(scrollMessage)
-			expect(postMessage).toHaveBeenCalledTimes(2)
-			expect(postMessage).toHaveBeenLastCalledWith({
-				type: "prismic:embedded-preview:report-selected-pin-position",
-				pin: { type: "thread", threadId: "thread" },
-				rect: { xRatio: 0.02, yRatio: 0.0375, widthRatio: 0.032, heightRatio: 0.04 },
-				visible: true,
-			})
+			receive(commentState)
 		})
+		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
+			type: "prismic:embedded-preview:report-selected-pin-position",
+			pin: { type: "thread", threadId: "thread" },
+			rect: { xRatio: 0.02, yRatio: 0.0375, widthRatio: 0.032, heightRatio: 0.04 },
+			visible: true,
+		})
+		act(() => receive(scrollMessage))
 		expect(window.scrollTo).not.toHaveBeenCalled()
 	})
 
