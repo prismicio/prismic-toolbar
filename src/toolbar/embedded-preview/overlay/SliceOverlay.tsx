@@ -110,15 +110,15 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 	useLayoutEffect(updateHoveredRange, [updateHoveredRange])
 
 	useEffect(() => {
-		let animationFrame: number | undefined
-
 		const handlePointerMove = (event: PointerEvent) => {
 			pointerRef.current = { x: event.clientX, y: event.clientY }
 		}
+
 		const handlePointerOver = (event: PointerEvent) => {
 			pointerRef.current = { x: event.clientX, y: event.clientY }
 			setHoveredRangeAtElement(event.target instanceof Element ? event.target : null)
 		}
+
 		const handleClick = (event: MouseEvent) => {
 			const target = event.target instanceof Element ? event.target : null
 			const range = target ? findSliceMarkerRangeAtElement(rangeLookup, target) : undefined
@@ -128,13 +128,7 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 			event.stopPropagation()
 			postMessage(createSelectSliceMessage(range.sliceId))
 		}
-		const updateHoveredRangeSoon = () => {
-			if (animationFrame !== undefined) return
-			animationFrame = requestAnimationFrame(() => {
-				animationFrame = undefined
-				updateHoveredRange()
-			})
-		}
+
 		const clearHoveredRange = () => {
 			pointerRef.current = undefined
 			setHoveredRange(undefined)
@@ -145,18 +139,17 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 		document.addEventListener("click", handleClick)
 		document.documentElement.addEventListener("pointerleave", clearHoveredRange)
 		window.addEventListener("blur", clearHoveredRange)
-		window.addEventListener("scroll", updateHoveredRangeSoon, true)
-		window.addEventListener("resize", updateHoveredRangeSoon)
+		window.addEventListener("scroll", updateHoveredRange, true)
+		window.addEventListener("resize", updateHoveredRange)
 
 		return () => {
-			if (animationFrame !== undefined) cancelAnimationFrame(animationFrame)
 			document.removeEventListener("pointermove", handlePointerMove)
 			document.removeEventListener("pointerover", handlePointerOver)
 			document.removeEventListener("click", handleClick)
 			document.documentElement.removeEventListener("pointerleave", clearHoveredRange)
 			window.removeEventListener("blur", clearHoveredRange)
-			window.removeEventListener("scroll", updateHoveredRangeSoon, true)
-			window.removeEventListener("resize", updateHoveredRangeSoon)
+			window.removeEventListener("scroll", updateHoveredRange, true)
+			window.removeEventListener("resize", updateHoveredRange)
 		}
 	}, [postMessage, rangeLookup, setHoveredRangeAtElement, updateHoveredRange])
 
