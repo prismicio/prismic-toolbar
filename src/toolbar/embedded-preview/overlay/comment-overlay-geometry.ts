@@ -42,16 +42,8 @@ export function getPinRectFromPosition(position: Position, uiScale: number) {
 
 export function measureDocument() {
 	return {
-		width: Math.max(
-			document.documentElement.clientWidth,
-			document.documentElement.scrollWidth,
-			document.body.scrollWidth,
-		),
-		height: Math.max(
-			document.documentElement.clientHeight,
-			document.documentElement.scrollHeight,
-			document.body.scrollHeight,
-		),
+		width: Math.max(document.documentElement.offsetWidth, document.body.scrollWidth),
+		height: Math.max(document.documentElement.offsetHeight, document.body.scrollHeight),
 	}
 }
 

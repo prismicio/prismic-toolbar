@@ -50,8 +50,8 @@ beforeEach(() => {
 			disconnect() {}
 		},
 	)
-	vi.spyOn(document.documentElement, "scrollWidth", "get").mockReturnValue(1200)
-	vi.spyOn(document.documentElement, "scrollHeight", "get").mockReturnValue(2000)
+	vi.spyOn(document.documentElement, "offsetWidth", "get").mockReturnValue(1200)
+	vi.spyOn(document.documentElement, "offsetHeight", "get").mockReturnValue(2000)
 	vi.spyOn(window, "scrollTo").mockImplementation(() => {})
 	container = document.createElement("div")
 	document.body.append(container)
@@ -296,7 +296,7 @@ describe("selected pin position reporting", () => {
 			visible: true,
 		})
 
-		vi.spyOn(document.documentElement, "scrollHeight", "get").mockReturnValue(3000)
+		vi.spyOn(document.documentElement, "offsetHeight", "get").mockReturnValue(3000)
 		postMessage.mockClear()
 		act(() => {
 			window.dispatchEvent(new Event("resize"))
