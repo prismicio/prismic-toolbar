@@ -229,6 +229,54 @@ describe("pin selection", () => {
 })
 
 describe("selected pin position reporting", () => {
+	it("reports viewport-only resizing even when document dimensions stay unchanged", () => {
+		act(() => receive(commentState))
+		const pin = container.querySelector<HTMLButtonElement>('[data-thread-id="thread"]')!
+		vi.spyOn(pin, "getBoundingClientRect").mockReturnValue(new DOMRect(20, 30, 32, 32))
+		postMessage.mockClear()
+		vi.stubGlobal("innerHeight", 400)
+		act(() => {
+			window.dispatchEvent(new Event("resize"))
+		})
+		expect(postMessage).toHaveBeenLastCalledWith({
+			type: "prismic:embedded-preview:report-selected-pin-position",
+			pin: { type: "thread", threadId: "thread" },
+			rect: { xRatio: 0.02, yRatio: 0.075, widthRatio: 0.032, heightRatio: 0.08 },
+			visible: true,
+		})
+	})
+
+	it.each([false, true])("reports coordinate updates for a draft: %s", (draft) => {
+		const state = draft
+			? {
+					...commentState,
+					draftAuthor: commentState.pins[0].author,
+					draftPin: { xRatio: 0.2, yRatio: 0.3 },
+				}
+			: commentState
+		act(() => receive(state))
+		const pin = container.querySelector<HTMLButtonElement>(
+			draft ? '[aria-label="New comment"]' : '[data-thread-id="thread"]',
+		)!
+		vi.spyOn(pin, "getBoundingClientRect").mockImplementation(
+			() => new DOMRect(parseFloat(pin.style.left), parseFloat(pin.style.top), 32, 32),
+		)
+		postMessage.mockClear()
+		act(() =>
+			receive(
+				draft
+					? { ...state, draftPin: { xRatio: 0.25, yRatio: 0.2 } }
+					: { ...state, pins: [{ ...commentState.pins[0], xRatio: 0.25, yRatio: 0.2 }] },
+			),
+		)
+		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
+			type: "prismic:embedded-preview:report-selected-pin-position",
+			pin: draft ? draftPinIdentity : { type: "thread", threadId: "thread" },
+			rect: { xRatio: 0.3, yRatio: 0.5, widthRatio: 0.032, heightRatio: 0.04 },
+			visible: true,
+		})
+	})
+
 	it("reports only the selected pin and stops when selection is cleared", () => {
 		const state = {
 			...commentState,

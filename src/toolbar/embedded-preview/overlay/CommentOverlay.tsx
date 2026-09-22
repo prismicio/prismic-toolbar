@@ -1,5 +1,5 @@
 import type { RefObject, TargetedMouseEvent } from "preact"
-import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
 	createDeselectPinMessage,
@@ -199,7 +199,12 @@ function ThreadPin(props: ThreadPinProps) {
 				onClick={handleClick}
 			/>
 			{selected && (
-				<PinPositionReporter pinRef={pinRef} identity={identity} postMessage={postMessage} />
+				<PinPositionReporter
+					pinRef={pinRef}
+					identity={identity}
+					postMessage={postMessage}
+					subscribeToMessages={subscribeToMessages}
+				/>
 			)}
 		</>
 	)
@@ -336,42 +341,71 @@ interface PinPositionReporterProps {
 	pinRef: RefObject<HTMLButtonElement>
 	identity: PinIdentity
 	postMessage: PostMessage
+	subscribeToMessages?: SubscribeToMessages
 }
 
 function PinPositionReporter(props: PinPositionReporterProps) {
-	const { pinRef, identity, postMessage } = props
+	const { pinRef, identity, postMessage, subscribeToMessages } = props
+
+	const reportPosition = useCallback(() => {
+		if (!pinRef.current) return
+
+		postMessage(
+			createReportSelectedPinPositionMessage({
+				pin: identity,
+				rect: getPinRect(pinRef.current),
+				visible: isVisible(pinRef.current),
+			}),
+		)
+	}, [identity, pinRef, postMessage])
+
+	// Read the committed pin geometry after scale, coordinates or document size change.
+	useLayoutEffect(reportPosition)
 
 	useLayoutEffect(() => {
-		function reportPosition() {
-			if (!pinRef.current) return
-
-			postMessage(
-				createReportSelectedPinPositionMessage({
-					pin: identity,
-					rect: getPinRect(pinRef.current),
-					visible: isVisible(pinRef.current),
-				}),
-			)
+		window.addEventListener("scroll", reportPosition, true)
+		return () => {
+			window.removeEventListener("scroll", reportPosition, true)
 		}
+	}, [reportPosition])
 
-		reportPosition()
-		window.addEventListener("scroll", reportPosition)
-		return () => window.removeEventListener("scroll", reportPosition)
-	}, [identity, pinRef, postMessage])
+	useLayoutEffect(() => {
+		return subscribeToMessages?.(({ data }) => {
+			if (
+				isScrollToPinMessage(data) &&
+				identity.type === "thread" &&
+				data.threadId === identity.threadId
+			) {
+				// An already-visible pin will not produce a browser scroll event.
+				reportPosition()
+			}
+		})
+	}, [identity, reportPosition, subscribeToMessages])
 
 	return null
 }
 
 function useDocumentSize() {
-	const [documentSize, setDocumentSize] = useState<DocumentSize>({ width: 0, height: 0 })
+	const [documentSize, setDocumentSize] = useState({
+		width: 0,
+		height: 0,
+		viewportWidth: 0,
+		viewportHeight: 0,
+	})
 
 	useLayoutEffect(() => {
 		function updateDocumentSize() {
-			const nextDocumentSize = measureDocument()
+			const nextDocumentSize = {
+				...measureDocument(),
+				viewportWidth: window.innerWidth,
+				viewportHeight: window.innerHeight,
+			}
 			setDocumentSize((currentDocumentSize) => {
 				if (
 					currentDocumentSize.width === nextDocumentSize.width &&
-					currentDocumentSize.height === nextDocumentSize.height
+					currentDocumentSize.height === nextDocumentSize.height &&
+					currentDocumentSize.viewportWidth === nextDocumentSize.viewportWidth &&
+					currentDocumentSize.viewportHeight === nextDocumentSize.viewportHeight
 				) {
 					return currentDocumentSize
 				}

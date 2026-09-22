@@ -69,7 +69,7 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	await expect(pin).toHaveText("TA") // broken avatar falls back to initials
 	await expect(site.locator('[data-thread-id="last"]')).toHaveCSS("opacity", "0.4")
 	await pin.click()
-	await expect(pin).toHaveAttribute("data-selected", "true")
+	await expect(pin).toHaveAttribute("aria-pressed", "true")
 	await expect
 		.poll(() =>
 			page.evaluate(() =>
@@ -81,6 +81,9 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 		.toBe(true)
 	await page.getByRole("button", { name: "Scale overlay" }).click()
 	await expect(pin).toHaveCSS("transform", "matrix(2, 0, 0, 2, 0, 0)")
+	await expectReportedPinPosition(page, pin)
+	await page.locator("iframe").evaluate((frame) => (frame.style.height = "500px"))
+	await expectReportedPinPosition(page, pin)
 	await page.getByRole("button", { name: "Place comment", exact: true }).click()
 	await site
 		.getByRole("button", { name: "Place a comment here" })
@@ -117,6 +120,27 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	expect(requests.some((url) => url.endsWith("/iframe.html"))).toBe(false)
 	expect(errors).toEqual([])
 })
+
+async function expectReportedPinPosition(page, pin) {
+	const rect = await pin.evaluate((element) => {
+		const bounds = element.getBoundingClientRect()
+		return {
+			xRatio: bounds.left / window.innerWidth,
+			yRatio: bounds.top / window.innerHeight,
+			widthRatio: bounds.width / window.innerWidth,
+			heightRatio: bounds.height / window.innerHeight,
+		}
+	})
+	await expect
+		.poll(() =>
+			page.evaluate(() =>
+				window.fixture.messages.findLast(
+					(message) => message.type === "prismic:embedded-preview:report-selected-pin-position",
+				),
+			),
+		)
+		.toMatchObject({ pin: { type: "thread", threadId: "first" }, rect, visible: true })
+}
 
 test("regular pages do not load embedded preview", async ({ page }) => {
 	const requests = []
