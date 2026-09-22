@@ -1,11 +1,12 @@
 import type { RefObject, TargetedMouseEvent } from "preact"
-import { useCallback, useLayoutEffect, useRef, useState } from "preact/hooks"
+import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
 	createDeselectPinMessage,
 	createPlaceCommentMessage,
 	createReportSelectedPinPositionMessage,
 	createSelectPinMessage,
+	draftPinIdentity,
 	isCommentOverlayMessage,
 	isScrollToPinMessage,
 } from "../message-protocol"
@@ -96,7 +97,7 @@ function PlacementLayer(props: PlacementLayerProps) {
 		event.stopPropagation()
 
 		if (draftPin) {
-			postMessage(createDeselectPinMessage({ type: "draft" }))
+			postMessage(createDeselectPinMessage(draftPinIdentity))
 			return
 		}
 
@@ -165,14 +166,12 @@ function ThreadPin(props: ThreadPinProps) {
 	const { pin, selected, documentSize, uiScale, postMessage, subscribeToMessages } = props
 
 	const pinRef = useRef<HTMLButtonElement>(null)
-	const identity = { type: "thread", threadId: pin.threadId } as const
-	const reportPosition = useReportSelectedPinPosition(
-		pinRef,
-		selected ? identity : undefined,
-		postMessage,
+	const identity = useMemo(
+		() => ({ type: "thread", threadId: pin.threadId }) as const,
+		[pin.threadId],
 	)
 
-	useScrollToThreadPin(pinRef, pin, reportPosition, subscribeToMessages)
+	useScrollToThreadPin(pinRef, pin, subscribeToMessages)
 
 	function handleClick(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
@@ -186,18 +185,23 @@ function ThreadPin(props: ThreadPinProps) {
 	}
 
 	return (
-		<Pin
-			pinRef={pinRef}
-			position={pin}
-			author={pin.author}
-			documentSize={documentSize}
-			uiScale={uiScale}
-			dimmed={pin.resolved && !selected}
-			data-thread-id={pin.threadId}
-			aria-label={`Open comment by ${pin.author.name || pin.author.id}`}
-			aria-pressed={selected}
-			onClick={handleClick}
-		/>
+		<>
+			<Pin
+				pinRef={pinRef}
+				position={pin}
+				author={pin.author}
+				documentSize={documentSize}
+				uiScale={uiScale}
+				dimmed={pin.resolved && !selected}
+				data-thread-id={pin.threadId}
+				aria-label={`Open comment by ${pin.author.name || pin.author.id}`}
+				aria-pressed={selected}
+				onClick={handleClick}
+			/>
+			{selected && (
+				<PinPositionReporter pinRef={pinRef} identity={identity} postMessage={postMessage} />
+			)}
+		</>
 	)
 }
 
@@ -214,18 +218,19 @@ function DraftPin(props: DraftPinProps) {
 
 	const pinRef = useRef<HTMLButtonElement>(null)
 
-	useReportSelectedPinPosition(pinRef, { type: "draft" }, postMessage)
-
 	return (
-		<Pin
-			pinRef={pinRef}
-			position={position}
-			author={author}
-			documentSize={documentSize}
-			uiScale={uiScale}
-			aria-label="New comment"
-			disabled
-		/>
+		<>
+			<Pin
+				pinRef={pinRef}
+				position={position}
+				author={author}
+				documentSize={documentSize}
+				uiScale={uiScale}
+				aria-label="New comment"
+				disabled
+			/>
+			<PinPositionReporter pinRef={pinRef} identity={draftPinIdentity} postMessage={postMessage} />
+		</>
 	)
 }
 
@@ -272,7 +277,7 @@ type CommentOverlayState = {
 function getSelectedPinIdentity(state: CommentOverlayState): PinIdentity | undefined {
 	const { draftPin, draftAuthor, selectedThreadId, pins } = state
 
-	if (draftPin && draftAuthor) return { type: "draft" }
+	if (draftPin && draftAuthor) return draftPinIdentity
 	if (selectedThreadId === undefined) return
 	if (!pins.some((pin) => pin.threadId === selectedThreadId)) return
 
@@ -307,18 +312,13 @@ function useDismissOnClick(pin: PinIdentity | undefined, postMessage: PostMessag
 function useScrollToThreadPin(
 	pinRef: RefObject<HTMLButtonElement>,
 	pin: ThreadPinData,
-	reportPosition: () => void,
 	subscribeToMessages: SubscribeToMessages,
 ) {
 	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
 			if (!isScrollToPinMessage(data) || data.threadId !== pin.threadId) return
 			if (!pinRef.current) return
-
-			if (isFullyVisible(pinRef.current)) {
-				reportPosition()
-				return
-			}
+			if (isFullyVisible(pinRef.current)) return
 
 			const { width, height } = measureDocument()
 			if (width === 0 || height === 0) return
@@ -329,43 +329,44 @@ function useScrollToThreadPin(
 				behavior: "smooth",
 			})
 		})
-	}, [pin, pinRef, reportPosition, subscribeToMessages])
+	}, [pin, pinRef, subscribeToMessages])
 }
 
-function useReportSelectedPinPosition(
-	pinRef: RefObject<HTMLButtonElement>,
-	pin: PinIdentity | undefined,
-	postMessage: PostMessage,
-) {
-	const reportPosition = useCallback(() => {
-		if (!pin || !pinRef.current) return
+interface PinPositionReporterProps {
+	pinRef: RefObject<HTMLButtonElement>
+	identity: PinIdentity
+	postMessage: PostMessage
+}
 
-		postMessage(
-			createReportSelectedPinPositionMessage({
-				pin,
-				rect: getPinRect(pinRef.current),
-				visible: isVisible(pinRef.current),
-			}),
-		)
-	}, [pin, pinRef, postMessage])
-
-	useLayoutEffect(reportPosition)
+function PinPositionReporter(props: PinPositionReporterProps) {
+	const { pinRef, identity, postMessage } = props
 
 	useLayoutEffect(() => {
-		if (!pin) return
+		function reportPosition() {
+			if (!pinRef.current) return
 
+			postMessage(
+				createReportSelectedPinPositionMessage({
+					pin: identity,
+					rect: getPinRect(pinRef.current),
+					visible: isVisible(pinRef.current),
+				}),
+			)
+		}
+
+		reportPosition()
 		window.addEventListener("scroll", reportPosition)
 		return () => window.removeEventListener("scroll", reportPosition)
-	}, [pin, reportPosition])
+	}, [identity, pinRef, postMessage])
 
-	return reportPosition
+	return null
 }
 
 function useDocumentSize() {
 	const [documentSize, setDocumentSize] = useState<DocumentSize>({ width: 0, height: 0 })
 
 	useLayoutEffect(() => {
-		const updateDocumentSize = () => {
+		function updateDocumentSize() {
 			const nextDocumentSize = measureDocument()
 			setDocumentSize((currentDocumentSize) => {
 				if (
@@ -377,11 +378,13 @@ function useDocumentSize() {
 				return nextDocumentSize
 			})
 		}
-		const resizeObserver = new ResizeObserver(updateDocumentSize)
 
 		updateDocumentSize()
+
+		const resizeObserver = new ResizeObserver(updateDocumentSize)
 		resizeObserver.observe(document.documentElement)
 		resizeObserver.observe(document.body)
+
 		window.addEventListener("resize", updateDocumentSize)
 
 		return () => {

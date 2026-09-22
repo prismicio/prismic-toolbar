@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { setupEmbeddedPreview } from "./index"
-import type { PostMessage, SubscribeToMessages } from "./message-protocol"
+import { draftPinIdentity, type PostMessage, type SubscribeToMessages } from "./message-protocol"
 
 const mocks = vi.hoisted(() => ({
 	setup: vi.fn(),
@@ -115,7 +115,7 @@ describe("embedded preview connection", () => {
 
 		const message = {
 			type: "prismic:embedded-preview:deselect-pin" as const,
-			pin: { type: "draft" as const },
+			pin: draftPinIdentity,
 		}
 		postMessage(message)
 		expect(window.parent.postMessage).toHaveBeenLastCalledWith(

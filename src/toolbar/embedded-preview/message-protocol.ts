@@ -65,7 +65,9 @@ const scrollToPinMessageSchema = z.object({
 })
 
 export type Author = z.infer<typeof authorSchema>
-type DraftPinIdentity = { type: "draft" }
+
+export const draftPinIdentity = { type: "draft" } as const
+type DraftPinIdentity = typeof draftPinIdentity
 type ThreadPinIdentity = { type: "thread"; threadId: string }
 export type PinIdentity = DraftPinIdentity | ThreadPinIdentity
 export interface PinRect {

@@ -2,7 +2,11 @@ import { h, render } from "preact"
 import { act } from "preact/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import type { MessageHandler, SubscribeToMessages } from "../message-protocol"
+import {
+	draftPinIdentity,
+	type MessageHandler,
+	type SubscribeToMessages,
+} from "../message-protocol"
 import { CommentOverlay } from "./CommentOverlay"
 
 const subscribers = new Set<MessageHandler>()
@@ -172,7 +176,7 @@ describe("comment placement", () => {
 
 		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
 			type: "prismic:embedded-preview:deselect-pin",
-			pin: { type: "draft" },
+			pin: draftPinIdentity,
 		})
 	})
 })
@@ -262,18 +266,18 @@ describe("selected pin position reporting", () => {
 			}),
 		)
 		expect(postMessage).toHaveBeenCalledExactlyOnceWith(
-			expect.objectContaining({ pin: { type: "draft" } }),
+			expect.objectContaining({ pin: draftPinIdentity }),
 		)
 		postMessage.mockClear()
 		window.dispatchEvent(new Event("scroll"))
 		expect(postMessage).toHaveBeenCalledExactlyOnceWith(
-			expect.objectContaining({ pin: { type: "draft" } }),
+			expect.objectContaining({ pin: draftPinIdentity }),
 		)
 		postMessage.mockClear()
 		document.dispatchEvent(new MouseEvent("click"))
 		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
 			type: "prismic:embedded-preview:deselect-pin",
-			pin: { type: "draft" },
+			pin: draftPinIdentity,
 		})
 	})
 
