@@ -151,6 +151,7 @@ describe("comment message subscriptions", () => {
 		expect(subscribers.size).toBe(0)
 		postMessage.mockClear()
 		window.dispatchEvent(new Event("scroll"))
+		window.dispatchEvent(new Event("resize"))
 		document.dispatchEvent(new MouseEvent("click"))
 		expect(postMessage).not.toHaveBeenCalled()
 	})
@@ -365,13 +366,19 @@ describe("selected pin position reporting", () => {
 		})
 
 		vi.spyOn(document.documentElement, "offsetHeight", "get").mockReturnValue(3000)
+		vi.spyOn(pin, "getBoundingClientRect").mockImplementation(
+			() => new DOMRect(20, parseFloat(pin.style.top), 64, 64),
+		)
 		postMessage.mockClear()
 		act(() => {
 			window.dispatchEvent(new Event("resize"))
 		})
 		expect(pin.style.top).toBe("2700px")
-		expect(postMessage).toHaveBeenCalledExactlyOnceWith(
-			expect.objectContaining({ pin: { type: "thread", threadId: "thread" } }),
-		)
+		expect(postMessage).toHaveBeenLastCalledWith({
+			type: "prismic:embedded-preview:report-selected-pin-position",
+			pin: { type: "thread", threadId: "thread" },
+			rect: { xRatio: 0.02, yRatio: 3.375, widthRatio: 0.064, heightRatio: 0.08 },
+			visible: false,
+		})
 	})
 })

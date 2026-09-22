@@ -358,8 +358,10 @@ function PinPositionReporter(props: PinPositionReporterProps) {
 
 	useLayoutEffect(() => {
 		window.addEventListener("scroll", reportPosition, true)
+		window.addEventListener("resize", reportPosition)
 		return () => {
 			window.removeEventListener("scroll", reportPosition, true)
+			window.removeEventListener("resize", reportPosition)
 		}
 	}, [reportPosition])
 
@@ -367,26 +369,15 @@ function PinPositionReporter(props: PinPositionReporterProps) {
 }
 
 function useDocumentSize() {
-	const [documentSize, setDocumentSize] = useState({
-		width: 0,
-		height: 0,
-		viewportWidth: 0,
-		viewportHeight: 0,
-	})
+	const [documentSize, setDocumentSize] = useState<DocumentSize>({ width: 0, height: 0 })
 
 	useLayoutEffect(() => {
 		function updateDocumentSize() {
-			const nextDocumentSize = {
-				...measureDocument(),
-				viewportWidth: window.innerWidth,
-				viewportHeight: window.innerHeight,
-			}
+			const nextDocumentSize = measureDocument()
 			setDocumentSize((currentDocumentSize) => {
 				if (
 					currentDocumentSize.width === nextDocumentSize.width &&
-					currentDocumentSize.height === nextDocumentSize.height &&
-					currentDocumentSize.viewportWidth === nextDocumentSize.viewportWidth &&
-					currentDocumentSize.viewportHeight === nextDocumentSize.viewportHeight
+					currentDocumentSize.height === nextDocumentSize.height
 				) {
 					return currentDocumentSize
 				}
