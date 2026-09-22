@@ -50,7 +50,19 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 }) => {
 	const errors = []
 	page.on("pageerror", (error) => errors.push(error.message))
-	await page.goto("/overlay.html")
+	const requests = []
+	page.on("request", (request) => requests.push(request.url()))
+	let releaseEmbeddedPreview
+	const embeddedPreviewRequested = new Promise((resolve) => {
+		page.route("**/embedded-preview.js", (route) => {
+			releaseEmbeddedPreview = () => route.continue()
+			resolve()
+		})
+	})
+	await page.goto("/overlay.html", { waitUntil: "domcontentloaded" })
+	await embeddedPreviewRequested
+	expect(await page.evaluate(() => window.fixture.messages)).toEqual([])
+	await releaseEmbeddedPreview()
 	const site = page.frameLocator("iframe")
 	const pin = site.locator('[data-thread-id="first"]')
 	await expect(pin).toBeVisible()
@@ -99,7 +111,7 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	await site.locator("#second-slice").hover()
 	await expect(highlight).toHaveAttribute("data-slice-id", "second-slice")
 	await pin.click()
-	await expect(pin).toHaveAttribute("data-selected", "true")
+	await expect(pin).toHaveAttribute("aria-pressed", "true")
 	await expect
 		.poll(() =>
 			page.evaluate(() =>
@@ -110,6 +122,9 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 		)
 		.toBe(true)
 	await expect(pin).toHaveCSS("transform", "matrix(2, 0, 0, 2, 0, 0)")
+	await expectReportedPinPosition(page, pin)
+	await page.locator("iframe").evaluate((frame) => (frame.style.height = "500px"))
+	await expectReportedPinPosition(page, pin)
 	await page.getByRole("button", { name: "Place comment", exact: true }).click()
 	await site
 		.getByRole("button", { name: "Place a comment here" })
@@ -142,8 +157,151 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 				.then((cookies) => cookies.find((cookie) => cookie.name === "io.prismic.preview")?.value),
 		)
 		.toBe("test-ref")
+	expect(requests.filter((url) => url.endsWith("/embedded-preview.js"))).toHaveLength(1)
+	expect(requests.some((url) => url.endsWith("/iframe.html"))).toBe(false)
 	expect(errors).toEqual([])
 })
+
+async function expectReportedPinPosition(page, pin) {
+	const rect = await pin.evaluate((element) => {
+		const bounds = element.getBoundingClientRect()
+		return {
+			xRatio: bounds.left / window.innerWidth,
+			yRatio: bounds.top / window.innerHeight,
+			widthRatio: bounds.width / window.innerWidth,
+			heightRatio: bounds.height / window.innerHeight,
+		}
+	})
+	await expect
+		.poll(() =>
+			page.evaluate(() =>
+				window.fixture.messages.findLast(
+					(message) => message.type === "prismic:embedded-preview:report-selected-pin-position",
+				),
+			),
+		)
+		.toMatchObject({ pin: { type: "thread", threadId: "first" }, rect, visible: true })
+}
+
+test("regular pages do not load embedded preview", async ({ page }) => {
+	const requests = []
+	const calls = []
+	page.on("request", (request) => requests.push(request.url()))
+	await mockPreviewService(page, calls)
+	await page.goto("/site.html")
+	await expect.poll(() => calls).toContain("close_preview_session")
+	expect(requests.some((url) => url.endsWith("/embedded-preview.js"))).toBe(false)
+})
+
+test("embedded overlay handles back-to-back state and scroll messages", async ({ page }) => {
+	await page.goto("/overlay.html")
+	const site = page.frameLocator("iframe")
+	await expect(site.locator('[data-thread-id="first"]')).toBeVisible()
+
+	await page.evaluate(() => {
+		const frame = document.querySelector("iframe")
+		frame.contentWindow.postMessage(
+			{
+				type: "prismic:embedded-preview:set-comment-overlay",
+				placementEnabled: false,
+				selectedThreadId: "new-thread",
+				pins: [
+					{
+						threadId: "new-thread",
+						xRatio: 0.5,
+						yRatio: 0.9,
+						author: { id: "author", name: "Test Author" },
+						resolved: false,
+					},
+				],
+			},
+			location.origin,
+		)
+		frame.contentWindow.postMessage(
+			{ type: "prismic:embedded-preview:scroll-to-pin", threadId: "new-thread" },
+			location.origin,
+		)
+	})
+
+	await expect(site.locator('[data-thread-id="new-thread"]')).toBeInViewport()
+	await expect
+		.poll(() =>
+			page.evaluate(() =>
+				window.fixture.messages.some(
+					(message) =>
+						message.type === "prismic:embedded-preview:report-selected-pin-position" &&
+						message.pin.threadId === "new-thread" &&
+						message.visible,
+				),
+			),
+		)
+		.toBe(true)
+})
+
+for (const active of [true, false]) {
+	test(`embedded polling (${active ? "active" : "inactive"}) stays independent of the editor connection`, async ({
+		page,
+	}) => {
+		const calls = []
+		let releaseService
+		const serviceReady = new Promise((resolve) => (releaseService = resolve))
+		await mockPreviewService(page, calls, active ? "poll-ref" : undefined, serviceReady)
+		await page
+			.context()
+			.addCookies([{ name: "io.prismic.preview", value: "poll-ref", url: "http://localhost:8082" }])
+		await page.route("**/overlay.html", async (route) => {
+			const response = await route.fetch()
+			await route.fulfill({
+				response,
+				body: (await response.text()).replace(
+					'name="prismic:embedded-preview"',
+					'name="prismic:embedded-preview:poll"',
+				),
+			})
+		})
+		await page.goto("/overlay.html", { waitUntil: "domcontentloaded" })
+		await expect(page.frameLocator("iframe").locator('[data-thread-id="first"]')).toBeVisible()
+		expect(calls).toEqual([])
+		releaseService()
+		await expect.poll(() => calls).toContain(active ? "update_preview" : "close_preview_session")
+		await page.getByRole("button", { name: "Update preview ref" }).click()
+		// A later overlay message proves the preceding set-ref message was processed.
+		await page.getByRole("button", { name: "Scale overlay" }).click()
+		await expect(page.frameLocator("iframe").locator('[data-thread-id="first"]')).toHaveCSS(
+			"transform",
+			"matrix(2, 0, 0, 2, 0, 0)",
+		)
+		expect(
+			(await page.context().cookies()).find((cookie) => cookie.name === "io.prismic.preview")
+				?.value,
+		).toBe("poll-ref")
+	})
+}
+
+async function mockPreviewService(page, calls, ref, ready = Promise.resolve()) {
+	await page.exposeFunction("recordPreviewCall", (type) => calls.push(type))
+	await page.route("**/prismic-toolbar/*/iframe.html", async (route) => {
+		await ready
+		await route.fulfill({
+			contentType: "text/html",
+			body: `<script>
+				window.addEventListener("message", (event) => {
+					if (event.data !== "setup_port") return;
+					const port = event.ports[0];
+					port.onmessage = ({ data: { type } }) => {
+						window.recordPreviewCall(type);
+						const ref = ${JSON.stringify(ref ?? null)};
+						const data = type === "preview_state"
+							? { auth: false, preview: { ref } }
+							: type === "update_preview" ? { ref, reload: false } : null;
+						port.postMessage({ type, data });
+					};
+					port.postMessage("ready");
+				});
+			</script>`,
+		})
+	})
+}
 
 test("inline auth iframe accepts a MessageChannel connection and returns preview state", async ({
 	page,

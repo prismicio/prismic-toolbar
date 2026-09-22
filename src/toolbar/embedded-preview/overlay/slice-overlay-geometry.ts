@@ -4,8 +4,6 @@ const sliceEndPrefix = "prismic-slice-end:"
 export interface SliceMarkerRange {
 	sliceId: string
 	depth: number
-	start: Comment
-	end: Comment
 	elements: Element[]
 }
 
@@ -53,8 +51,6 @@ export function findSliceMarkerRanges(root: Node): SliceMarkerRange[] {
 		ranges.push({
 			sliceId: endSliceId,
 			depth: startMarker.depth,
-			start: startMarker.start,
-			end: node,
 			elements: getElementsBetween(startMarker.start, node),
 		})
 	}

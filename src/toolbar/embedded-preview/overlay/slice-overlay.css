@@ -1,0 +1,22 @@
+.slice-highlight {
+	position: absolute;
+	border: calc(2px * var(--prismic-overlay-ui-scale)) solid #6e56cf;
+	border-radius: calc(12px * var(--prismic-overlay-ui-scale));
+	overflow: hidden;
+}
+
+.slice-highlight-badge {
+	position: absolute;
+	top: 8px;
+	left: 8px;
+	max-width: 100%;
+	padding: calc(2px * var(--prismic-overlay-ui-scale)) calc(4px * var(--prismic-overlay-ui-scale));
+	overflow: hidden;
+	color: white;
+	font-size: calc(10px * var(--prismic-overlay-ui-scale));
+	line-height: calc(16px * var(--prismic-overlay-ui-scale));
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	background: #6e56cf;
+	border-radius: 8px;
+}

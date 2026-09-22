@@ -5,7 +5,7 @@ import {
 	findSliceMarkerRangeAtElement,
 	findSliceMarkerRanges,
 	measureSliceMarkerRange,
-} from "../../src/toolbar/embedded-preview/slice-overlay"
+} from "./slice-overlay-geometry"
 
 afterEach(() => {
 	document.body.replaceChildren()

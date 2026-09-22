@@ -1,4 +1,4 @@
-import type { PinRect, Positioned } from "./overlay-messages"
+import type { PinRect } from "../message-protocol"
 
 const boundaryPadding = 4
 const pinSize = 32
@@ -8,8 +8,13 @@ export interface DocumentSize {
 	height: number
 }
 
+interface Position {
+	xRatio: number
+	yRatio: number
+}
+
 export function getPinDocumentPosition(
-	position: Positioned,
+	position: Position,
 	uiScale: number,
 	{ width, height } = measureDocument(),
 ) {
@@ -23,7 +28,7 @@ export function getPinDocumentPosition(
 	}
 }
 
-export function getPinRectFromPosition(position: Positioned, uiScale: number) {
+export function getPinRectFromPosition(position: Position, uiScale: number) {
 	const { left, top } = getPinDocumentPosition(position, uiScale)
 	const renderedPinSize = pinSize * uiScale
 
@@ -37,16 +42,8 @@ export function getPinRectFromPosition(position: Positioned, uiScale: number) {
 
 export function measureDocument() {
 	return {
-		width: Math.max(
-			document.documentElement.clientWidth,
-			document.documentElement.scrollWidth,
-			document.body.scrollWidth,
-		),
-		height: Math.max(
-			document.documentElement.clientHeight,
-			document.documentElement.scrollHeight,
-			document.body.scrollHeight,
-		),
+		width: Math.max(document.documentElement.offsetWidth, document.body.scrollWidth),
+		height: Math.max(document.documentElement.offsetHeight, document.body.scrollHeight),
 	}
 }
 

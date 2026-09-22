@@ -1,26 +1,26 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
+import { createSelectSliceMessage } from "../message-protocol"
+import type { PostMessage } from "../message-protocol"
 import {
 	createSliceMarkerRangeLookup,
 	findSliceMarkerRangeAtElement,
 	findSliceMarkerRanges,
 	measureSliceMarkerRange,
-} from "../slice-overlay"
-import type { SliceMarkerRange, SliceRect } from "../slice-overlay"
+} from "./slice-overlay-geometry"
+import type { SliceMarkerRange, SliceRect } from "./slice-overlay-geometry"
 
 interface SliceOverlayProps {
-	onSelectSlice: (sliceId: string) => void
+	postMessage: PostMessage
 }
 
 export function SliceOverlay(props: SliceOverlayProps) {
-	const { onSelectSlice } = props
+	const { postMessage } = props
 
 	const ranges = useSliceMarkerRanges()
-	const hoveredRange = useHoveredSliceMarkerRange({ ranges, onSelectSlice })
+	const hoveredRange = useHoveredSliceMarkerRange({ ranges, postMessage })
 
-	return (
-		<div className="slice-overlay">{hoveredRange && <SliceHighlight range={hoveredRange} />}</div>
-	)
+	return hoveredRange ? <SliceHighlight range={hoveredRange} /> : null
 }
 
 interface SliceHighlightProps {
@@ -83,11 +83,11 @@ function useSliceMarkerRanges() {
 
 interface UseHoveredSliceMarkerRangeArgs {
 	ranges: SliceMarkerRange[]
-	onSelectSlice: (sliceId: string) => void
+	postMessage: PostMessage
 }
 
 function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
-	const { ranges, onSelectSlice } = args
+	const { ranges, postMessage } = args
 
 	const pointerRef = useRef<{ x: number; y: number }>()
 	const [hoveredRange, setHoveredRange] = useState<SliceMarkerRange>()
@@ -96,7 +96,7 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 	const setHoveredRangeAtElement = useCallback(
 		(target: Element | null) => {
 			const nextRange = target ? findSliceMarkerRangeAtElement(rangeLookup, target) : undefined
-			setHoveredRange((currentRange) => (currentRange === nextRange ? currentRange : nextRange))
+			setHoveredRange(nextRange)
 		},
 		[rangeLookup],
 	)
@@ -126,7 +126,7 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 
 			event.preventDefault()
 			event.stopPropagation()
-			onSelectSlice(range.sliceId)
+			postMessage(createSelectSliceMessage(range.sliceId))
 		}
 		const updateHoveredRangeSoon = () => {
 			if (animationFrame !== undefined) return
@@ -158,7 +158,7 @@ function useHoveredSliceMarkerRange(args: UseHoveredSliceMarkerRangeArgs) {
 			window.removeEventListener("scroll", updateHoveredRangeSoon, true)
 			window.removeEventListener("resize", updateHoveredRangeSoon)
 		}
-	}, [onSelectSlice, rangeLookup, setHoveredRangeAtElement, updateHoveredRange])
+	}, [postMessage, rangeLookup, setHoveredRangeAtElement, updateHoveredRange])
 
 	return hoveredRange
 }
