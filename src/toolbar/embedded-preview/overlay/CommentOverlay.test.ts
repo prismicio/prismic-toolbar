@@ -132,7 +132,67 @@ describe("comment message subscriptions", () => {
 	})
 })
 
+describe("comment placement", () => {
+	it("reports the clicked document position and viewport rectangle", () => {
+		act(() => receive({ ...commentState, placementEnabled: true }))
+		const placementLayer = container.querySelector<HTMLButtonElement>(
+			'[aria-label="Place a comment here"]',
+		)!
+		postMessage.mockClear()
+
+		act(() => {
+			placementLayer.dispatchEvent(
+				new MouseEvent("click", { bubbles: true, clientX: 600, clientY: 400 }),
+			)
+		})
+
+		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
+			type: "prismic:embedded-preview:place-comment",
+			xRatio: 0.5,
+			yRatio: 0.2,
+			rect: { xRatio: 0.6, yRatio: 0.5, widthRatio: 0.032, heightRatio: 0.04 },
+		})
+	})
+
+	it("deselects an existing draft instead of placing another comment", () => {
+		act(() =>
+			receive({
+				...commentState,
+				placementEnabled: true,
+				draftAuthor: commentState.pins[0].author,
+				draftPin: { xRatio: 0.2, yRatio: 0.3 },
+			}),
+		)
+		const placementLayer = container.querySelector<HTMLButtonElement>(
+			'[aria-label="Place a comment here"]',
+		)!
+		postMessage.mockClear()
+
+		act(() => placementLayer.click())
+
+		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
+			type: "prismic:embedded-preview:deselect-pin",
+			pin: { type: "draft" },
+		})
+	})
+})
+
 describe("pin selection", () => {
+	it("dims resolved pins unless they are selected", () => {
+		const resolvedState = {
+			...commentState,
+			selectedThreadId: undefined,
+			pins: [{ ...commentState.pins[0], resolved: true }],
+		}
+		act(() => receive(resolvedState))
+		const pin = container.querySelector<HTMLButtonElement>('[data-thread-id="thread"]')!
+
+		expect(pin.classList.contains("pin-dimmed")).toBe(true)
+
+		act(() => receive({ ...resolvedState, selectedThreadId: "thread" }))
+		expect(pin.classList.contains("pin-dimmed")).toBe(false)
+	})
+
 	it("keeps selection controlled by the parent until it acknowledges a click", () => {
 		act(() => receive({ ...commentState, selectedThreadId: undefined }))
 		const pin = container.querySelector<HTMLButtonElement>('[data-thread-id="thread"]')!
@@ -140,7 +200,7 @@ describe("pin selection", () => {
 
 		act(() => pin.click())
 		act(() => pin.click())
-		expect(pin.dataset.selected).toBe("false")
+		expect(pin.getAttribute("aria-pressed")).toBe("false")
 		expect(postMessage).toHaveBeenCalledTimes(2)
 		for (const [message] of postMessage.mock.calls) {
 			expect(message).toMatchObject({
@@ -150,17 +210,17 @@ describe("pin selection", () => {
 		}
 
 		act(() => receive(commentState))
-		expect(pin.dataset.selected).toBe("true")
+		expect(pin.getAttribute("aria-pressed")).toBe("true")
 		postMessage.mockClear()
 		act(() => pin.click())
 		expect(postMessage).toHaveBeenCalledExactlyOnceWith({
 			type: "prismic:embedded-preview:deselect-pin",
 			pin: { type: "thread", threadId: "thread" },
 		})
-		expect(pin.dataset.selected).toBe("true")
+		expect(pin.getAttribute("aria-pressed")).toBe("true")
 
 		act(() => receive({ ...commentState, selectedThreadId: undefined }))
-		expect(pin.dataset.selected).toBe("false")
+		expect(pin.getAttribute("aria-pressed")).toBe("false")
 	})
 })
 

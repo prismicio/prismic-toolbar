@@ -1,4 +1,4 @@
-import type { ComponentChildren, RefObject, TargetedMouseEvent } from "preact"
+import type { RefObject, TargetedMouseEvent } from "preact"
 import { useCallback, useLayoutEffect, useRef, useState } from "preact/hooks"
 
 import {
@@ -11,11 +11,11 @@ import {
 } from "../message-protocol"
 import type {
 	Author,
-	DraftPin,
 	PinIdentity,
+	PinPosition,
 	PostMessage,
 	SubscribeToMessages,
-	ThreadPin,
+	ThreadPinData,
 } from "../message-protocol"
 import { Avatar } from "./Avatar"
 import {
@@ -35,97 +35,62 @@ interface CommentOverlayProps {
 	postMessage: PostMessage
 }
 
-type CommentOverlayState = {
-	placementEnabled: boolean
-	pins: ThreadPin[]
-	draftAuthor?: Author
-	selectedThreadId?: string
-	draftPin?: DraftPin
-}
-
 export function CommentOverlay(props: CommentOverlayProps) {
 	const { uiScale, subscribeToMessages, postMessage } = props
-
-	const [state, setState] = useState<CommentOverlayState>({
-		placementEnabled: false,
-		pins: [],
-		draftAuthor: undefined,
-		selectedThreadId: undefined,
-		draftPin: undefined,
-	})
+	const state = useCommentOverlayState(subscribeToMessages)
+	const { placementEnabled, pins, draftAuthor, selectedThreadId, draftPin } = state
 
 	const documentSize = useDocumentSize()
 
-	useLayoutEffect(() => {
-		return subscribeToMessages(({ data }) => {
-			if (isCommentOverlayMessage(data)) setState(data)
-		})
-	}, [subscribeToMessages])
+	const selectedPin = getSelectedPinIdentity(state)
+
+	useDismissOnClick(placementEnabled ? undefined : selectedPin, postMessage)
 
 	return (
-		<div className="comment-overlay">
-			<CommentPlacement
-				placementEnabled={state.placementEnabled}
-				draftAuthor={state.draftAuthor}
-				draftPin={state.draftPin}
-				uiScale={uiScale}
-				postMessage={postMessage}
-			>
-				<div className="comment-pins">
-					{state.pins.map((pin) => (
-						<Pin
-							key={pin.threadId}
-							pin={{
-								...pin,
-								selected: !state.draftPin && pin.threadId === state.selectedThreadId,
-								type: "thread",
-							}}
-							placementEnabled={state.placementEnabled}
-							subscribeToMessages={subscribeToMessages}
-							documentSize={documentSize}
-							uiScale={uiScale}
-							postMessage={postMessage}
-						/>
-					))}
-					{state.draftPin && state.draftAuthor && (
-						<Pin
-							key="draft"
-							pin={{
-								...state.draftPin,
-								author: state.draftAuthor,
-								selected: true,
-								type: "draft",
-							}}
-							placementEnabled={state.placementEnabled}
-							subscribeToMessages={subscribeToMessages}
-							documentSize={documentSize}
-							uiScale={uiScale}
-							postMessage={postMessage}
-						/>
-					)}
-				</div>
-			</CommentPlacement>
-		</div>
+		<>
+			{placementEnabled && (
+				<PlacementLayer
+					draftAuthor={draftAuthor}
+					draftPin={draftPin}
+					uiScale={uiScale}
+					postMessage={postMessage}
+				/>
+			)}
+			{pins.map((pin) => (
+				<ThreadPin
+					key={pin.threadId}
+					pin={pin}
+					selected={!draftPin && pin.threadId === selectedThreadId}
+					subscribeToMessages={subscribeToMessages}
+					documentSize={documentSize}
+					uiScale={uiScale}
+					postMessage={postMessage}
+				/>
+			))}
+			{draftPin && draftAuthor && (
+				<DraftPin
+					position={draftPin}
+					author={draftAuthor}
+					documentSize={documentSize}
+					uiScale={uiScale}
+					postMessage={postMessage}
+				/>
+			)}
+		</>
 	)
 }
 
-interface CommentPlacementProps {
-	children: ComponentChildren
-	placementEnabled: boolean
+interface PlacementLayerProps {
 	draftAuthor: Author | undefined
-	draftPin: DraftPin | undefined
+	draftPin: PinPosition | undefined
 	uiScale: number
 	postMessage: PostMessage
 }
 
-function CommentPlacement(props: CommentPlacementProps) {
-	const { children, placementEnabled, draftAuthor, draftPin, uiScale, postMessage } = props
+function PlacementLayer(props: PlacementLayerProps) {
+	const { draftAuthor, draftPin, uiScale, postMessage } = props
 
 	const [cursorPosition, setCursorPosition] = useState<{ left: number; top: number }>()
-
-	useLayoutEffect(() => {
-		if (!placementEnabled) setCursorPosition(undefined)
-	}, [placementEnabled])
 
 	function placeComment(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
@@ -150,65 +115,210 @@ function CommentPlacement(props: CommentPlacementProps) {
 		)
 	}
 
-	function updateCursorPosition(event: TargetedMouseEvent<HTMLButtonElement>) {
+	function trackCursor(event: TargetedMouseEvent<HTMLButtonElement>) {
 		setCursorPosition({ left: event.clientX, top: event.clientY })
 	}
 
 	return (
 		<>
-			{placementEnabled && (
-				<button
-					type="button"
-					className="placement-layer"
-					aria-label="Place a comment here"
-					onClick={placeComment}
-					onMouseMove={updateCursorPosition}
-					onMouseEnter={updateCursorPosition}
-					onMouseLeave={() => setCursorPosition(undefined)}
-				/>
-			)}
-			{children}
-			{placementEnabled && cursorPosition && draftAuthor && (
-				<div
-					className="pin cursor-pin"
-					style={`left: ${cursorPosition.left}px; top: ${cursorPosition.top}px`}
-				>
-					<Avatar name={draftAuthor.name || draftAuthor.id} imageUrl={draftAuthor.avatarUrl} />
-				</div>
+			<button
+				type="button"
+				className="placement-layer"
+				aria-label="Place a comment here"
+				onClick={placeComment}
+				onMouseMove={trackCursor}
+				onMouseEnter={trackCursor}
+				onMouseLeave={() => setCursorPosition(undefined)}
+			/>
+			{cursorPosition && draftAuthor && (
+				<CursorPin position={cursorPosition} author={draftAuthor} />
 			)}
 		</>
 	)
 }
 
-type RenderedPin = {
+interface CursorPinProps {
+	position: { left: number; top: number }
 	author: Author
-	selected: boolean
-	resolved?: boolean
-	xRatio: number
-	yRatio: number
-} & PinIdentity
+}
 
-interface PinProps {
-	pin: RenderedPin
-	placementEnabled: boolean
+function CursorPin(props: CursorPinProps) {
+	const { position, author } = props
+
+	return (
+		<div className="pin cursor-pin" style={{ left: position.left, top: position.top }}>
+			<Avatar name={author.name || author.id} imageUrl={author.avatarUrl} />
+		</div>
+	)
+}
+
+interface ThreadPinProps {
+	pin: ThreadPinData
+	selected: boolean
 	subscribeToMessages: SubscribeToMessages
 	documentSize: DocumentSize
 	uiScale: number
 	postMessage: PostMessage
 }
 
-function Pin(props: PinProps) {
-	const { pin, placementEnabled, documentSize, uiScale, postMessage, subscribeToMessages } = props
+function ThreadPin(props: ThreadPinProps) {
+	const { pin, selected, documentSize, uiScale, postMessage, subscribeToMessages } = props
+
+	const pinRef = useRef<HTMLButtonElement>(null)
+	const identity = { type: "thread", threadId: pin.threadId } as const
+	const reportPosition = useReportSelectedPinPosition(
+		pinRef,
+		selected ? identity : undefined,
+		postMessage,
+	)
+
+	useScrollToThreadPin(pinRef, pin, reportPosition, subscribeToMessages)
+
+	function handleClick(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+
+		if (selected) {
+			postMessage(createDeselectPinMessage(identity))
+			return
+		}
+
+		postMessage(createSelectPinMessage({ pin: identity, rect: getPinRect(event.currentTarget) }))
+	}
+
+	return (
+		<Pin
+			pinRef={pinRef}
+			position={pin}
+			author={pin.author}
+			documentSize={documentSize}
+			uiScale={uiScale}
+			dimmed={pin.resolved && !selected}
+			data-thread-id={pin.threadId}
+			aria-label={`Open comment by ${pin.author.name || pin.author.id}`}
+			aria-pressed={selected}
+			onClick={handleClick}
+		/>
+	)
+}
+
+interface DraftPinProps {
+	position: PinPosition
+	author: Author
+	documentSize: DocumentSize
+	uiScale: number
+	postMessage: PostMessage
+}
+
+function DraftPin(props: DraftPinProps) {
+	const { position, author, documentSize, uiScale, postMessage } = props
+
 	const pinRef = useRef<HTMLButtonElement>(null)
 
-	const { left, top } = getPinDocumentPosition(pin, uiScale, documentSize)
+	useReportSelectedPinPosition(pinRef, { type: "draft" }, postMessage)
+
+	return (
+		<Pin
+			pinRef={pinRef}
+			position={position}
+			author={author}
+			documentSize={documentSize}
+			uiScale={uiScale}
+			aria-label="New comment"
+			disabled
+		/>
+	)
+}
+
+interface PinProps {
+	pinRef: RefObject<HTMLButtonElement>
+	position: PinPosition
+	author: Author
+	documentSize: DocumentSize
+	uiScale: number
+	dimmed?: boolean
+	disabled?: boolean
+	onClick?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	"aria-label"?: string
+	"aria-pressed"?: boolean
+	"data-thread-id"?: string
+}
+
+function Pin(props: PinProps) {
+	const { pinRef, position, author, documentSize, uiScale, dimmed, ...rest } = props
+
+	const { left, top } = getPinDocumentPosition(position, uiScale, documentSize)
+
+	return (
+		<button
+			{...rest}
+			ref={pinRef}
+			type="button"
+			className={`pin ${dimmed ? "pin-dimmed" : ""}`}
+			style={{ left, top }}
+		>
+			<Avatar name={author.name || author.id} imageUrl={author.avatarUrl} />
+		</button>
+	)
+}
+
+type CommentOverlayState = {
+	placementEnabled: boolean
+	pins: ThreadPinData[]
+	draftAuthor?: Author
+	selectedThreadId?: string
+	draftPin?: PinPosition
+}
+
+function getSelectedPinIdentity(state: CommentOverlayState): PinIdentity | undefined {
+	const { draftPin, draftAuthor, selectedThreadId, pins } = state
+
+	if (draftPin && draftAuthor) return { type: "draft" }
+	if (selectedThreadId === undefined) return
+	if (!pins.some((pin) => pin.threadId === selectedThreadId)) return
+
+	return { type: "thread", threadId: selectedThreadId }
+}
+
+function useCommentOverlayState(subscribeToMessages: SubscribeToMessages) {
+	const [state, setState] = useState<CommentOverlayState>({
+		placementEnabled: false,
+		pins: [],
+	})
 
 	useLayoutEffect(() => {
-		if (pin.type !== "thread") return
+		return subscribeToMessages(({ data }) => {
+			if (isCommentOverlayMessage(data)) setState(data)
+		})
+	}, [subscribeToMessages])
 
+	return state
+}
+
+function useDismissOnClick(pin: PinIdentity | undefined, postMessage: PostMessage) {
+	useLayoutEffect(() => {
+		if (!pin) return
+
+		const deselectPin = () => postMessage(createDeselectPinMessage(pin))
+		document.addEventListener("click", deselectPin)
+		return () => document.removeEventListener("click", deselectPin)
+	}, [pin, postMessage])
+}
+
+function useScrollToThreadPin(
+	pinRef: RefObject<HTMLButtonElement>,
+	pin: ThreadPinData,
+	reportPosition: () => void,
+	subscribeToMessages: SubscribeToMessages,
+) {
+	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
 			if (!isScrollToPinMessage(data) || data.threadId !== pin.threadId) return
-			if (!pinRef.current || isFullyVisible(pinRef.current)) return
+			if (!pinRef.current) return
+
+			if (isFullyVisible(pinRef.current)) {
+				reportPosition()
+				return
+			}
 
 			const { width, height } = measureDocument()
 			if (width === 0 || height === 0) return
@@ -219,81 +329,16 @@ function Pin(props: PinProps) {
 				behavior: "smooth",
 			})
 		})
-	}, [pin, subscribeToMessages])
-
-	useLayoutEffect(() => {
-		if (!pin.selected || placementEnabled) return
-
-		const identity: PinIdentity =
-			pin.type === "thread" ? { type: "thread", threadId: pin.threadId } : { type: "draft" }
-		const deselectPin = () => postMessage(createDeselectPinMessage(identity))
-		document.addEventListener("click", deselectPin)
-		return () => document.removeEventListener("click", deselectPin)
-	}, [pin, placementEnabled, postMessage])
-
-	function handleClick(event: TargetedMouseEvent<HTMLButtonElement>) {
-		if (pin.type !== "thread") return
-
-		event.stopPropagation()
-
-		if (pin.selected) {
-			postMessage(createDeselectPinMessage({ type: "thread", threadId: pin.threadId }))
-			return
-		}
-
-		postMessage(
-			createSelectPinMessage({
-				pin: { type: "thread", threadId: pin.threadId },
-				rect: getPinRect(event.currentTarget),
-			}),
-		)
-	}
-
-	return (
-		<>
-			<button
-				ref={pinRef}
-				type="button"
-				className="pin"
-				style={`left: ${left}px; top: ${top}px`}
-				data-pin-type={pin.type}
-				data-thread-id={pin.type === "thread" ? pin.threadId : undefined}
-				data-selected={String(pin.selected)}
-				data-resolved={String(Boolean(pin.resolved))}
-				aria-label={
-					pin.type === "thread" ? `Open comment by ${pin.author.name || "author"}` : "New comment"
-				}
-				disabled={pin.type === "draft"}
-				onClick={pin.type === "thread" ? handleClick : undefined}
-			>
-				<Avatar name={pin.author.name || pin.author.id} imageUrl={pin.author.avatarUrl} />
-			</button>
-			{pin.selected && (
-				<PinPositionReporter
-					pin={
-						pin.type === "thread" ? { type: "thread", threadId: pin.threadId } : { type: "draft" }
-					}
-					pinRef={pinRef}
-					postMessage={postMessage}
-					subscribeToMessages={subscribeToMessages}
-				/>
-			)}
-		</>
-	)
+	}, [pin, pinRef, reportPosition, subscribeToMessages])
 }
 
-interface PinPositionReporterProps {
-	pin: PinIdentity
-	pinRef: RefObject<HTMLButtonElement>
-	postMessage: PostMessage
-	subscribeToMessages: SubscribeToMessages
-}
-
-function PinPositionReporter(props: PinPositionReporterProps) {
-	const { pin, pinRef, postMessage, subscribeToMessages } = props
-
+function useReportSelectedPinPosition(
+	pinRef: RefObject<HTMLButtonElement>,
+	pin: PinIdentity | undefined,
+	postMessage: PostMessage,
+) {
 	const reportPosition = useCallback(() => {
-		if (!pinRef.current) return
+		if (!pin || !pinRef.current) return
 
 		postMessage(
 			createReportSelectedPinPositionMessage({
@@ -304,23 +349,16 @@ function PinPositionReporter(props: PinPositionReporterProps) {
 		)
 	}, [pin, pinRef, postMessage])
 
-	// The parent renders again when the pin, document size, or UI scale changes.
 	useLayoutEffect(reportPosition)
 
 	useLayoutEffect(() => {
+		if (!pin) return
+
 		window.addEventListener("scroll", reportPosition)
 		return () => window.removeEventListener("scroll", reportPosition)
-	}, [reportPosition])
+	}, [pin, reportPosition])
 
-	useLayoutEffect(() => {
-		return subscribeToMessages(({ data }) => {
-			if (pin.type !== "thread" || !isScrollToPinMessage(data) || data.threadId !== pin.threadId)
-				return
-			if (pinRef.current && isFullyVisible(pinRef.current)) reportPosition()
-		})
-	}, [pin, pinRef, reportPosition, subscribeToMessages])
-
-	return null
+	return reportPosition
 }
 
 function useDocumentSize() {

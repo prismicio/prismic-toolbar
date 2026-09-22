@@ -30,7 +30,7 @@ const threadPinSchema = z.object({
 	xRatio: ratioSchema,
 	yRatio: ratioSchema,
 })
-export type ThreadPin = z.infer<typeof threadPinSchema>
+export type ThreadPinData = z.infer<typeof threadPinSchema>
 
 const ackMessageSchema = z.object({ type: z.literal(ackMessageType) })
 
@@ -48,7 +48,7 @@ const draftPinSchema = z.object({
 	xRatio: ratioSchema,
 	yRatio: ratioSchema,
 })
-export type DraftPin = z.infer<typeof draftPinSchema>
+export type PinPosition = z.infer<typeof draftPinSchema>
 
 const commentOverlayMessageSchema = z.object({
 	type: z.literal(setCommentOverlayMessageType),

@@ -21,7 +21,7 @@ export function Overlay(props: OverlayProps) {
 	}, [subscribeToMessages])
 
 	return (
-		<div style={`--prismic-overlay-ui-scale: ${uiScale}`}>
+		<div style={{ "--prismic-overlay-ui-scale": uiScale }}>
 			<CommentOverlay
 				uiScale={uiScale}
 				subscribeToMessages={subscribeToMessages}

@@ -4,20 +4,6 @@
 	--prismic-overlay-pin-size: 32px;
 }
 
-.comment-overlay {
-	position: relative;
-	width: 0;
-	height: 0;
-}
-
-.comment-pins {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 0;
-	height: 0;
-}
-
 .placement-layer {
 	position: fixed;
 	inset: 0;
@@ -53,7 +39,7 @@
 	transform-origin: top left;
 }
 
-.pin[data-resolved="true"]:not([data-selected="true"]) {
+.pin-dimmed {
 	opacity: 0.4;
 }
 
