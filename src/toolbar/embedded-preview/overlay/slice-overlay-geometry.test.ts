@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
-	createSliceMarkerRangeLookup,
-	findSliceMarkerRangeAtElement,
+	findSliceAtElement,
 	findSliceMarkerRanges,
 	measureSliceMarkerRange,
 } from "./slice-overlay-geometry"
@@ -29,14 +28,11 @@ describe("slice overlay", () => {
 		const outer = document.querySelector("#outer")
 		const outerContent = document.querySelector("#outer-content")
 		const inner = document.querySelector("#inner")
-		const lookup = createSliceMarkerRangeLookup(ranges)
 
 		expect(ranges.map((range) => range.sliceId)).toEqual(["inner", "outer"])
-		expect(inner && findSliceMarkerRangeAtElement(lookup, inner)?.sliceId).toBe("inner")
-		expect(outer && findSliceMarkerRangeAtElement(lookup, outer)?.sliceId).toBe("outer")
-		expect(outerContent && findSliceMarkerRangeAtElement(lookup, outerContent)?.sliceId).toBe(
-			"outer",
-		)
+		expect(inner && findSliceAtElement(ranges, inner)?.sliceId).toBe("inner")
+		expect(outer && findSliceAtElement(ranges, outer)?.sliceId).toBe("outer")
+		expect(outerContent && findSliceAtElement(ranges, outerContent)?.sliceId).toBe("outer")
 	})
 
 	it("measures one rectangle around multiple slice elements", () => {
@@ -74,12 +70,10 @@ describe("slice overlay", () => {
 			<!--prismic-slice-end:inner-->
 			<!--prismic-slice-end:outer-->
 		`
-		const lookup = createSliceMarkerRangeLookup(findSliceMarkerRanges(document.body))
-		expect(findSliceMarkerRangeAtElement(lookup, document.querySelector("#shared")!)?.sliceId).toBe(
-			"inner",
+		const ranges = findSliceMarkerRanges(document.body)
+		expect(findSliceAtElement(ranges, document.querySelector("#shared")!)?.sliceId).toBe("inner")
+		expect(findSliceAtElement(ranges, document.querySelector("#outer-only")!)?.sliceId).toBe(
+			"outer",
 		)
-		expect(
-			findSliceMarkerRangeAtElement(lookup, document.querySelector("#outer-only")!)?.sliceId,
-		).toBe("outer")
 	})
 })

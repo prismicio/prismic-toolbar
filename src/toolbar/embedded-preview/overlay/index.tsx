@@ -3,8 +3,7 @@ import { render } from "preact"
 
 import type { PostMessage, SubscribeToMessages } from "../message-protocol"
 import { Overlay } from "./Overlay"
-
-import overlayStyles from "./overlay.css?inline"
+import shadowStyles from "./index.css?inline"
 
 export class EmbeddedPreviewOverlay {
 	constructor({
@@ -26,7 +25,7 @@ export class EmbeddedPreviewOverlay {
 				pointerEvents: "none",
 			},
 		})
-		appendCSS(root, overlayStyles)
+		appendCSS(root, shadowStyles)
 		render(<Overlay postMessage={postMessage} subscribeToMessages={subscribeToMessages} />, root)
 	}
 }

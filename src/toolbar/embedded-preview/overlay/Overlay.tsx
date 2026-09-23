@@ -4,6 +4,7 @@ import { isOverlayScaleMessage } from "../message-protocol"
 import type { PostMessage, SubscribeToMessages } from "../message-protocol"
 import { CommentOverlay } from "./CommentOverlay"
 import { SliceOverlay } from "./SliceOverlay"
+import { useSlices } from "./useSlices"
 
 interface OverlayProps {
 	postMessage: PostMessage
@@ -13,6 +14,22 @@ interface OverlayProps {
 export function Overlay(props: OverlayProps) {
 	const { postMessage, subscribeToMessages } = props
 
+	const uiScale = useUIScale(subscribeToMessages)
+	const slices = useSlices()
+
+	return (
+		<div style={{ "--prismic-overlay-ui-scale": uiScale }}>
+			<SliceOverlay postMessage={postMessage} slices={slices} />
+			<CommentOverlay
+				uiScale={uiScale}
+				subscribeToMessages={subscribeToMessages}
+				postMessage={postMessage}
+			/>
+		</div>
+	)
+}
+
+function useUIScale(subscribeToMessages: SubscribeToMessages) {
 	const [uiScale, setUIScale] = useState(1)
 
 	useLayoutEffect(() => {
@@ -21,14 +38,5 @@ export function Overlay(props: OverlayProps) {
 		})
 	}, [subscribeToMessages])
 
-	return (
-		<div style={{ "--prismic-overlay-ui-scale": uiScale }}>
-			<SliceOverlay postMessage={postMessage} />
-			<CommentOverlay
-				uiScale={uiScale}
-				subscribeToMessages={subscribeToMessages}
-				postMessage={postMessage}
-			/>
-		</div>
-	)
+	return uiScale
 }

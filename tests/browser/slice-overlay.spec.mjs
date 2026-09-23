@@ -5,20 +5,24 @@ test.beforeEach(async ({ page }) => {
 	await expect(page.frameLocator("iframe").locator('[data-thread-id="first"]')).toBeVisible()
 })
 
-test("highlight follows position changes under a stationary pointer", async ({ page }) => {
+test("highlight refreshes position-only changes on pointer movement", async ({ page }) => {
 	const site = page.frameLocator("iframe")
 	const slice = site.locator("#first-slice")
 	const highlight = site.locator(".slice-highlight")
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 
+	const box = await slice.boundingBox()
 	await slice.evaluate((element) => (element.style.transform = "translateY(40px)"))
+	await page.mouse.move(box.x + 501, box.y + 200)
 	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
 
-	// Moving out from under the pointer must clear hover without a pointer event.
+	// Position-only motion is picked up on the next pointer event.
 	await slice.evaluate((element) => (element.style.transform = "translateY(500px)"))
+	await page.mouse.move(box.x + 502, box.y + 200)
 	await expect(highlight).toHaveCount(0)
 	await slice.evaluate((element) => (element.style.transform = ""))
+	await page.mouse.move(box.x + 503, box.y + 200)
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
 })
@@ -82,7 +86,7 @@ test("highlight and selection use updated roots and marker IDs", async ({ page }
 	await expect(highlight).toHaveAttribute("data-slice-id", "second-slice")
 })
 
-test("tracking stops outside the preview and resumes on reentry", async ({ page }) => {
+test("highlight does not poll while idle and clears outside the preview", async ({ page }) => {
 	const site = page.frameLocator("iframe")
 	const slice = site.locator("#first-slice")
 	const highlight = site.locator(".slice-highlight")
@@ -96,6 +100,16 @@ test("tracking stops outside the preview and resumes on reentry", async ({ page 
 	})
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toBeVisible()
+	const measurementsWhileIdle = await slice.evaluate(async (element) => {
+		// Let any initial ResizeObserver delivery settle before checking for polling.
+		await new Promise(requestAnimationFrame)
+		const before = element.measurements
+		for (let frame = 0; frame < 4; frame++) {
+			await new Promise(requestAnimationFrame)
+		}
+		return element.measurements - before
+	})
+	expect(measurementsWhileIdle).toBe(0)
 	await page.mouse.move(20, 850)
 	await expect(highlight).toHaveCount(0)
 	const measurementsWhileOutside = await slice.evaluate(async (element) => {
@@ -108,4 +122,113 @@ test("tracking stops outside the preview and resumes on reentry", async ({ page 
 	expect(measurementsWhileOutside).toBe(0)
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
+})
+
+test("comment placement takes precedence over slice hover and selection", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	const highlight = site.locator(".slice-highlight")
+	await page.getByRole("button", { name: "Place comment", exact: true }).click()
+	const placement = site.getByRole("button", { name: "Place a comment here" })
+	await placement.hover({ position: { x: 500, y: 200 } })
+	await expect(highlight).toHaveCount(0)
+	await placement.click({ position: { x: 500, y: 200 } })
+	await expect
+		.poll(() =>
+			page.evaluate(() =>
+				window.fixture.messages.some(
+					(message) => message.type === "prismic:embedded-preview:place-comment",
+				),
+			),
+		)
+		.toBe(true)
+	expect(
+		await page.evaluate(() =>
+			window.fixture.messages.some(
+				(message) => message.type === "prismic:embedded-preview:select-slice",
+			),
+		),
+	).toBe(false)
+})
+
+async function sliceSelections(page) {
+	return page.evaluate(() =>
+		window.fixture.messages.filter(
+			(message) => message.type === "prismic:embedded-preview:select-slice",
+		),
+	)
+}
+
+test("hovering and clicking a comment pin clears slice hover without selecting a slice", async ({
+	page,
+}) => {
+	const site = page.frameLocator("iframe")
+	const slice = site.locator("#first-slice")
+	const highlight = site.locator(".slice-highlight")
+	await slice.hover({ position: { x: 500, y: 200 } })
+	await expect(highlight).toBeVisible()
+	const pin = site.locator('[data-thread-id="first"]')
+	await pin.hover()
+	await expect(highlight).toHaveCount(0)
+	await pin.click()
+	expect(await sliceSelections(page)).toEqual([])
+	await slice.hover({ position: { x: 500, y: 200 } })
+	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
+})
+
+test("text can be selected by dragging without selecting the slice", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	await site.locator("#first-slice").evaluate((element) => {
+		const text = document.createElement("span")
+		text.id = "selectable-text"
+		text.textContent = "Select this page text by dragging across it."
+		text.style.cssText =
+			"position:absolute;top:100px;left:350px;font:24px monospace;user-select:text"
+		element.append(text)
+	})
+	const text = site.locator("#selectable-text")
+	const box = await text.boundingBox()
+	await page.mouse.move(box.x + 1, box.y + box.height / 2)
+	await page.mouse.down()
+	await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2, { steps: 15 })
+	await page.mouse.up()
+	expect(await text.evaluate(() => window.getSelection().toString())).toContain(
+		"Select this page text",
+	)
+	expect(await sliceSelections(page)).toEqual([])
+	await site.locator("#first-slice").click({ position: { x: 600, y: 250 } })
+	await expect
+		.poll(() => sliceSelections(page))
+		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+})
+
+test("clicking a gap between slice roots selects it but clicking a covering popup does not", async ({
+	page,
+}) => {
+	const site = page.frameLocator("iframe")
+	await site.locator("body").evaluate((body) => {
+		const container = document.createElement("div")
+		container.id = "split-slice"
+		container.style.cssText =
+			"position:absolute;top:50px;left:350px;width:400px;display:flex;flex-direction:column;gap:50px"
+		container.innerHTML = `
+			<!--prismic-slice-start:split-->
+			<div style="height:50px;background:green"></div>
+			<div style="height:50px;background:green"></div>
+			<!--prismic-slice-end:split-->
+		`
+		body.append(container)
+	})
+	await site.locator("#split-slice").click({ position: { x: 100, y: 75 } })
+	await expect
+		.poll(() => sliceSelections(page))
+		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "split" }])
+	await site.locator("body").evaluate((body) => {
+		const modal = document.createElement("div")
+		modal.id = "modal"
+		modal.style.cssText = "position:fixed;inset:0;background:white;z-index:10"
+		body.append(modal)
+	})
+	await site.locator("#modal").click({ position: { x: 450, y: 125 } })
+	await expect(site.locator(".slice-highlight")).toHaveCount(0)
+	expect(await sliceSelections(page)).toHaveLength(1)
 })

@@ -13,6 +13,11 @@ export interface SliceRect {
 	height: number
 }
 
+export interface Slice extends SliceMarkerRange {
+	/** Bounds in document coordinates. */
+	rect: SliceRect | undefined
+}
+
 interface OpenSliceMarker {
 	sliceId: string
 	start: Comment
@@ -55,31 +60,6 @@ export function findSliceMarkerRanges(root: Node): SliceMarkerRange[] {
 	return ranges
 }
 
-export function createSliceMarkerRangeLookup(ranges: SliceMarkerRange[]) {
-	const lookup = new WeakMap<Element, SliceMarkerRange>()
-
-	for (const range of ranges) {
-		for (const element of range.elements) {
-			if (!lookup.has(element)) lookup.set(element, range)
-		}
-	}
-
-	return lookup
-}
-
-export function findSliceMarkerRangeAtElement(
-	lookup: WeakMap<Element, SliceMarkerRange>,
-	target: Element,
-): SliceMarkerRange | undefined {
-	let element: Element | null = target
-
-	while (element) {
-		const range = lookup.get(element)
-		if (range) return range
-		element = element.parentElement
-	}
-}
-
 export function measureSliceMarkerRange(range: SliceMarkerRange): SliceRect | undefined {
 	let top = Number.POSITIVE_INFINITY
 	let left = Number.POSITIVE_INFINITY
@@ -104,6 +84,41 @@ export function measureSliceMarkerRange(range: SliceMarkerRange): SliceRect | un
 		width: right - left,
 		height: bottom - top,
 	}
+}
+
+export function findSliceAtElement<T extends SliceMarkerRange>(
+	slices: T[],
+	target: Element | null,
+): T | undefined {
+	let element = target
+
+	while (element) {
+		for (const slice of slices) {
+			if (slice.elements.includes(element)) return slice
+		}
+		element = element.parentElement
+	}
+
+	return undefined
+}
+
+export function findSliceAtPoint<T extends Slice>(
+	slices: T[],
+	target: Element | null,
+	x: number,
+	y: number,
+): T | undefined {
+	if (!target) return
+
+	return slices.find(
+		({ elements, rect }) =>
+			rect &&
+			x >= rect.left &&
+			x <= rect.left + rect.width &&
+			y >= rect.top &&
+			y <= rect.top + rect.height &&
+			elements.some((element) => element.contains(target) || target.contains(element)),
+	)
 }
 
 function getMarkerSliceId(value: string, prefix: string) {
