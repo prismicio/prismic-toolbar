@@ -2,7 +2,7 @@ import { useLayoutEffect, useMemo, useState } from "preact/hooks"
 
 import { createSelectSliceMessage } from "../message-protocol"
 import type { PostMessage } from "../message-protocol"
-import { findSliceAtElement, findSliceAtPoint } from "./slice-overlay-geometry"
+import { findSliceAtElement } from "./slice-overlay-geometry"
 import type { Slice } from "./slice-overlay-geometry"
 
 interface SliceOverlayProps {
@@ -18,8 +18,7 @@ export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
 	// `pointer-events: auto` and regular `onClick` handlers because they intentionally cover the page.
 	useLayoutEffect(() => {
 		function track(event: PointerEvent) {
-			const target = event.target instanceof Element ? event.target : null
-			setTarget((prev) => (prev === target ? prev : target))
+			setTarget(event.target instanceof Element ? event.target : null)
 		}
 
 		function clear() {
@@ -47,7 +46,7 @@ export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
 			const target = event.target instanceof Element ? event.target : null
 			if (!target) return
 
-			const slice = findSliceAtPoint(slices, target, event.pageX, event.pageY)
+			const slice = findSliceAtElement(slices, target)
 			if (!slice) return
 
 			event.preventDefault()

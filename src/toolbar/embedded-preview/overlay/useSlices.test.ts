@@ -79,6 +79,20 @@ describe("shared slice model", () => {
 		expect(disconnect).not.toHaveBeenCalled()
 	})
 
+	it("publishes a replacement root even when its ID and bounds are unchanged", async () => {
+		const previous = slices
+		const replacement = document.createElement("section")
+		replacement.id = element.id
+		// Share the same measurement function so only DOM identity differs.
+		replacement.getBoundingClientRect = element.getBoundingClientRect
+		await act(async () => element.replaceWith(replacement))
+		expect(slices).not.toBe(previous)
+		expect(slices[0]?.elements[0]).toBe(replacement)
+		expect(slices[0]?.rect).toEqual(previous[0]?.rect)
+		expect(unobserve).toHaveBeenCalledWith(element)
+		expect(observe).toHaveBeenCalledWith(replacement, { box: "border-box" })
+	})
+
 	it("publishes replaced roots, changed marker IDs, and removed slices", async () => {
 		const replacement = document.createElement("section")
 		vi.spyOn(replacement, "getBoundingClientRect").mockReturnValue(new DOMRect(30, 40, 250, 150))

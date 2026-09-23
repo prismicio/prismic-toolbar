@@ -78,6 +78,7 @@ export function measureSliceMarkerRange(range: SliceMarkerRange): SliceRect | un
 
 	if (![top, left, right, bottom].every(Number.isFinite)) return
 
+	// Convert viewport coordinates to document coordinates
 	return {
 		top: top + window.scrollY,
 		left: left + window.scrollX,
@@ -91,34 +92,13 @@ export function findSliceAtElement<T extends SliceMarkerRange>(
 	target: Element | null,
 ): T | undefined {
 	let element = target
-
 	while (element) {
 		for (const slice of slices) {
 			if (slice.elements.includes(element)) return slice
 		}
 		element = element.parentElement
 	}
-
 	return undefined
-}
-
-export function findSliceAtPoint<T extends Slice>(
-	slices: T[],
-	target: Element | null,
-	x: number,
-	y: number,
-): T | undefined {
-	if (!target) return
-
-	return slices.find(
-		({ elements, rect }) =>
-			rect &&
-			x >= rect.left &&
-			x <= rect.left + rect.width &&
-			y >= rect.top &&
-			y <= rect.top + rect.height &&
-			elements.some((element) => element.contains(target) || target.contains(element)),
-	)
 }
 
 function getMarkerSliceId(value: string, prefix: string) {

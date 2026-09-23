@@ -3,6 +3,7 @@ import { render } from "preact"
 
 import type { PostMessage, SubscribeToMessages } from "../message-protocol"
 import { Overlay } from "./Overlay"
+
 import shadowStyles from "./index.css?inline"
 
 export class EmbeddedPreviewOverlay {

@@ -201,9 +201,7 @@ test("text can be selected by dragging without selecting the slice", async ({ pa
 		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
 })
 
-test("clicking a gap between slice roots selects it but clicking a covering popup does not", async ({
-	page,
-}) => {
+test("slice roots are selectable but gaps and covering popups are not", async ({ page }) => {
 	const site = page.frameLocator("iframe")
 	await site.locator("body").evaluate((body) => {
 		const container = document.createElement("div")
@@ -218,10 +216,16 @@ test("clicking a gap between slice roots selects it but clicking a covering popu
 		`
 		body.append(container)
 	})
-	await site.locator("#split-slice").click({ position: { x: 100, y: 75 } })
+	await site.locator("#split-slice").hover({ position: { x: 100, y: 25 } })
+	await expect(site.locator(".slice-highlight")).toHaveAttribute("data-slice-id", "split")
+	await site.locator("#split-slice").click({ position: { x: 100, y: 25 } })
 	await expect
 		.poll(() => sliceSelections(page))
 		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "split" }])
+	await site.locator("#split-slice").hover({ position: { x: 100, y: 75 } })
+	await expect(site.locator(".slice-highlight")).toHaveCount(0)
+	await site.locator("#split-slice").click({ position: { x: 100, y: 75 } })
+	expect(await sliceSelections(page)).toHaveLength(1)
 	await site.locator("body").evaluate((body) => {
 		const modal = document.createElement("div")
 		modal.id = "modal"
@@ -231,4 +235,55 @@ test("clicking a gap between slice roots selects it but clicking a covering popu
 	await site.locator("#modal").click({ position: { x: 450, y: 125 } })
 	await expect(site.locator(".slice-highlight")).toHaveCount(0)
 	expect(await sliceSelections(page)).toHaveLength(1)
+})
+
+test("hover and click agree for nested gaps and overflowing content", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	await site.locator("body").evaluate((body) => {
+		const container = document.createElement("div")
+		container.innerHTML = `
+			<!--prismic-slice-start:outer-->
+			<section id="nested-outer" style="position:absolute;top:50px;left:350px;width:400px;height:250px;background:lightblue">
+				<!--prismic-slice-start:inner-->
+				<div style="height:50px;background:green"></div>
+				<div style="height:50px;margin-top:50px;background:green"></div>
+				<!--prismic-slice-end:inner-->
+				<div id="overflow" style="position:absolute;top:0;left:420px;width:50px;height:50px;background:red"></div>
+			</section>
+			<!--prismic-slice-end:outer-->
+		`
+		body.append(container)
+	})
+	const outer = site.locator("#nested-outer")
+	const highlight = site.locator(".slice-highlight")
+	for (const [y, sliceId] of [
+		[25, "inner"],
+		[75, "outer"],
+		[200, "outer"],
+	]) {
+		await outer.hover({ position: { x: 100, y } })
+		await expect(highlight).toHaveAttribute("data-slice-id", sliceId)
+		await outer.click({ position: { x: 100, y } })
+		await expect.poll(async () => (await sliceSelections(page)).at(-1)?.sliceId).toBe(sliceId)
+	}
+	await site.locator("#overflow").hover()
+	await expect(highlight).toHaveAttribute("data-slice-id", "outer")
+	await site.locator("#overflow").click()
+	await expect
+		.poll(async () => (await sliceSelections(page)).map(({ sliceId }) => sliceId))
+		.toEqual(["inner", "outer", "outer", "outer"])
+})
+
+test("same-size DOM replacement remains highlightable and selectable", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	const slice = site.locator("#first-slice")
+	await slice.hover({ position: { x: 500, y: 200 } })
+	await expect(site.locator(".slice-highlight")).toHaveAttribute("data-slice-id", "first-slice")
+	await slice.evaluate((element) => element.replaceWith(element.cloneNode(true)))
+	await slice.hover({ position: { x: 501, y: 200 } })
+	await expect(site.locator(".slice-highlight")).toHaveAttribute("data-slice-id", "first-slice")
+	await slice.click({ position: { x: 501, y: 200 } })
+	await expect
+		.poll(() => sliceSelections(page))
+		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
 })
