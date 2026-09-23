@@ -64,4 +64,22 @@ describe("slice overlay", () => {
 			height: 90,
 		})
 	})
+
+	it("prefers nested markers sharing the same parent and root element", () => {
+		document.body.innerHTML = `
+			<!--prismic-slice-start:outer-->
+			<div id="outer-only"></div>
+			<!--prismic-slice-start:inner-->
+			<div id="shared"></div>
+			<!--prismic-slice-end:inner-->
+			<!--prismic-slice-end:outer-->
+		`
+		const lookup = createSliceMarkerRangeLookup(findSliceMarkerRanges(document.body))
+		expect(findSliceMarkerRangeAtElement(lookup, document.querySelector("#shared")!)?.sliceId).toBe(
+			"inner",
+		)
+		expect(
+			findSliceMarkerRangeAtElement(lookup, document.querySelector("#outer-only")!)?.sliceId,
+		).toBe("outer")
+	})
 })

@@ -3,7 +3,6 @@ const sliceEndPrefix = "prismic-slice-end:"
 
 export interface SliceMarkerRange {
 	sliceId: string
-	depth: number
 	elements: Element[]
 }
 
@@ -16,7 +15,6 @@ export interface SliceRect {
 
 interface OpenSliceMarker {
 	sliceId: string
-	depth: number
 	start: Comment
 }
 
@@ -33,7 +31,6 @@ export function findSliceMarkerRanges(root: Node): SliceMarkerRange[] {
 		if (startSliceId) {
 			openMarkers.push({
 				sliceId: startSliceId,
-				depth: openMarkers.length,
 				start: node,
 			})
 			continue
@@ -50,12 +47,12 @@ export function findSliceMarkerRanges(root: Node): SliceMarkerRange[] {
 
 		ranges.push({
 			sliceId: endSliceId,
-			depth: startMarker.depth,
 			elements: getElementsBetween(startMarker.start, node),
 		})
 	}
 
-	return ranges.sort((first, second) => second.depth - first.depth)
+	// Inner markers close first, so overlapping roots prefer the innermost slice.
+	return ranges
 }
 
 export function createSliceMarkerRangeLookup(ranges: SliceMarkerRange[]) {
