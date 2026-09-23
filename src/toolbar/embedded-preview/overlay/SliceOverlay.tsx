@@ -1,10 +1,10 @@
+import { useStableCallback } from "@common"
 import { useLayoutEffect, useMemo, useState } from "preact/hooks"
 
 import { createSelectSliceMessage } from "../message-protocol"
 import type { PostMessage } from "../message-protocol"
 import { findSliceAtElement } from "./slice-overlay-geometry"
 import type { Slice } from "./slice-overlay-geometry"
-import { useStableCallback } from "@common"
 
 interface SliceOverlayProps {
 	postMessage: PostMessage
