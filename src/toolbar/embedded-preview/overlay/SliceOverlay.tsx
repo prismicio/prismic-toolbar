@@ -18,7 +18,8 @@ export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
 	// `pointer-events: auto` and regular `onClick` handlers because they intentionally cover the page.
 	useLayoutEffect(() => {
 		function track(event: PointerEvent) {
-			setTarget(event.target instanceof Element ? event.target : null)
+			const hoverTarget = event.target instanceof Element ? event.target : null
+			setTarget(hoverTarget)
 		}
 
 		function clear() {
@@ -43,10 +44,9 @@ export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
 			// Don't select a slice if the user is interacting with the UI or has selected text.
 			if (event.defaultPrevented || window.getSelection()?.isCollapsed === false) return
 
-			const target = event.target instanceof Element ? event.target : null
-			if (!target) return
+			const clickTarget = event.target instanceof Element ? event.target : null
 
-			const slice = findSliceAtElement(slices, target)
+			const slice = findSliceAtElement(slices, clickTarget)
 			if (!slice) return
 
 			event.preventDefault()
