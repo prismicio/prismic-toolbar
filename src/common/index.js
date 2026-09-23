@@ -26,3 +26,4 @@ export {
 	deleteNodes,
 	script,
 } from "./general"
+export { useStableCallback } from "./react"

@@ -4,6 +4,7 @@ import { createSelectSliceMessage } from "../message-protocol"
 import type { PostMessage } from "../message-protocol"
 import { findSliceAtElement } from "./slice-overlay-geometry"
 import type { Slice } from "./slice-overlay-geometry"
+import { useStableCallback } from "@common"
 
 interface SliceOverlayProps {
 	postMessage: PostMessage
@@ -11,6 +12,16 @@ interface SliceOverlayProps {
 }
 
 export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
+	const slice = useHoveredSlice(slices)
+
+	useSliceSelection(slices, postMessage)
+
+	if (!slice) return null
+
+	return <SliceHighlight slice={slice} />
+}
+
+function useHoveredSlice(slices: Slice[]) {
 	const [target, setTarget] = useState<Element | null>(null)
 
 	// Slice highlights remain pointer-transparent so they do not block the preview. Hover and slice
@@ -39,31 +50,47 @@ export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
 		}
 	}, [])
 
-	useLayoutEffect(() => {
-		function selectSlice(event: MouseEvent) {
-			// Don't select a slice if the user is interacting with the UI or has selected text.
-			if (event.defaultPrevented || window.getSelection()?.isCollapsed === false) return
-
-			const clickTarget = event.target instanceof Element ? event.target : null
-
-			const slice = findSliceAtElement(slices, clickTarget)
-			if (!slice) return
-
-			event.preventDefault()
-			event.stopPropagation()
-
-			postMessage(createSelectSliceMessage(slice.sliceId))
-		}
-
-		document.addEventListener("click", selectSlice)
-
-		return () => document.removeEventListener("click", selectSlice)
-	}, [postMessage, slices])
-
 	const slice = useMemo(() => findSliceAtElement(slices, target), [slices, target])
-	if (!slice) return null
 
-	return <SliceHighlight slice={slice} />
+	return slice
+}
+
+const interactiveElementSelector = [
+	"a[href]",
+	"button",
+	"input",
+	"select",
+	"textarea",
+	"label",
+	"summary",
+	'[role="button"]',
+	'[role="link"]',
+].join(",")
+
+function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
+	const selectSlice = useStableCallback((event: MouseEvent) => {
+		// Don't select a slice if the user is interacting with the UI or has selected text.
+		if (event.defaultPrevented || window.getSelection()?.isCollapsed === false) return
+
+		const clickTarget = event.target instanceof Element ? event.target : null
+		if (!clickTarget) return
+
+		if (clickTarget.closest(interactiveElementSelector)) return
+		if (clickTarget instanceof HTMLElement && clickTarget.isContentEditable) return
+
+		const slice = findSliceAtElement(slices, clickTarget)
+		if (!slice) return
+
+		event.preventDefault()
+		event.stopPropagation()
+
+		postMessage(createSelectSliceMessage(slice.sliceId))
+	})
+
+	useLayoutEffect(() => {
+		document.addEventListener("click", selectSlice)
+		return () => document.removeEventListener("click", selectSlice)
+	}, [selectSlice])
 }
 
 interface SliceHighlightProps {

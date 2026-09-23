@@ -201,6 +201,87 @@ test("text can be selected by dragging without selecting the slice", async ({ pa
 		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
 })
 
+test("native controls remain usable without selecting the slice", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	const slice = site.locator("#first-slice")
+	await slice.evaluate((element) => {
+		element.innerHTML = `
+			<input id="checkbox" type="checkbox" />
+			<label for="checkbox"><span>Toggle checkbox</span></label>
+			<details><summary><span>Expand content</span></summary><p>Hidden content</p></details>
+			<form>
+				<button type="submit"><span>Submit form</span></button>
+				<select aria-label="Option"><option>First</option><option>Second</option></select>
+				<textarea aria-label="Notes"></textarea>
+			</form>
+			<div contenteditable="true"><span>Editable content</span></div>
+		`
+		element.querySelector("form").addEventListener("submit", (event) => {
+			event.preventDefault()
+			element.dataset.submitted = "true"
+		})
+	})
+
+	const checkbox = site.getByRole("checkbox")
+	await checkbox.click()
+	await expect(checkbox).toBeChecked()
+	await site.getByText("Toggle checkbox", { exact: true }).click()
+	await expect(checkbox).not.toBeChecked()
+	await site.getByText("Expand content", { exact: true }).click()
+	await expect(site.getByText("Hidden content", { exact: true })).toBeVisible()
+	await site.getByText("Submit form", { exact: true }).click()
+	await expect(slice).toHaveAttribute("data-submitted", "true")
+	await site.getByRole("combobox").click()
+	await page.keyboard.press("Escape")
+	await site.getByRole("combobox").selectOption({ label: "Second" })
+	await expect(site.getByRole("combobox")).toHaveValue("Second")
+	await site.getByRole("textbox", { name: "Notes" }).click()
+	await page.keyboard.type("Some notes")
+	await expect(site.getByRole("textbox", { name: "Notes" })).toHaveValue("Some notes")
+	await site.getByText("Editable content", { exact: true }).click()
+	await page.keyboard.press("End")
+	await page.keyboard.type("!")
+	await expect(site.locator('[contenteditable="true"]')).toContainText("!")
+
+	await slice.click({ position: { x: 600, y: 350 } })
+	await expect
+		.poll(() => sliceSelections(page))
+		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+})
+
+test("links and button roles keep their actions without selecting the slice", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	const slice = site.locator("#first-slice")
+	await slice.evaluate((element) => {
+		element.innerHTML = `
+			<a href="#first-slice"><span>Go to slice</span></a>
+			<div role="button" tabindex="0"><span>Custom button</span></div>
+			<div role="link" tabindex="0"><span>Custom link</span></div>
+		`
+		for (const control of element.querySelectorAll("[role]")) {
+			control.addEventListener("click", () => (control.dataset.clicked = "true"))
+		}
+	})
+
+	await site.getByText("Go to slice", { exact: true }).click()
+	await expect.poll(() => slice.evaluate(() => location.hash)).toBe("#first-slice")
+	await site.getByText("Custom button", { exact: true }).click()
+	await expect(site.getByRole("button", { name: "Custom button" })).toHaveAttribute(
+		"data-clicked",
+		"true",
+	)
+	await site.getByText("Custom link", { exact: true }).click()
+	await expect(site.getByRole("link", { name: "Custom link" })).toHaveAttribute(
+		"data-clicked",
+		"true",
+	)
+
+	await slice.click({ position: { x: 600, y: 350 } })
+	await expect
+		.poll(() => sliceSelections(page))
+		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+})
+
 test("slice roots are selectable but gaps and covering popups are not", async ({ page }) => {
 	const site = page.frameLocator("iframe")
 	await site.locator("body").evaluate((body) => {
