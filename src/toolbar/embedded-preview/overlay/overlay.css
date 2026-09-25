@@ -1,0 +1,10 @@
+:host {
+	--prismic-overlay-ui-scale: 1;
+
+	display: block;
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* {
+	box-sizing: border-box;
+}

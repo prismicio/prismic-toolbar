@@ -1,0 +1,6 @@
+.slice-highlight {
+	position: absolute;
+	border: calc(2px * var(--prismic-overlay-ui-scale)) solid #6e56cf;
+	border-radius: calc(12px * var(--prismic-overlay-ui-scale));
+	overflow: hidden;
+}

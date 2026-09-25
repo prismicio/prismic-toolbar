@@ -1,0 +1,49 @@
+@import "./avatar.css";
+
+:host {
+	--prismic-overlay-pin-size: 32px;
+}
+
+.placement-layer {
+	position: fixed;
+	inset: 0;
+	margin: 0;
+	padding: 0;
+	background: transparent;
+	border: 0;
+	outline: none;
+	cursor: none;
+	pointer-events: auto;
+}
+
+.pin {
+	position: absolute;
+	display: grid;
+	width: var(--prismic-overlay-pin-size);
+	height: var(--prismic-overlay-pin-size);
+	margin: 0;
+	padding: 4px;
+	place-items: center;
+	overflow: hidden;
+	color: #666;
+	background: white;
+	border: 0;
+	border-radius: 2px 50% 50%;
+	box-shadow:
+		0 0 0 1px rgb(0 0 0 / 4%),
+		0 2px 6px rgb(0 0 0 / 8%),
+		0 8px 26px rgb(0 0 0 / 12%);
+	cursor: pointer;
+	pointer-events: auto;
+	transform: scale(var(--prismic-overlay-ui-scale));
+	transform-origin: top left;
+}
+
+.pin-dimmed {
+	opacity: 0.4;
+}
+
+.cursor-pin {
+	position: fixed;
+	pointer-events: none;
+}

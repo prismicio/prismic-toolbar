@@ -1,0 +1,25 @@
+{
+	"ci": {
+		"repoBranchBase": "master",
+		"trackBranches": ["master"]
+	},
+	"defaultCompression": "none",
+	"files": [
+		{
+			"path": "./build/prismic-toolbar/*/prismic.js",
+			"maxSize": "25KB"
+		},
+		{
+			"path": "./build/prismic-toolbar/*/embedded-preview.js",
+			"maxSize": "60KB"
+		},
+		{
+			"path": "./build/prismic-toolbar/*/toolbar.js",
+			"maxSize": "340KB"
+		},
+		{
+			"path": "./build/prismic-toolbar/*/iframe.html",
+			"maxSize": "15KB"
+		}
+	]
+}

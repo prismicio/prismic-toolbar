@@ -1,30 +1,28 @@
-import './checkBrowser';
-import { ToolbarService } from '@toolbar-service';
-import { toolbarEvents, dispatchToolbarEvent, script } from '@common';
-import { reloadOrigin, getAbsoluteURL } from './utils';
-import { Preview } from './preview';
-import { Prediction } from './prediction';
-import { Analytics } from './analytics';
-import { PreviewCookie } from './preview/cookie';
-import {
-  EmbeddedPreviewCookie,
-  getEmbeddedPreviewMode,
-  setupEmbeddedPreviewPoll,
-  setupEmbeddedPreviewPush,
-} from './embedded-preview';
+import "./checkBrowser"
+import { toolbarEvents, dispatchToolbarEvent, script, warn as warnToolbar } from "@common"
+import { ToolbarService } from "@toolbar-service"
 
-const version = process.env.npm_package_version;
-const isTopLevel = window.self === window.top;
-const embeddedPreviewMode = getEmbeddedPreviewMode();
-const isEmbeddedPushPreview = embeddedPreviewMode === 'push';
-const isEmbeddedPollPreview = embeddedPreviewMode === 'poll';
-const isRegularToolbar = embeddedPreviewMode === undefined;
+import { Analytics } from "./analytics"
+import { getEmbeddedPreviewMode, loadEmbeddedPreview } from "./embedded-preview/bootstrap"
+import { Experiment } from "./experiment"
+import { Prediction } from "./prediction"
+import { Preview } from "./preview"
+import { PreviewCookie } from "./preview/cookie"
+import { EmbeddedPreviewCookie } from "./preview/embedded-cookie"
+import { reloadOrigin, getAbsoluteURL } from "./utils"
+
+const version = process.env.npm_package_version
+const isTopLevel = window.self === window.top
+const embeddedPreviewMode = getEmbeddedPreviewMode()
+const isEmbeddedPushPreview = embeddedPreviewMode === "push"
+const isEmbeddedPollPreview = embeddedPreviewMode === "poll"
+const isRegularToolbar = embeddedPreviewMode === undefined
 
 // Run at the top level, or inside the editor's embedded preview iframe
-const shouldRunToolbar = isTopLevel || Boolean(embeddedPreviewMode);
+const shouldRunToolbar = isTopLevel || Boolean(embeddedPreviewMode)
 
 if (shouldRunToolbar) {
-  const warn = (...message) => require('@common').warn`
+	const warn = (...message) => warnToolbar`
   ${String.raw(...message)}
 
   Please remove your current Prismic Toolbar installation and replace it with
@@ -32,132 +30,139 @@ if (shouldRunToolbar) {
   <script async defer src=//static.cdn.prismic.io/prismic.js?repo=example-repository&new=true></script>
 
   For complete documentation on setting up the Prismic Toolbar, please refer to
-  https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`;
+  https://prismic.io/docs/javascript/beyond-the-api/in-website-preview`
 
-  // Prismic Toolbar Interface
-  window.prismic = window.PrismicToolbar = {
-    endpoint: null,
-    ...window.prismic/* Legacy */,
-    version,
-    setup: (...args) => {
-      warn`window.prismic.setup is deprecated.`;
-      args.forEach(setup);
-    },
-    startExperiment/* TODO automate */: expId => {
-      const { Experiment } = require('./experiment');
-      new Experiment(expId);
-    },
-    setupEditButton/* Legacy */: () => {
-      warn`window.prismic.setupEditButton is deprecated.`;
-    },
-  };
+	// Prismic Toolbar Interface
+	window.prismic = window.PrismicToolbar = {
+		endpoint: null,
+		...window.prismic /* Legacy */,
+		version,
+		setup: (...args) => {
+			warn`window.prismic.setup is deprecated.`
+			args.forEach(setup)
+		},
+		startExperiment /* TODO automate */: (expId) => {
+			new Experiment(expId)
+		},
+		setupEditButton /* Legacy */: () => {
+			warn`window.prismic.setupEditButton is deprecated.`
+		},
+	}
 
-  let repos = new Set();
+	let repos = new Set()
 
-  // Prismic variable is available
-  dispatchToolbarEvent(toolbarEvents.prismic);
+	// Prismic variable is available
+	dispatchToolbarEvent(toolbarEvents.prismic)
 
-  // Auto-querystring setup
-  const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute('src')));
-  const repoParam = scriptURL.searchParams.get('repo');
-  if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(',')]);
+	// Auto-querystring setup
+	const scriptURL = new URL(getAbsoluteURL(document.currentScript.getAttribute("src")))
+	const embeddedPreviewURL = `${CDN_HOST}/prismic-toolbar/${version}/embedded-preview.js`
+	const repoParam = scriptURL.searchParams.get("repo")
+	if (repoParam !== null) repos = new Set([...repos, ...repoParam.split(",")])
 
-  // Auto-legacy setup
-  const legacyEndpoint = getLegacyEndpoint();
-  if (legacyEndpoint) {
-    warn`window.prismic.endpoint is deprecated.`;
-    repos.add(legacyEndpoint);
-  }
+	// Auto-legacy setup
+	const legacyEndpoint = getLegacyEndpoint()
+	if (legacyEndpoint) {
+		warn`window.prismic.endpoint is deprecated.`
+		repos.add(legacyEndpoint)
+	}
 
-  if (!repos.size) warn`Your are not connected to a repository.`;
+	if (!repos.size) warn`Your are not connected to a repository.`
 
-  // Setup the Prismic Toolbar for one repository TODO support multi-repo
-  let setupDomain = null;
+	// Setup the Prismic Toolbar for one repository TODO support multi-repo
+	let setupDomain = null
 
-  repos.forEach(setup);
+	repos.forEach(setup)
 
-  // eslint-disable-next-line no-inner-declarations
-  async function setup (rawInput) {
-  // Validate repository
-    const domain = parseEndpoint(rawInput);
+	// oxlint-disable-next-line no-inner-declarations
+	async function setup(rawInput) {
+		// Validate repository
+		const domain = parseEndpoint(rawInput)
 
-    if (!domain) return warn`
-    Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || 'nothing'}`;
+		if (!domain)
+			return warn`
+    Failed to setup. Expected a repository identifier (example | example.prismic.io) but got ${rawInput || "nothing"}`
 
-    // Only allow setup to be called once
-    if (setupDomain) return warn`
-    Already connected to a repository (${setupDomain}).`;
+		// Only allow setup to be called once
+		if (setupDomain)
+			return warn`
+    Already connected to a repository (${setupDomain}).`
 
-    setupDomain = domain;
+		setupDomain = domain
 
-    if (isEmbeddedPushPreview) {
-      const previewCookieHelper = new EmbeddedPreviewCookie();
-      const preview = new Preview({
-        closePreviewSession: async () => {},
-      }, previewCookieHelper, {});
-      setupEmbeddedPreviewPush({ preview });
-      return;
-    }
+		if (isEmbeddedPushPreview) {
+			const previewCookieHelper = new EmbeddedPreviewCookie()
+			const preview = new Preview(
+				{
+					closePreviewSession: async () => {},
+				},
+				previewCookieHelper,
+				{},
+			)
+			void loadEmbeddedPreview({
+				url: embeddedPreviewURL,
+				onRef: (ref) => preview.updateFromRef(ref),
+			})
+			return
+		}
 
-    if (isEmbeddedPollPreview) setupEmbeddedPreviewPoll();
+		if (isEmbeddedPollPreview) void loadEmbeddedPreview({ url: embeddedPreviewURL })
 
-    const protocol = domain.match('.test$') ? window.location.protocol : 'https:';
-    const toolbarClient = await ToolbarService.getClient(`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`);
-    const previewState = await toolbarClient.getPreviewState();
-    const previewCookieHelper = isEmbeddedPollPreview
-      ? new EmbeddedPreviewCookie()
-      : new PreviewCookie(previewState.auth, toolbarClient.hostname);
-    const preview = new Preview(toolbarClient, previewCookieHelper, previewState);
+		const protocol = domain.match(".test$") ? window.location.protocol : "https:"
+		const toolbarClient = await ToolbarService.getClient(
+			`${protocol}//${domain}/prismic-toolbar/${version}/iframe.html`,
+		)
+		const previewState = await toolbarClient.getPreviewState()
+		const previewCookieHelper = isEmbeddedPollPreview
+			? new EmbeddedPreviewCookie()
+			: new PreviewCookie(previewState.auth, toolbarClient.hostname)
+		const preview = new Preview(toolbarClient, previewCookieHelper, previewState)
 
-    const { initialRef, isActive } = await preview.setup();
+		const { initialRef, isActive } = await preview.setup()
 
-    // Skip cookie sync when inactive so we don't clear a preview owned by another tab.
-    if (isActive && previewCookieHelper.sync(initialRef)) {
-      reloadOrigin();
-      return;
-    }
+		// Skip cookie sync when inactive so we don't clear a preview owned by another tab.
+		if (isActive && previewCookieHelper.sync(initialRef)) {
+			reloadOrigin()
+			return
+		}
 
-    if (isRegularToolbar && (isActive || previewState.auth)) {
-      const prediction = previewState.auth
-        ? new Prediction(toolbarClient, previewCookieHelper)
-        : undefined;
-      const analytics = previewState.auth
-        ? new Analytics(toolbarClient)
-        : undefined;
+		if (isRegularToolbar && (isActive || previewState.auth)) {
+			const prediction = previewState.auth
+				? new Prediction(toolbarClient, previewCookieHelper)
+				: undefined
+			const analytics = previewState.auth ? new Analytics(toolbarClient) : undefined
 
-      // eslint-disable-next-line no-undef
-      await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`);
-      new window.prismic.Toolbar({
-        displayPreview: isActive,
-        auth: previewState.auth,
-        preview,
-        prediction,
-        analytics
-      });
+			await script(`${CDN_HOST}/prismic-toolbar/${version}/toolbar.js`)
+			new window.prismic.Toolbar({
+				displayPreview: isActive,
+				auth: previewState.auth,
+				preview,
+				prediction,
+				analytics,
+			})
 
-      // Track initial setup of toolbar
-      if (analytics) analytics.trackToolbarSetup();
-    }
+			// Track initial setup of toolbar
+			if (analytics) analytics.trackToolbarSetup()
+		}
 
-    if (!isActive) {
-      await toolbarClient.closePreviewSession();
-    }
-  }
+		if (!isActive) {
+			await toolbarClient.closePreviewSession()
+		}
+	}
 }
 
 function parseEndpoint(repo) {
-  if (!repo) return null;
-  /* eslint-disable no-useless-escape */
-  if (!/^(https?:\/\/)?[-a-zA-Z0-9.\/]+/.test(repo)) return null;
-  // eslint-disable-next-line no-undef
-  if (!repo.includes('.')) repo = `${repo}.prismic.io`;
-  return repo;
+	if (!repo) return null
+	/* oxlint-disable no-useless-escape */
+	if (!/^(https?:\/\/)?[-a-zA-Z0-9.\/]+/.test(repo)) return null
+	if (!repo.includes(".")) repo = `${repo}.prismic.io`
+	return repo
 }
 
 function getLegacyEndpoint() {
-  try {
-    return new URL(window.prismic.endpoint).hostname.replace('.cdn', '');
-  } catch (e) {
-    return window.prismic.endpoint;
-  }
+	try {
+		return new URL(window.prismic.endpoint).hostname.replace(".cdn", "")
+	} catch {
+		return window.prismic.endpoint
+	}
 }

@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Embedded preview parent fixture</title>
+<style>
+	body {
+		margin: 0;
+	}
+	iframe {
+		width: 100%;
+		height: 700px;
+		border: 0;
+	}
+</style>
+<button id="place">Place comment</button>
+<button id="scale">Scale overlay</button>
+<button id="scroll">Scroll to pin</button>
+<button id="ref">Update preview ref</button>
+<button id="draft">Show draft</button>
+<iframe name="prismic:embedded-preview" src="/site.html"></iframe>
+<script>
+	const frame = document.querySelector("iframe")
+	const author = { id: "author", name: "Test Author", avatarUrl: "/missing-avatar" }
+	const state = {
+		type: "prismic:embedded-preview:set-comment-overlay",
+		placementEnabled: false,
+		pins: [
+			{ threadId: "first", xRatio: 0.1, yRatio: 0.1, author, resolved: false },
+			{ threadId: "last", xRatio: 0.8, yRatio: 0.9, author, resolved: true },
+		],
+		draftAuthor: author,
+	}
+	window.fixture = { messages: [] }
+	const send = (data) => frame.contentWindow.postMessage(data, location.origin)
+	window.addEventListener("message", (event) => {
+		if (event.source !== frame.contentWindow || event.origin !== location.origin) return
+		window.fixture.messages.push(event.data)
+		if (event.data.type === "prismic:embedded-preview:ready") {
+			send({ type: "prismic:embedded-preview:ack" })
+			send(state)
+		}
+		if (event.data.type === "prismic:embedded-preview:select-pin") {
+			state.selectedThreadId = event.data.pin.threadId
+			send(state)
+		}
+		if (event.data.type === "prismic:embedded-preview:deselect-pin") {
+			delete state.selectedThreadId
+			delete state.draftPin
+			send(state)
+		}
+	})
+	document.querySelector("#place").onclick = () => {
+		state.placementEnabled = !state.placementEnabled
+		send(state)
+	}
+	document.querySelector("#scale").onclick = () =>
+		send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
+	document.querySelector("#scroll").onclick = () =>
+		send({ type: "prismic:embedded-preview:scroll-to-pin", threadId: "last" })
+	document.querySelector("#ref").onclick = () =>
+		send({ type: "prismic:embedded-preview:set-ref", token: "test-ref" })
+	document.querySelector("#draft").onclick = () => {
+		state.draftPin = { xRatio: 0.2, yRatio: 0.1 }
+		send(state)
+	}
+</script>

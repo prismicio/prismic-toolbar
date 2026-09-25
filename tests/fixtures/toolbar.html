@@ -1,0 +1,64 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>Toolbar compatibility fixture</title>
+<style>
+	body {
+		font: 16px sans-serif;
+		padding: 24px;
+	}
+	.Menu {
+		color: rgb(255, 0, 0);
+	}
+</style>
+<h1>Customer page</h1>
+<div class="Menu" id="host-sentinel">Host styles stay isolated</div>
+<script>
+	window.prismic = {}
+	window.fixture = { ended: false, edits: 0 }
+</script>
+<script src="/prismic-toolbar/__VERSION__/toolbar.js"></script>
+<script>
+	const doc = {
+		id: "document",
+		type: "page",
+		uid: "home",
+		title: "Fixture page",
+		summary: "A fixture document",
+		status: "draft",
+		editorUrl: "#edit",
+		url: "#page",
+		data: { heading: "Hello", nested: { value: "Nested value" } },
+	}
+	new window.prismic.Toolbar({
+		displayPreview: true,
+		auth: true,
+		preview: {
+			active: true,
+			title: "Fixture preview",
+			documents: [doc],
+			end() {
+				window.fixture.ended = true
+			},
+			share: async () => "https://example.test/share",
+		},
+		prediction: {
+			onDocuments(callback) {
+				this.documents = callback
+			},
+			onDocumentsLoading(callback) {
+				this.loading = callback
+			},
+			setup() {
+				setTimeout(
+					() => this.documents([doc], [[doc], { data: { page: { heading: "GraphQL value" } } }]),
+					0,
+				)
+			},
+		},
+		analytics: {
+			trackDocumentClick() {
+				window.fixture.edits++
+			},
+		},
+	})
+</script>

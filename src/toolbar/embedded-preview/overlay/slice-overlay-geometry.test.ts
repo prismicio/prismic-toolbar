@@ -1,0 +1,79 @@
+import { afterEach, describe, expect, it, vi } from "vitest"
+
+import {
+	findSliceAtElement,
+	findSliceMarkerRanges,
+	measureSliceMarkerRange,
+} from "./slice-overlay-geometry"
+
+afterEach(() => {
+	document.body.replaceChildren()
+	vi.unstubAllGlobals()
+})
+
+describe("slice overlay", () => {
+	it("finds marked slice elements and prefers the innermost slice", () => {
+		document.body.innerHTML = `
+			<!--prismic-slice-start:outer-->
+			<section id="outer">
+				<div id="outer-content"></div>
+				<!--prismic-slice-start:inner-->
+				<div id="inner"></div>
+				<!--prismic-slice-end:inner-->
+			</section>
+			<!--prismic-slice-end:outer-->
+		`
+
+		const ranges = findSliceMarkerRanges(document.body)
+		const outer = document.querySelector("#outer")
+		const outerContent = document.querySelector("#outer-content")
+		const inner = document.querySelector("#inner")
+
+		expect(ranges.map((range) => range.sliceId)).toEqual(["inner", "outer"])
+		expect(inner && findSliceAtElement(ranges, inner)?.sliceId).toBe("inner")
+		expect(outer && findSliceAtElement(ranges, outer)?.sliceId).toBe("outer")
+		expect(outerContent && findSliceAtElement(ranges, outerContent)?.sliceId).toBe("outer")
+	})
+
+	it("measures one rectangle around multiple slice elements", () => {
+		document.body.innerHTML = `
+			<!--prismic-slice-start:slice-id-->
+			<div id="first"></div>
+			<div id="second"></div>
+			<!--prismic-slice-end:slice-id-->
+		`
+
+		const first = document.querySelector("#first")
+		const second = document.querySelector("#second")
+		if (!first || !second) throw new Error("Missing slice fixture elements")
+
+		vi.spyOn(first, "getBoundingClientRect").mockReturnValue(new DOMRect(20, 10, 100, 40))
+		vi.spyOn(second, "getBoundingClientRect").mockReturnValue(new DOMRect(10, 80, 160, 20))
+		vi.stubGlobal("scrollX", 5)
+		vi.stubGlobal("scrollY", 30)
+
+		const [range] = findSliceMarkerRanges(document.body)
+		expect(range && measureSliceMarkerRange(range)).toEqual({
+			top: 40,
+			left: 15,
+			width: 160,
+			height: 90,
+		})
+	})
+
+	it("prefers nested markers sharing the same parent and root element", () => {
+		document.body.innerHTML = `
+			<!--prismic-slice-start:outer-->
+			<div id="outer-only"></div>
+			<!--prismic-slice-start:inner-->
+			<div id="shared"></div>
+			<!--prismic-slice-end:inner-->
+			<!--prismic-slice-end:outer-->
+		`
+		const ranges = findSliceMarkerRanges(document.body)
+		expect(findSliceAtElement(ranges, document.querySelector("#shared")!)?.sliceId).toBe("inner")
+		expect(findSliceAtElement(ranges, document.querySelector("#outer-only")!)?.sliceId).toBe(
+			"outer",
+		)
+	})
+})
