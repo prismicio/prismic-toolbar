@@ -1,4 +1,4 @@
-import { useStableCallback } from "@common"
+import { useStableCallback } from "@toolbar/support/react"
 import { useLayoutEffect, useMemo, useState } from "preact/hooks"
 
 import { createSelectSliceMessage } from "../message-protocol"
