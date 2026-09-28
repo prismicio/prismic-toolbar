@@ -97,6 +97,7 @@ npm run test:browser
 
 ## How to deploy
 
-```sh
-npm run build
-```
+Bump `version` in `package.json` and merge to `master`. Once checks pass, the
+`deploy` job in `.github/workflows/check.yml` uploads the build to S3, points
+CloudFront at the new version, and invalidates the cache. Pushes that keep the
+live version skip the deploy.

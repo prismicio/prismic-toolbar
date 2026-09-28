@@ -23,6 +23,8 @@ jobs:
       - run: npm run format:check
       - run: npm test
       - run: npm run build
+        env:
+          CDN_HOST: https://prismic.io
       - run: npm run bundlewatch
         env:
           BUNDLEWATCH_GITHUB_TOKEN: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
@@ -34,3 +36,91 @@ jobs:
         with:
           name: browser-test-results
           path: test-results/
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        with:
+          name: build
+          path: build/
+
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      BUCKET: prismic-assets
+      DISTRIBUTION_ID: E1QO5NR1TMVV3J
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: build/
+      - run: echo "VERSION=$(jq -r .version package.json)" >> "$GITHUB_ENV"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Check live version
+        id: live
+        run: |
+          paths=$(aws cloudfront get-distribution-config --id "$DISTRIBUTION_ID" \
+            --query "DistributionConfig.Origins.Items[?starts_with(OriginPath, '/prod/prismic-toolbar/')].OriginPath" \
+            --output json)
+          if [ "$(jq length <<< "$paths")" != 1 ]; then
+            echo "Expected exactly one toolbar origin, found: $paths"
+            exit 1
+          fi
+          if [ "$(jq -r '.[0]' <<< "$paths")" = "/prod/prismic-toolbar/$VERSION" ]; then
+            echo "Version $VERSION is already live, skipping deploy."
+            echo "deployed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload to S3
+        if: steps.live.outputs.deployed != 'true'
+        run: |
+          dir="build/prismic-toolbar/$VERSION"
+          cp "$dir/prismic.js" "$dir/prismic.min.js"
+          aws s3 cp "$dir/" "s3://$BUCKET/prod/prismic-toolbar/$VERSION/" --recursive --acl public-read
+
+      - name: Verify public-read ACL
+        if: steps.live.outputs.deployed != 'true'
+        run: |
+          for file in build/prismic-toolbar/"$VERSION"/*; do
+            aws s3api get-object-acl --bucket "$BUCKET" --key "prod/prismic-toolbar/$VERSION/$(basename "$file")" \
+              | jq -e '.Grants[] | select(.Grantee.URI == "http://acs.amazonaws.com/groups/global/AllUsers" and .Permission == "READ")' > /dev/null \
+              || { echo "$(basename "$file") is not public-read"; exit 1; }
+          done
+
+      - name: Point CloudFront at the new version
+        if: steps.live.outputs.deployed != 'true'
+        run: |
+          aws cloudfront get-distribution-config --id "$DISTRIBUTION_ID" > distribution.json
+          jq --arg path "/prod/prismic-toolbar/$VERSION" '.DistributionConfig
+            | .Origins.Items |= map(if (.OriginPath | startswith("/prod/prismic-toolbar/")) then .OriginPath = $path else . end)' \
+            distribution.json > config.json
+          aws cloudfront update-distribution --id "$DISTRIBUTION_ID" \
+            --if-match "$(jq -r .ETag distribution.json)" \
+            --distribution-config file://config.json > /dev/null
+          aws cloudfront wait distribution-deployed --id "$DISTRIBUTION_ID"
+
+      - name: Invalidate cache
+        if: steps.live.outputs.deployed != 'true'
+        run: |
+          id=$(aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths '/*' \
+            --query Invalidation.Id --output text)
+          aws cloudfront wait invalidation-completed --distribution-id "$DISTRIBUTION_ID" --id "$id"
+
+      - name: Verify live version
+        if: steps.live.outputs.deployed != 'true'
+        run: |
+          domain=$(aws cloudfront get-distribution --id "$DISTRIBUTION_ID" --query Distribution.DomainName --output text)
+          curl -fsS "https://$domain/prismic.js" -o live.js
+          grep -qF "$VERSION" live.js
