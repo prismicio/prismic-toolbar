@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm test
+      - run: npm run build
+      - run: npm run bundlewatch
+        env:
+          BUNDLEWATCH_GITHUB_TOKEN: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
+          CI_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: browser-test-results
+          path: test-results/
+
+  deploy:
+    needs: check
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: production
+    concurrency:
+      group: production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build for production
+        run: npm run build
+        env:
+          CDN_HOST: https://prismic.io
+      - name: Load current version
+        run: echo "VERSION=$(node -p 'require("./package.json").version')" >> "$GITHUB_ENV"
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Check version is not deployed yet
+        run: |
+          if aws s3 ls "s3://prismic-assets/prod/prismic-toolbar/$VERSION/prismic.js"; then
+            echo "::error::Version $VERSION is already deployed. Bump the version in package.json."
+            exit 1
+          fi
+      - name: Upload versioned build artifacts
+        run: aws s3 sync "build/prismic-toolbar/$VERSION" "s3://prismic-assets/prod/prismic-toolbar/$VERSION" --acl public-read --cache-control "public, max-age=31536000, immutable"
+      # Browsers revalidate on every load; CloudFront keeps it for a day and is invalidated below.
+      - name: Upload main build artifacts
+        run: |
+          aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" s3://prismic-assets/prod/prismic-toolbar/prismic.js --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
+          aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" s3://prismic-assets/prod/prismic-toolbar/prismic.min.js --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
+      - name: Invalidate cache
+        run: aws cloudfront create-invalidation --distribution-id E1QO5NR1TMVV3J --paths /prismic.js /prismic.min.js
