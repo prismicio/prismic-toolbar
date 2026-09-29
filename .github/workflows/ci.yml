@@ -71,8 +71,8 @@ jobs:
             exit 1
           fi
       - name: Upload versioned build artifacts
-        run: aws s3 sync "build/prismic-toolbar/$VERSION" "s3://${{ secrets.BUCKET_PATH }}/$VERSION" --acl public-read --cache-control "public, max-age=31536000, immutable"
-      # Browsers revalidate on every load; CloudFront keeps it for a day and is invalidated below.
+        run: aws s3 sync "build/prismic-toolbar/$VERSION" "s3://${{ secrets.BUCKET_PATH }}/$VERSION" --acl public-read --cache-control "public, max-age=86400, immutable" # change this to max-age=31536000 (1 year) after testing
+      # Browsers revalidate on every load; CloudFront keeps it for a day; CloudFront is invalidated during deployment.
       - name: Upload main build artifacts
         run: |
           aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/prismic.js" --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
