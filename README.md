@@ -20,7 +20,7 @@ Replace `YOUR_REPO_NAME` with the name of your Prismic repository.
 
 ## How to develop
 
-Use Node.js 24 or later (see `.nvmrc`):
+Use Node.js 24 (see `.nvmrc`):
 
 ```sh
 nvm install
