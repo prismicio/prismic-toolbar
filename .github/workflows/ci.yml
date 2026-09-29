@@ -65,25 +65,17 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
       - name: Check version is not deployed yet
-        env:
-          BUCKET_PATH: ${{ secrets.BUCKET_PATH }}
         run: |
-          if aws s3 ls "s3://$BUCKET_PATH/$VERSION/prismic.js"; then
+          if aws s3 ls "s3://${{ secrets.BUCKET_PATH }}/$VERSION/prismic.js"; then
             echo "::error::Version $VERSION is already deployed. Bump the version in package.json."
             exit 1
           fi
       - name: Upload versioned build artifacts
-        env:
-          BUCKET_PATH: ${{ secrets.BUCKET_PATH }}
-        run: aws s3 sync "build/prismic-toolbar/$VERSION" "s3://$BUCKET_PATH/$VERSION" --acl public-read --cache-control "public, max-age=31536000, immutable"
+        run: aws s3 sync "build/prismic-toolbar/$VERSION" "s3://${{ secrets.BUCKET_PATH }}/$VERSION" --acl public-read --cache-control "public, max-age=31536000, immutable"
       # Browsers revalidate on every load; CloudFront keeps it for a day and is invalidated below.
       - name: Upload main build artifacts
-        env:
-          BUCKET_PATH: ${{ secrets.BUCKET_PATH }}
         run: |
-          aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://$BUCKET_PATH/prismic.js" --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
-          aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://$BUCKET_PATH/prismic.min.js" --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
+          aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/prismic.js" --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
+          aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/prismic.min.js" --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
       - name: Invalidate cache
-        env:
-          CLOUDFRONT_ID: ${{ secrets.CLOUDFRONT_ID }}
-        run: aws cloudfront create-invalidation --distribution-id "$CLOUDFRONT_ID" --paths /prismic.js /prismic.min.js
+        run: aws cloudfront create-invalidation --distribution-id "${{ secrets.CLOUDFRONT_ID }}" --paths /prismic.js /prismic.min.js
