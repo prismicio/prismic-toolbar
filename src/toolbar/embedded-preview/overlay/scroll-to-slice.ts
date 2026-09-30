@@ -1,20 +1,5 @@
 import { measureSliceMarkerRange } from "./slice-overlay-geometry"
-import type { SliceMarkerRange } from "./slice-overlay-geometry"
-
-// Returns the smallest movement that reveals a fitting slice. For oversized
-// slices the top is the anchor, leaving space for the outline.
-export function getSliceScrollDelta(
-	top: number,
-	bottom: number,
-	visibleTop: number,
-	visibleBottom: number,
-) {
-	if (top < visibleTop) return top - visibleTop
-	if (bottom - top > visibleBottom - visibleTop) {
-		return top >= visibleBottom ? top - visibleTop : 0
-	}
-	return Math.max(0, bottom - visibleBottom)
-}
+import type { SliceMarkerRange, SliceRect } from "./slice-overlay-geometry"
 
 export function scrollToSlice(slice: SliceMarkerRange, uiScale: number) {
 	if (!measureSliceMarkerRange(slice)) return
@@ -23,10 +8,6 @@ export function scrollToSlice(slice: SliceMarkerRange, uiScale: number) {
 		? "instant"
 		: "smooth"
 	let ancestor = slice.elements[0]?.parentElement
-	// Multi-root slices must be revealed as a whole, not just their first root.
-	while (ancestor && !slice.elements.every((element) => ancestor?.contains(element))) {
-		ancestor = ancestor.parentElement
-	}
 	const scrollers: HTMLElement[] = []
 	while (ancestor && ancestor !== document.documentElement) {
 		const overflow = getComputedStyle(ancestor).overflowY
@@ -43,22 +24,22 @@ export function scrollToSlice(slice: SliceMarkerRange, uiScale: number) {
 		if (!rect) return
 		const viewport = scroller.getBoundingClientRect()
 		const top = viewport.top + scroller.clientTop
-		const delta = getSliceScrollDelta(
-			rect.top - window.scrollY,
-			rect.top + rect.height - window.scrollY,
-			top + inset,
-			top + scroller.clientHeight,
-		)
+		const delta = getSliceScrollDelta(rect, top + inset, top + scroller.clientHeight)
 		// Set inner containers first so the outer viewport measures their final bounds.
 		if (delta) scroller.scrollBy({ top: delta, behavior: "instant" })
 	}
 	const rect = measureSliceMarkerRange(slice)
 	if (!rect) return
-	const delta = getSliceScrollDelta(
-		rect.top - window.scrollY,
-		rect.top + rect.height - window.scrollY,
-		inset,
-		window.innerHeight,
-	)
+	const delta = getSliceScrollDelta(rect, inset, window.innerHeight)
 	if (delta) window.scrollBy({ top: delta, behavior })
+}
+
+// Reveal fitting slices with the smallest movement; align oversized slices at the top.
+function getSliceScrollDelta(rect: SliceRect, visibleTop: number, visibleBottom: number) {
+	const top = rect.top - window.scrollY
+	if (top < visibleTop) return top - visibleTop
+	if (rect.height > visibleBottom - visibleTop) {
+		return top >= visibleBottom ? top - visibleTop : 0
+	}
+	return Math.max(0, top + rect.height - visibleBottom)
 }

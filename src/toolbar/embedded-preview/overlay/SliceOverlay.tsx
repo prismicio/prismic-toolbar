@@ -18,12 +18,8 @@ interface SliceOverlayProps {
 	slices: Slice[]
 }
 
-export function SliceOverlay({
-	postMessage,
-	slices,
-	subscribeToMessages,
-	uiScale,
-}: SliceOverlayProps) {
+export function SliceOverlay(props: SliceOverlayProps) {
+	const { postMessage, slices, subscribeToMessages, uiScale } = props
 	const [overlay, setOverlay] = useState<SetSliceOverlayMessage>()
 	const handleMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
 		if (isSliceOverlayMessage(data)) {
@@ -44,7 +40,7 @@ export function SliceOverlay({
 
 	return (
 		<>
-			{selected && <SliceHighlight slice={selected} selected />}
+			{selected && <SliceHighlight slice={selected} />}
 			{hovered && hovered !== selected && <SliceHighlight slice={hovered} />}
 		</>
 	)
@@ -123,12 +119,11 @@ function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
 }
 
 interface SliceHighlightProps {
-	selected?: boolean
 	slice: Slice
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, selected } = props
+	const { slice } = props
 	const { sliceId, rect } = slice
 
 	if (!rect) return null
@@ -137,7 +132,6 @@ function SliceHighlight(props: SliceHighlightProps) {
 		<div
 			className="slice-highlight"
 			data-slice-id={sliceId}
-			data-selected={selected || undefined}
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
 		/>
 	)
