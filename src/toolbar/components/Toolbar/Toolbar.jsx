@@ -8,6 +8,14 @@ export class Toolbar extends Component {
 	constructor({ prediction }) {
 		super(...arguments)
 
+		this.state = {
+			page: NONE,
+			documents: [],
+			queries: [],
+			renderedPreview: this.props.preview.active,
+			documentsLoading: false,
+		}
+
 		if (prediction) {
 			prediction.onDocuments((documents, queries) => {
 				this.setState({ documents, queries, documentsLoading: false })
@@ -18,14 +26,6 @@ export class Toolbar extends Component {
 			})
 
 			prediction.setup()
-		}
-
-		this.state = {
-			page: NONE,
-			documents: [],
-			queries: [],
-			renderedPreview: this.props.preview.active,
-			documentsLoading: false,
 		}
 	}
 
