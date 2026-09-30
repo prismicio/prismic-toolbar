@@ -49,6 +49,8 @@
 				this.loading = callback
 			},
 			setup() {
+				// Real Prediction.setup reports loading before its first await.
+				this.loading()
 				setTimeout(
 					() => this.documents([doc], [[doc], { data: { page: { heading: "GraphQL value" } } }]),
 					0,
