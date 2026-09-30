@@ -368,3 +368,117 @@ test("same-size DOM replacement remains highlightable and selectable", async ({ 
 		.poll(() => sliceSelections(page))
 		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
 })
+
+async function configureSlices(page, selectedSliceId, sliceIds = ["first-slice", "second-slice"]) {
+	await page.evaluate(
+		({ selectedSliceId, sliceIds }) => {
+			document.querySelector("iframe").contentWindow.postMessage(
+				{
+					type: "prismic:embedded-preview:set-slice-overlay",
+					sliceIds,
+					selectedSliceId,
+				},
+				location.origin,
+			)
+		},
+		{ selectedSliceId, sliceIds },
+	)
+}
+
+async function revealSlice(page, sliceId) {
+	await page.evaluate((sliceId) => {
+		document.querySelector("iframe").contentWindow.postMessage(
+			{
+				type: "prismic:embedded-preview:scroll-to-slice",
+				sliceId,
+			},
+			location.origin,
+		)
+	}, sliceId)
+}
+
+test("V2 selection persists without hover and excludes foreign slices", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	await configureSlices(page, "first-slice", ["first-slice"])
+	const selected = site.locator('.slice-highlight[data-selected="true"]')
+	await expect(selected).toHaveAttribute("data-slice-id", "first-slice")
+	await site.locator("#second-slice").click()
+	expect(await sliceSelections(page)).toEqual([])
+	await page.mouse.move(20, 850)
+	await expect(selected).toHaveAttribute("data-slice-id", "first-slice")
+	await configureSlices(page, undefined, ["first-slice"])
+	await expect(selected).toHaveCount(0)
+})
+
+test("V2 state does not scroll; explicit reveal shows a fitting slice and then stays still", async ({
+	page,
+}) => {
+	const site = page.frameLocator("iframe")
+	const body = site.locator("body")
+	const second = site.locator("#second-slice")
+	await configureSlices(page, "second-slice")
+	await expect(site.locator('[data-selected="true"]')).toHaveAttribute(
+		"data-slice-id",
+		"second-slice",
+	)
+	expect(await body.evaluate(() => window.scrollY)).toBe(0)
+	await revealSlice(page, "second-slice")
+	await expect
+		.poll(() =>
+			second.evaluate((element) => element.getBoundingClientRect().bottom <= innerHeight + 1),
+		)
+		.toBe(true)
+	const scroll = await body.evaluate(() => window.scrollY)
+	await revealSlice(page, "second-slice")
+	await expect.poll(() => body.evaluate(() => window.scrollY)).toBe(scroll)
+	await configureSlices(page, "first-slice")
+	await expect(site.locator('[data-selected="true"]')).toHaveAttribute(
+		"data-slice-id",
+		"first-slice",
+	)
+	expect(await body.evaluate(() => window.scrollY)).toBe(scroll)
+})
+
+test("V2 reveal handles tall slices, nested scrolling, and a missing DOM target", async ({
+	page,
+}) => {
+	await page.emulateMedia({ reducedMotion: "reduce" })
+	const site = page.frameLocator("iframe")
+	const second = site.locator("#second-slice")
+	await second.evaluate((element) => {
+		element.style.height = "1000px"
+	})
+	await configureSlices(page, "second-slice")
+	await expect(site.locator('[data-selected="true"]')).toHaveAttribute(
+		"data-slice-id",
+		"second-slice",
+	)
+	await site.locator("body").evaluate(() => window.scrollTo(0, 700))
+	await revealSlice(page, "second-slice")
+	await expect
+		.poll(() => second.evaluate((element) => Math.round(element.getBoundingClientRect().top)))
+		.toBe(16)
+	await site.locator("body").evaluate((body) => {
+		body.insertAdjacentHTML(
+			"beforeend",
+			`<div id="nested" style="position:absolute;top:100px;left:300px;height:250px;width:300px;overflow:auto"><div style="height:600px"></div><!--prismic-slice-start:nested--><section id="nested-slice" style="height:100px">Nested</section><!--prismic-slice-end:nested--><div style="height:500px"></div></div>`,
+		)
+	})
+	await configureSlices(page, "nested", ["nested"])
+	await expect(site.locator('[data-selected="true"]')).toHaveAttribute("data-slice-id", "nested")
+	await revealSlice(page, "nested")
+	await expect
+		.poll(() => site.locator("#nested").evaluate((element) => element.scrollTop))
+		.toBeGreaterThan(0)
+	await expect
+		.poll(() =>
+			site
+				.locator("#nested-slice")
+				.evaluate((element) => element.getBoundingClientRect().top >= 16),
+		)
+		.toBe(true)
+	const scroll = await site.locator("body").evaluate(() => window.scrollY)
+	await configureSlices(page, "missing", ["missing"])
+	await revealSlice(page, "missing")
+	expect(await site.locator("body").evaluate(() => window.scrollY)).toBe(scroll)
+})

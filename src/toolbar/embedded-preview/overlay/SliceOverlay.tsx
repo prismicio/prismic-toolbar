@@ -1,24 +1,53 @@
 import { useStableCallback } from "@toolbar/support/react"
 import { useLayoutEffect, useMemo, useState } from "preact/hooks"
 
-import { createSelectSliceMessage } from "../message-protocol"
-import type { PostMessage } from "../message-protocol"
+import {
+	createSelectSliceMessage,
+	isSliceOverlayMessage,
+	isScrollToSliceMessage,
+} from "../message-protocol"
+import type { PostMessage, SubscribeToMessages, SetSliceOverlayMessage } from "../message-protocol"
+import { scrollToSlice } from "./scroll-to-slice"
 import { findSliceAtElement } from "./slice-overlay-geometry"
 import type { Slice } from "./slice-overlay-geometry"
 
 interface SliceOverlayProps {
 	postMessage: PostMessage
+	subscribeToMessages: SubscribeToMessages
+	uiScale: number
 	slices: Slice[]
 }
 
-export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
-	const slice = useHoveredSlice(slices)
+export function SliceOverlay({
+	postMessage,
+	slices,
+	subscribeToMessages,
+	uiScale,
+}: SliceOverlayProps) {
+	const [overlay, setOverlay] = useState<SetSliceOverlayMessage>()
+	const handleMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
+		if (isSliceOverlayMessage(data)) {
+			setOverlay(data)
+		} else if (isScrollToSliceMessage(data)) {
+			const slice = slices.find((slice) => slice.sliceId === data.sliceId)
+			if (slice) scrollToSlice(slice, uiScale)
+		}
+	})
+	useLayoutEffect(() => subscribeToMessages(handleMessage), [subscribeToMessages, handleMessage])
+	const eligibleSlices = useMemo(
+		() => (overlay ? slices.filter((slice) => overlay.sliceIds.includes(slice.sliceId)) : slices),
+		[slices, overlay],
+	)
+	const hovered = useHoveredSlice(eligibleSlices)
+	const selected = eligibleSlices.find((slice) => slice.sliceId === overlay?.selectedSliceId)
+	useSliceSelection(eligibleSlices, postMessage)
 
-	useSliceSelection(slices, postMessage)
-
-	if (!slice) return null
-
-	return <SliceHighlight slice={slice} />
+	return (
+		<>
+			{selected && <SliceHighlight slice={selected} selected />}
+			{hovered && hovered !== selected && <SliceHighlight slice={hovered} />}
+		</>
+	)
 }
 
 function useHoveredSlice(slices: Slice[]) {
@@ -94,11 +123,12 @@ function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
 }
 
 interface SliceHighlightProps {
+	selected?: boolean
 	slice: Slice
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice } = props
+	const { slice, selected } = props
 	const { sliceId, rect } = slice
 
 	if (!rect) return null
@@ -107,6 +137,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 		<div
 			className="slice-highlight"
 			data-slice-id={sliceId}
+			data-selected={selected || undefined}
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
 		/>
 	)
