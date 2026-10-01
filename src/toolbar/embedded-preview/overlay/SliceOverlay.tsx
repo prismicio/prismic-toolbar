@@ -1,5 +1,5 @@
 import { useStableCallback } from "@toolbar/support/react"
-import { useLayoutEffect, useMemo, useState } from "preact/hooks"
+import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
 	createSelectSliceMessage,
@@ -21,6 +21,7 @@ interface SliceOverlayProps {
 export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, slices, subscribeToMessages, uiScale } = props
 	const [overlay, setOverlay] = useState<SetSliceOverlayMessage>()
+	const revealSlice = useSliceScroll(slices, uiScale)
 
 	const handleMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
 		if (isSliceOverlayMessage(data)) {
@@ -28,10 +29,7 @@ export function SliceOverlay(props: SliceOverlayProps) {
 			return
 		}
 
-		if (!isScrollToSliceMessage(data)) return
-
-		const slice = slices.find((slice) => slice.sliceId === data.sliceId)
-		if (slice) scrollToSlice(slice, uiScale)
+		if (isScrollToSliceMessage(data)) revealSlice(data.sliceId)
 	})
 
 	useLayoutEffect(() => subscribeToMessages(handleMessage), [subscribeToMessages, handleMessage])
@@ -43,7 +41,10 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	const hoveredSlice = useHoveredSlice(eligibleSlices)
 	const selectedSlice = eligibleSlices.find((slice) => slice.sliceId === overlay?.selectedSliceId)
 
-	useSliceSelection(eligibleSlices, postMessage)
+	useSliceSelection(eligibleSlices, (slice) => {
+		revealSlice(slice.sliceId)
+		postMessage(createSelectSliceMessage(slice.sliceId))
+	})
 
 	return (
 		<>
@@ -51,6 +52,50 @@ export function SliceOverlay(props: SliceOverlayProps) {
 			{hoveredSlice && hoveredSlice !== selectedSlice && <SliceHighlight slice={hoveredSlice} />}
 		</>
 	)
+}
+
+function useSliceScroll(slices: Slice[], uiScale: number) {
+	const pendingSliceIdRef = useRef<string>()
+	const timeoutRef = useRef<number>()
+
+	const reveal = useStableCallback(() => {
+		const slice = slices.find((slice) => slice.sliceId === pendingSliceIdRef.current)
+		pendingSliceIdRef.current = undefined
+		if (slice) scrollToSlice(slice, uiScale)
+	})
+
+	// Opening an editor panel animates the preview size. Reveal once that size settles.
+	const schedule = useStableCallback(() => {
+		if (!pendingSliceIdRef.current) return
+
+		window.clearTimeout(timeoutRef.current)
+		timeoutRef.current = window.setTimeout(reveal, 100)
+	})
+
+	useLayoutEffect(schedule, [schedule, uiScale])
+
+	useLayoutEffect(() => {
+		function cancel() {
+			window.clearTimeout(timeoutRef.current)
+			pendingSliceIdRef.current = undefined
+		}
+
+		const controller = new AbortController()
+		window.addEventListener("resize", schedule, { signal: controller.signal })
+		for (const event of ["wheel", "touchstart", "pointerdown", "keydown"]) {
+			window.addEventListener(event, cancel, { capture: true, signal: controller.signal })
+		}
+
+		return () => {
+			cancel()
+			controller.abort()
+		}
+	}, [schedule])
+
+	return useStableCallback((sliceId: string) => {
+		pendingSliceIdRef.current = sliceId
+		schedule()
+	})
 }
 
 function useHoveredSlice(slices: Slice[]) {
@@ -99,7 +144,7 @@ const interactiveElementSelector = [
 	'[role="link"]',
 ].join(",")
 
-function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
+function useSliceSelection(slices: Slice[], onSelect: (slice: Slice) => void) {
 	const selectSlice = useStableCallback((event: MouseEvent) => {
 		// Don't select a slice if the user is interacting with the UI or has selected text.
 		if (event.defaultPrevented || window.getSelection()?.isCollapsed === false) return
@@ -116,7 +161,7 @@ function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
 		event.preventDefault()
 		event.stopPropagation()
 
-		postMessage(createSelectSliceMessage(slice.sliceId))
+		onSelect(slice)
 	})
 
 	useLayoutEffect(() => {

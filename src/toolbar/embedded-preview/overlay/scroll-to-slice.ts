@@ -47,14 +47,18 @@ export function scrollToSlice(slice: SliceMarkerRange, uiScale: number) {
 	window.scrollBy({ top: windowDelta, behavior })
 }
 
-// Fully reveal fitting slices; leave tall slices in place if their start is visible.
+// Leave visible slices in place, centre clipped slices, and top-align tall slices.
 function getSliceScrollDelta(sliceRect: SliceRect, viewportTop: number, viewportBottom: number) {
 	const sliceTop = sliceRect.top - window.scrollY
 	const sliceBottom = sliceTop + sliceRect.height
 
-	if (sliceTop < viewportTop) return sliceTop - viewportTop
-	if (sliceBottom <= viewportBottom) return 0
-	if (sliceRect.height <= viewportBottom - viewportTop) return sliceBottom - viewportBottom
+	if (sliceRect.height > viewportBottom - viewportTop) {
+		return sliceTop - viewportTop
+	}
 
-	return sliceTop >= viewportBottom ? sliceTop - viewportTop : 0
+	if (sliceTop >= viewportTop && sliceBottom <= viewportBottom) return 0
+
+	const sliceCenter = sliceTop + sliceRect.height / 2
+	const viewportCenter = (viewportTop + viewportBottom) / 2
+	return sliceCenter - viewportCenter
 }
