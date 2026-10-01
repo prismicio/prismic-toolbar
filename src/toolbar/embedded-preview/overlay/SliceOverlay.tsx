@@ -3,6 +3,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
 	createSelectSliceMessage,
+	isScrollToPinMessage,
 	isSliceOverlayMessage,
 	isScrollToSliceMessage,
 } from "../message-protocol"
@@ -21,7 +22,7 @@ interface SliceOverlayProps {
 export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, slices, subscribeToMessages, uiScale } = props
 	const [overlay, setOverlay] = useState<SetSliceOverlayMessage>()
-	const revealSlice = useSliceScroll(slices, uiScale)
+	const { revealSlice, cancelReveal } = useSliceScroll(slices, uiScale)
 
 	const handleMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
 		if (isSliceOverlayMessage(data)) {
@@ -30,6 +31,7 @@ export function SliceOverlay(props: SliceOverlayProps) {
 		}
 
 		if (isScrollToSliceMessage(data)) revealSlice(data.sliceId)
+		if (isScrollToPinMessage(data)) cancelReveal()
 	})
 
 	useLayoutEffect(() => subscribeToMessages(handleMessage), [subscribeToMessages, handleMessage])
@@ -57,6 +59,10 @@ export function SliceOverlay(props: SliceOverlayProps) {
 function useSliceScroll(slices: Slice[], uiScale: number) {
 	const pendingSliceIdRef = useRef<string>()
 	const timeoutRef = useRef<number>()
+	const cancelReveal = useStableCallback(() => {
+		window.clearTimeout(timeoutRef.current)
+		pendingSliceIdRef.current = undefined
+	})
 
 	const reveal = useStableCallback(() => {
 		const slice = slices.find((slice) => slice.sliceId === pendingSliceIdRef.current)
@@ -75,27 +81,24 @@ function useSliceScroll(slices: Slice[], uiScale: number) {
 	useLayoutEffect(schedule, [schedule, uiScale])
 
 	useLayoutEffect(() => {
-		function cancel() {
-			window.clearTimeout(timeoutRef.current)
-			pendingSliceIdRef.current = undefined
-		}
-
 		const controller = new AbortController()
 		window.addEventListener("resize", schedule, { signal: controller.signal })
 		for (const event of ["wheel", "touchstart", "pointerdown", "keydown"]) {
-			window.addEventListener(event, cancel, { capture: true, signal: controller.signal })
+			window.addEventListener(event, cancelReveal, { capture: true, signal: controller.signal })
 		}
 
 		return () => {
-			cancel()
+			cancelReveal()
 			controller.abort()
 		}
-	}, [schedule])
+	}, [schedule, cancelReveal])
 
-	return useStableCallback((sliceId: string) => {
+	const revealSlice = useStableCallback((sliceId: string) => {
 		pendingSliceIdRef.current = sliceId
 		schedule()
 	})
+
+	return { revealSlice, cancelReveal }
 }
 
 function useHoveredSlice(slices: Slice[]) {
