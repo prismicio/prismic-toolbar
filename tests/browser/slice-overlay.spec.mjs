@@ -28,6 +28,7 @@ test("highlight refreshes position-only changes on pointer movement", async ({ p
 })
 
 test("highlight follows a slice inside a scrolling container", async ({ page }) => {
+	await sendSlices(page, [{ sliceId: "scrolling-slice", label: "Scrolling slice" }])
 	const site = page.frameLocator("iframe")
 	await site.locator("body").evaluate((body) => {
 		const scroller = document.createElement("div")
@@ -70,6 +71,11 @@ test("highlight and selection use updated roots and marker IDs", async ({ page }
 			walker.currentNode.data = walker.currentNode.data.replace("first-slice", "renamed-slice")
 		}
 	})
+	await expect(highlight).toHaveCount(0)
+	await sendSlices(page, [
+		{ sliceId: "renamed-slice", label: "Hero", variation: "Default" },
+		{ sliceId: "second-slice", label: "Call to action", variation: "Centered" },
+	])
 	await expect(highlight).toHaveAttribute("data-slice-id", "renamed-slice")
 	await site.locator("#first-slice").click({ position: { x: 500, y: 200 } })
 	await expect
@@ -283,6 +289,7 @@ test("links and button roles keep their actions without selecting the slice", as
 })
 
 test("slice roots are selectable but gaps and covering popups are not", async ({ page }) => {
+	await sendSlices(page, [{ sliceId: "split", label: "Split" }])
 	const site = page.frameLocator("iframe")
 	await site.locator("body").evaluate((body) => {
 		const container = document.createElement("div")
@@ -319,6 +326,10 @@ test("slice roots are selectable but gaps and covering popups are not", async ({
 })
 
 test("hover and click agree for nested gaps and overflowing content", async ({ page }) => {
+	await sendSlices(page, [
+		{ sliceId: "outer", label: "Outer" },
+		{ sliceId: "inner", label: "Inner" },
+	])
 	const site = page.frameLocator("iframe")
 	await site.locator("body").evaluate((body) => {
 		const container = document.createElement("div")
@@ -367,4 +378,98 @@ test("same-size DOM replacement remains highlightable and selectable", async ({ 
 	await expect
 		.poll(() => sliceSelections(page))
 		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+})
+
+async function sendSlices(page, slices) {
+	await page.evaluate((slices) => {
+		document
+			.querySelector("iframe")
+			.contentWindow.postMessage(
+				{ type: "prismic:embedded-preview:set-slices", slices },
+				location.origin,
+			)
+	}, slices)
+}
+
+test("labels are compact, inset inside the highlight and scroll with the slice", async ({
+	page,
+}, testInfo) => {
+	const site = page.frameLocator("iframe")
+	const highlight = site.locator(".slice-highlight")
+	const label = site.locator(".slice-highlight-label")
+	await site.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
+	await expect(label).toHaveText("Hero • Default")
+	await expect(label).toBeInViewport()
+	await expect(label).toHaveCSS("background-color", "rgb(110, 86, 207)")
+	await expect(label).toHaveCSS("color", "rgb(255, 255, 255)")
+	await expect(label).toHaveCSS("font-size", "12px")
+	await expect(label).toHaveCSS("position", "absolute")
+
+	await site.locator("#second-slice").hover({ position: { x: 500, y: 100 } })
+	await expect(label).toHaveText("Call to action • Centered")
+	const bounds = await highlight.boundingBox()
+	const labelBounds = await label.boundingBox()
+	expect(labelBounds.x).toBe(bounds.x + 6)
+	expect(labelBounds.y).toBe(bounds.y + 6)
+	expect(labelBounds.height).toBe(24)
+	await page.screenshot({ path: testInfo.outputPath("slice-highlight.png") })
+	await site.locator("#second-slice").evaluate(() => window.scrollBy(0, 40))
+	await expect.poll(async () => (await label.boundingBox())?.y).toBe(labelBounds.y - 40)
+	await page.getByRole("button", { name: "Scale overlay" }).click()
+	await site.locator("#second-slice").hover({ position: { x: 500, y: 100 } })
+	await expect(label).toHaveCSS("font-size", "24px")
+	await expect(highlight).toHaveCSS("border-width", "4px")
+})
+
+test("metadata updates clear stale highlights and exclude other documents", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	const first = site.locator("#first-slice")
+	const second = site.locator("#second-slice")
+	const highlight = site.locator(".slice-highlight")
+	const label = site.locator(".slice-highlight-label")
+	await first.hover({ position: { x: 500, y: 200 } })
+	await expect(label).toHaveText("Hero • Default")
+
+	await sendSlices(page, [{ sliceId: "first-slice", label: "Banner", variation: "Wide" }])
+	await expect(label).toHaveText("Banner • Wide")
+	await second.hover({ position: { x: 500, y: 100 } })
+	await expect(highlight).toHaveCount(0)
+	await second.click({ position: { x: 500, y: 100 } })
+	expect(await sliceSelections(page)).toEqual([])
+
+	await first.hover({ position: { x: 500, y: 200 } })
+	await sendSlices(page, [])
+	await expect(highlight).toHaveCount(0)
+	await first.click({ position: { x: 500, y: 200 } })
+	expect(await sliceSelections(page)).toEqual([])
+
+	// The old document's DOM can remain present while the next preview loads.
+	await sendSlices(page, [{ sliceId: "second-slice", label: "Footer" }])
+	await first.hover({ position: { x: 501, y: 200 } })
+	await expect(highlight).toHaveCount(0)
+	await second.hover({ position: { x: 500, y: 100 } })
+	await expect(label).toHaveText("Footer")
+	await second.click({ position: { x: 500, y: 100 } })
+	await expect
+		.poll(() => sliceSelections(page))
+		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "second-slice" }])
+})
+
+test("newly rendered slices require current Page Builder metadata", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	await site.locator("body").evaluate((body) => {
+		const root = document.createElement("div")
+		root.innerHTML = `
+			<!--prismic-slice-start:added-->
+			<section id="added" style="position:absolute;top:100px;left:400px;width:300px;height:200px;background:white">Added slice</section>
+			<!--prismic-slice-end:added-->
+		`
+		body.append(root)
+	})
+	await site.locator("#added").hover()
+	await expect(site.locator(".slice-highlight")).toHaveCount(0)
+	await sendSlices(page, [{ sliceId: "added", label: "New slice", variation: "Default" }])
+	await expect(site.locator(".slice-highlight-label")).toHaveText("New slice • Default")
+	await site.locator("#added").evaluate((element) => element.parentElement.remove())
+	await expect(site.locator(".slice-highlight")).toHaveCount(0)
 })

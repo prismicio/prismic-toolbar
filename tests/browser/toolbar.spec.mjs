@@ -74,7 +74,7 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
 	await expect(highlight).toHaveCSS("border-width", "2px")
-	await expect(highlight).toHaveCSS("border-radius", "12px")
+	await expect(highlight).toHaveCSS("border-radius", "8px")
 	await firstSlice.click()
 	await expect
 		.poll(() =>
@@ -95,7 +95,7 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 		)
 	})
 	await expect(highlight).toHaveCSS("border-width", "4px")
-	await expect(highlight).toHaveCSS("border-radius", "24px")
+	await expect(highlight).toHaveCSS("border-radius", "16px")
 	const firstSliceBox = await firstSlice.boundingBox()
 	const firstHighlightBox = await highlight.boundingBox()
 	expect(firstHighlightBox).toEqual(firstSliceBox)

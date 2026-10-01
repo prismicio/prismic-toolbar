@@ -1,3 +1,5 @@
+import type { SliceMetadata } from "../message-protocol"
+
 const sliceStartPrefix = "prismic-slice-start:"
 const sliceEndPrefix = "prismic-slice-end:"
 
@@ -13,7 +15,7 @@ export interface SliceRect {
 	height: number
 }
 
-export interface Slice extends SliceMarkerRange {
+export interface Slice extends SliceMarkerRange, SliceMetadata {
 	/** Bounds in document coordinates. */
 	rect: SliceRect | undefined
 }

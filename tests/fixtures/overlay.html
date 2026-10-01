@@ -36,6 +36,13 @@
 		window.fixture.messages.push(event.data)
 		if (event.data.type === "prismic:embedded-preview:ready") {
 			send({ type: "prismic:embedded-preview:ack" })
+			send({
+				type: "prismic:embedded-preview:set-slices",
+				slices: [
+					{ sliceId: "first-slice", label: "Hero", variation: "Default" },
+					{ sliceId: "second-slice", label: "Call to action", variation: "Centered" },
+				],
+			})
 			send(state)
 		}
 		if (event.data.type === "prismic:embedded-preview:select-pin") {
