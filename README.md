@@ -15,17 +15,17 @@ Include the following script on every page of your site (including the `404` pag
 Replace `YOUR_REPO_NAME` with the name of your Prismic repository.
 
 ```html
-<script src="//prismic.io/prismic.js?repo=YOUR_REPO_NAME"></script>
+<script src="https://static.cdn.prismic.io/prismic.js?repo=YOUR_REPO_NAME"></script>
 ```
 
 ## How to develop
 
-Use Node.js 24 or later (see `.nvmrc`):
+Use Node.js 24 (see `.nvmrc`):
 
 ```sh
 nvm install
 nvm use
-npm ci
+npm install
 ```
 
 In two terminals:
@@ -93,10 +93,4 @@ npm test
 npm run build
 npm run bundlewatch
 npm run test:browser
-```
-
-## How to deploy
-
-```sh
-npm run build
 ```
