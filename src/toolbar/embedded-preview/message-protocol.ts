@@ -72,12 +72,11 @@ const sliceOverlayMessageSchema = z.object({
 	sliceIds: z.array(nonemptyStringSchema),
 	selectedSliceId: z.optional(nonemptyStringSchema),
 })
+
 const scrollToSliceMessageSchema = z.object({
 	type: z.literal(scrollToSliceMessageType),
 	sliceId: nonemptyStringSchema,
 })
-export type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
-type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
 export type Author = z.infer<typeof authorSchema>
 
@@ -97,6 +96,8 @@ type SetRefMessage = z.infer<typeof setRefMessageSchema>
 type SetOverlayScaleMessage = z.infer<typeof overlayScaleMessageSchema>
 export type SetCommentOverlayMessage = z.infer<typeof commentOverlayMessageSchema>
 type ScrollToPinMessage = z.infer<typeof scrollToPinMessageSchema>
+export type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
+type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
 interface PlaceCommentMessage {
 	type: typeof placeCommentMessageType
@@ -197,6 +198,7 @@ export function isScrollToPinMessage(data: unknown): data is ScrollToPinMessage 
 export function isSliceOverlayMessage(data: unknown): data is SetSliceOverlayMessage {
 	return z.validate(sliceOverlayMessageSchema, data)
 }
+
 export function isScrollToSliceMessage(data: unknown): data is ScrollToSliceMessage {
 	return z.validate(scrollToSliceMessageSchema, data)
 }
