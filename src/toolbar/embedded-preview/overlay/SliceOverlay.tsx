@@ -21,27 +21,34 @@ interface SliceOverlayProps {
 export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, slices, subscribeToMessages, uiScale } = props
 	const [overlay, setOverlay] = useState<SetSliceOverlayMessage>()
+
 	const handleMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
 		if (isSliceOverlayMessage(data)) {
 			setOverlay(data)
-		} else if (isScrollToSliceMessage(data)) {
-			const slice = slices.find((slice) => slice.sliceId === data.sliceId)
-			if (slice) scrollToSlice(slice, uiScale)
+			return
 		}
+
+		if (!isScrollToSliceMessage(data)) return
+
+		const slice = slices.find((slice) => slice.sliceId === data.sliceId)
+		if (slice) scrollToSlice(slice, uiScale)
 	})
+
 	useLayoutEffect(() => subscribeToMessages(handleMessage), [subscribeToMessages, handleMessage])
+
 	const eligibleSlices = useMemo(
 		() => (overlay ? slices.filter((slice) => overlay.sliceIds.includes(slice.sliceId)) : slices),
 		[slices, overlay],
 	)
-	const hovered = useHoveredSlice(eligibleSlices)
-	const selected = eligibleSlices.find((slice) => slice.sliceId === overlay?.selectedSliceId)
+	const hoveredSlice = useHoveredSlice(eligibleSlices)
+	const selectedSlice = eligibleSlices.find((slice) => slice.sliceId === overlay?.selectedSliceId)
+
 	useSliceSelection(eligibleSlices, postMessage)
 
 	return (
 		<>
-			{selected && <SliceHighlight slice={selected} />}
-			{hovered && hovered !== selected && <SliceHighlight slice={hovered} />}
+			{selectedSlice && <SliceHighlight slice={selectedSlice} />}
+			{hoveredSlice && hoveredSlice !== selectedSlice && <SliceHighlight slice={hoveredSlice} />}
 		</>
 	)
 }
