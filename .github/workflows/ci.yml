@@ -70,12 +70,24 @@ jobs:
             echo "::error::Version $VERSION is already deployed. Bump the version in package.json."
             exit 1
           fi
+
       - name: Upload versioned build artifacts
-        run: aws s3 sync "build/prismic-toolbar/$VERSION" "s3://${{ secrets.BUCKET_PATH }}/$VERSION" --acl public-read --cache-control "public, max-age=86400, immutable" # change this to max-age=31536000 (1 year) after testing
-      # Browsers revalidate on every load; CloudFront keeps it for a day; CloudFront is invalidated during deployment.
+        # Change immutable assets to max-age=31536000 (1 year) after testing.
+        run: |
+          aws s3 sync "build/prismic-toolbar/$VERSION" "s3://${{ secrets.BUCKET_PATH }}/$VERSION" \
+            --exclude "prismic.js" \
+            --acl public-read \
+            --cache-control "public, max-age=86400, immutable"
+
+          aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/$VERSION/prismic.js" \
+            --acl public-read \
+            --cache-control "public, max-age=0, s-maxage=86400"
+
       - name: Upload main build artifacts
+        # Browsers revalidate on every load; CloudFront keeps it for a day; CloudFront is invalidated during deployment.
         run: |
           aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/prismic.js" --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
           aws s3 cp "build/prismic-toolbar/$VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/prismic.min.js" --acl public-read --cache-control "public, max-age=0, s-maxage=86400"
+
       - name: Invalidate cache
         run: aws cloudfront create-invalidation --distribution-id "${{ secrets.CLOUDFRONT_ID }}" --paths /prismic.js /prismic.min.js
