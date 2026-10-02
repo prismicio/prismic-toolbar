@@ -4,6 +4,7 @@
 		"trackBranches": ["master"]
 	},
 	"defaultCompression": "none",
+	"normalizeFilenames": "(^\\./build/prismic-toolbar/[^/]+/).+$",
 	"files": [
 		{
 			"path": "./build/prismic-toolbar/*/prismic.js",

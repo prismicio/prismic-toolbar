@@ -1,6 +1,6 @@
 {
 	"name": "prismic-toolbar",
-	"version": "4.1.10",
+	"version": "4.1.12",
 	"description": "Prismic Toolbar",
 	"license": "Apache-2.0",
 	"scripts": {
@@ -50,6 +50,6 @@
 		"react-dom": "16.14.0"
 	},
 	"engines": {
-		"node": ">=24"
+		"node": "24"
 	}
 }
