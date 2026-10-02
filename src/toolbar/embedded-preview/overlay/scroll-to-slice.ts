@@ -32,7 +32,12 @@ export function scrollToSlice(slice: SliceMarkerRange, uiScale: number) {
 	window.scrollBy({ top: delta, behavior: reducedMotion ? "instant" : "smooth" })
 }
 
-function getScrollDelta(rect: SliceRect, viewportTop: number, viewportBottom: number, inset: number) {
+function getScrollDelta(
+	rect: SliceRect,
+	viewportTop: number,
+	viewportBottom: number,
+	inset: number,
+) {
 	const top = rect.top - window.scrollY
 	const bottom = top + rect.height
 	if (top >= viewportTop && bottom <= viewportBottom) return 0

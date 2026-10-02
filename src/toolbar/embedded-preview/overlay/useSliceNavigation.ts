@@ -1,7 +1,12 @@
 import { useStableCallback } from "@toolbar/support/react"
-import { useLayoutEffect, useRef, useState } from "preact/hooks"
+import { useLayoutEffect, useState } from "preact/hooks"
 
-import { isScrollToPinMessage, isScrollToSliceMessage, isSelectedSliceMessage } from "../message-protocol"
+import {
+	isOverlayScaleMessage,
+	isScrollToPinMessage,
+	isScrollToSliceMessage,
+	isSelectedSliceMessage,
+} from "../message-protocol"
 import type { SubscribeToMessages } from "../message-protocol"
 import { scrollToSlice } from "./scroll-to-slice"
 import type { Slice } from "./slice-overlay-geometry"
@@ -12,38 +17,42 @@ export function useSliceNavigation(
 	subscribeToMessages: SubscribeToMessages,
 ) {
 	const [selectedSliceId, setSelectedSliceId] = useState<string>()
-	const pendingSliceId = useRef<string>()
-	const timeout = useRef<number>()
-	const cancel = useStableCallback(() => {
-		window.clearTimeout(timeout.current)
-		pendingSliceId.current = undefined
-	})
-	const reveal = useStableCallback(() => {
-		const slice = slices.find((slice) => slice.sliceId === pendingSliceId.current)
-		cancel()
+	const reveal = useStableCallback((sliceId: string) => {
+		const slice = slices.find((slice) => slice.sliceId === sliceId)
 		if (slice) scrollToSlice(slice, uiScale)
 	})
-	const schedule = useStableCallback(() => {
-		if (!pendingSliceId.current) return
-		window.clearTimeout(timeout.current)
-		// Opening fields resizes the iframe. Scroll after its size has settled.
-		timeout.current = window.setTimeout(reveal, 100)
-	})
-	const onMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
-		if (isSelectedSliceMessage(data)) {
-			setSelectedSliceId(data.selectedSliceId)
-			if (pendingSliceId.current !== data.selectedSliceId) cancel()
-		} else if (isScrollToSliceMessage(data)) {
-			pendingSliceId.current = data.sliceId
-			schedule()
-		} else if (isScrollToPinMessage(data)) {
-			cancel()
-		}
-	})
 
-	useLayoutEffect(() => subscribeToMessages(onMessage), [subscribeToMessages, onMessage])
-	useLayoutEffect(schedule, [schedule, uiScale])
 	useLayoutEffect(() => {
+		let pendingSliceId: string | undefined
+		let timeout: number | undefined
+		function cancel() {
+			window.clearTimeout(timeout)
+			pendingSliceId = undefined
+		}
+		function schedule() {
+			if (!pendingSliceId) return
+			window.clearTimeout(timeout)
+			// Opening fields resizes the iframe. Scroll after its size has settled.
+			timeout = window.setTimeout(() => {
+				const sliceId = pendingSliceId
+				cancel()
+				if (sliceId) reveal(sliceId)
+			}, 100)
+		}
+		function onMessage({ data }: MessageEvent<unknown>) {
+			if (isSelectedSliceMessage(data)) {
+				setSelectedSliceId(data.selectedSliceId)
+				if (pendingSliceId !== data.selectedSliceId) cancel()
+			} else if (isScrollToSliceMessage(data)) {
+				pendingSliceId = data.sliceId
+				schedule()
+			} else if (isOverlayScaleMessage(data)) {
+				schedule()
+			} else if (isScrollToPinMessage(data)) {
+				cancel()
+			}
+		}
+		const unsubscribe = subscribeToMessages(onMessage)
 		const controller = new AbortController()
 		window.addEventListener("resize", schedule, { signal: controller.signal })
 		for (const event of ["wheel", "touchstart", "pointerdown", "keydown"]) {
@@ -51,9 +60,10 @@ export function useSliceNavigation(
 		}
 		return () => {
 			cancel()
+			unsubscribe()
 			controller.abort()
 		}
-	}, [schedule, cancel])
+	}, [subscribeToMessages, reveal])
 
 	return selectedSliceId
 }
