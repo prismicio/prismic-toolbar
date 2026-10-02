@@ -7,6 +7,8 @@ const setRefMessageType = "prismic:embedded-preview:set-ref"
 
 const setOverlayScaleMessageType = "prismic:embedded-preview:set-overlay-scale"
 const setSlicesMessageType = "prismic:embedded-preview:set-slices"
+const setSelectedSliceMessageType = "prismic:embedded-preview:set-selected-slice"
+const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 
 const setCommentOverlayMessageType = "prismic:embedded-preview:set-comment-overlay"
 const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
@@ -58,6 +60,18 @@ const slicesMessageSchema = z.object({
 	slices: z.array(sliceMetadataSchema),
 })
 type SetSlicesMessage = z.infer<typeof slicesMessageSchema>
+
+const selectedSliceMessageSchema = z.object({
+	type: z.literal(setSelectedSliceMessageType),
+	selectedSliceId: z.optional(nonemptyStringSchema),
+})
+type SetSelectedSliceMessage = z.infer<typeof selectedSliceMessageSchema>
+
+const scrollToSliceMessageSchema = z.object({
+	type: z.literal(scrollToSliceMessageType),
+	sliceId: nonemptyStringSchema,
+})
+type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
 const draftPinSchema = z.object({
 	xRatio: ratioSchema,
@@ -130,6 +144,8 @@ export type Message =
 	| SetRefMessage
 	| SetOverlayScaleMessage
 	| SetSlicesMessage
+	| SetSelectedSliceMessage
+	| ScrollToSliceMessage
 	| SetCommentOverlayMessage
 	| ScrollToPinMessage
 	| PlaceCommentMessage
@@ -187,6 +203,14 @@ export function isOverlayScaleMessage(data: unknown): data is SetOverlayScaleMes
 
 export function isSetSlicesMessage(data: unknown): data is SetSlicesMessage {
 	return z.validate(slicesMessageSchema, data)
+}
+
+export function isSelectedSliceMessage(data: unknown): data is SetSelectedSliceMessage {
+	return z.validate(selectedSliceMessageSchema, data)
+}
+
+export function isScrollToSliceMessage(data: unknown): data is ScrollToSliceMessage {
+	return z.validate(scrollToSliceMessageSchema, data)
 }
 
 export function isCommentOverlayMessage(data: unknown): data is SetCommentOverlayMessage {

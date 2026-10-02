@@ -468,3 +468,158 @@ test("newly rendered slices require current Page Builder metadata", async ({ pag
 	await site.locator("#added").evaluate((element) => element.parentElement.remove())
 	await expect(site.locator(".slice-highlight")).toHaveCount(0)
 })
+
+async function sendSliceMessage(page, message) {
+	await page.evaluate((message) => {
+		document.querySelector("iframe").contentWindow.postMessage(message, location.origin)
+	}, message)
+}
+
+async function selectSlice(page, sliceId) {
+	await sendSliceMessage(page, {
+		type: "prismic:embedded-preview:set-selected-slice",
+		selectedSliceId: sliceId,
+	})
+}
+
+async function scrollToSlice(page, sliceId) {
+	await sendSliceMessage(page, { type: "prismic:embedded-preview:scroll-to-slice", sliceId })
+}
+
+async function settleSliceNavigation(site) {
+	await site.locator("body").evaluate(() => new Promise((resolve) => setTimeout(resolve, 200)))
+}
+
+test("selected highlight persists outside the slice and clears independently of hover", async ({
+	page,
+}) => {
+	const site = page.frameLocator("iframe")
+	const selected = site.locator('.slice-highlight[data-selected="true"]')
+	await selectSlice(page, "first-slice")
+	await expect(selected).toHaveAttribute("data-slice-id", "first-slice")
+	await site.locator("#second-slice").hover({ position: { x: 500, y: 100 } })
+	await expect(site.locator(".slice-highlight")).toHaveCount(2)
+	await page.mouse.move(20, 850)
+	await expect(site.locator(".slice-highlight")).toHaveCount(1)
+	await selectSlice(page, undefined)
+	await expect(selected).toHaveCount(0)
+})
+
+test("selection reports do not scroll and visible slices stay in place", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	await page.mouse.move(20, 850)
+	await selectSlice(page, "second-slice")
+	await expect(site.locator('[data-selected="true"]')).toHaveAttribute(
+		"data-slice-id",
+		"second-slice",
+	)
+	await settleSliceNavigation(site)
+	expect(await site.locator("body").evaluate(() => window.scrollY)).toBe(0)
+	await scrollToSlice(page, "first-slice")
+	await settleSliceNavigation(site)
+	expect(await site.locator("body").evaluate(() => window.scrollY)).toBe(0)
+})
+
+test("clipped slices smaller than the viewport are centered", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" })
+	const site = page.frameLocator("iframe")
+	await scrollToSlice(page, "second-slice")
+	await expect
+		.poll(() =>
+			site.locator("#second-slice").evaluate((element) => {
+				const rect = element.getBoundingClientRect()
+				return Math.round(rect.top + rect.height / 2 - window.innerHeight / 2)
+			}),
+		)
+		.toBe(0)
+})
+
+test("tall multi-root slices align their combined top with the inset", async ({ page }) => {
+	await page.emulateMedia({ reducedMotion: "reduce" })
+	const site = page.frameLocator("iframe")
+	await site.locator("body").evaluate((body) => {
+		const root = document.createElement("div")
+		root.style.cssText = "position:absolute;top:1200px;left:100px;width:400px"
+		root.innerHTML = `
+			<!--prismic-slice-start:tall-->
+			<section id="tall-first" style="height:450px"></section>
+			<section id="tall-last" style="height:450px"></section>
+			<!--prismic-slice-end:tall-->
+		`
+		body.append(root)
+	})
+	await sendSlices(page, [{ sliceId: "tall", label: "Tall" }])
+	await selectSlice(page, "tall")
+	await expect(site.locator('[data-selected="true"]')).toHaveAttribute("data-slice-id", "tall")
+	await scrollToSlice(page, "tall")
+	await expect
+		.poll(() =>
+			site
+				.locator("#tall-first")
+				.evaluate((element) => Math.round(element.getBoundingClientRect().top)),
+		)
+		.toBe(16)
+	await page.getByRole("button", { name: "Scale overlay" }).click()
+	await scrollToSlice(page, "tall")
+	// It remains clipped, so the scaled inset is applied on the next request.
+	await expect
+		.poll(() =>
+			site
+				.locator("#tall-first")
+				.evaluate((element) => Math.round(element.getBoundingClientRect().top)),
+		)
+		.toBe(32)
+})
+
+test("slice navigation reveals nested scroll containers before the page", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	await site.locator("body").evaluate((body) => {
+		const scroller = document.createElement("div")
+		scroller.id = "navigation-scroller"
+		scroller.style.cssText =
+			"position:absolute;top:100px;left:100px;width:400px;height:300px;overflow:auto"
+		scroller.innerHTML = `
+			<div style="height:700px"></div>
+			<!--prismic-slice-start:nested-->
+			<section id="nested" style="height:100px">Nested slice</section>
+			<!--prismic-slice-end:nested-->
+			<div style="height:700px"></div>
+		`
+		body.append(scroller)
+	})
+	await sendSlices(page, [{ sliceId: "nested", label: "Nested" }])
+	await scrollToSlice(page, "nested")
+	await expect
+		.poll(() => site.locator("#navigation-scroller").evaluate((element) => element.scrollTop))
+		.toBe(600)
+	expect(await site.locator("body").evaluate(() => window.scrollY)).toBe(0)
+})
+
+test("metadata excludes foreign or removed slices from selection and navigation", async ({
+	page,
+}) => {
+	const site = page.frameLocator("iframe")
+	await page.mouse.move(20, 850)
+	await sendSlices(page, [{ sliceId: "first-slice", label: "Hero" }])
+	await selectSlice(page, "second-slice")
+	await scrollToSlice(page, "second-slice")
+	await settleSliceNavigation(site)
+	await expect(site.locator(".slice-highlight")).toHaveCount(0)
+	expect(await site.locator("body").evaluate(() => window.scrollY)).toBe(0)
+	await selectSlice(page, "first-slice")
+	await expect(site.locator('[data-selected="true"]')).toHaveCount(1)
+	await sendSlices(page, [])
+	await expect(site.locator('[data-selected="true"]')).toHaveCount(0)
+})
+
+test("user input cancels pending slice navigation", async ({ page }) => {
+	const site = page.frameLocator("iframe")
+	await scrollToSlice(page, "second-slice")
+	await site.locator("body").evaluate(async () => {
+		await new Promise(requestAnimationFrame)
+		await new Promise(requestAnimationFrame)
+		window.dispatchEvent(new WheelEvent("wheel"))
+	})
+	await settleSliceNavigation(site)
+	expect(await site.locator("body").evaluate(() => window.scrollY)).toBe(0)
+})
