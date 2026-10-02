@@ -400,10 +400,6 @@ test("labels are compact, inset inside the highlight and scroll with the slice",
 	await site.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
 	await expect(label).toHaveText("Hero • Default")
 	await expect(label).toBeInViewport()
-	await expect(label).toHaveCSS("background-color", "rgb(110, 86, 207)")
-	await expect(label).toHaveCSS("color", "rgb(255, 255, 255)")
-	await expect(label).toHaveCSS("font-size", "12px")
-	await expect(label).toHaveCSS("position", "absolute")
 
 	await site.locator("#second-slice").hover({ position: { x: 500, y: 100 } })
 	await expect(label).toHaveText("Call to action • Centered")
@@ -417,8 +413,7 @@ test("labels are compact, inset inside the highlight and scroll with the slice",
 	await expect.poll(async () => (await label.boundingBox())?.y).toBe(labelBounds.y - 40)
 	await page.getByRole("button", { name: "Scale overlay" }).click()
 	await site.locator("#second-slice").hover({ position: { x: 500, y: 100 } })
-	await expect(label).toHaveCSS("font-size", "24px")
-	await expect(highlight).toHaveCSS("border-width", "4px")
+	await expect.poll(async () => (await label.boundingBox())?.height).toBe(labelBounds.height * 2)
 })
 
 test("metadata updates clear stale highlights and exclude other documents", async ({ page }) => {

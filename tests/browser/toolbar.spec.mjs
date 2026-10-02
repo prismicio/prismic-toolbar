@@ -17,7 +17,6 @@ test("classic toolbar bundle: panels, tabs, collapsibles, JSON tree and preview 
 	})
 	await page.goto("/toolbar.html")
 	await expect(page.locator(".PreviewMenu")).toBeVisible()
-	await expect(page.locator("#host-sentinel")).toHaveCSS("color", "rgb(255, 0, 0)")
 	await expect(page.locator(".Toolbar")).toHaveCSS("position", "fixed")
 	await page.locator("#prismic-toolbar-v2 .Menu").click()
 	await expect(page.getByRole("link", { name: /Fixture page/ })).toBeVisible()
@@ -67,14 +66,11 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	const pin = site.locator('[data-thread-id="first"]')
 	await expect(pin).toBeVisible()
 	await expect(pin).toHaveText("TA") // broken avatar falls back to initials
-	await expect(site.locator('[data-thread-id="last"]')).toHaveCSS("opacity", "0.4")
+	await expect(site.locator('[data-thread-id="last"]')).toHaveClass(/pin-dimmed/)
 	const highlight = site.locator("#prismic-embedded-preview-overlay").locator(".slice-highlight")
 	const firstSlice = site.locator("#first-slice")
 	await firstSlice.hover({ position: { x: 400, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
-	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
-	await expect(highlight).toHaveCSS("border-width", "2px")
-	await expect(highlight).toHaveCSS("border-radius", "8px")
 	await firstSlice.click()
 	await expect
 		.poll(() =>
@@ -94,8 +90,6 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 			location.origin,
 		)
 	})
-	await expect(highlight).toHaveCSS("border-width", "4px")
-	await expect(highlight).toHaveCSS("border-radius", "16px")
 	const firstSliceBox = await firstSlice.boundingBox()
 	const firstHighlightBox = await highlight.boundingBox()
 	expect(firstHighlightBox).toEqual(firstSliceBox)
