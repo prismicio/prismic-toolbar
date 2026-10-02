@@ -50,6 +50,32 @@ test("highlight follows a slice inside a scrolling container", async ({ page }) 
 	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
 })
 
+test("selecting a fully visible slice near the viewport edge leaves it in place", async ({
+	page,
+}) => {
+	const site = page.frameLocator("iframe")
+	const slice = site.locator("#second-slice")
+	await slice.evaluate((element) => {
+		window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - 8)
+	})
+	await slice.hover()
+	await expect(site.locator(".slice-highlight")).toHaveAttribute("data-slice-id", "second-slice")
+	const initialScrollY = await slice.evaluate(() => window.scrollY)
+	await page.evaluate(() => {
+		document
+			.querySelector("iframe")
+			.contentWindow.postMessage(
+				{ type: "prismic:embedded-preview:scroll-to-slice", sliceId: "second-slice" },
+				location.origin,
+			)
+	})
+	const finalScrollY = await slice.evaluate(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 250))
+		return window.scrollY
+	})
+	expect(finalScrollY).toBe(initialScrollY)
+})
+
 test("highlight and selection use updated roots and marker IDs", async ({ page }) => {
 	const site = page.frameLocator("iframe")
 	const highlight = site.locator(".slice-highlight")
