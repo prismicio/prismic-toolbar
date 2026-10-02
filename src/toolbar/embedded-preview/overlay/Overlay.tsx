@@ -4,6 +4,7 @@ import { isOverlayScaleMessage } from "../message-protocol"
 import type { PostMessage, SubscribeToMessages } from "../message-protocol"
 import { CommentOverlay } from "./CommentOverlay"
 import { SliceOverlay } from "./SliceOverlay"
+import { useSliceNavigation } from "./useSliceNavigation"
 import { useSlices } from "./useSlices"
 
 interface OverlayProps {
@@ -16,10 +17,11 @@ export function Overlay(props: OverlayProps) {
 
 	const uiScale = useUIScale(subscribeToMessages)
 	const slices = useSlices(subscribeToMessages)
+	const selectedSliceId = useSliceNavigation(slices, uiScale, subscribeToMessages)
 
 	return (
 		<div style={{ "--prismic-overlay-ui-scale": uiScale }}>
-			<SliceOverlay postMessage={postMessage} slices={slices} />
+			<SliceOverlay postMessage={postMessage} slices={slices} selectedSliceId={selectedSliceId} />
 			<CommentOverlay
 				uiScale={uiScale}
 				subscribeToMessages={subscribeToMessages}

@@ -9,16 +9,21 @@ import type { Slice } from "./slice-overlay-geometry"
 interface SliceOverlayProps {
 	postMessage: PostMessage
 	slices: Slice[]
+	selectedSliceId: string | undefined
 }
 
-export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
-	const slice = useHoveredSlice(slices)
+export function SliceOverlay({ postMessage, slices, selectedSliceId }: SliceOverlayProps) {
+	const hoveredSlice = useHoveredSlice(slices)
+	const selectedSlice = slices.find((slice) => slice.sliceId === selectedSliceId)
 
 	useSliceSelection(slices, postMessage)
 
-	if (!slice) return null
-
-	return <SliceHighlight slice={slice} />
+	return (
+		<>
+			{selectedSlice && <SliceHighlight slice={selectedSlice} selected />}
+			{hoveredSlice && hoveredSlice !== selectedSlice && <SliceHighlight slice={hoveredSlice} />}
+		</>
+	)
 }
 
 function useHoveredSlice(slices: Slice[]) {
@@ -95,10 +100,11 @@ function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
 
 interface SliceHighlightProps {
 	slice: Slice
+	selected?: boolean
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice } = props
+	const { slice, selected } = props
 	const { sliceId, rect, label, variation } = slice
 
 	if (!rect) return null
@@ -109,6 +115,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 		<div
 			className="slice-highlight"
 			data-slice-id={sliceId}
+			data-selected={selected || undefined}
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
 		>
 			<div className="slice-highlight-label">{title}</div>
