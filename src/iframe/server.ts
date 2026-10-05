@@ -29,7 +29,8 @@ export function createBridgeHandlers(): BridgeMethods {
 
 	async function createShareLink(pageURL: string): Promise<string> {
 		const session = Cookies.get(sessionCookieName)
-		const { csrf, preview } = await loadState()
+		// Fresh, so the link gets the current session's title and CSRF token.
+		const { csrf, preview } = await fetchState()
 		if (!session || !preview) throw new Error("No active preview session to share.")
 
 		// Prismic requires an image name; screenshots are no longer uploaded.

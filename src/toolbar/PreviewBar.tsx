@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks"
 
 import type { MountToolbarOptions } from "../lib/chunks"
+import { repositoryOrigin } from "../lib/env"
 import type { PreviewSession, PreviewSnapshot } from "../lib/preview-session"
 import { CloseIcon, PrismicLogo } from "./icons"
 
@@ -16,7 +17,7 @@ export function PreviewBar({ session, repositoryHost }: MountToolbarOptions) {
 			{snapshot.authenticated ? (
 				<a
 					class="logo"
-					href={`https://${repositoryHost}/`}
+					href={`${repositoryOrigin(repositoryHost)}/`}
 					target="_blank"
 					rel="noopener noreferrer"
 					aria-label="Open the repository in Prismic"

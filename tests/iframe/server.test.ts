@@ -114,6 +114,28 @@ describe("share", () => {
 		})
 	})
 
+	it("uses the current session's title and CSRF token", async () => {
+		const responses: Record<string, unknown> = {
+			[statePath]: previewState,
+			"/previews/s": { url: "https://share.link", hasPreviewImage: false },
+		}
+		const { handlers, fetch } = setup(session, responses)
+		await handlers.getState()
+		responses[statePath] = {
+			...previewState,
+			csrf: "new-csrf-token",
+			previewState: { ...previewState.previewState, title: "Summer launch" },
+		}
+
+		await handlers.share("https://example.com/")
+
+		const [url] = fetch.mock.calls.find(([url]) => url.startsWith("/previews/s?")) as [string]
+		expect(new URL(url, "https://example.prismic.io").searchParams.get("title")).toBe(
+			"Summer launch",
+		)
+		expect(new URL(url, "https://example.prismic.io").searchParams.get("_")).toBe("new-csrf-token")
+	})
+
 	it("fails without an active session, and retries after a failure", async () => {
 		const { handlers } = setup({})
 		await expect(handlers.share("https://example.com/")).rejects.toThrow(
