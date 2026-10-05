@@ -4,6 +4,7 @@ node_modules/
 # Build
 build/
 .next/
+.vercel/
 next-env.d.ts
 *.tsbuildinfo
 

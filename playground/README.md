@@ -24,4 +24,12 @@ Locally, the toolbar's hidden iframe still loads from the repository host, for t
 
 ## Vercel
 
-Create a Vercel project from this repository with `playground` as its root directory. Vercel deploys `master` to production and every branch as a preview.
+The `prismic-toolbar-playground` project on the Prismic team serves https://prismic-toolbar-playground.vercel.app. Connect it to this repository with `playground` as its root directory, so Vercel deploys `master` to production and every branch as a preview.
+
+Until then, deploy by hand from this folder:
+
+```sh
+vercel deploy --prod --scope prismic
+```
+
+A deployment made this way loads the released toolbar. Set `TOOLBAR_SRC` on the project to test a pull request's build.
