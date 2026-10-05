@@ -44,16 +44,12 @@ export function demolishCookie(name: string, options: CookieAttributes = {}) {
 	)
 }
 
-// Browsers treat loopback as a secure context, so `Secure` cookies are stored
-// there over plain http. Gating on the protocol alone leaves a dev server in a
-// cross-site iframe writing `SameSite=Lax`, which the browser drops — the
-// embedded preview then never settles its ref and reload-loops.
+// Loopback hosts are secure contexts, so `Secure` cookies hold there over plain http. A local dev
+// server in a cross-site iframe would otherwise write `SameSite=Lax`, which the browser drops.
 function isPotentiallyTrustworthy(): boolean {
-	if (window.location.protocol === "https:") return true
-
-	const { hostname } = window.location
-
+	const { protocol, hostname } = window.location
 	return (
+		protocol === "https:" ||
 		hostname === "localhost" ||
 		hostname.endsWith(".localhost") ||
 		hostname === "127.0.0.1" ||
