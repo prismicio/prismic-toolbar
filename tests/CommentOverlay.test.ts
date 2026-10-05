@@ -6,8 +6,8 @@ import {
 	draftPinIdentity,
 	type MessageHandler,
 	type SubscribeToMessages,
-} from "../message-protocol"
-import { CommentOverlay } from "./CommentOverlay"
+} from "../src/toolbar/embedded-preview/message-protocol"
+import { CommentOverlay } from "../src/toolbar/embedded-preview/overlay/CommentOverlay"
 
 const subscribers = new Set<MessageHandler>()
 const postMessage = vi.fn()

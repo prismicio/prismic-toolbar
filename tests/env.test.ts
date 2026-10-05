@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import { detectMode, findRepositoryHost, parseRepositoryHost, repositoryOrigin } from "./env"
+import {
+	detectMode,
+	findRepositoryHost,
+	parseRepositoryHost,
+	repositoryOrigin,
+} from "../src/core/env"
 
 afterEach(() => {
 	document.head.innerHTML = ""

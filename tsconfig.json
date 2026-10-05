@@ -1,24 +1,20 @@
 {
 	"compilerOptions": {
-		"target": "ES2020",
-		"lib": ["ES2020", "DOM", "DOM.Iterable"],
-		"module": "ESNext",
-		"moduleResolution": "bundler",
-		"isolatedModules": true,
 		"strict": true,
-		"allowJs": false,
-		"noEmit": true,
+		"skipLibCheck": true,
+
+		"target": "esnext",
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"resolveJsonModule": true,
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+
+		"forceConsistentCasingInFileNames": true,
 		"jsx": "react-jsx",
 		"jsxImportSource": "preact",
-		"resolveJsonModule": true,
-		"types": ["vite/client"],
-		"paths": {
-			"~/*": ["./src/*"],
-			"@common": ["./src/common/index.ts"],
-			"@common/*": ["./src/common/*"],
-			"@toolbar/*": ["./src/toolbar/*"]
-		},
-		"skipLibCheck": true
+		"lib": ["esnext", "dom", "dom.iterable"],
+		"types": ["node", "vite/client"]
 	},
-	"include": ["src"]
+	"exclude": ["node_modules", "build", "playground"]
 }

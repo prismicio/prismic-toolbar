@@ -1,5 +1,5 @@
 import Cookies from "js-cookie"
-import { afterEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
 import {
 	claimOwnership,
@@ -7,12 +7,8 @@ import {
 	ownerCookieName,
 	readOwner,
 	releaseOwnership,
-} from "./owner-marker"
-import { parseSiteCookie } from "./site-cookie"
-
-afterEach(() => {
-	Cookies.remove(ownerCookieName, { path: "/" })
-})
+} from "../src/core/owner-marker"
+import { parseSiteCookie } from "../src/core/site-cookie"
 
 describe("owner marker", () => {
 	it("round-trips a claim and its release", () => {

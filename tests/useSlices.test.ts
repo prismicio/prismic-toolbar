@@ -3,8 +3,8 @@ import { useLayoutEffect } from "preact/hooks"
 import { act } from "preact/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import type { Slice } from "./slice-overlay-geometry"
-import { useSlices } from "./useSlices"
+import type { Slice } from "../src/toolbar/embedded-preview/overlay/slice-overlay-geometry"
+import { useSlices } from "../src/toolbar/embedded-preview/overlay/useSlices"
 
 let slices: Slice[]
 let publications = 0

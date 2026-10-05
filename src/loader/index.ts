@@ -1,14 +1,14 @@
-import { connectBridge } from "~/core/bridge"
-import { loadChunk, type EmbeddedPreviewOptions } from "~/core/chunks"
-import { createEmbeddedPush } from "~/core/embedded-push"
+import { connectBridge } from "../core/bridge"
+import { loadChunk, type EmbeddedPreviewOptions } from "../core/chunks"
+import { createEmbeddedPush } from "../core/embedded-push"
 import {
 	detectMode,
 	findRepositoryHost,
 	repositoryOrigin,
 	warn,
 	type ToolbarMode,
-} from "~/core/env"
-import { createPreviewSession } from "~/core/preview-session"
+} from "../core/env"
+import { createPreviewSession } from "../core/preview-session"
 
 const mode = detectMode()
 const repositoryHost = findRepositoryHost()

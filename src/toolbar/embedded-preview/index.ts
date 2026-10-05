@@ -1,7 +1,5 @@
-import { once, readyDOM } from "@common"
-
-import { registerChunk, type EmbeddedPreviewOptions } from "~/core/chunks"
-
+import { registerChunk, type EmbeddedPreviewOptions } from "../../core/chunks"
+import { readyDOM } from "../../core/dom"
 import { isAckMessage, isSetRefMessage, readyMessage } from "./message-protocol"
 import type { MessageHandler, PostMessage } from "./message-protocol"
 import { EmbeddedPreviewOverlay } from "./overlay"
@@ -30,17 +28,13 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 		})
 	}
 
-	const connect = once((event: MessageEvent<unknown>) => {
-		const postMessage: PostMessage = (message) => window.parent.postMessage(message, event.origin)
-
-		new EmbeddedPreviewOverlay({
-			postMessage,
-			subscribeToMessages,
-		})
-	})
-
+	let connected = false
 	subscribeToMessages((event) => {
-		if (isAckMessage(event.data)) connect(event)
+		if (connected || !isAckMessage(event.data)) return
+
+		connected = true
+		const postMessage: PostMessage = (message) => window.parent.postMessage(message, event.origin)
+		new EmbeddedPreviewOverlay({ postMessage, subscribeToMessages })
 	})
 
 	const handleMessage = (event: MessageEvent<unknown>) => {

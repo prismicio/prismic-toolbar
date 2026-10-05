@@ -1,5 +1,4 @@
-import { loadScript } from "@common"
-
+import { loadScript } from "./dom"
 import type { PreviewSession } from "./preview-session"
 
 export interface MountToolbarOptions {

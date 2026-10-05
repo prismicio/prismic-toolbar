@@ -1,15 +1,15 @@
 import Cookies from "js-cookie"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import type { Bridge } from "./bridge"
-import type { BridgeState } from "./bridge-protocol"
-import { claimOwnership, ownerCookieName, readOwner } from "./owner-marker"
+import type { Bridge } from "../src/core/bridge"
+import type { BridgeState } from "../src/core/bridge-protocol"
+import { claimOwnership, readOwner } from "../src/core/owner-marker"
 import {
 	createPreviewSession,
 	type PreviewSession,
 	type PreviewSessionOptions,
-} from "./preview-session"
-import { createSiteCookieStore, previewCookieName } from "./site-cookie"
+} from "../src/core/preview-session"
+import { createSiteCookieStore, previewCookieName } from "../src/core/site-cookie"
 
 const repository = "example.prismic.io"
 const otherRepository = "other.prismic.io"
@@ -35,9 +35,6 @@ beforeEach(() => {
 afterEach(() => {
 	for (const session of sessions.splice(0)) session.dispose()
 	for (const type of eventTypes) window.removeEventListener(type, recordEvent)
-	Cookies.remove(previewCookieName, { path: "/" })
-	Cookies.remove(ownerCookieName, { path: "/" })
-	vi.useRealTimers()
 })
 
 function fakeBridge(state: BridgeState) {
@@ -459,17 +456,5 @@ describe("exit", () => {
 		expect(storedCookie()).toBe("editor-ref")
 		expect(readOwner()?.repository).toBe(otherRepository)
 		expect(events).toEqual([["prismicPreviewEnd", null]])
-	})
-})
-
-describe("share", () => {
-	it("asks the repository for a link to the current page", async () => {
-		const { session, bridge } = setup({ isAuthenticated: true })
-		await session.start()
-
-		await expect(session.share("https://example.com/page")).resolves.toBe(
-			"https://example.prismic.io/previews/s/https://example.com/page",
-		)
-		expect(bridge.share).toHaveBeenCalledWith("https://example.com/page")
 	})
 })

@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest"
 
-import { servePort } from "~/iframe/server"
-
-import { createBridgeClient } from "./bridge"
-import type { BridgeMethods } from "./bridge-protocol"
+import { createBridgeClient } from "../src/core/bridge"
+import type { BridgeMethods } from "../src/core/bridge-protocol"
+import { servePort } from "../src/iframe/server"
 
 const channels: MessageChannel[] = []
 afterEach(() => {

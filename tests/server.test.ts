@@ -1,12 +1,7 @@
 import Cookies from "js-cookie"
-import { afterEach, describe, expect, it, vi } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 
-import { createBridgeHandlers, sessionCookieName } from "./server"
-
-afterEach(() => {
-	for (const name of Object.keys(Cookies.get())) Cookies.remove(name, { path: "/" })
-	vi.unstubAllGlobals()
-})
+import { createBridgeHandlers, sessionCookieName } from "../src/iframe/server"
 
 /** Sets cookies on the repository host and answers Prismic requests by path. */
 function setup(cookies: Record<string, string>, responses: Record<string, unknown> = {}) {

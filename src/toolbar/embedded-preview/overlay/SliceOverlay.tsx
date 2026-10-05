@@ -1,6 +1,6 @@
-import { useStableCallback } from "@toolbar/support/react"
 import { useLayoutEffect, useMemo, useState } from "preact/hooks"
 
+import { useStableCallback } from "../../support/react"
 import { createSelectSliceMessage } from "../message-protocol"
 import type { PostMessage } from "../message-protocol"
 import { findSliceAtElement } from "./slice-overlay-geometry"

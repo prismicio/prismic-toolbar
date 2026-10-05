@@ -1,14 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { setupEmbeddedPreview } from "./index"
-import { draftPinIdentity, type PostMessage, type SubscribeToMessages } from "./message-protocol"
+import { setupEmbeddedPreview } from "../src/toolbar/embedded-preview"
+import {
+	draftPinIdentity,
+	type PostMessage,
+	type SubscribeToMessages,
+} from "../src/toolbar/embedded-preview/message-protocol"
 
 const mocks = vi.hoisted(() => ({
 	setup: vi.fn(),
 	message: vi.fn(),
 	subscribe: vi.fn(),
 }))
-vi.mock("./overlay", () => ({
+vi.mock("../src/toolbar/embedded-preview/overlay", () => ({
 	EmbeddedPreviewOverlay: class {
 		constructor(options: { postMessage: PostMessage; subscribeToMessages: SubscribeToMessages }) {
 			mocks.setup({ postMessage: options.postMessage })

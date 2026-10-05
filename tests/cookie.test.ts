@@ -1,7 +1,7 @@
 import Cookies from "js-cookie"
 import { afterEach, expect, it, vi } from "vitest"
 
-import { deleteCookie, setCookie } from "./cookie"
+import { deleteCookie, setCookie } from "../src/core/cookie"
 
 const topWindow = window.top
 const initialLocation = window.location
@@ -9,7 +9,6 @@ const initialLocation = window.location
 afterEach(() => {
 	Object.defineProperty(window, "top", { value: topWindow, configurable: true })
 	Object.defineProperty(window, "location", { value: initialLocation, configurable: true })
-	Cookies.remove("toolbar-test", { path: "/" })
 })
 
 it("stores a session cookie, reports whether the browser kept it, and deletes it", () => {

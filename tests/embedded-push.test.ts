@@ -1,9 +1,9 @@
 import Cookies from "js-cookie"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { createEmbeddedPush } from "./embedded-push"
-import { claimOwnership, ownerCookieName, readOwner } from "./owner-marker"
-import { createSiteCookieStore, previewCookieName } from "./site-cookie"
+import { createEmbeddedPush } from "../src/core/embedded-push"
+import { claimOwnership, readOwner } from "../src/core/owner-marker"
+import { createSiteCookieStore, previewCookieName } from "../src/core/site-cookie"
 
 const repository = "example.prismic.io"
 
@@ -22,8 +22,6 @@ beforeEach(() => {
 
 afterEach(() => {
 	window.removeEventListener("prismicPreviewUpdate", recordUpdate)
-	Cookies.remove(previewCookieName, { path: "/" })
-	Cookies.remove(ownerCookieName, { path: "/" })
 })
 
 function setup() {

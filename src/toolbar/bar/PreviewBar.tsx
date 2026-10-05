@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "preact/hooks"
 
-import type { MountToolbarOptions } from "~/core/chunks"
-import type { PreviewSession, PreviewSnapshot } from "~/core/preview-session"
-
+import type { MountToolbarOptions } from "../../core/chunks"
+import type { PreviewSession, PreviewSnapshot } from "../../core/preview-session"
 import { CloseIcon, PrismicLogo } from "./icons"
 
 export function PreviewBar({ session, repositoryHost }: MountToolbarOptions) {

@@ -1,6 +1,6 @@
-import { appendCSS, shadow } from "@common"
 import { render } from "preact"
 
+import { appendCSS, shadow } from "../../../core/dom"
 import type { PostMessage, SubscribeToMessages } from "../message-protocol"
 import { Overlay } from "./Overlay"
 

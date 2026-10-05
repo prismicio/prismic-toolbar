@@ -1,7 +1,7 @@
 import Cookies from "js-cookie"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
-import { watchCookie } from "./cookie-watcher"
+import { watchCookie } from "../src/core/cookie-watcher"
 
 const name = "watched-cookie"
 const stops: (() => void)[] = []
@@ -15,8 +15,6 @@ beforeEach(() => {
 
 afterEach(() => {
 	for (const stop of stops.splice(0)) stop()
-	vi.useRealTimers()
-	Cookies.remove(name, { path: "/" })
 	delete (window as { cookieStore?: unknown }).cookieStore
 })
 

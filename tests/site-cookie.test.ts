@@ -1,16 +1,17 @@
 import Cookies from "js-cookie"
-import { afterEach, describe, expect, it } from "vitest"
+import { describe, expect, it } from "vitest"
 
-import { createSiteCookieStore, parseSiteCookie, previewCookieName, refFor } from "./site-cookie"
+import {
+	createSiteCookieStore,
+	parseSiteCookie,
+	previewCookieName,
+	refFor,
+} from "../src/core/site-cookie"
 
 const repository = "example.prismic.io"
 const otherRepository = "other.prismic.io"
 
 const storedJSON = () => JSON.parse(Cookies.get(previewCookieName) ?? "null")
-
-afterEach(() => {
-	Cookies.remove(previewCookieName, { path: "/" })
-})
 
 describe("parseSiteCookie", () => {
 	it("reads a missing cookie as none", () => {

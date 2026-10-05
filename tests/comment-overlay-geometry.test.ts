@@ -1,6 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import { clamp, getPinDocumentPosition, getPinRectFromPosition } from "./comment-overlay-geometry"
+import {
+	clamp,
+	getPinDocumentPosition,
+	getPinRectFromPosition,
+} from "../src/toolbar/embedded-preview/overlay/comment-overlay-geometry"
 
 beforeEach(() => {
 	vi.spyOn(document.documentElement, "clientWidth", "get").mockReturnValue(1000)

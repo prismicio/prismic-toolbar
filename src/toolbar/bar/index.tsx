@@ -1,8 +1,7 @@
-import { appendCSS, shadow } from "@common"
 import { render } from "preact"
 
-import { registerChunk, type MountToolbarOptions } from "~/core/chunks"
-
+import { registerChunk, type MountToolbarOptions } from "../../core/chunks"
+import { appendCSS, shadow } from "../../core/dom"
 import { PreviewBar } from "./PreviewBar"
 
 import styles from "./bar.css?inline"

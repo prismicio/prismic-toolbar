@@ -1,5 +1,3 @@
-import { readyDOM } from "@common"
-
 import {
 	connectMessageType,
 	isBridgeResponse,
@@ -8,6 +6,7 @@ import {
 	type BridgeMethods,
 	type BridgeState,
 } from "./bridge-protocol"
+import { readyDOM } from "./dom"
 
 export interface Bridge extends BridgeMethods {
 	dispose(): void
