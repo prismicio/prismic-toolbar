@@ -163,13 +163,45 @@ describe("startup", () => {
 	it("notifies once when the editor pushed after the page started loading", async () => {
 		Cookies.set(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart + 1)
-		const { session, reload } = setup(active("session-ref"))
+		const { session, reload, bridge } = setup(active("session-ref"))
 
 		await session.start()
 
 		expect(events).toEqual([["prismicPreviewUpdate", "editor-ref"]])
 		expect(reload).toHaveBeenCalledOnce()
 		expect(storedCookie()).toBe("editor-ref")
+		// The page is unloading: it must not start polling.
+		expect(session.getSnapshot().status).toBe("reloading")
+		await vi.advanceTimersByTimeAsync(3000)
+		expect(bridge.ping).not.toHaveBeenCalled()
+	})
+
+	it("stops starting up when a cookie change reloads the page meanwhile", async () => {
+		const { bridge } = fakeBridge(active("ref-1"))
+		let connected = (_bridge: Bridge) => {}
+		const reload = vi.fn()
+		const session = createPreviewSession({
+			repositoryHost: repository,
+			codec: "json",
+			watchCookie: true,
+			connect: () => new Promise<Bridge>((resolve) => (connected = resolve)),
+			reload,
+			navigationStart,
+		})
+		sessions.push(session)
+		const starting = session.start()
+
+		Cookies.set(previewCookieName, "editor-ref")
+		await vi.advanceTimersByTimeAsync(250)
+		connected(bridge)
+		await starting
+		await vi.advanceTimersByTimeAsync(3000)
+
+		expect(events).toEqual([["prismicPreviewUpdate", "editor-ref"]])
+		expect(reload).toHaveBeenCalledOnce()
+		expect(session.getSnapshot().status).toBe("reloading")
+		expect(storedCookie()).toBe("editor-ref")
+		expect(bridge.ping).not.toHaveBeenCalled()
 	})
 
 	it("ignores a recent push from another repository's editor", async () => {

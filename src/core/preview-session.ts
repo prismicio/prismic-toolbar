@@ -81,6 +81,8 @@ export function createPreviewSession({
 		pollTimer = undefined
 	}
 
+	const isReloading = () => snapshot.status === "reloading"
+
 	function reloadPage() {
 		stopPolling()
 		unwatch?.()
@@ -91,7 +93,7 @@ export function createPreviewSession({
 	/** Notifies the website when the cookie's ref differs from the one it renders. */
 	function reconcile(event: "prismicPreviewStart" | "prismicPreviewUpdate") {
 		const ref = currentRef()
-		if (snapshot.status === "reloading" || ref === renderedRef) return
+		if (isReloading() || ref === renderedRef) return
 
 		renderedRef = ref
 		if (dispatchPreviewEvent(ref === undefined ? "prismicPreviewEnd" : event, ref)) reloadPage()
@@ -159,6 +161,8 @@ export function createPreviewSession({
 			try {
 				bridge = await connect()
 				const state = await bridge.getState()
+				// A cookie change during startup may already be reloading the page.
+				if (isReloading()) return
 				setSnapshot({ authenticated: state.isAuthenticated })
 
 				if (!state.preview) {
@@ -174,6 +178,7 @@ export function createPreviewSession({
 				const cookie = store.read()
 				if (liveOwner(cookie)) {
 					reconcileEditorPush()
+					if (isReloading()) return
 				} else if (refFor(cookie, repositoryHost) !== serverRef) {
 					if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
 					renderedRef = serverRef
