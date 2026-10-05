@@ -16,5 +16,5 @@
 		"lib": ["esnext", "dom", "dom.iterable"],
 		"types": ["node", "vite/client"]
 	},
-	"exclude": ["node_modules", "build", "playground"]
+	"exclude": ["node_modules", "dist", "playground"]
 }

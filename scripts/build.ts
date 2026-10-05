@@ -2,12 +2,12 @@ import { rm } from "node:fs/promises"
 
 import { build } from "vite"
 
-import { entries, entryConfig, type Entry } from "../vite.config"
+import { entries, entryConfig } from "../vite.config"
 
 const development = process.argv.includes("--watch")
 
-await rm("build", { recursive: true, force: true })
+await rm("dist", { recursive: true, force: true })
 
-for (const entry of Object.keys(entries) as Entry[]) {
+for (const entry of entries) {
 	await build(entryConfig(entry, development))
 }

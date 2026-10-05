@@ -55,7 +55,7 @@ jobs:
         if: github.event.action != 'closed'
         # Rebuilt on every push under the same folder, so it must not be cached.
         run: |
-          aws s3 sync "build/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION" \
+          aws s3 sync "dist/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION" \
             --delete \
             --acl public-read \
             --cache-control "no-store"

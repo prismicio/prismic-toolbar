@@ -13,7 +13,7 @@ export const previewCookieName = "io.prismic.preview"
 export const ownerCookieName = "io.prismic.preview.updated"
 export const sessionCookieName = "io.prismic.previewSession"
 
-const toolbarFile = (name: string) => `build/prismic-toolbar/${version}/${name}`
+const toolbarFile = (name: string) => `dist/prismic-toolbar/${version}/${name}`
 
 type PreviewEvent = [type: string, ref: string | null]
 

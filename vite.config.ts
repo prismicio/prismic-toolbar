@@ -8,14 +8,10 @@ import packageJSON from "./package.json" with { type: "json" }
 // Asset folder name. Pull request previews build into `pr-<number>` instead of the version.
 export const version = process.env.TOOLBAR_VERSION || packageJSON.version
 
-export const entries = {
-	prismic: "src/loader/index.ts",
-	"embedded-preview": "src/toolbar/embedded-preview/index.ts",
-	toolbar: "src/toolbar/bar/index.tsx",
-	iframe: "src/iframe/index.ts",
-}
+/** Each entry builds `src/<entry>.ts` into `<entry>.js`. */
+export const entries = ["prismic", "embedded-preview", "toolbar", "iframe"] as const
 
-export type Entry = keyof typeof entries
+export type Entry = (typeof entries)[number]
 
 const oxc = { jsx: { runtime: "automatic", importSource: "preact" } } as const
 
@@ -40,7 +36,7 @@ const inlineIframeScript: Plugin = {
 		const script = bundle["iframe.js"]
 		if (script?.type !== "chunk") throw new Error("Missing iframe script")
 
-		const template = readFileSync("src/iframe/index.html", "utf8")
+		const template = readFileSync("src/iframe.html", "utf8")
 		this.emitFile({
 			type: "asset",
 			fileName: "iframe.html",
@@ -60,11 +56,11 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 		oxc,
 		define: defines(development),
 		build: {
-			outDir: `build/prismic-toolbar/${version}`,
+			outDir: `dist/prismic-toolbar/${version}`,
 			emptyOutDir: false,
 			// No module loader or shared chunks on customer pages: the CDN sends no CORS headers.
 			lib: {
-				entry: entries[entry],
+				entry: `src/${entry}.ts`,
 				formats: ["iife"],
 				name: `PrismicToolbar_${entry.replace(/\W/g, "_")}`,
 				fileName: () => `${entry}.js`,
@@ -88,7 +84,7 @@ export default defineConfig({
 		coverage: {
 			provider: "v8",
 			reporter: ["lcovonly", "text"],
-			include: ["src"],
+			include: ["src/**/*.{ts,tsx}"],
 		},
 	},
 })

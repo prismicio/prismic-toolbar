@@ -8,7 +8,7 @@ import {
 	type BridgeMethods,
 	type BridgeResponse,
 	type BridgeState,
-} from "../core/bridge-protocol"
+} from "../lib/bridge-protocol"
 
 /** Set by Prismic on the repository host when a preview session starts. */
 export const sessionCookieName = "io.prismic.previewSession"

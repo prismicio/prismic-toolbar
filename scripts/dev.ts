@@ -17,7 +17,7 @@ if (!existsSync("playground/node_modules")) {
 
 // Ctrl+C reaches every process started from the terminal, so these stop with this script.
 run("npx tsx scripts/build.ts --watch")
-run("npx http-server build -p 8081 -g -c-1")
+run("npx http-server dist -p 8081 -g -c-1")
 run("npm run dev --prefix playground", {
 	TOOLBAR_SRC: `http://localhost:8081/prismic-toolbar/${version}/prismic.js`,
 })

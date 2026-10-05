@@ -8,7 +8,7 @@ This package is primarily maintained by [Prismic](https://prismic.io)[^1]. Exter
 
 The following setup is required to work on this project:
 
-- Node.js 24
+- Node.js 26
 - npm CLI
 
 ## :memo: Project-specific notes
@@ -18,17 +18,17 @@ The following setup is required to work on this project:
 
 #### Architecture
 
-The build outputs four files to `build/prismic-toolbar/<version>/`:
+Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<version>/`. A folder of the same name holds its code:
 
-| File                  | Source                         | Loaded                                                |
-| --------------------- | ------------------------------ | ----------------------------------------------------- |
-| `prismic.js`          | `src/loader`                   | On every page, by the install snippet                 |
-| `toolbar.js`          | `src/toolbar/bar`              | Only while a preview session is active                |
-| `embedded-preview.js` | `src/toolbar/embedded-preview` | Only inside the Prismic editor's preview iframe       |
-| `iframe.html`         | `src/iframe`                   | Hidden, from the repository host, to read its cookies |
+| Entry                     | Loaded                                                | Code                                               |
+| ------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
+| `src/prismic.ts`          | On every page, by the install snippet                 | `src/lib`                                          |
+| `src/toolbar.ts`          | Only while a preview session is active                | `src/toolbar`: the preview bar                     |
+| `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe       | `src/embedded-preview`: comment and slice overlays |
+| `src/iframe.ts`           | Hidden, from the repository host, to read its cookies | `src/iframe`, inlined into `src/iframe.html`       |
 
-- Each file is a self-contained classic script. The CDN sends no CORS headers, so the loader loads the other bundles as classic scripts, and they register on `window.__prismicToolbar`.
-- `src/core` holds the loader's logic. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `embedded-push.ts` handles refs the editor pushes into its preview iframe.
+- Each file is a self-contained classic script. The CDN sends no CORS headers, so `prismic.js` loads the other bundles as classic scripts, and they register on `window.__prismicToolbar`.
+- `src/lib` holds the logic of `prismic.js` and code the bundles share. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `embedded-push.ts` handles refs the editor pushes into its preview iframe.
 
 #### Development builds
 
@@ -47,8 +47,9 @@ The build outputs four files to `build/prismic-toolbar/<version>/`:
 
 #### Tests
 
-- Unit tests use [Vitest](https://vitest.dev/) and are named after the file they test, like `tests/preview-session.test.ts`.
-- E2E tests use [Playwright](https://playwright.dev/) and are named after the feature they test, like `tests/previews.spec.ts`. They run the production build at its production URLs against a fake website, repository, and editor, defined in `tests/infra`. They need no Prismic account.
+- Tests are grouped like `src`: one folder per entry, plus `tests/lib`.
+- Unit tests use [Vitest](https://vitest.dev/) and are named after the file they test, like `tests/lib/preview-session.test.ts`.
+- E2E tests use [Playwright](https://playwright.dev/) and are named after the feature they test, like `tests/prismic/previews.spec.ts`. They run the production build at its production URLs against a fake website, repository, and editor, defined in `tests/infra`. They need no Prismic account.
 
 ## :construction_worker: Develop
 
