@@ -34,7 +34,7 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 
 - `node --run dev` builds the toolbar on change, serves it at `http://localhost:8081/prismic-toolbar/<version>/`, and runs the [playground](./playground/README.md) with it at `http://localhost:3000`.
 - Development builds also accept an editor on `localhost` in the embedded preview. Set `TOOLBAR_LOCAL_EDITOR=true` to allow it in a production build.
-- Websites load `iframe.html` from the repository host for the same `<version>`, which only exists on Prismic once released or uploaded as a pull request preview.
+- Websites load `iframe.html` from the repository host, from the same folder as `prismic.js`. Local builds use the `package.json` version, which has no folder on Prismic: set `TOOLBAR_VERSION` to a deployed commit or pull request preview, like `pr-149`, to reuse its iframe.
 - With a local Prismic behind a proxy, set `CDN_HOST` so bundles load through it, and qualify the repository with the proxy domain:
 
   ```sh
@@ -131,9 +131,9 @@ gh pr create
 > [!CAUTION]
 > Publishing is restricted to the Prismic team.[^4]
 
-Merging to `master` deploys to production when `package.json` has a new version: bump it in the pull request that should ship. CI uploads the versioned files, publishes `prismic.js` at the public URL, and invalidates the CDN.
+Merging to `master` deploys to production when it changes the toolbar. CI uploads the build to `prismic.io/prismic-toolbar/<commit>/`, named after the commit's first 8 characters, publishes its `prismic.js` at the public URL, and invalidates the CDN.
 
-To roll back, run the [Rollback workflow](https://github.com/prismicio/prismic-toolbar/actions/workflows/rollback.yml) with a previous version.
+To roll back, run the [Rollback workflow](https://github.com/prismicio/prismic-toolbar/actions/workflows/rollback.yml) with a previously deployed commit.
 
 [^1]: This package is maintained by the DevX team. Prismic employees can ask for help or a review in the [#team-devx](https://prismic-team.slack.com/archives/C014VAACCQL) Slack channel.
 

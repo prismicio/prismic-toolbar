@@ -18,7 +18,7 @@ To preview from Prismic, add the playground to the repository's previews, with `
 
 `TOOLBAR_SRC` overrides it. The header shows the script in use.
 
-Locally, the toolbar's hidden iframe still loads from the repository host, for the same version. It only exists there once that version is released or uploaded as a pull request preview, so a local build with a new version cannot reach the preview session. Run `TOOLBAR_VERSION=pr-<number> npm run dev` to reuse a pull request's iframe. The editor's live preview does not need the iframe and works with any local build.
+Locally, the toolbar's hidden iframe still loads from the repository host, from the folder of the build. Local builds use the `package.json` version, which has no folder there, so they cannot reach the preview session. Run `TOOLBAR_VERSION=pr-<number> npm run dev` to reuse a pull request's iframe, or set it to a deployed commit. The editor's live preview does not need the iframe and works with any local build.
 
 `<PrismicPreview>` from `@prismicio/next` always loads the released toolbar, so `src/app/Preview.tsx` mirrors it with a configurable script.
 

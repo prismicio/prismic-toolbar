@@ -5,7 +5,8 @@ import { defineConfig } from "vitest/config"
 
 import packageJSON from "./package.json" with { type: "json" }
 
-// Asset folder name. Pull request previews build into `pr-<number>` instead of the version.
+// Asset folder name: the commit's short SHA in production, `pr-<number>` for pull request previews,
+// and the package version locally.
 export const version = process.env.TOOLBAR_VERSION || packageJSON.version
 
 /** Each entry builds `src/<entry>.ts` into `<entry>.js`. */

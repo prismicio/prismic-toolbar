@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Previously deployed version to restore (e.g. 4.1.9)"
+        description: "Deploy to restore: a commit's first 8 characters (e.g. 1a2b3c4d), or a 4.x version (e.g. 4.1.12)"
         required: true
         type: string
 
