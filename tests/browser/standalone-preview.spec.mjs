@@ -7,8 +7,35 @@ const repository = "preview-repository.test"
 const repositoryURL = `https://${repository}`
 const previewCookie = "io.prismic.preview"
 const sessionCookie = "io.prismic.previewSession"
+const ownerCookie = "io.prismic.preview.updated"
 
-async function setupStandalone({ page, context, request }, initialRef = "ref-1") {
+// Records preview events and cancels them, like a website that loads new refs itself.
+const eventRecorder = `<script>
+	window.previewEvents = []
+	for (const type of ["prismicPreviewStart", "prismicPreviewUpdate", "prismicPreviewEnd"]) {
+		window.addEventListener(type, (event) => {
+			window.previewEvents.push([type, event.detail?.ref ?? null])
+			event.preventDefault()
+		})
+	}
+</script>`
+
+// The toolbar writes a JSON cookie; SDK preview routes and the editor write the raw ref.
+function readPreviewRef(value) {
+	try {
+		return JSON.parse(value)[repository]?.preview
+	} catch {
+		return value
+	}
+}
+
+const previewBar = (page) => page.getByRole("region", { name: "Prismic preview" })
+
+async function setupStandalone(
+	{ page, context, request },
+	initialRef = "ref-1",
+	{ handleEvents = false } = {},
+) {
 	const fixture = await readFile(new URL("../fixtures/standalone.html", import.meta.url), "utf8")
 	const state = { ref: initialRef, loads: [], pings: [], errors: [], unexpectedRequests: [] }
 	page.on("pageerror", (error) => state.errors.push(error.message))
@@ -28,13 +55,15 @@ async function setupStandalone({ page, context, request }, initialRef = "ref-1")
 		if (url.href === siteURL) {
 			const cookies = (await route.request().allHeaders()).cookie || ""
 			const value = cookies.split("; ").find((cookie) => cookie.startsWith(`${previewCookie}=`))
-			const ref =
-				value &&
-				JSON.parse(decodeURIComponent(value.slice(previewCookie.length + 1)))[repository]?.preview
+			const ref = value && readPreviewRef(decodeURIComponent(value.slice(previewCookie.length + 1)))
 			state.loads.push(ref || null)
+			const body = fixture.replace(
+				"__CONTENT__",
+				ref ? `Draft content: ${ref}` : "Published content",
+			)
 			await route.fulfill({
 				contentType: "text/html",
-				body: fixture.replace("__CONTENT__", ref ? `Draft content: ${ref}` : "Published content"),
+				body: handleEvents ? body.replace("<script", `${eventRecorder}<script`) : body,
 			})
 		} else if (/\/(prismic\.js|toolbar\.js|iframe\.html)$/.test(url.pathname)) {
 			// Serve actual build artifacts at their production URLs, including the cross-origin iframe.
@@ -82,7 +111,7 @@ for (const ending of ["close button", "expired session"]) {
 
 		// Initial synchronization must reload the customer page with the preview ref in its request.
 		await expect(page.locator("#content")).toHaveText("Draft content: ref-1")
-		await expect(page.locator(".PreviewMenu")).toBeVisible()
+		await expect(previewBar(page)).toBeVisible()
 		expect(state.loads).toEqual([null, "ref-1"])
 		expect(JSON.parse(await cookieValue(context, siteURL, previewCookie))).toEqual({
 			[repository]: { preview: "ref-1" },
@@ -91,18 +120,19 @@ for (const ending of ["close button", "expired session"]) {
 		// Let the real polling timer, iframe fetch and MessageChannel deliver the new ref.
 		state.ref = "ref-2"
 		await expect(page.locator("#content")).toHaveText("Draft content: ref-2", { timeout: 10_000 })
-		await expect(page.locator(".PreviewMenu")).toBeVisible()
+		await expect(previewBar(page)).toBeVisible()
 		expect(state.pings).toContain("ref-1")
 		expect(state.loads).toEqual([null, "ref-1", "ref-2"])
 		expect(JSON.parse(await cookieValue(context, siteURL, previewCookie))).toEqual({
 			[repository]: { preview: "ref-2" },
 		})
 
-		if (ending === "close button") await page.locator(".PreviewMenu > .x").click()
-		else state.ref = null
+		if (ending === "close button") {
+			await previewBar(page).getByRole("button", { name: "Exit preview" }).click()
+		} else state.ref = null
 
 		await expect(page.locator("#content")).toHaveText("Published content", { timeout: 10_000 })
-		await expect(page.locator(".PreviewMenu")).toHaveCount(0)
+		await expect(previewBar(page)).toHaveCount(0)
 		expect(await cookieValue(context, siteURL, previewCookie)).toBeUndefined()
 		expect(await cookieValue(context, repositoryURL, sessionCookie)).toBeUndefined()
 		expect(state.loads).toEqual([null, "ref-1", "ref-2", null])
@@ -111,7 +141,7 @@ for (const ending of ["close button", "expired session"]) {
 		// A fresh visit must stay out of preview after the repository session is cleared.
 		await page.reload()
 		await expect(page.locator("#content")).toHaveText("Published content")
-		await expect(page.locator(".PreviewMenu")).toHaveCount(0)
+		await expect(previewBar(page)).toHaveCount(0)
 		expect(state.loads).toEqual([null, "ref-1", "ref-2", null, null])
 		expect(state.errors).toEqual([])
 		expect(state.unexpectedRequests).toEqual([])
@@ -139,9 +169,102 @@ test("an inactive standalone session preserves an existing site preview cookie",
 	await expect.poll(() => cookieValue(context, repositoryURL, sessionCookie)).toBeUndefined()
 	expect(await cookieValue(context, siteURL, previewCookie)).toBe(existingPreview)
 	await expect(page.locator("#content")).toHaveText("Draft content: another-tab-ref")
-	await expect(page.locator(".PreviewMenu")).toHaveCount(0)
+	await expect(previewBar(page)).toHaveCount(0)
 	expect(state.loads).toEqual(["another-tab-ref"])
 	expect(state.pings).toEqual([])
+	expect(state.errors).toEqual([])
+	expect(state.unexpectedRequests).toEqual([])
+})
+
+test("a website that handles prismicPreviewStart enters the preview without a reload and keeps polling", async ({
+	page,
+	context,
+	request,
+}) => {
+	const state = await setupStandalone({ page, context, request }, "ref-1", { handleEvents: true })
+	const previewEvents = () => page.evaluate(() => window.previewEvents)
+	await page.goto(siteURL)
+
+	await expect.poll(previewEvents).toEqual([["prismicPreviewStart", "ref-1"]])
+	await expect(previewBar(page)).toBeVisible()
+	expect(JSON.parse(await cookieValue(context, siteURL, previewCookie))).toEqual({
+		[repository]: { preview: "ref-1" },
+	})
+
+	// Polling must start even though the page did not reload into the preview.
+	state.ref = "ref-2"
+	await expect.poll(previewEvents, { timeout: 10_000 }).toEqual([
+		["prismicPreviewStart", "ref-1"],
+		["prismicPreviewUpdate", "ref-2"],
+	])
+	expect(JSON.parse(await cookieValue(context, siteURL, previewCookie))).toEqual({
+		[repository]: { preview: "ref-2" },
+	})
+	expect(state.loads).toEqual([null])
+	expect(state.errors).toEqual([])
+	expect(state.unexpectedRequests).toEqual([])
+})
+
+test("a raw preview cookie that matches the session converts without a reload", async ({
+	page,
+	context,
+	request,
+}) => {
+	const state = await setupStandalone({ page, context, request })
+	await context.addCookies([{ name: previewCookie, value: "ref-1", url: siteURL, sameSite: "Lax" }])
+	await page.goto(siteURL)
+
+	// A ping proves setup finished synchronizing without reloading.
+	await expect.poll(() => state.pings, { timeout: 10_000 }).toContain("ref-1")
+	await expect(previewBar(page)).toBeVisible()
+	expect(state.loads).toEqual(["ref-1"])
+	expect(JSON.parse(await cookieValue(context, siteURL, previewCookie))).toEqual({
+		[repository]: { preview: "ref-1" },
+	})
+	expect(state.errors).toEqual([])
+	expect(state.unexpectedRequests).toEqual([])
+})
+
+test("a website tab follows editor pushes without overwriting them, and exit clears them", async ({
+	page,
+	context,
+	request,
+}) => {
+	const state = await setupStandalone({ page, context, request }, "ref-1", { handleEvents: true })
+	const previewEvents = () => page.evaluate(() => window.previewEvents)
+	await page.goto(siteURL)
+	await expect.poll(previewEvents).toEqual([["prismicPreviewStart", "ref-1"]])
+
+	// The editor's preview iframe shares this cookie jar: it marks its ref, then stores it.
+	const pushEditorRef = (ref) =>
+		context.addCookies([
+			{
+				name: ownerCookie,
+				value: encodeURIComponent(JSON.stringify({ version: 2, repository, ref, at: Date.now() })),
+				url: siteURL,
+			},
+			{ name: previewCookie, value: ref, url: siteURL },
+		])
+	await pushEditorRef("editor-1")
+	await expect.poll(previewEvents).toContainEqual(["prismicPreviewUpdate", "editor-1"])
+
+	// New session refs and unchanged ones must both leave the editor's ref in place.
+	const pings = state.pings.length
+	state.ref = "ref-2"
+	await expect.poll(() => state.pings.length, { timeout: 10_000 }).toBeGreaterThan(pings + 1)
+	expect(await cookieValue(context, siteURL, previewCookie)).toBe("editor-1")
+
+	await pushEditorRef("editor-2")
+	await expect.poll(previewEvents).toContainEqual(["prismicPreviewUpdate", "editor-2"])
+	expect((await previewEvents()).map(([, ref]) => ref)).not.toContain("ref-2")
+
+	await previewBar(page).getByRole("button", { name: "Exit preview" }).click()
+	await expect.poll(() => cookieValue(context, siteURL, previewCookie)).toBeUndefined()
+	expect(await cookieValue(context, siteURL, ownerCookie)).toBeUndefined()
+	expect(await cookieValue(context, repositoryURL, sessionCookie)).toBeUndefined()
+	expect((await previewEvents()).at(-1)).toEqual(["prismicPreviewEnd", null])
+	await expect(previewBar(page)).toHaveCount(0)
+	expect(state.loads).toEqual([null])
 	expect(state.errors).toEqual([])
 	expect(state.unexpectedRequests).toEqual([])
 })

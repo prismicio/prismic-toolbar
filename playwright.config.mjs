@@ -8,7 +8,8 @@ export default defineConfig({
 		trace: "retain-on-failure",
 	},
 	webServer: {
-		command: "CDN_HOST=http://localhost:8082 npm run build && node tests/fixtures/server.mjs",
+		command:
+			"CDN_HOST=http://localhost:8082 TOOLBAR_LOCAL_EDITOR=true npm run build && node tests/fixtures/server.mjs",
 		url: "http://localhost:8082",
 		reuseExistingServer: false,
 	},

@@ -1,48 +1,69 @@
 import { test, expect } from "@playwright/test"
 
-test("classic toolbar bundle: panels, tabs, collapsibles, JSON tree and preview controls", async ({
+test("preview bar: title, live status, share link and exit, isolated from page styles", async ({
 	page,
 }, testInfo) => {
 	const errors = []
 	page.on("pageerror", (error) => errors.push(error.message))
-	// Exercise copy behavior without writing to the developer's system clipboard.
+	// Exercise copying without writing to the developer's system clipboard.
 	await page.addInitScript(() => {
 		Object.defineProperty(navigator, "clipboard", {
 			value: {
 				writeText: async (text) => {
-					window.fixture.copiedText = text
+					window.copiedText = text
 				},
 			},
 		})
 	})
 	await page.goto("/toolbar.html")
-	await expect(page.locator(".PreviewMenu")).toBeVisible()
+
+	const bar = page.getByRole("region", { name: "Prismic preview" })
+	await expect(bar).toContainText("Spring launch")
+	await expect(bar).toContainText("Live preview")
 	await expect(page.locator("#host-sentinel")).toHaveCSS("color", "rgb(255, 0, 0)")
-	await expect(page.locator(".Toolbar")).toHaveCSS("position", "fixed")
-	await page.locator("#prismic-toolbar-v2 .Menu").click()
-	await expect(page.getByRole("link", { name: /Fixture page/ })).toBeVisible()
-	await page.getByRole("tab", { name: "Dev Mode" }).click()
-	await page.getByText("page (1)", { exact: true }).click()
-	await expect(page.getByText('"Hello"', { exact: true })).toBeVisible()
-	await page.locator(".key-object").filter({ hasText: "nested:" }).click()
-	await expect(page.getByText('"Nested value"', { exact: true })).toBeVisible()
-	const nested = page.locator(".json-view-container").filter({ hasText: '"Nested value"' })
-	await nested.hover()
-	await nested.getByText("Copy", { exact: true }).click()
-	await expect(nested.getByText("Copied", { exact: true })).toBeVisible()
-	expect(await page.evaluate(() => window.fixture.copiedText)).toBe("data.nested.value")
-	await page.getByRole("heading", { name: "page", exact: true }).click()
-	await page.locator(".key-object").filter({ hasText: "page:" }).click()
-	await expect(page.getByText('"GraphQL value"', { exact: true })).toBeVisible()
-	await page.screenshot({ path: testInfo.outputPath("toolbar-devmode.png") })
-	await page.locator(".PreviewMenu .docs").click()
-	await expect(page.locator(".PreviewPanel")).toContainText("1 document to preview")
-	await page.locator(".PreviewMenu .share").click()
-	await expect(page.locator(".SharePanel")).toContainText("https://example.test/share")
-	await page.locator(".PreviewMenu > .x").click()
-	await expect(page.locator(".PreviewMenu")).toHaveCount(0)
-	expect(await page.evaluate(() => window.fixture.ended)).toBe(true)
+	await expect(bar.locator(".title")).not.toHaveCSS("color", "rgb(255, 0, 0)")
+	await expect(bar.getByRole("link", { name: "Open the repository in Prismic" })).toHaveAttribute(
+		"href",
+		"https://fixture.prismic.io/",
+	)
+	await page.screenshot({ path: testInfo.outputPath("preview-bar.png") })
+
+	await bar.getByRole("button", { name: "Copy share link" }).click()
+	await expect(bar.getByRole("button", { name: "Link copied" })).toBeVisible()
+	expect(await page.evaluate(() => window.copiedText)).toBe(
+		"https://fixture.prismic.io/previews/s/abc",
+	)
+
+	// When the browser refuses to copy, the link is shown to copy by hand.
+	await page.evaluate(() => {
+		navigator.clipboard.writeText = async () => {
+			throw new Error("Denied")
+		}
+	})
+	await bar.getByRole("button", { name: "Copy share link" }).click()
+	await expect(bar.getByRole("textbox", { name: "Share link" })).toHaveValue(
+		"https://fixture.prismic.io/previews/s/abc",
+	)
+
+	await page.evaluate(() =>
+		window.fixture.setSnapshot({ ...window.fixtureSession.getSnapshot(), status: "reloading" }),
+	)
+	await expect(bar).toContainText("Updating…")
+
+	await bar.getByRole("button", { name: "Exit preview" }).click()
+	await expect(bar).toHaveCount(0)
+	expect(await page.evaluate(() => window.fixture.exits)).toBe(1)
 	expect(errors).toEqual([])
+})
+
+test("preview bar for share link visitors offers no share link", async ({ page }) => {
+	await page.goto("/toolbar.html?auth=false")
+
+	const bar = page.getByRole("region", { name: "Prismic preview" })
+	await expect(bar.getByRole("link", { name: "Powered by Prismic" })).toBeVisible()
+	await expect(bar.getByRole("button", { name: "Copy share link" })).toHaveCount(0)
+	await expect(bar.getByRole("link", { name: "Open the repository in Prismic" })).toHaveCount(0)
+	await expect(bar.getByRole("button", { name: "Exit preview" })).toBeVisible()
 })
 
 test("embedded overlay: handshake, pin selection, placement, scale, scroll and draft", async ({
@@ -186,7 +207,7 @@ test("regular pages do not load embedded preview", async ({ page }) => {
 	page.on("request", (request) => requests.push(request.url()))
 	await mockPreviewService(page, calls)
 	await page.goto("/site.html")
-	await expect.poll(() => calls).toContain("close_preview_session")
+	await expect.poll(() => calls).toContain("closeSession")
 	expect(requests.some((url) => url.endsWith("/embedded-preview.js"))).toBe(false)
 })
 
@@ -260,7 +281,7 @@ for (const active of [true, false]) {
 		await expect(page.frameLocator("iframe").locator('[data-thread-id="first"]')).toBeVisible()
 		expect(calls).toEqual([])
 		releaseService()
-		await expect.poll(() => calls).toContain(active ? "update_preview" : "close_preview_session")
+		await expect.poll(() => calls).toContain(active ? "ping" : "closeSession")
 		await page.getByRole("button", { name: "Update preview ref" }).click()
 		// A later overlay message proves the preceding set-ref message was processed.
 		await page.getByRole("button", { name: "Scale overlay" }).click()
@@ -276,37 +297,123 @@ for (const active of [true, false]) {
 }
 
 async function mockPreviewService(page, calls, ref, ready = Promise.resolve()) {
-	await page.exposeFunction("recordPreviewCall", (type) => calls.push(type))
+	await page.exposeFunction("recordPreviewCall", (method) => calls.push(method))
 	await page.route("**/prismic-toolbar/*/iframe.html", async (route) => {
 		await ready
 		await route.fulfill({
 			contentType: "text/html",
 			body: `<script>
 				window.addEventListener("message", (event) => {
-					if (event.data !== "setup_port") return;
+					if (event.data?.type !== "prismic-toolbar:connect") return;
 					const port = event.ports[0];
-					port.onmessage = ({ data: { type } }) => {
-						window.recordPreviewCall(type);
-						const ref = ${JSON.stringify(ref ?? null)};
-						const data = type === "preview_state"
-							? { auth: false, preview: { ref } }
-							: type === "update_preview" ? { ref, reload: false } : null;
-						port.postMessage({ type, data });
+					const ref = ${JSON.stringify(ref ?? null)};
+					port.onmessage = ({ data: { id, method } }) => {
+						window.recordPreviewCall(method);
+						const result = method === "getState"
+							? (ref ? { isAuthenticated: false, preview: { ref, title: "Fixture" } } : { isAuthenticated: false })
+							: method === "ping" ? { ref } : null;
+						port.postMessage({ id, result });
 					};
-					port.postMessage("ready");
+					port.postMessage({ type: "prismic-toolbar:ready" });
 				});
 			</script>`,
 		})
 	})
 }
 
-test("inline auth iframe accepts a MessageChannel connection and returns preview state", async ({
-	page,
-}) => {
+test("repository iframe answers bridge requests over a MessageChannel", async ({ page }) => {
 	const errors = []
 	page.on("pageerror", (error) => errors.push(error.message))
 	await page.goto("/auth.html")
-	await expect(page.locator("#state")).toContainText('"auth":false')
-	await expect(page.locator("#state")).toContainText('"type":"preview_state"')
+	// Without session or sign-in cookies, the iframe answers without calling Prismic.
+	await expect(page.locator("#state")).toHaveText('{"id":1,"result":{"isAuthenticated":false}}')
 	expect(errors).toEqual([])
+})
+
+test("editor refs sent with reload: false update a site without listeners in place", async ({
+	page,
+}) => {
+	const siteLoads = []
+	page.on("request", (request) => {
+		if (new URL(request.url()).pathname === "/site.html") siteLoads.push(request.url())
+	})
+	// Record updates without cancelling them, like a website that does not handle preview events.
+	await page.route("**/site.html", async (route) => {
+		const response = await route.fetch()
+		await route.fulfill({
+			response,
+			body: (await response.text()).replace(
+				'window.addEventListener("prismicPreviewUpdate", (event) => event.preventDefault())',
+				'window.addEventListener("prismicPreviewUpdate", (event) => (window.previewUpdates ||= []).push(event.detail.ref))',
+			),
+		})
+	})
+	await page.goto("/overlay.html")
+	await expect(page.frameLocator("iframe").locator('[data-thread-id="first"]')).toBeVisible()
+	const site = page.frame({ name: "prismic:embedded-preview" })
+	const send = (data) =>
+		page.evaluate(
+			(data) => document.querySelector("iframe").contentWindow.postMessage(data, location.origin),
+			data,
+		)
+	const cookies = async () =>
+		Object.fromEntries(
+			(await page.context().cookies()).map((cookie) => [
+				cookie.name,
+				decodeURIComponent(cookie.value),
+			]),
+		)
+
+	await send({ type: "prismic:embedded-preview:set-ref", token: "live-1", reload: false })
+	await send({ type: "prismic:embedded-preview:set-ref", token: "live-1", reload: false })
+	await send({ type: "prismic:embedded-preview:set-ref", token: "live-2", reload: false })
+	await expect.poll(() => site.evaluate(() => window.previewUpdates)).toEqual(["live-1", "live-2"])
+	expect(siteLoads).toHaveLength(1)
+	const pushed = await cookies()
+	expect(pushed["io.prismic.preview"]).toBe("live-2")
+	// Website tabs read this marker to leave the editor's ref alone.
+	expect(JSON.parse(pushed["io.prismic.preview.updated"])).toMatchObject({
+		version: 2,
+		repository: "fixture.prismic.io",
+		ref: "live-2",
+	})
+
+	// Refs without the flag keep the reload fallback for websites that do not handle the event.
+	await send({ type: "prismic:embedded-preview:set-ref", token: "legacy-1" })
+	await expect.poll(() => siteLoads).toHaveLength(2)
+	const legacy = await cookies()
+	expect(legacy["io.prismic.preview"]).toBe("legacy-1")
+	expect(legacy["io.prismic.preview.updated"]).toBeUndefined()
+})
+
+test("embedded polling on a loopback site in a cross-site editor stores its cookie and settles", async ({
+	page,
+}) => {
+	const calls = []
+	const siteLoads = []
+	await mockPreviewService(page, calls, "poll-ref")
+	// The routed editor page counts as public, so Chromium asks before it frames a local site.
+	await page.context().grantPermissions(["local-network-access"])
+	// localhost and 127.0.0.1 are different sites, so this frames the site cross-site over plain
+	// http, like a local dev server previewed from the hosted editor.
+	await page.route("http://127.0.0.1:8082/editor.html", (route) =>
+		route.fulfill({
+			contentType: "text/html",
+			body: '<iframe name="prismic:embedded-preview:poll" src="http://localhost:8082/site.html"></iframe>',
+		}),
+	)
+	page.on("request", (request) => {
+		if (request.url() === "http://localhost:8082/site.html") siteLoads.push(request.url())
+	})
+
+	await page.goto("http://127.0.0.1:8082/editor.html")
+
+	// A dropped cookie write makes every load sync and reload again, so polling never starts.
+	await expect.poll(() => calls, { timeout: 10_000 }).toContain("ping")
+	expect(siteLoads).toHaveLength(2)
+	expect(
+		(await page.context().cookies("http://localhost:8082")).find(
+			(cookie) => cookie.name === "io.prismic.preview",
+		),
+	).toMatchObject({ value: "poll-ref", sameSite: "None", secure: true })
 })

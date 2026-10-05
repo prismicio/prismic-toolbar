@@ -1,15 +1,22 @@
 <!doctype html>
 <meta charset="utf-8" />
-<title>Auth iframe fixture</title>
+<title>Repository iframe fixture</title>
 <iframe src="/prismic-toolbar/__VERSION__/iframe.html"></iframe>
 <output id="state">Waiting for iframe</output>
 <script>
 	document.querySelector("iframe").onload = (event) => {
 		const channel = new MessageChannel()
-		channel.port1.onmessage = (message) => {
-			if (message.data === "ready") channel.port1.postMessage({ type: "preview_state" })
-			else document.querySelector("#state").textContent = JSON.stringify(message.data)
+		channel.port1.onmessage = ({ data }) => {
+			if (data.type === "prismic-toolbar:ready") {
+				channel.port1.postMessage({ id: 1, method: "getState", params: [] })
+			} else {
+				document.querySelector("#state").textContent = JSON.stringify(data)
+			}
 		}
-		event.target.contentWindow.postMessage("setup_port", "*", [channel.port2])
+		// Unrelated messages, such as those from browser extensions, are ignored.
+		event.target.contentWindow.postMessage("noise", "*")
+		event.target.contentWindow.postMessage({ type: "prismic-toolbar:connect" }, "*", [
+			channel.port2,
+		])
 	}
 </script>
