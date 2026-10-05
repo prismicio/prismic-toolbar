@@ -55,6 +55,12 @@
 				"no-undef": "off",
 				"prefer-const": "error"
 			}
+		},
+		{
+			"files": ["tests/infra/**"],
+			"rules": {
+				"react/rules-of-hooks": "off"
+			}
 		}
 	],
 	"ignorePatterns": ["playground/.next", "playground/next-env.d.ts"]

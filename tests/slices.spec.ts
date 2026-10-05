@@ -1,18 +1,51 @@
-import { expect, test } from "@playwright/test"
+import { comments, type Editor, expect, test } from "./infra"
 
-test.beforeEach(async ({ page }) => {
-	await page.goto("/overlay.html")
-	await expect(page.frameLocator("iframe").locator('[data-thread-id="first"]')).toBeVisible()
+test.beforeEach(async ({ editor }) => {
+	await editor.goto({ comments })
+	await expect(editor.preview.locator('[data-thread-id="first"]')).toBeVisible()
 })
 
-test("highlight refreshes position-only changes on pointer movement", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	const slice = site.locator("#first-slice")
-	const highlight = site.locator(".slice-highlight")
+const sliceSelections = (editor: Editor) => editor.messages("select-slice")
+
+const selected = (sliceId: string) => ({ type: "prismic:embedded-preview:select-slice", sliceId })
+
+test("highlights and selects slices, following the overlay's scale and scroll", async ({
+	editor,
+}) => {
+	const highlight = editor.overlay.locator(".slice-highlight")
+	const slice = editor.preview.locator("#first-slice")
+
+	await slice.hover({ position: { x: 400, y: 200 } })
+	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
+	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
+	await expect(highlight).toHaveCSS("border-width", "2px")
+	await expect(highlight).toHaveCSS("border-radius", "12px")
+
+	await slice.click()
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
+
+	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
+	await expect(highlight).toHaveCSS("border-width", "4px")
+	await expect(highlight).toHaveCSS("border-radius", "24px")
+	const box = await highlight.boundingBox()
+	expect(box).toEqual(await slice.boundingBox())
+
+	await slice.evaluate(() => window.scrollBy(0, 50))
+	await expect.poll(async () => (await highlight.boundingBox())?.y).toBe((box?.y ?? 0) - 50)
+
+	await editor.preview.locator("#outside-slices").hover()
+	await expect(highlight).toHaveCount(0)
+	await editor.preview.locator("#second-slice").hover()
+	await expect(highlight).toHaveAttribute("data-slice-id", "second-slice")
+})
+
+test("highlight refreshes position-only changes on pointer movement", async ({ editor, page }) => {
+	const slice = editor.preview.locator("#first-slice")
+	const highlight = editor.preview.locator(".slice-highlight")
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 
-	const box = await slice.boundingBox()
+	const box = (await slice.boundingBox())!
 	await slice.evaluate((element) => (element.style.transform = "translateY(40px)"))
 	await page.mouse.move(box.x + 501, box.y + 200)
 	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
@@ -27,9 +60,8 @@ test("highlight refreshes position-only changes on pointer movement", async ({ p
 	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
 })
 
-test("highlight follows a slice inside a scrolling container", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	await site.locator("body").evaluate((body) => {
+test("highlight follows a slice inside a scrolling container", async ({ editor }) => {
+	await editor.preview.locator("body").evaluate((body) => {
 		const scroller = document.createElement("div")
 		scroller.id = "scroller"
 		scroller.style.cssText =
@@ -42,55 +74,52 @@ test("highlight follows a slice inside a scrolling container", async ({ page }) 
 		`
 		body.append(scroller)
 	})
-	const slice = site.locator("#scrolling-slice")
-	const highlight = site.locator(".slice-highlight")
+	const slice = editor.preview.locator("#scrolling-slice")
+	const highlight = editor.preview.locator(".slice-highlight")
 	await slice.hover({ position: { x: 100, y: 150 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "scrolling-slice")
-	await site.locator("#scroller").evaluate((element) => (element.scrollTop = 50))
+	await editor.preview.locator("#scroller").evaluate((element) => (element.scrollTop = 50))
 	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
 })
 
-test("highlight and selection use updated roots and marker IDs", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	const highlight = site.locator(".slice-highlight")
-	await site.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
+test("highlight and selection use updated roots and marker IDs", async ({ editor }) => {
+	const highlight = editor.preview.locator(".slice-highlight")
+	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
-	await site.locator("#first-slice").evaluate((element) => {
-		const replacement = element.cloneNode(true)
+	await editor.preview.locator("#first-slice").evaluate((element) => {
+		const replacement = element.cloneNode(true) as HTMLElement
 		replacement.style.height = "450px"
 		element.replaceWith(replacement)
 	})
 	await expect
 		.poll(() => highlight.boundingBox())
-		.toEqual(await site.locator("#first-slice").boundingBox())
+		.toEqual(await editor.preview.locator("#first-slice").boundingBox())
 
-	await site.locator("body").evaluate((body) => {
+	await editor.preview.locator("body").evaluate((body) => {
 		const walker = document.createTreeWalker(body, NodeFilter.SHOW_COMMENT)
 		while (walker.nextNode()) {
-			walker.currentNode.data = walker.currentNode.data.replace("first-slice", "renamed-slice")
+			const comment = walker.currentNode as Comment
+			comment.data = comment.data.replace("first-slice", "renamed-slice")
 		}
 	})
 	await expect(highlight).toHaveAttribute("data-slice-id", "renamed-slice")
-	await site.locator("#first-slice").click({ position: { x: 500, y: 200 } })
+	await editor.preview.locator("#first-slice").click({ position: { x: 500, y: 200 } })
 	await expect
-		.poll(() =>
-			page.evaluate(() =>
-				window.fixture.messages.findLast(
-					(message) => message.type === "prismic:embedded-preview:select-slice",
-				),
-			),
-		)
-		.toEqual({ type: "prismic:embedded-preview:select-slice", sliceId: "renamed-slice" })
+		.poll(async () => (await sliceSelections(editor)).at(-1))
+		.toEqual(selected("renamed-slice"))
 
-	await site.locator("#first-slice").evaluate((element) => element.remove())
+	await editor.preview.locator("#first-slice").evaluate((element) => element.remove())
 	await expect(highlight).toHaveAttribute("data-slice-id", "second-slice")
 })
 
-test("highlight does not poll while idle and clears outside the preview", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	const slice = site.locator("#first-slice")
-	const highlight = site.locator(".slice-highlight")
-	await slice.evaluate((element) => {
+test("highlight does not poll while idle and clears outside the preview", async ({
+	editor,
+	page,
+}) => {
+	const slice = editor.preview.locator("#first-slice")
+	const highlight = editor.preview.locator(".slice-highlight")
+	type Measured = HTMLElement & { measurements: number }
+	await slice.evaluate((element: Measured) => {
 		const measure = element.getBoundingClientRect.bind(element)
 		element.measurements = 0
 		element.getBoundingClientRect = () => {
@@ -98,86 +127,60 @@ test("highlight does not poll while idle and clears outside the preview", async 
 			return measure()
 		}
 	})
+	const countMeasurements = () =>
+		slice.evaluate(async (element: Measured) => {
+			// Let any initial ResizeObserver delivery settle before checking for polling.
+			await new Promise(requestAnimationFrame)
+			const before = element.measurements
+			for (let frame = 0; frame < 4; frame++) await new Promise(requestAnimationFrame)
+			return element.measurements - before
+		})
+
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toBeVisible()
-	const measurementsWhileIdle = await slice.evaluate(async (element) => {
-		// Let any initial ResizeObserver delivery settle before checking for polling.
-		await new Promise(requestAnimationFrame)
-		const before = element.measurements
-		for (let frame = 0; frame < 4; frame++) {
-			await new Promise(requestAnimationFrame)
-		}
-		return element.measurements - before
-	})
-	expect(measurementsWhileIdle).toBe(0)
+	expect(await countMeasurements()).toBe(0)
+
 	await page.mouse.move(20, 850)
 	await expect(highlight).toHaveCount(0)
-	const measurementsWhileOutside = await slice.evaluate(async (element) => {
-		const before = element.measurements
-		for (let frame = 0; frame < 4; frame++) {
-			await new Promise(requestAnimationFrame)
-		}
-		return element.measurements - before
-	})
-	expect(measurementsWhileOutside).toBe(0)
+	expect(await countMeasurements()).toBe(0)
+
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 })
 
-test("comment placement takes precedence over slice hover and selection", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	const highlight = site.locator(".slice-highlight")
-	await page.getByRole("button", { name: "Place comment", exact: true }).click()
-	const placement = site.getByRole("button", { name: "Place a comment here" })
+test("comment placement takes precedence over slice hover and selection", async ({ editor }) => {
+	const highlight = editor.preview.locator(".slice-highlight")
+	await editor.updateComments({ placementEnabled: true })
+	const placement = editor.preview.getByRole("button", { name: "Place a comment here" })
+
 	await placement.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveCount(0)
 	await placement.click({ position: { x: 500, y: 200 } })
-	await expect
-		.poll(() =>
-			page.evaluate(() =>
-				window.fixture.messages.some(
-					(message) => message.type === "prismic:embedded-preview:place-comment",
-				),
-			),
-		)
-		.toBe(true)
-	expect(
-		await page.evaluate(() =>
-			window.fixture.messages.some(
-				(message) => message.type === "prismic:embedded-preview:select-slice",
-			),
-		),
-	).toBe(false)
+
+	await expect.poll(() => editor.messages("place-comment")).toHaveLength(1)
+	expect(await sliceSelections(editor)).toEqual([])
 })
 
-async function sliceSelections(page) {
-	return page.evaluate(() =>
-		window.fixture.messages.filter(
-			(message) => message.type === "prismic:embedded-preview:select-slice",
-		),
-	)
-}
-
 test("hovering and clicking a comment pin clears slice hover without selecting a slice", async ({
-	page,
+	editor,
 }) => {
-	const site = page.frameLocator("iframe")
-	const slice = site.locator("#first-slice")
-	const highlight = site.locator(".slice-highlight")
+	const slice = editor.preview.locator("#first-slice")
+	const highlight = editor.preview.locator(".slice-highlight")
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toBeVisible()
-	const pin = site.locator('[data-thread-id="first"]')
+
+	const pin = editor.preview.locator('[data-thread-id="first"]')
 	await pin.hover()
 	await expect(highlight).toHaveCount(0)
 	await pin.click()
-	expect(await sliceSelections(page)).toEqual([])
+	expect(await sliceSelections(editor)).toEqual([])
+
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 })
 
-test("text can be selected by dragging without selecting the slice", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	await site.locator("#first-slice").evaluate((element) => {
+test("text can be selected by dragging without selecting the slice", async ({ editor, page }) => {
+	await editor.preview.locator("#first-slice").evaluate((element) => {
 		const text = document.createElement("span")
 		text.id = "selectable-text"
 		text.textContent = "Select this page text by dragging across it."
@@ -185,25 +188,24 @@ test("text can be selected by dragging without selecting the slice", async ({ pa
 			"position:absolute;top:100px;left:350px;font:24px monospace;user-select:text"
 		element.append(text)
 	})
-	const text = site.locator("#selectable-text")
-	const box = await text.boundingBox()
+	const text = editor.preview.locator("#selectable-text")
+	const box = (await text.boundingBox())!
+
 	await page.mouse.move(box.x + 1, box.y + box.height / 2)
 	await page.mouse.down()
 	await page.mouse.move(box.x + box.width - 1, box.y + box.height / 2, { steps: 15 })
 	await page.mouse.up()
-	expect(await text.evaluate(() => window.getSelection().toString())).toContain(
+
+	expect(await text.evaluate(() => window.getSelection()?.toString())).toContain(
 		"Select this page text",
 	)
-	expect(await sliceSelections(page)).toEqual([])
-	await site.locator("#first-slice").click({ position: { x: 600, y: 250 } })
-	await expect
-		.poll(() => sliceSelections(page))
-		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+	expect(await sliceSelections(editor)).toEqual([])
+	await editor.preview.locator("#first-slice").click({ position: { x: 600, y: 250 } })
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
 })
 
-test("native controls remain usable without selecting the slice", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	const slice = site.locator("#first-slice")
+test("native controls remain usable without selecting the slice", async ({ editor, page }) => {
+	const slice = editor.preview.locator("#first-slice")
 	await slice.evaluate((element) => {
 		element.innerHTML = `
 			<input id="checkbox" type="checkbox" />
@@ -216,11 +218,12 @@ test("native controls remain usable without selecting the slice", async ({ page 
 			</form>
 			<div contenteditable="true"><span>Editable content</span></div>
 		`
-		element.querySelector("form").addEventListener("submit", (event) => {
+		element.querySelector("form")?.addEventListener("submit", (event) => {
 			event.preventDefault()
 			element.dataset.submitted = "true"
 		})
 	})
+	const site = editor.preview
 
 	const checkbox = site.getByRole("checkbox")
 	await checkbox.click()
@@ -242,26 +245,27 @@ test("native controls remain usable without selecting the slice", async ({ page 
 	await page.keyboard.press("End")
 	await page.keyboard.type("!")
 	await expect(site.locator('[contenteditable="true"]')).toContainText("!")
+	expect(await sliceSelections(editor)).toEqual([])
 
 	await slice.click({ position: { x: 600, y: 350 } })
-	await expect
-		.poll(() => sliceSelections(page))
-		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
 })
 
-test("links and button roles keep their actions without selecting the slice", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	const slice = site.locator("#first-slice")
+test("links and button roles keep their actions without selecting the slice", async ({
+	editor,
+}) => {
+	const slice = editor.preview.locator("#first-slice")
 	await slice.evaluate((element) => {
 		element.innerHTML = `
 			<a href="#first-slice"><span>Go to slice</span></a>
 			<div role="button" tabindex="0"><span>Custom button</span></div>
 			<div role="link" tabindex="0"><span>Custom link</span></div>
 		`
-		for (const control of element.querySelectorAll("[role]")) {
+		for (const control of element.querySelectorAll<HTMLElement>("[role]")) {
 			control.addEventListener("click", () => (control.dataset.clicked = "true"))
 		}
 	})
+	const site = editor.preview
 
 	await site.getByText("Go to slice", { exact: true }).click()
 	await expect.poll(() => slice.evaluate(() => location.hash)).toBe("#first-slice")
@@ -275,15 +279,14 @@ test("links and button roles keep their actions without selecting the slice", as
 		"data-clicked",
 		"true",
 	)
+	expect(await sliceSelections(editor)).toEqual([])
 
 	await slice.click({ position: { x: 600, y: 350 } })
-	await expect
-		.poll(() => sliceSelections(page))
-		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
 })
 
-test("slice roots are selectable but gaps and covering popups are not", async ({ page }) => {
-	const site = page.frameLocator("iframe")
+test("slice roots are selectable but gaps and covering popups are not", async ({ editor }) => {
+	const site = editor.preview
 	await site.locator("body").evaluate((body) => {
 		const container = document.createElement("div")
 		container.id = "split-slice"
@@ -297,16 +300,17 @@ test("slice roots are selectable but gaps and covering popups are not", async ({
 		`
 		body.append(container)
 	})
+
 	await site.locator("#split-slice").hover({ position: { x: 100, y: 25 } })
 	await expect(site.locator(".slice-highlight")).toHaveAttribute("data-slice-id", "split")
 	await site.locator("#split-slice").click({ position: { x: 100, y: 25 } })
-	await expect
-		.poll(() => sliceSelections(page))
-		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "split" }])
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("split")])
+
 	await site.locator("#split-slice").hover({ position: { x: 100, y: 75 } })
 	await expect(site.locator(".slice-highlight")).toHaveCount(0)
 	await site.locator("#split-slice").click({ position: { x: 100, y: 75 } })
-	expect(await sliceSelections(page)).toHaveLength(1)
+	expect(await sliceSelections(editor)).toHaveLength(1)
+
 	await site.locator("body").evaluate((body) => {
 		const modal = document.createElement("div")
 		modal.id = "modal"
@@ -315,11 +319,11 @@ test("slice roots are selectable but gaps and covering popups are not", async ({
 	})
 	await site.locator("#modal").click({ position: { x: 450, y: 125 } })
 	await expect(site.locator(".slice-highlight")).toHaveCount(0)
-	expect(await sliceSelections(page)).toHaveLength(1)
+	expect(await sliceSelections(editor)).toHaveLength(1)
 })
 
-test("hover and click agree for nested gaps and overflowing content", async ({ page }) => {
-	const site = page.frameLocator("iframe")
+test("hover and click agree for nested gaps and overflowing content", async ({ editor }) => {
+	const site = editor.preview
 	await site.locator("body").evaluate((body) => {
 		const container = document.createElement("div")
 		container.innerHTML = `
@@ -337,34 +341,40 @@ test("hover and click agree for nested gaps and overflowing content", async ({ p
 	})
 	const outer = site.locator("#nested-outer")
 	const highlight = site.locator(".slice-highlight")
+
 	for (const [y, sliceId] of [
 		[25, "inner"],
 		[75, "outer"],
 		[200, "outer"],
-	]) {
+	] as const) {
 		await outer.hover({ position: { x: 100, y } })
 		await expect(highlight).toHaveAttribute("data-slice-id", sliceId)
 		await outer.click({ position: { x: 100, y } })
-		await expect.poll(async () => (await sliceSelections(page)).at(-1)?.sliceId).toBe(sliceId)
+		await expect.poll(async () => (await sliceSelections(editor)).at(-1)?.sliceId).toBe(sliceId)
 	}
 	await site.locator("#overflow").hover()
 	await expect(highlight).toHaveAttribute("data-slice-id", "outer")
 	await site.locator("#overflow").click()
 	await expect
-		.poll(async () => (await sliceSelections(page)).map(({ sliceId }) => sliceId))
+		.poll(async () => (await sliceSelections(editor)).map(({ sliceId }) => sliceId))
 		.toEqual(["inner", "outer", "outer", "outer"])
 })
 
-test("same-size DOM replacement remains highlightable and selectable", async ({ page }) => {
-	const site = page.frameLocator("iframe")
-	const slice = site.locator("#first-slice")
+test("same-size DOM replacement remains highlightable and selectable", async ({ editor }) => {
+	const slice = editor.preview.locator("#first-slice")
 	await slice.hover({ position: { x: 500, y: 200 } })
-	await expect(site.locator(".slice-highlight")).toHaveAttribute("data-slice-id", "first-slice")
+	await expect(editor.preview.locator(".slice-highlight")).toHaveAttribute(
+		"data-slice-id",
+		"first-slice",
+	)
+
 	await slice.evaluate((element) => element.replaceWith(element.cloneNode(true)))
+
 	await slice.hover({ position: { x: 501, y: 200 } })
-	await expect(site.locator(".slice-highlight")).toHaveAttribute("data-slice-id", "first-slice")
+	await expect(editor.preview.locator(".slice-highlight")).toHaveAttribute(
+		"data-slice-id",
+		"first-slice",
+	)
 	await slice.click({ position: { x: 501, y: 200 } })
-	await expect
-		.poll(() => sliceSelections(page))
-		.toEqual([{ type: "prismic:embedded-preview:select-slice", sliceId: "first-slice" }])
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
 })
