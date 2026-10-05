@@ -7,6 +7,7 @@ import {
 	createSiteCookieStore,
 	previewCookieName,
 	refFor,
+	type SiteCookie,
 	type SiteCookieCodec,
 	type SiteCookieStore,
 } from "./site-cookie"
@@ -32,7 +33,10 @@ export interface PreviewSessionOptions {
 	repositoryHost: string
 	/** `json` on websites, `plain` inside the editor. */
 	codec: SiteCookieCodec
-	/** Follows preview cookie changes made outside this page, such as editor pushes. */
+	/**
+	 * Follows preview cookie changes made outside this page, such as editor pushes, and leaves refs
+	 * the editor pushed alone. Off in the editor, where the preview session sets the ref.
+	 */
 	watchCookie: boolean
 	connect(): Promise<Bridge>
 	reload?: () => void
@@ -76,9 +80,19 @@ export function createPreviewSession({
 		for (const listener of listeners) listener(snapshot)
 	}
 
+	/** Only pages that follow editor pushes leave the editor's ref alone. */
+	const editorOwner = (cookie: SiteCookie) => (watch ? liveOwner(cookie) : undefined)
+
+	function startPolling() {
+		pollTimer = setInterval(tick, 3000)
+		// A tab coming back into view catches up right away.
+		document.addEventListener("visibilitychange", tick)
+	}
+
 	function stopPolling() {
 		clearInterval(pollTimer)
 		pollTimer = undefined
+		document.removeEventListener("visibilitychange", tick)
 	}
 
 	const isReloading = () => snapshot.status === "reloading"
@@ -104,7 +118,7 @@ export function createPreviewSession({
 	 * HTML. Pushes that landed before are, so this cannot loop on reload.
 	 */
 	function reconcileEditorPush() {
-		const owner = liveOwner(store.read())
+		const owner = editorOwner(store.read())
 		if (!watch || renderedRef !== initialRef) return
 		if (owner?.repository !== repositoryHost || owner.at <= navigationStart) return
 
@@ -127,10 +141,11 @@ export function createPreviewSession({
 		} catch {
 			return // Transient failure: try again on the next tick.
 		}
-		if (snapshot.status !== "polling" || nextRef === serverRef) return
+		// Polling may have stopped during the ping, such as on exit or reload.
+		if (pollTimer === undefined || nextRef === serverRef) return
 
 		const cookie = store.read()
-		const editorOwnsCookie = Boolean(liveOwner(cookie))
+		const editorOwnsCookie = Boolean(editorOwner(cookie))
 
 		if (nextRef === null) {
 			// The session ended. Clear the cookie only when it still holds this session's ref.
@@ -176,7 +191,7 @@ export function createPreviewSession({
 
 				serverRef = state.preview.ref
 				const cookie = store.read()
-				if (liveOwner(cookie)) {
+				if (editorOwner(cookie)) {
 					reconcileEditorPush()
 					if (isReloading()) return
 				} else if (refFor(cookie, repositoryHost) !== serverRef) {
@@ -189,7 +204,7 @@ export function createPreviewSession({
 				}
 
 				setSnapshot({ status: "polling", preview: state.preview })
-				pollTimer = setInterval(tick, 3000)
+				startPolling()
 			} catch (error) {
 				warn(`Could not reach the preview session.\n\n${String(error)}`)
 				setSnapshot({ status: "idle" })
@@ -201,7 +216,7 @@ export function createPreviewSession({
 			await bridge?.closeSession().catch(() => {})
 			serverRef = undefined
 
-			const owner = liveOwner(store.read())
+			const owner = editorOwner(store.read())
 			if (!owner) {
 				store.removeOwn()
 			} else if (owner.repository === repositoryHost) {

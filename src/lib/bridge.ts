@@ -29,10 +29,15 @@ export async function connectBridge(url: string, timeout = 15_000): Promise<Brid
 		port.onmessage = (event) => {
 			if (isMessage(event.data, readyMessageType)) resolve()
 		}
-		iframe.addEventListener("load", () => {
-			const message = { type: connectMessageType }
-			iframe.contentWindow?.postMessage(message, new URL(url).origin, [port2])
-		})
+		// A port can only be transferred once, so a reloaded iframe must not resend it.
+		iframe.addEventListener(
+			"load",
+			() => {
+				const message = { type: connectMessageType }
+				iframe.contentWindow?.postMessage(message, new URL(url).origin, [port2])
+			},
+			{ once: true },
+		)
 	})
 	document.body.appendChild(iframe)
 

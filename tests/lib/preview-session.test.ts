@@ -26,6 +26,8 @@ const sessions: PreviewSession[] = []
 
 beforeEach(() => {
 	vi.useFakeTimers()
+	// Editor pushes in these tests happen around the page load.
+	vi.setSystemTime(navigationStart)
 	Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true })
 	events = []
 	cancelEvents = false
@@ -201,6 +203,36 @@ describe("startup", () => {
 		expect(bridge.ping).not.toHaveBeenCalled()
 	})
 
+	it("lets a session replace an editor push older than ten minutes", async () => {
+		cancelEvents = true
+		Cookies.set(previewCookieName, "editor-ref")
+		claimOwnership(repository, "editor-ref", navigationStart - 10 * 60_000)
+		const { session } = setup(active("ref-1"))
+
+		await session.start()
+
+		expect(storedJSON()).toEqual({ [repository]: { preview: "ref-1" } })
+		expect(events).toEqual([["prismicPreviewStart", "ref-1"]])
+	})
+
+	it("follows the session in the editor's poll mode, whatever the editor pushed", async () => {
+		cancelEvents = true
+		Cookies.set(previewCookieName, "editor-ref")
+		claimOwnership(repository, "editor-ref", navigationStart - 1)
+		const { session, server } = setup(active("ref-1"), { watchCookie: false, codec: "plain" })
+
+		await session.start()
+		expect(storedCookie()).toBe("ref-1")
+
+		server.ref = "ref-2"
+		await vi.advanceTimersByTimeAsync(3000)
+		expect(storedCookie()).toBe("ref-2")
+		expect(events).toEqual([
+			["prismicPreviewStart", "ref-1"],
+			["prismicPreviewUpdate", "ref-2"],
+		])
+	})
+
 	it("ignores a recent push from another repository's editor", async () => {
 		Cookies.set(previewCookieName, "editor-ref")
 		claimOwnership(otherRepository, "editor-ref", navigationStart + 1)
@@ -353,6 +385,38 @@ describe("polling", () => {
 		await vi.advanceTimersByTimeAsync(3000)
 		expect(bridge.ping).toHaveBeenCalledTimes(2)
 		expect(events).toEqual([["prismicPreviewUpdate", "ref-2"]])
+	})
+
+	it("pings as soon as the page is visible again", async () => {
+		const { bridge } = await startPolling()
+		Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true })
+		await vi.advanceTimersByTimeAsync(6000)
+
+		Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true })
+		document.dispatchEvent(new Event("visibilitychange"))
+		await vi.advanceTimersByTimeAsync(0)
+
+		expect(bridge.ping).toHaveBeenCalledOnce()
+	})
+
+	it("ignores a ping that answers after exiting", async () => {
+		const { bridge, session } = await startPolling()
+		let answer = (_response: { ref: string | null }) => {}
+		let closed = () => {}
+		bridge.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		bridge.closeSession.mockImplementationOnce(
+			() => new Promise<void>((resolve) => (closed = resolve)),
+		)
+		await vi.advanceTimersByTimeAsync(3000)
+
+		const exiting = session.exit()
+		answer({ ref: "ref-2" })
+		await vi.advanceTimersByTimeAsync(0)
+		closed()
+		await exiting
+
+		expect(storedCookie()).toBeUndefined()
+		expect(events).toEqual([["prismicPreviewEnd", null]])
 	})
 })
 

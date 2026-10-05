@@ -38,13 +38,21 @@ describe("owner marker", () => {
 
 	it("is live only while the preview cookie holds the claimed ref", () => {
 		claimOwnership("example.prismic.io", "editor-ref", 1000)
-		expect(liveOwner(parseSiteCookie("editor-ref"))?.ref).toBe("editor-ref")
-		expect(liveOwner(parseSiteCookie("share-link-ref"))).toBeUndefined()
-		expect(liveOwner(parseSiteCookie(undefined))).toBeUndefined()
+		expect(liveOwner(parseSiteCookie("editor-ref"), 1000)?.ref).toBe("editor-ref")
+		expect(liveOwner(parseSiteCookie("share-link-ref"), 1000)).toBeUndefined()
+		expect(liveOwner(parseSiteCookie(undefined), 1000)).toBeUndefined()
 		expect(
 			liveOwner(
 				parseSiteCookie(JSON.stringify({ "example.prismic.io": { preview: "editor-ref" } })),
+				1000,
 			),
 		).toBeUndefined()
+	})
+
+	it("expires ten minutes after the editor's last push", () => {
+		claimOwnership("example.prismic.io", "editor-ref", 1000)
+		const minutes = (count: number) => 1000 + count * 60_000
+		expect(liveOwner(parseSiteCookie("editor-ref"), minutes(10) - 1)?.ref).toBe("editor-ref")
+		expect(liveOwner(parseSiteCookie("editor-ref"), minutes(10))).toBeUndefined()
 	})
 })

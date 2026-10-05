@@ -37,13 +37,18 @@ export function readOwner(): Owner | undefined {
 	}
 }
 
+/** The editor pushes on every edit, so a marker this old belongs to an editor no longer in use. */
+const ownershipTTL = 10 * 60 * 1000
+
 /**
- * The editor owns the preview cookie only while the cookie still holds the ref it pushed. Any other
- * write, such as a share link or an exit, ends the ownership without touching the marker.
+ * The editor owns the preview cookie only while the cookie still holds the ref it pushed, and only
+ * for a while after that push. Any other write, such as a share link or an exit, ends the ownership
+ * without touching the marker; expiring keeps an old push from hiding a newer preview session.
  */
-export function liveOwner(cookie: SiteCookie): Owner | undefined {
+export function liveOwner(cookie: SiteCookie, now = Date.now()): Owner | undefined {
 	const owner = readOwner()
-	if (owner && cookie.kind !== "none" && cookie.raw === owner.ref) return owner
+	if (!owner || cookie.kind === "none" || cookie.raw !== owner.ref) return undefined
+	if (now - owner.at < ownershipTTL) return owner
 }
 
 export function claimOwnership(repository: string, ref: string, at: number): void {
