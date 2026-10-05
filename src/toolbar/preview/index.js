@@ -33,7 +33,7 @@ export class Preview {
 	}
 
 	watchPreviewUpdates() {
-		if (this.active) {
+		if (this.active && !this.interval) {
 			this.interval = setInterval(() => {
 				// End only on a falsy ping ref (via start → end), not a missing site cookie.
 				if (document.visibilityState === "visible") this.updatePreview()
@@ -43,6 +43,7 @@ export class Preview {
 
 	cancelPreviewUpdates() {
 		if (this.interval) clearInterval(this.interval)
+		this.interval = undefined
 	}
 
 	async updatePreview() {

@@ -13,10 +13,12 @@ export class PreviewCookie {
 
 	// Align the site cookie with `ref`. Returns true when the page should reload.
 	sync(ref) {
-		const converted = this.convertLegacyCookieIfNeeded()
+		// A legacy cookie holds a raw ref the website already renders, so converting it needs no reload.
+		this.convertLegacyCookieIfNeeded()
+
 		const upToDate = ref === this.getRefForDomain()
 		this.upsertPreviewForDomain(ref)
-		return converted || !upToDate
+		return !upToDate
 	}
 
 	convertLegacyCookieIfNeeded() {
