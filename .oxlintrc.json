@@ -56,5 +56,6 @@
 				"prefer-const": "error"
 			}
 		}
-	]
+	],
+	"ignorePatterns": ["playground/.next", "playground/next-env.d.ts"]
 }

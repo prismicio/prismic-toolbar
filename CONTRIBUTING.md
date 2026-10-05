@@ -32,11 +32,12 @@ Each file is a self-contained classic script. The CDN sends no CORS headers, so 
 ## Develop
 
 ```sh
-npm start
-npm run serve
+npm run dev
 ```
 
-`npm start` rebuilds on change. `npm run serve` serves the build at `http://localhost:8081/prismic-toolbar/<version>/`. Point a website at your build:
+This rebuilds the toolbar on change, serves it at `http://localhost:8081/prismic-toolbar/<version>/`, and runs the [playground](./playground/README.md) at `http://localhost:3000` with it. The playground is a minimal Next.js website showing any repository, also deployed on Vercel for each branch.
+
+To use your build on another website, run `npm start` and `npm run serve`, and point the website at it:
 
 ```html
 <script src="http://localhost:8081/prismic-toolbar/<version>/prismic.js?repo=YOUR_REPOSITORY"></script>
