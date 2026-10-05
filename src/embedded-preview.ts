@@ -52,6 +52,9 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 
 registerChunk("setupEmbeddedPreview", setupEmbeddedPreview)
 
+/** Whether an editor on `localhost` may drive the embedded preview. Replaced at build time. */
+declare const __TOOLBAR_LOCAL_EDITOR__: boolean
+
 const allowedParentOrigins = [
 	/^https:\/\/([^/]+\.)?prismic\.io$/,
 	/^https:\/\/([^/]+\.)?wroom\.io$/,

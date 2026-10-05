@@ -5,11 +5,6 @@
 		"browser": true,
 		"node": true
 	},
-	"globals": {
-		"CDN_HOST": "readonly",
-		"__TOOLBAR_VERSION__": "readonly",
-		"__TOOLBAR_LOCAL_EDITOR__": "readonly"
-	},
 	"rules": {
 		"no-undef": "error",
 		"no-useless-assignment": "error",

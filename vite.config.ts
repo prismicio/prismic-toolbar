@@ -15,7 +15,7 @@ export type Entry = (typeof entries)[number]
 
 const oxc = { jsx: { runtime: "automatic", importSource: "preact" } } as const
 
-/** Build-time constants declared in `src/globals.d.ts`. */
+/** Build-time constants, declared where they are used. */
 function defines(development: boolean) {
 	return {
 		CDN_HOST: JSON.stringify(
