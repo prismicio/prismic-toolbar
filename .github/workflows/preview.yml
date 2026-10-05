@@ -1,0 +1,85 @@
+name: Preview
+run-name: Preview toolbar for pull request ${{ github.event.pull_request.number }}
+
+# Uploads each pull request build to its own immutable folder, `pr-<number>`, so it can be tested on
+# any website before release. The public `prismic.js` is untouched.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    # Pull requests from forks get no AWS credentials.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    environment: preview
+    concurrency:
+      group: preview-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      id-token: write
+      pull-requests: write
+    env:
+      TOOLBAR_VERSION: pr-${{ github.event.pull_request.number }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0, fixed commit for security reasons
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Remove the preview
+        if: github.event.action == 'closed'
+        run: aws s3 rm "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION" --recursive
+
+      - uses: actions/checkout@v7
+        if: github.event.action != 'closed'
+      - uses: actions/setup-node@v7
+        if: github.event.action != 'closed'
+        with:
+          node-version-file: package.json
+          cache: npm
+      - name: Build the preview
+        if: github.event.action != 'closed'
+        run: |
+          npm ci
+          npm run build
+        env:
+          CDN_HOST: https://prismic.io
+
+      - name: Upload the preview
+        if: github.event.action != 'closed'
+        # Rebuilt on every push under the same folder, so it must not be cached.
+        run: |
+          aws s3 sync "build/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION" \
+            --delete \
+            --acl public-read \
+            --cache-control "no-store"
+
+      - name: Comment the preview snippet
+        if: github.event.action != 'closed'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const marker = "<!-- toolbar-preview -->"
+            const src = `https://prismic.io/prismic-toolbar/${process.env.TOOLBAR_VERSION}/prismic.js?repo=YOUR_REPOSITORY`
+            const body = [
+              marker,
+              "Test this pull request on any website by replacing its toolbar script with:",
+              "",
+              "```html",
+              `<script async defer src="${src}"></script>`,
+              "```",
+              "",
+              `Updated for ${context.payload.pull_request.head.sha.slice(0, 7)}.`,
+            ].join("\n")
+            const { owner, repo } = context.repo
+            const issue_number = context.payload.pull_request.number
+            const comments = await github.paginate(github.rest.issues.listComments, { owner, repo, issue_number })
+            const existing = comments.find((comment) => comment.body?.startsWith(marker))
+            if (existing) await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body })
+            else await github.rest.issues.createComment({ owner, repo, issue_number, body })
