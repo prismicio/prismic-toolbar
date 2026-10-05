@@ -1,7 +1,7 @@
 import type { Bridge } from "./bridge"
-import { createCookieWatcher } from "./cookie-watcher"
-import { navigationStart as defaultNavigationStart, warn } from "./env"
-import { dispatchPreviewEvent, previewEvents } from "./events"
+import { watchCookie } from "./cookie-watcher"
+import { warn } from "./env"
+import { dispatchPreviewEvent } from "./events"
 import { liveOwner, releaseOwnership } from "./owner-marker"
 import {
 	createSiteCookieStore,
@@ -11,10 +11,8 @@ import {
 	type SiteCookieStore,
 } from "./site-cookie"
 
-export type PreviewStatus = "booting" | "idle" | "polling" | "reloading"
-
 export interface PreviewSnapshot {
-	status: PreviewStatus
+	status: "booting" | "idle" | "polling" | "reloading"
 	authenticated: boolean
 	/** Set while this page follows an active preview session. */
 	preview?: { ref: string; title: string }
@@ -37,9 +35,9 @@ export interface PreviewSessionOptions {
 	/** Follows preview cookie changes made outside this page, such as editor pushes. */
 	watchCookie: boolean
 	connect(): Promise<Bridge>
-	pollInterval?: number
 	reload?: () => void
-	navigationStart?: () => number
+	/** When this page's navigation started, comparable with `Date.now()`. */
+	navigationStart?: number
 	store?: SiteCookieStore
 }
 
@@ -52,11 +50,10 @@ export interface PreviewSessionOptions {
 export function createPreviewSession({
 	repositoryHost,
 	codec,
-	watchCookie,
+	watchCookie: watch,
 	connect,
-	pollInterval = 3000,
 	reload = () => window.location.reload(),
-	navigationStart = defaultNavigationStart,
+	navigationStart = performance.timeOrigin,
 	store = createSiteCookieStore(repositoryHost),
 }: PreviewSessionOptions): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
@@ -64,50 +61,40 @@ export function createPreviewSession({
 	let bridge: Bridge | undefined
 	let serverRef: string | undefined
 	let pollTimer: ReturnType<typeof setInterval> | undefined
-	let pinging = false
 
+	const currentRef = () => refFor(store.read(), repositoryHost)
 	// Read before anything can change the cookie: the closest guess of what the server rendered.
 	const initialRef = currentRef()
 	let renderedRef = initialRef
-
-	const watcher = watchCookie
-		? createCookieWatcher({
-				name: previewCookieName,
-				onChange: () => reconcile(previewEvents.update),
-			})
-		: undefined
 	// Watch before connecting so a change during startup is not mistaken for the rendered ref.
-	watcher?.start()
-
-	function currentRef() {
-		return refFor(store.read(), repositoryHost)
-	}
+	const unwatch = watch
+		? watchCookie(previewCookieName, () => reconcile("prismicPreviewUpdate"))
+		: undefined
 
 	function setSnapshot(patch: Partial<PreviewSnapshot>) {
 		snapshot = { ...snapshot, ...patch }
 		for (const listener of listeners) listener(snapshot)
 	}
 
+	function stopPolling() {
+		clearInterval(pollTimer)
+		pollTimer = undefined
+	}
+
 	function reloadPage() {
 		stopPolling()
-		watcher?.stop()
+		unwatch?.()
 		setSnapshot({ status: "reloading" })
 		reload()
 	}
 
 	/** Notifies the website when the cookie's ref differs from the one it renders. */
-	function reconcile(event: typeof previewEvents.start | typeof previewEvents.update) {
-		if (snapshot.status === "reloading") return
-
+	function reconcile(event: "prismicPreviewStart" | "prismicPreviewUpdate") {
 		const ref = currentRef()
-		if (ref === renderedRef) return
+		if (snapshot.status === "reloading" || ref === renderedRef) return
 
 		renderedRef = ref
-		const unhandled =
-			ref === undefined
-				? dispatchPreviewEvent(previewEvents.end)
-				: dispatchPreviewEvent(event, { ref })
-		if (unhandled) reloadPage()
+		if (dispatchPreviewEvent(ref === undefined ? "prismicPreviewEnd" : event, ref)) reloadPage()
 	}
 
 	/**
@@ -115,13 +102,12 @@ export function createPreviewSession({
 	 * HTML. Pushes that landed before are, so this cannot loop on reload.
 	 */
 	function reconcileEditorPush() {
-		if (!watchCookie || renderedRef !== initialRef) return
-
 		const owner = liveOwner(store.read())
-		if (owner?.repository !== repositoryHost || owner.at <= navigationStart()) return
+		if (!watch || renderedRef !== initialRef) return
+		if (owner?.repository !== repositoryHost || owner.at <= navigationStart) return
 
 		renderedRef = undefined
-		reconcile(previewEvents.update)
+		reconcile("prismicPreviewUpdate")
 	}
 
 	function writeRef(ref: string) {
@@ -130,37 +116,14 @@ export function createPreviewSession({
 		return written
 	}
 
-	function startPolling(preview: { ref: string; title: string }) {
-		setSnapshot({ status: "polling", preview })
-		pollTimer ??= setInterval(() => {
-			if (document.visibilityState === "visible") void tick()
-		}, pollInterval)
-		document.addEventListener("visibilitychange", handleVisibilityChange)
-	}
-
-	function stopPolling() {
-		if (pollTimer) clearInterval(pollTimer)
-		pollTimer = undefined
-		document.removeEventListener("visibilitychange", handleVisibilityChange)
-	}
-
-	function handleVisibilityChange() {
-		if (document.visibilityState !== "visible") return
-		watcher?.check()
-		void tick()
-	}
-
 	async function tick() {
-		if (!bridge || snapshot.status !== "polling" || pinging || serverRef === undefined) return
+		if (!bridge || serverRef === undefined || document.visibilityState !== "visible") return
 
-		pinging = true
 		let nextRef: string | null
 		try {
 			nextRef = (await bridge.ping(serverRef)).ref
 		} catch {
 			return // Transient failure: try again on the next tick.
-		} finally {
-			pinging = false
 		}
 		if (snapshot.status !== "polling" || nextRef === serverRef) return
 
@@ -176,7 +139,7 @@ export function createPreviewSession({
 			setSnapshot({ status: "idle", preview: undefined })
 			if (ownsCookie) {
 				store.removeOwn()
-				reconcile(previewEvents.update)
+				reconcile("prismicPreviewUpdate")
 			}
 			return
 		}
@@ -188,7 +151,7 @@ export function createPreviewSession({
 		if (editorOwnsCookie) return
 
 		if (refFor(cookie, repositoryHost) !== nextRef && !writeRef(nextRef)) return
-		reconcile(previewEvents.update)
+		reconcile("prismicPreviewUpdate")
 	}
 
 	return {
@@ -209,26 +172,19 @@ export function createPreviewSession({
 
 				serverRef = state.preview.ref
 				const cookie = store.read()
-				const cookieRef = refFor(cookie, repositoryHost)
-
 				if (liveOwner(cookie)) {
 					reconcileEditorPush()
-				} else if (cookieRef !== serverRef) {
-					if (!writeRef(serverRef)) {
-						setSnapshot({ status: "idle" })
-						return
-					}
+				} else if (refFor(cookie, repositoryHost) !== serverRef) {
+					if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
 					renderedRef = serverRef
-					if (dispatchPreviewEvent(previewEvents.start, { ref: serverRef })) {
-						reloadPage()
-						return
-					}
+					if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
 				} else if (cookie.kind === "plain" && codec === "json") {
 					// SDK preview routes store the raw ref, which already renders the session.
 					writeRef(serverRef)
 				}
 
-				startPolling(state.preview)
+				setSnapshot({ status: "polling", preview: state.preview })
+				pollTimer = setInterval(tick, 3000)
 			} catch (error) {
 				warn(`Could not reach the preview session.\n\n${String(error)}`)
 				setSnapshot({ status: "idle" })
@@ -250,7 +206,7 @@ export function createPreviewSession({
 
 			renderedRef = currentRef()
 			setSnapshot({ status: "idle", preview: undefined })
-			if (dispatchPreviewEvent(previewEvents.end)) reloadPage()
+			if (dispatchPreviewEvent("prismicPreviewEnd")) reloadPage()
 		},
 
 		async share(pageURL = window.location.href) {
@@ -267,7 +223,7 @@ export function createPreviewSession({
 
 		dispose() {
 			stopPolling()
-			watcher?.stop()
+			unwatch?.()
 			bridge?.dispose()
 			listeners.clear()
 		},

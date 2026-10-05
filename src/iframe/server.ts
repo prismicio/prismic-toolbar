@@ -1,45 +1,25 @@
+import Cookies from "js-cookie"
+
 import {
+	connectMessageType,
 	isBridgeRequest,
-	isConnectMessage,
+	isMessage,
 	readyMessageType,
 	type BridgeMethods,
 	type BridgeResponse,
 	type BridgeState,
 } from "~/core/bridge-protocol"
-import { deleteCookieEverywhere, getCookie } from "~/core/cookie"
 
 /** Set by Prismic on the repository host when a preview session starts. */
 export const sessionCookieName = "io.prismic.previewSession"
-/** Set by Prismic on the repository host for signed-in users. */
-export const loggedInCookieName = "is-logged-in"
-
-interface ServerState extends BridgeState {
-	csrf: string | null
-}
-
-export interface BridgeServerDependencies {
-	fetch: typeof fetch
-	getCookie: (name: string) => string | undefined
-	deleteSessionCookie: () => void
-}
-
-const defaultDependencies: BridgeServerDependencies = {
-	fetch: (...args) => fetch(...args),
-	getCookie,
-	deleteSessionCookie: () =>
-		deleteCookieEverywhere(sessionCookieName, { sameSite: "none", secure: true }),
-}
 
 /** Implements the bridge on the repository host, with relative requests to Prismic. */
-export function createBridgeHandlers(
-	dependencies: BridgeServerDependencies = defaultDependencies,
-): BridgeMethods {
-	const { fetch, getCookie, deleteSessionCookie } = dependencies
-	let state: Promise<ServerState> | undefined
+export function createBridgeHandlers(): BridgeMethods {
+	let state: Promise<BridgeState & { csrf?: string }> | undefined
 	let ping: Promise<{ ref: string | null }> | undefined
 	const shares = new Map<string, Promise<string>>()
 
-	function loadState(): Promise<ServerState> {
+	function loadState() {
 		state ??= fetchState().catch((error: unknown) => {
 			state = undefined
 			throw error
@@ -47,13 +27,24 @@ export function createBridgeHandlers(
 		return state
 	}
 
-	async function fetchState(): Promise<ServerState> {
-		// Without these cookies, Prismic has nothing to report; skip the request.
-		if (!getCookie(loggedInCookieName) && !getCookie(sessionCookieName)) {
-			return { csrf: null, isAuthenticated: false }
-		}
+	async function createShareLink(pageURL: string): Promise<string> {
+		const session = Cookies.get(sessionCookieName)
+		const { csrf, preview } = await loadState()
+		if (!session || !preview) throw new Error("No active preview session to share.")
 
-		return normalizeState(await fetchJSON(fetch, "/toolbar/state"))
+		// Prismic requires an image name; screenshots are no longer uploaded.
+		const page = new URL(pageURL)
+		const query = new URLSearchParams({
+			sessionId: session,
+			pageURL,
+			title: preview.title,
+			imageName: `${page.pathname.slice(1)}${page.hash}${session}.jpg`,
+		})
+		if (csrf) query.set("_", csrf)
+
+		const { url } = await fetchJSON<{ url?: unknown }>(`/previews/s?${query}`, { method: "POST" })
+		if (typeof url !== "string" || !url) throw new Error("Prismic did not return a share link.")
+		return url
 	}
 
 	return {
@@ -64,19 +55,19 @@ export function createBridgeHandlers(
 
 		async ping(ref) {
 			// Read the session on every ping: another tab may have replaced or closed it.
-			const session = getCookie(sessionCookieName)
+			const session = Cookies.get(sessionCookieName)
 			if (!session) return { ref: null }
 
 			// Prismic answers `{ ref, reload }`, or `{ close: true }` once the session ended.
-			ping ??= fetchJSON(fetch, `/previews/${session}/ping?ref=${encodeURIComponent(ref)}`)
-				.then((response) => {
-					const currentRef = isObject(response) ? response.ref : undefined
-					return { ref: typeof currentRef === "string" && currentRef ? currentRef : null }
-				})
+			ping ??= fetchJSON<{ ref?: unknown }>(
+				`/previews/${session}/ping?ref=${encodeURIComponent(ref)}`,
+			)
+				.then((response) => ({
+					ref: typeof response.ref === "string" && response.ref ? response.ref : null,
+				}))
 				.finally(() => {
 					ping = undefined
 				})
-
 			return ping
 		},
 
@@ -95,39 +86,14 @@ export function createBridgeHandlers(
 			return share
 		},
 	}
-
-	async function createShareLink(pageURL: string): Promise<string> {
-		const session = getCookie(sessionCookieName)
-		const { csrf, preview } = await loadState()
-		if (!session || !preview) throw new Error("No active preview session to share.")
-
-		// Prismic requires an image name; screenshots are no longer uploaded.
-		const page = new URL(pageURL)
-		const query = new URLSearchParams({
-			sessionId: session,
-			pageURL,
-			title: preview.title,
-			imageName: `${page.pathname.slice(1)}${page.hash}${session}.jpg`,
-		})
-		if (csrf) query.set("_", csrf)
-
-		const response = await fetchJSON(fetch, `/previews/s?${query}`, { method: "POST" })
-		const url = isObject(response) ? response.url : undefined
-		if (typeof url !== "string" || !url) throw new Error("Prismic did not return a share link.")
-
-		return url
-	}
 }
 
 /** Serves bridge requests on every port a website connects with. Ignores any other message. */
-export function serveBridge(handlers: BridgeMethods = createBridgeHandlers()): () => void {
-	function handleConnect(event: MessageEvent) {
+export function serveBridge(handlers: BridgeMethods = createBridgeHandlers()): void {
+	window.addEventListener("message", (event) => {
 		const port = event.ports[0]
-		if (isConnectMessage(event.data) && port) servePort(port, handlers)
-	}
-
-	window.addEventListener("message", handleConnect)
-	return () => window.removeEventListener("message", handleConnect)
+		if (isMessage(event.data, connectMessageType) && port) servePort(port, handlers)
+	})
 }
 
 /** Answers bridge requests received on a port, then announces it is ready. */
@@ -147,27 +113,52 @@ export function servePort(port: MessagePort, handlers: BridgeMethods): void {
 	port.postMessage({ type: readyMessageType })
 }
 
-function normalizeState(response: unknown): ServerState {
-	const data = isObject(response) ? response : {}
-	const previewState = isObject(data.previewState) ? data.previewState : undefined
+async function fetchState(): Promise<BridgeState & { csrf?: string }> {
+	// Without these cookies, Prismic has nothing to report.
+	if (!Cookies.get("is-logged-in") && !Cookies.get(sessionCookieName)) {
+		return { isAuthenticated: false }
+	}
+
+	const { csrf, isAuthenticated, previewState } = await fetchJSON<{
+		csrf?: unknown
+		isAuthenticated?: unknown
+		previewState?: { ref?: unknown; title?: unknown } | null
+	}>("/toolbar/state")
 	const ref = previewState?.ref
+	const title = previewState?.title
 
 	return {
-		csrf: typeof data.csrf === "string" ? data.csrf : null,
-		isAuthenticated: Boolean(data.isAuthenticated),
+		csrf: typeof csrf === "string" ? csrf : undefined,
+		isAuthenticated: Boolean(isAuthenticated),
 		preview:
 			typeof ref === "string" && ref
-				? { ref, title: typeof previewState?.title === "string" ? previewState.title : "" }
+				? { ref, title: typeof title === "string" ? title : "" }
 				: undefined,
 	}
 }
 
-async function fetchJSON(fetch: typeof globalThis.fetch, url: string, init?: RequestInit) {
+async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
 	const response = await fetch(url, init)
 	if (!response.ok) throw new Error(`${init?.method ?? "GET"} ${url} responded ${response.status}.`)
-	return (await response.json()) as unknown
+	return (await response.json()) as T
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-	return Boolean(value) && typeof value === "object"
+// Prismic writes the session cookie, so its exact domain and path are unknown: delete every variant.
+function deleteSessionCookie() {
+	const hostParts = window.location.hostname.split(".")
+	const pathParts = window.location.pathname.slice(1).split("/")
+	const domains = hostParts.flatMap((_, index) => {
+		const domain = hostParts.slice(index).join(".")
+		return [domain, `.${domain}`]
+	})
+	const paths = pathParts.flatMap((_, index) => {
+		const path = `/${pathParts.slice(0, index + 1).join("/")}`
+		return [path, `${path}/`]
+	})
+
+	for (const domain of [undefined, ...domains]) {
+		for (const path of [undefined, "/", ...paths]) {
+			Cookies.remove(sessionCookieName, { domain, path, sameSite: "none", secure: true })
+		}
+	}
 }

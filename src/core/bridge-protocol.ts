@@ -24,39 +24,25 @@ export interface BridgeMethods {
 	share(pageURL: string): Promise<string>
 }
 
-export type BridgeMethodName = keyof BridgeMethods
-
-export type BridgeRequest = {
-	[Method in BridgeMethodName]: {
-		id: number
-		method: Method
-		params: Parameters<BridgeMethods[Method]>
-	}
-}[BridgeMethodName]
+export interface BridgeRequest {
+	id: number
+	method: keyof BridgeMethods
+	params: unknown[]
+}
 
 export type BridgeResponse = { id: number; result: unknown } | { id: number; error: string }
 
-const methodNames: ReadonlySet<string> = new Set<BridgeMethodName>([
-	"getState",
-	"ping",
-	"closeSession",
-	"share",
-])
+const methods: ReadonlySet<unknown> = new Set(["getState", "ping", "closeSession", "share"])
 
-export function isConnectMessage(data: unknown): boolean {
-	return isObject(data) && data.type === connectMessageType
-}
-
-export function isReadyMessage(data: unknown): boolean {
-	return isObject(data) && data.type === readyMessageType
+export function isMessage(data: unknown, type: string): boolean {
+	return isObject(data) && data.type === type
 }
 
 export function isBridgeRequest(data: unknown): data is BridgeRequest {
 	return (
 		isObject(data) &&
 		typeof data.id === "number" &&
-		typeof data.method === "string" &&
-		methodNames.has(data.method) &&
+		methods.has(data.method) &&
 		Array.isArray(data.params)
 	)
 }

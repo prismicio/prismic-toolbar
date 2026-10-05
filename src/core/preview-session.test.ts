@@ -61,7 +61,7 @@ function setup(state: BridgeState, options: Partial<PreviewSessionOptions> = {})
 		watchCookie: true,
 		connect: async () => bridge,
 		reload,
-		navigationStart: () => navigationStart,
+		navigationStart,
 		...options,
 	})
 	sessions.push(session)
@@ -321,8 +321,7 @@ describe("polling", () => {
 
 		server.ref = "ref-2"
 		Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true })
-		document.dispatchEvent(new Event("visibilitychange"))
-		await vi.advanceTimersByTimeAsync(0)
+		await vi.advanceTimersByTimeAsync(3000)
 		expect(bridge.ping).toHaveBeenCalledTimes(2)
 		expect(events).toEqual([["prismicPreviewUpdate", "ref-2"]])
 	})

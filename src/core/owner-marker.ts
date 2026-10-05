@@ -1,4 +1,6 @@
-import { deleteCookie, getCookie, setCookie } from "./cookie"
+import Cookies from "js-cookie"
+
+import { deleteCookie, setCookie } from "./cookie"
 import type { SiteCookie } from "./site-cookie"
 
 /**
@@ -18,24 +20,20 @@ export interface Owner {
 }
 
 export function readOwner(): Owner | undefined {
-	const raw = getCookie(ownerCookieName)
-	if (!raw) return undefined
-
 	try {
-		const value = JSON.parse(raw) as Partial<Owner> | null
+		const owner = JSON.parse(Cookies.get(ownerCookieName) ?? "null") as Partial<Owner> | null
 		if (
-			value?.version === 2 &&
-			typeof value.repository === "string" &&
-			value.repository.length > 0 &&
-			typeof value.ref === "string" &&
-			value.ref.length > 0 &&
-			typeof value.at === "number" &&
-			Number.isFinite(value.at)
+			owner?.version === 2 &&
+			typeof owner.repository === "string" &&
+			owner.repository &&
+			typeof owner.ref === "string" &&
+			owner.ref &&
+			Number.isFinite(owner.at)
 		) {
-			return value as Owner
+			return owner as Owner
 		}
 	} catch {
-		// Malformed markers claim nothing.
+		return undefined
 	}
 }
 
@@ -49,8 +47,7 @@ export function liveOwner(cookie: SiteCookie): Owner | undefined {
 }
 
 export function claimOwnership(repository: string, ref: string, at: number): void {
-	const owner: Owner = { version: 2, repository, ref, at }
-	setCookie(ownerCookieName, JSON.stringify(owner))
+	setCookie(ownerCookieName, JSON.stringify({ version: 2, repository, ref, at } satisfies Owner))
 }
 
 export function releaseOwnership(): void {

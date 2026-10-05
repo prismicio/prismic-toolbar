@@ -124,10 +124,7 @@ function useSnapshot(session: PreviewSession): PreviewSnapshot {
 
 	useEffect(() => {
 		setSnapshot(session.getSnapshot())
-		const unsubscribe = session.subscribe(setSnapshot)
-		return () => {
-			unsubscribe()
-		}
+		return session.subscribe(setSnapshot)
 	}, [session])
 
 	return snapshot

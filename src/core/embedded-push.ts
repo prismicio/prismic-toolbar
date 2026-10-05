@@ -1,14 +1,7 @@
 import { warn } from "./env"
-import { dispatchPreviewEvent, previewEvents } from "./events"
+import { dispatchPreviewEvent } from "./events"
 import { claimOwnership, releaseOwnership } from "./owner-marker"
 import { createSiteCookieStore, refFor, type SiteCookieStore } from "./site-cookie"
-
-export interface EmbeddedPushOptions {
-	repositoryHost: string
-	reload?: () => void
-	now?: () => number
-	store?: SiteCookieStore
-}
 
 /**
  * Handles refs the editor pushes into its preview iframe.
@@ -23,7 +16,12 @@ export function createEmbeddedPush({
 	reload = () => window.location.reload(),
 	now = Date.now,
 	store = createSiteCookieStore(repositoryHost),
-}: EmbeddedPushOptions): (token: string, reloadPage?: boolean) => Promise<void> {
+}: {
+	repositoryHost: string
+	reload?: () => void
+	now?: () => number
+	store?: SiteCookieStore
+}): (token: string, reloadPage?: boolean) => Promise<void> {
 	let lastToken: string | undefined
 
 	return async (token, reloadPage) => {
@@ -38,7 +36,7 @@ export function createEmbeddedPush({
 			// Claim before writing, so website tabs see the marker as soon as the ref lands.
 			claimOwnership(repositoryHost, token, now())
 			if (token !== cookieRef && !writeRef(store, token)) return
-			dispatchPreviewEvent(previewEvents.update, { ref: token })
+			dispatchPreviewEvent("prismicPreviewUpdate", token)
 			return
 		}
 
@@ -47,7 +45,7 @@ export function createEmbeddedPush({
 
 		releaseOwnership()
 		if (!writeRef(store, token)) return
-		if (dispatchPreviewEvent(previewEvents.update, { ref: token })) reload()
+		if (dispatchPreviewEvent("prismicPreviewUpdate", token)) reload()
 	}
 }
 

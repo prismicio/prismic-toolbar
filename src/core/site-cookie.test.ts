@@ -1,13 +1,7 @@
 import Cookies from "js-cookie"
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-	createSiteCookieStore,
-	parseSiteCookie,
-	previewCookieName,
-	refFor,
-	serializeSiteCookie,
-} from "./site-cookie"
+import { createSiteCookieStore, parseSiteCookie, previewCookieName, refFor } from "./site-cookie"
 
 const repository = "example.prismic.io"
 const otherRepository = "other.prismic.io"
@@ -62,18 +56,6 @@ describe("refFor", () => {
 	})
 })
 
-describe("serializeSiteCookie", () => {
-	it("puts the tracker first so SDKs find the repository key after it", () => {
-		expect(serializeSiteCookie({ tracker: "abcd1234", refs: { [repository]: "ref" } })).toBe(
-			`{"_tracker":"abcd1234","${repository}":{"preview":"ref"}}`,
-		)
-	})
-
-	it("returns undefined without refs", () => {
-		expect(serializeSiteCookie({ tracker: "abcd1234", refs: {} })).toBeUndefined()
-	})
-})
-
 describe("site cookie store", () => {
 	const store = createSiteCookieStore(repository)
 
@@ -84,6 +66,8 @@ describe("site cookie store", () => {
 
 	it("writes JSON with a new tracker for authenticated users only", () => {
 		store.writeRef("ref-1", { codec: "json", authenticated: true })
+		// Older SDKs find the repository with a regex that expects `_tracker` first.
+		expect(Cookies.get(previewCookieName)).toMatch(/^\{"_tracker":"[A-Za-z0-9]{8}",/)
 		const first = storedJSON()
 		expect(first).toEqual({
 			_tracker: expect.stringMatching(/^[A-Za-z0-9]{8}$/),

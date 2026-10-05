@@ -3,20 +3,17 @@ import { loadChunk, type EmbeddedPreviewOptions } from "~/core/chunks"
 import { createEmbeddedPush } from "~/core/embedded-push"
 import {
 	detectMode,
-	findToolbarScript,
-	repositoryHostFromScript,
+	findRepositoryHost,
 	repositoryOrigin,
 	warn,
 	type ToolbarMode,
 } from "~/core/env"
 import { createPreviewSession } from "~/core/preview-session"
 
-// `document.currentScript` is only set while this script first runs.
-const script = findToolbarScript()
 const mode = detectMode()
+const repositoryHost = findRepositoryHost()
 
 if (mode) {
-	const repositoryHost = repositoryHostFromScript(script)
 	if (repositoryHost) start(mode, repositoryHost)
 	else {
 		warn(`Add your repository name to the toolbar script, for example:

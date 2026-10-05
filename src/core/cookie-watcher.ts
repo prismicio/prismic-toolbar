@@ -1,81 +1,27 @@
-import { getCookie } from "./cookie"
-
-export interface CookieWatcher {
-	start(): void
-	stop(): void
-	/** Compares the cookie with its last known value now. */
-	check(): void
-}
-
-interface CookieStoreLike extends EventTarget {}
-interface CookieChangeEventLike extends Event {
-	changed: ReadonlyArray<{ name?: string }>
-	deleted: ReadonlyArray<{ name?: string }>
-}
+import Cookies from "js-cookie"
 
 /**
- * Reports changes to a cookie made outside this page, such as an editor push or another tab. Uses
- * Cookie Store change events when available, and polls while the page is visible otherwise. The
- * callback also sees this page's own writes; callers ignore those by comparing values.
+ * Calls `onChange` when a cookie's value changes, including changes from other tabs or the editor's
+ * iframe. Uses Cookie Store change events when available, and polls while the page is visible
+ * otherwise. Returns a function that stops watching.
  */
-export function createCookieWatcher({
-	name,
-	onChange,
-	interval = 250,
-}: {
-	name: string
-	onChange: (value: string | undefined) => void
-	interval?: number
-}): CookieWatcher {
-	const cookieStore = (window as { cookieStore?: CookieStoreLike }).cookieStore
-	let lastValue = getCookie(name)
-	let timer: ReturnType<typeof setInterval> | undefined
-	let started = false
-
-	function check() {
-		const value = getCookie(name)
+export function watchCookie(name: string, onChange: () => void): () => void {
+	let lastValue = Cookies.get(name)
+	const check = () => {
+		const value = Cookies.get(name)
 		if (value === lastValue) return
 		lastValue = value
-		onChange(value)
+		onChange()
 	}
 
-	function handleCookieChange(event: Event) {
-		const { changed, deleted } = event as CookieChangeEventLike
-		if ([...changed, ...deleted].some((cookie) => cookie.name === name)) check()
+	const cookieStore = (window as { cookieStore?: EventTarget }).cookieStore
+	if (cookieStore) {
+		cookieStore.addEventListener("change", check)
+		return () => cookieStore.removeEventListener("change", check)
 	}
 
-	function updatePolling() {
-		if (cookieStore) return
-		const shouldPoll = started && document.visibilityState === "visible"
-		if (shouldPoll && !timer) timer = setInterval(check, interval)
-		if (!shouldPoll && timer) {
-			clearInterval(timer)
-			timer = undefined
-		}
-	}
-
-	function handleVisibilityChange() {
+	const timer = setInterval(() => {
 		if (document.visibilityState === "visible") check()
-		updatePolling()
-	}
-
-	return {
-		check,
-
-		start() {
-			if (started) return
-			started = true
-			lastValue = getCookie(name)
-			cookieStore?.addEventListener("change", handleCookieChange)
-			document.addEventListener("visibilitychange", handleVisibilityChange)
-			updatePolling()
-		},
-
-		stop() {
-			started = false
-			cookieStore?.removeEventListener("change", handleCookieChange)
-			document.removeEventListener("visibilitychange", handleVisibilityChange)
-			updatePolling()
-		},
-	}
+	}, 250)
+	return () => clearInterval(timer)
 }

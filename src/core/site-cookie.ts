@@ -1,22 +1,20 @@
-import { deleteCookie, getCookie, setCookie } from "./cookie"
+import Cookies from "js-cookie"
 
-/**
- * The website's preview cookie. `@prismicio/client` sends its whole value as the Content API ref,
- * and the framework SDKs read it to detect an active preview.
- */
+import { deleteCookie, setCookie } from "./cookie"
+
+/** `@prismicio/client` sends this cookie's whole value as the Content API ref. */
 export const previewCookieName = "io.prismic.preview"
 
 /**
  * - `plain`: a raw ref, written by SDK preview routes and by the toolbar inside the editor.
  * - `json`: `{ "_tracker": "…", "<repository host>": { "preview": "<ref>" } }`, written by the
- *   toolbar on the website itself.
+ *   toolbar on websites.
  */
 export type SiteCookie =
 	| { kind: "none" }
 	| { kind: "plain"; raw: string }
 	| { kind: "json"; raw: string; tracker?: string; refs: Record<string, string> }
 
-/** `json` cookies carry one ref per repository; `plain` cookies carry a single raw ref. */
 export type SiteCookieCodec = "json" | "plain"
 
 export function parseSiteCookie(raw: string | undefined): SiteCookie {
@@ -30,41 +28,19 @@ export function parseSiteCookie(raw: string | undefined): SiteCookie {
 	}
 	if (!value || typeof value !== "object" || Array.isArray(value)) return { kind: "plain", raw }
 
-	let tracker: string | undefined
+	const { _tracker, ...entries } = value as Record<string, unknown>
 	const refs: Record<string, string> = {}
-	for (const [key, entry] of Object.entries(value)) {
-		if (key === "_tracker") {
-			if (typeof entry === "string") tracker = entry
-		} else if (isPreviewEntry(entry)) {
-			refs[key] = entry.preview
-		}
+	for (const [repositoryHost, entry] of Object.entries(entries)) {
+		const preview = (entry as { preview?: unknown } | null)?.preview
+		if (typeof preview === "string") refs[repositoryHost] = preview
 	}
 
-	return { kind: "json", raw, tracker, refs }
+	return { kind: "json", raw, tracker: typeof _tracker === "string" ? _tracker : undefined, refs }
 }
 
-/** The ref a repository's preview uses, if the cookie holds one. */
 export function refFor(cookie: SiteCookie, repositoryHost: string): string | undefined {
 	if (cookie.kind === "plain") return cookie.raw
 	if (cookie.kind === "json") return cookie.refs[repositoryHost]
-}
-
-/** Serializes a `json` cookie, with `_tracker` first, or returns `undefined` when it holds no ref. */
-export function serializeSiteCookie({
-	tracker,
-	refs,
-}: {
-	tracker?: string
-	refs: Record<string, string>
-}): string | undefined {
-	const entries = Object.entries(refs)
-	if (!entries.length) return undefined
-
-	const value: Record<string, unknown> = {}
-	if (tracker) value._tracker = tracker
-	for (const [repositoryHost, preview] of entries) value[repositoryHost] = { preview }
-
-	return JSON.stringify(value)
 }
 
 export interface SiteCookieStore {
@@ -81,7 +57,18 @@ export interface SiteCookieStore {
 }
 
 export function createSiteCookieStore(repositoryHost: string): SiteCookieStore {
-	const read = () => parseSiteCookie(getCookie(previewCookieName))
+	const read = () => parseSiteCookie(Cookies.get(previewCookieName))
+
+	function writeJSON(tracker: string | undefined, refs: Record<string, string>) {
+		const entries = Object.entries(refs).map(([host, preview]) => [host, { preview }])
+		if (!entries.length) {
+			deleteCookie(previewCookieName)
+			return true
+		}
+		// Older SDKs find the repository with a regex that expects `_tracker` first.
+		const value = Object.fromEntries(tracker ? [["_tracker", tracker], ...entries] : entries)
+		return setCookie(previewCookieName, JSON.stringify(value))
+	}
 
 	return {
 		read,
@@ -90,36 +77,22 @@ export function createSiteCookieStore(repositoryHost: string): SiteCookieStore {
 			if (codec === "plain") return setCookie(previewCookieName, ref)
 
 			const current = read()
-			const refs = current.kind === "json" ? { ...current.refs } : {}
-			refs[repositoryHost] = ref
-			const tracker = authenticated ? generateTracker() : undefined
-
-			return setCookie(previewCookieName, serializeSiteCookie({ tracker, refs }) as string)
+			const refs = { ...(current.kind === "json" ? current.refs : {}), [repositoryHost]: ref }
+			return writeJSON(authenticated ? generateTracker() : undefined, refs)
 		},
 
 		removeOwn() {
 			const current = read()
 			if (current.kind !== "json") return deleteCookie(previewCookieName)
 
-			const refs = { ...current.refs }
-			delete refs[repositoryHost]
-			const value = serializeSiteCookie({ tracker: current.tracker, refs })
-			if (value) setCookie(previewCookieName, value)
-			else deleteCookie(previewCookieName)
+			const { [repositoryHost]: _removed, ...refs } = current.refs
+			writeJSON(current.tracker, refs)
 		},
 
 		deleteAll() {
 			deleteCookie(previewCookieName)
 		},
 	}
-}
-
-function isPreviewEntry(entry: unknown): entry is { preview: string } {
-	return (
-		Boolean(entry) &&
-		typeof entry === "object" &&
-		typeof (entry as { preview?: unknown }).preview === "string"
-	)
 }
 
 const trackerAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"

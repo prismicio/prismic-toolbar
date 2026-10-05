@@ -12,34 +12,25 @@ export function detectMode(win: Window = window): ToolbarMode | undefined {
 	if (win.name === "prismic:embedded-preview:poll") return "embedded-poll"
 }
 
-/** Must run synchronously while the toolbar script executes, before `currentScript` resets. */
-export function findToolbarScript(doc: Document = document): HTMLScriptElement | undefined {
-	if (doc.currentScript instanceof HTMLScriptElement) return doc.currentScript
-
+/**
+ * Reads the repository from the toolbar script's `repo` parameter. Call it while that script first
+ * runs: `document.currentScript` is only set then.
+ */
+export function findRepositoryHost(doc: Document = document): string | undefined {
 	const scripts = doc.querySelectorAll<HTMLScriptElement>(
 		'script[src*="prismic.js"], script[src*="prismic.min.js"]',
 	)
-	return scripts[scripts.length - 1]
-}
+	const script =
+		doc.currentScript instanceof HTMLScriptElement ? doc.currentScript : scripts[scripts.length - 1]
 
-/** Reads the repository from the `repo` query parameter of the toolbar script. */
-export function repositoryHostFromScript(
-	script: HTMLScriptElement | undefined,
-): string | undefined {
-	if (!script?.src) return undefined
-
-	try {
-		return parseRepositoryHost(new URL(script.src, window.location.href).searchParams.get("repo"))
-	} catch {
-		return undefined
-	}
+	return script?.src ? parseRepositoryHost(new URL(script.src).searchParams.get("repo")) : undefined
 }
 
 /**
  * Accepts a repository name (`example` → `example.prismic.io`) or host (`example.wroom.io`, with an
  * optional protocol, path, or `.cdn` segment). Only the first of comma-separated values is used.
  */
-export function parseRepositoryHost(input: string | null | undefined): string | undefined {
+export function parseRepositoryHost(input: string | null): string | undefined {
 	const first = input?.split(",")[0]?.trim().toLowerCase()
 	if (!first) return undefined
 
@@ -52,17 +43,8 @@ export function parseRepositoryHost(input: string | null | undefined): string | 
 
 /** Repositories on `.test` hosts are local Prismic instances that follow the page's protocol. */
 export function repositoryOrigin(repositoryHost: string, location: Location = window.location) {
-	const hostname = repositoryHost.replace(/:\d+$/, "")
-	const protocol = hostname.endsWith(".test") ? location.protocol : "https:"
-
-	return `${protocol}//${repositoryHost}`
-}
-
-/** When this page's navigation started, comparable with `Date.now()`. */
-export function navigationStart(): number {
-	return typeof performance !== "undefined" && performance.timeOrigin
-		? performance.timeOrigin
-		: Date.now()
+	const isLocal = repositoryHost.replace(/:\d+$/, "").endsWith(".test")
+	return `${isLocal ? location.protocol : "https:"}//${repositoryHost}`
 }
 
 export function warn(message: string): void {

@@ -1,12 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest"
 
-import {
-	detectMode,
-	findToolbarScript,
-	parseRepositoryHost,
-	repositoryHostFromScript,
-	repositoryOrigin,
-} from "./env"
+import { detectMode, findRepositoryHost, parseRepositoryHost, repositoryOrigin } from "./env"
 
 afterEach(() => {
 	document.head.innerHTML = ""
@@ -40,29 +34,22 @@ describe("parseRepositoryHost", () => {
 		expect(parseRepositoryHost(input)).toBe(expected)
 	})
 
-	it.each([null, undefined, "", ",", "exa mple", "example.prismic.io<script>"])(
-		"rejects %s",
-		(input) => {
-			expect(parseRepositoryHost(input)).toBeUndefined()
-		},
-	)
+	it.each([null, "", ",", "exa mple", "example.prismic.io<script>"])("rejects %s", (input) => {
+		expect(parseRepositoryHost(input)).toBeUndefined()
+	})
 })
 
-describe("toolbar script", () => {
-	it("reads the repository from the script's repo parameter", () => {
-		const script = document.createElement("script")
-		script.src = "https://static.cdn.prismic.io/prismic.js?new=true&repo=example"
-		expect(repositoryHostFromScript(script)).toBe("example.prismic.io")
-		expect(repositoryHostFromScript(undefined)).toBeUndefined()
-	})
-
-	it("falls back to the last toolbar script when currentScript is unavailable", () => {
+describe("findRepositoryHost", () => {
+	it("reads the repo parameter of the last toolbar script when currentScript is unavailable", () => {
 		document.head.innerHTML = `
 			<script src="https://static.cdn.prismic.io/prismic.js?repo=first"></script>
 			<script src="https://example.com/other.js"></script>
-			<script src="https://static.cdn.prismic.io/prismic.min.js?repo=second"></script>
+			<script src="https://static.cdn.prismic.io/prismic.min.js?new=true&repo=second"></script>
 		`
-		expect(repositoryHostFromScript(findToolbarScript())).toBe("second.prismic.io")
+		expect(findRepositoryHost()).toBe("second.prismic.io")
+
+		document.head.innerHTML = `<script src="https://static.cdn.prismic.io/prismic.js"></script>`
+		expect(findRepositoryHost()).toBeUndefined()
 	})
 })
 
