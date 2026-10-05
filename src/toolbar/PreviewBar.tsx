@@ -66,7 +66,7 @@ const shareLabels = {
 	idle: "Copy share link",
 	loading: "Getting link…",
 	copied: "Link copied",
-	failed: "Could not get a link",
+	failed: "Sharing failed",
 }
 
 function ShareButton({ session }: { session: PreviewSession }) {
@@ -113,7 +113,12 @@ function ShareButton({ session }: { session: PreviewSession }) {
 			aria-live="polite"
 			onClick={() => void share()}
 		>
-			{shareLabels[state.kind]}
+			{/* Every label takes space, so the button keeps its width when its label changes. */}
+			{Object.entries(shareLabels).map(([kind, label]) => (
+				<span key={kind} class={kind === state.kind ? undefined : "inactive"}>
+					{label}
+				</span>
+			))}
 		</button>
 	)
 }

@@ -96,9 +96,19 @@
 }
 
 .share {
+	display: grid;
 	flex: none;
+	place-items: center;
 	margin: 0;
 	cursor: pointer;
+}
+
+.share > span {
+	grid-area: 1 / 1;
+}
+
+.share > .inactive {
+	visibility: hidden;
 }
 
 .share:hover:not(:disabled) {

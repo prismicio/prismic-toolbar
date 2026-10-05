@@ -49,10 +49,14 @@ test("shows that the preview is updating while the page reloads", async ({
 test("copies a share link to the current page", async ({ repository, website }) => {
 	await repository.startPreview("ref-1")
 	await website.goto()
+	const button = website.previewBar.getByRole("button", { name: "Copy share link" })
+	const width = (await button.boundingBox())?.width
 
-	await website.previewBar.getByRole("button", { name: "Copy share link" }).click()
+	await button.click()
 
 	await expect(website.previewBar.getByRole("button", { name: "Link copied" })).toBeVisible()
+	// The bar does not shift when the label changes.
+	expect((await button.boundingBox())?.width).toBe(width)
 	expect(await website.page.evaluate(() => sessionStorage.getItem("clipboard"))).toBe(
 		`${repository.url}/previews/s/share-id`,
 	)
@@ -96,9 +100,7 @@ test("reports when Prismic cannot create a share link", async ({
 
 	await website.previewBar.getByRole("button", { name: "Copy share link" }).click()
 
-	await expect(
-		website.previewBar.getByRole("button", { name: "Could not get a link" }),
-	).toBeVisible()
+	await expect(website.previewBar.getByRole("button", { name: "Sharing failed" })).toBeVisible()
 })
 
 test("offers share link visitors no share link", async ({ repository, website }) => {

@@ -147,7 +147,8 @@ async function fetchJSON<T>(url: string, init?: RequestInit): Promise<T> {
 function deleteSessionCookie() {
 	const hostParts = window.location.hostname.split(".")
 	const pathParts = window.location.pathname.slice(1).split("/")
-	const domains = hostParts.flatMap((_, index) => {
+	// Skip the top-level domain: browsers reject cookies set on it, and Firefox logs each attempt.
+	const domains = hostParts.slice(0, -1).flatMap((_, index) => {
 		const domain = hostParts.slice(index).join(".")
 		return [domain, `.${domain}`]
 	})
