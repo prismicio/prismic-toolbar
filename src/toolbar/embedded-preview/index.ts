@@ -1,12 +1,12 @@
 import { once, readyDOM } from "@common"
 
+import { registerChunk, type EmbeddedPreviewOptions } from "~/core/chunks"
+
 import { isAckMessage, isSetRefMessage, readyMessage } from "./message-protocol"
 import type { MessageHandler, PostMessage } from "./message-protocol"
 import { EmbeddedPreviewOverlay } from "./overlay"
 
-export interface EmbeddedPreviewOptions {
-	onRef?: (ref: string) => Promise<void>
-}
+export type { EmbeddedPreviewOptions }
 
 export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {}) {
 	await readyDOM()
@@ -24,7 +24,7 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 		subscribeToMessages(({ data }) => {
 			if (!isSetRefMessage(data)) return
 
-			onRef(data.token).catch((error) => {
+			onRef(data.token, data.reload).catch((error) => {
 				console.error("Failed to update embedded preview ref.", error)
 			})
 		})
@@ -56,9 +56,7 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 	window.parent.postMessage(readyMessage, "*")
 }
 
-if (window.prismic) {
-	window.prismic.setupEmbeddedPreview = setupEmbeddedPreview
-}
+registerChunk("setupEmbeddedPreview", setupEmbeddedPreview)
 
 const allowedParentOrigins = [
 	/^https:\/\/([^/]+\.)?prismic\.io$/,
@@ -68,8 +66,8 @@ const allowedParentOrigins = [
 	/^https:\/\/([^/]+\.)?platform-wroom\.com$/,
 	/^https:\/\/([^/]+\.)?devops-wroom\.com$/,
 	/^https:\/\/[a-z0-9-]+-prismic\.vercel\.app$/,
-	/^http:\/\/localhost:\d+$/,
-	/^http:\/\/127\.0\.0\.1:\d+$/,
+	// A local editor only drives development builds.
+	...(__TOOLBAR_LOCAL_EDITOR__ ? [/^http:\/\/localhost:\d+$/, /^http:\/\/127\.0\.0\.1:\d+$/] : []),
 ]
 
 function isAllowedParentOrigin(origin: string) {

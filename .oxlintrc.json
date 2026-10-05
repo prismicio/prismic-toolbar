@@ -6,7 +6,9 @@
 		"node": true
 	},
 	"globals": {
-		"CDN_HOST": "readonly"
+		"CDN_HOST": "readonly",
+		"__TOOLBAR_VERSION__": "readonly",
+		"__TOOLBAR_LOCAL_EDITOR__": "readonly"
 	},
 	"rules": {
 		"no-undef": "error",
@@ -52,12 +54,6 @@
 			"rules": {
 				"no-undef": "off",
 				"prefer-const": "error"
-			}
-		},
-		{
-			"files": ["src/toolbar-service/index.js", "src/toolbar/prediction.js"],
-			"rules": {
-				"no-async-promise-executor": "off"
 			}
 		}
 	]

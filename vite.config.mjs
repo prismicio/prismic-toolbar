@@ -4,44 +4,48 @@ import { fileURLToPath } from "node:url"
 import browserslistToEsbuild from "browserslist-to-esbuild"
 import postcssImport from "postcss-import"
 import postcssPresetEnv from "postcss-preset-env"
-import postcssUrl from "postcss-url"
 
 const relative = (path) => fileURLToPath(new URL(path, import.meta.url))
-export const { version } = JSON.parse(readFileSync(relative("./package.json"), "utf8"))
+const packageJSON = JSON.parse(readFileSync(relative("./package.json"), "utf8"))
+// Asset folder name. Pull request previews build into `pr-<number>` instead of the version.
+export const version = process.env.TOOLBAR_VERSION || packageJSON.version
 const browserTargets = browserslistToEsbuild(undefined, { path: relative(".") })
 
 export const entries = {
-	prismic: relative("src/toolbar/index.js"),
+	prismic: relative("src/loader/index.ts"),
 	"embedded-preview": relative("src/toolbar/embedded-preview/index.ts"),
-	toolbar: relative("src/toolbar/toolbar.jsx"),
-	iframe: relative("src/iframe/index.js"),
+	toolbar: relative("src/toolbar/bar/index.tsx"),
+	iframe: relative("src/iframe/index.ts"),
 }
 
 const shared = {
 	resolve: {
 		alias: [
-			{ find: /^react$/, replacement: "preact/compat" },
-			{ find: /^react-dom$/, replacement: "preact/compat" },
-			{ find: /^react\/jsx-runtime$/, replacement: "preact/jsx-runtime" },
 			{ find: "~", replacement: relative("src") },
 			{ find: "@common", replacement: relative("src/common") },
 			{ find: "@toolbar", replacement: relative("src/toolbar") },
-			{ find: "@iframe", replacement: relative("src/iframe") },
-			{ find: "@toolbar-service", replacement: relative("src/toolbar-service") },
 		],
 	},
 	oxc: { jsx: { runtime: "automatic", importSource: "preact" } },
 	css: {
 		postcss: {
-			plugins: [
-				postcssImport(),
-				postcssUrl({ url: "inline" }),
-				postcssPresetEnv({
-					features: { "nesting-rules": true },
-				}),
-			],
+			plugins: [postcssImport(), postcssPresetEnv({ features: { "nesting-rules": true } })],
 		},
 	},
+}
+
+/** Build-time constants, shared with Vitest. */
+export function defines({ development = false } = {}) {
+	return {
+		CDN_HOST: JSON.stringify(
+			process.env.CDN_HOST || (development ? "http://localhost:8081" : "https://prismic.io"),
+		),
+		__TOOLBAR_VERSION__: JSON.stringify(version),
+		__TOOLBAR_LOCAL_EDITOR__: JSON.stringify(
+			development || process.env.TOOLBAR_LOCAL_EDITOR === "true",
+		),
+		"process.env.NODE_ENV": JSON.stringify(development ? "development" : "production"),
+	}
 }
 
 export function entryConfig(entry, development = false) {
@@ -72,13 +76,7 @@ export function entryConfig(entry, development = false) {
 	return {
 		...shared,
 		configFile: false,
-		define: {
-			CDN_HOST: JSON.stringify(
-				process.env.CDN_HOST || (development ? "http://localhost:8081" : "https://prismic.io"),
-			),
-			"process.env.npm_package_version": JSON.stringify(version),
-			"process.env.NODE_ENV": JSON.stringify(development ? "development" : "production"),
-		},
+		define: defines({ development }),
 		build: {
 			outDir: `build/prismic-toolbar/${version}`,
 			emptyOutDir: false,
@@ -86,7 +84,7 @@ export function entryConfig(entry, development = false) {
 			lib: {
 				entry: entries[entry],
 				formats: ["iife"],
-				name: entry === "embedded-preview" ? "PrismicEmbeddedPreview" : `Prismic${entry}`,
+				name: `PrismicToolbar_${entry.replace(/\W/g, "_")}`,
 				fileName: () => `${entry}.js`,
 			},
 			target: browserTargets,

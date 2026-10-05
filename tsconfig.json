@@ -6,21 +6,17 @@
 		"moduleResolution": "bundler",
 		"isolatedModules": true,
 		"strict": true,
-		"allowJs": true,
-		"checkJs": false,
+		"allowJs": false,
 		"noEmit": true,
 		"jsx": "react-jsx",
 		"jsxImportSource": "preact",
 		"resolveJsonModule": true,
 		"types": ["vite/client"],
 		"paths": {
-			"@common": ["./src/common/index.js"],
+			"~/*": ["./src/*"],
+			"@common": ["./src/common/index.ts"],
 			"@common/*": ["./src/common/*"],
-			"@toolbar/*": ["./src/toolbar/*"],
-			"@toolbar-service": ["./src/toolbar-service/index.js"],
-			"@iframe/*": ["./src/iframe/*"],
-			"react": ["./node_modules/preact/compat"],
-			"react-dom": ["./node_modules/preact/compat"]
+			"@toolbar/*": ["./src/toolbar/*"]
 		},
 		"skipLibCheck": true
 	},

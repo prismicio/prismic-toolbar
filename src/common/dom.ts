@@ -33,3 +33,26 @@ export const appendCSS = (el: Node, css: string) => {
 	style.appendChild(document.createTextNode(css))
 	el.appendChild(style)
 }
+
+const scripts = new Map<string, Promise<void>>()
+
+// Load a classic script once. Toolbar chunks are classic scripts: the CDN sends no CORS headers,
+// which module scripts would need.
+export const loadScript = (src: string): Promise<void> => {
+	let script = scripts.get(src)
+	if (!script) {
+		script = new Promise<void>((resolve, reject) => {
+			const element = document.createElement("script")
+			element.src = src
+			element.async = true
+			element.addEventListener("load", () => resolve(), { once: true })
+			element.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), {
+				once: true,
+			})
+			document.head.appendChild(element)
+		})
+		script.catch(() => scripts.delete(src))
+		scripts.set(src, script)
+	}
+	return script
+}
