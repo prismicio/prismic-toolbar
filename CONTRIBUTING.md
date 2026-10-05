@@ -45,6 +45,12 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
   <script src="//wroom.test/prismic-toolbar/<version>/prismic.js?repo=repo_name.wroom.test"></script>
   ```
 
+#### Cookies
+
+- The toolbar stores the preview ref in the `io.prismic.preview` cookie, which `@prismicio/client` sends to the Content API.
+- On a website, the cookie holds JSON: `{ "_tracker": "…", "<repository host>": { "preview": "<ref>" } }`. The tracker comes first: older SDKs read the cookie with a regular expression. Inside the editor, it holds the raw ref.
+- The `io.prismic.preview.updated` cookie marks refs the editor pushed, so website tabs leave them alone.
+
 #### Tests
 
 - Tests are grouped like `src`: one folder per entry, plus `tests/lib`.
