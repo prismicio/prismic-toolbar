@@ -275,6 +275,38 @@ for (const active of [true, false]) {
 	})
 }
 
+test("embedded polling on a loopback site in a cross-site editor stores its cookie and settles", async ({
+	page,
+}) => {
+	const calls = []
+	const siteLoads = []
+	await mockPreviewService(page, calls, "poll-ref")
+	// The routed editor page counts as public, so Chromium asks before it frames a local site.
+	await page.context().grantPermissions(["local-network-access"])
+	// localhost and 127.0.0.1 are different sites, so this frames the site cross-site over plain
+	// http, like a local dev server previewed from the hosted editor.
+	await page.route("http://127.0.0.1:8082/editor.html", (route) =>
+		route.fulfill({
+			contentType: "text/html",
+			body: '<iframe name="prismic:embedded-preview:poll" src="http://localhost:8082/site.html"></iframe>',
+		}),
+	)
+	page.on("request", (request) => {
+		if (request.url() === "http://localhost:8082/site.html") siteLoads.push(request.url())
+	})
+
+	await page.goto("http://127.0.0.1:8082/editor.html")
+
+	// A dropped cookie write makes every load sync and reload again, so polling never starts.
+	await expect.poll(() => calls, { timeout: 10_000 }).toContain("update_preview")
+	expect(siteLoads).toHaveLength(2)
+	expect(
+		(await page.context().cookies("http://localhost:8082")).find(
+			(cookie) => cookie.name === "io.prismic.preview",
+		),
+	).toMatchObject({ value: "poll-ref", sameSite: "None", secure: true })
+})
+
 async function mockPreviewService(page, calls, ref, ready = Promise.resolve()) {
 	await page.exposeFunction("recordPreviewCall", (type) => calls.push(type))
 	await page.route("**/prismic-toolbar/*/iframe.html", async (route) => {
