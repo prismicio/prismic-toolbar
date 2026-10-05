@@ -32,8 +32,11 @@ function Field({ value }: { value: unknown }) {
 	return <pre>{JSON.stringify(value, null, 2)}</pre>
 }
 
+// Links also have a `type` and a `text`: the linked document's type and the link's text.
 function isRichTextNode(value: unknown): boolean {
-	return typeof value === "object" && value !== null && "type" in value && "text" in value
+	if (typeof value !== "object" || value === null || "link_type" in value) return false
+	const { type, spans } = value as { type?: unknown; spans?: unknown }
+	return typeof type === "string" && (Array.isArray(spans) || type === "image" || type === "embed")
 }
 
 function isImage(value: unknown): value is { url: string; alt?: string | null } {
