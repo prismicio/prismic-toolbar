@@ -5,28 +5,14 @@ import { Preview } from "./index"
 const mocks = vi.hoisted(() => ({ reloadOrigin: vi.fn() }))
 vi.mock("../utils", () => ({ reloadOrigin: mocks.reloadOrigin }))
 
-class FakeCookie {
-	value: string | undefined
-
-	constructor(value?: string) {
-		this.value = value
+function createPreview(value?: string) {
+	const cookie = {
+		value,
+		getRefForDomain: () => cookie.value,
+		upsertPreviewForDomain: vi.fn((ref: string) => {
+			cookie.value = ref
+		}),
 	}
-
-	getRefForDomain() {
-		return this.value
-	}
-
-	upsertPreviewForDomain = vi.fn((ref: string) => {
-		this.value = ref
-	})
-
-	deletePreviewForDomain = vi.fn(() => {
-		this.value = undefined
-	})
-}
-
-function createPreview(cookieValue?: string) {
-	const cookie = new FakeCookie(cookieValue)
 	const preview = new Preview({ closePreviewSession: async () => {} }, cookie, {})
 	return { preview, cookie }
 }
