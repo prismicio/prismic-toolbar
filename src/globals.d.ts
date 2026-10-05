@@ -11,7 +11,9 @@ interface PrismicToolbarAPI {
 		prediction: unknown
 		analytics: unknown
 	}) => object
-	setupEmbeddedPreview?: (options?: { onRef?: (ref: string) => Promise<void> }) => Promise<void>
+	setupEmbeddedPreview?: (options?: {
+		onRef?: (ref: string, reload?: boolean) => Promise<void>
+	}) => Promise<void>
 }
 
 interface Window {

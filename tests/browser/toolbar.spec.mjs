@@ -235,6 +235,48 @@ test("embedded overlay handles back-to-back state and scroll messages", async ({
 		.toBe(true)
 })
 
+test("editor refs sent with reload: false update a site without listeners in place", async ({
+	page,
+}) => {
+	const siteLoads = []
+	page.on("request", (request) => {
+		if (new URL(request.url()).pathname === "/site.html") siteLoads.push(request.url())
+	})
+	// Record updates without cancelling them, like a website that does not handle preview events.
+	await page.route("**/site.html", async (route) => {
+		const response = await route.fetch()
+		await route.fulfill({
+			response,
+			body: (await response.text()).replace(
+				'window.addEventListener("prismicPreviewUpdate", (event) => event.preventDefault())',
+				'window.addEventListener("prismicPreviewUpdate", (event) => (window.previewUpdates ||= []).push(event.detail.ref))',
+			),
+		})
+	})
+	await page.goto("/overlay.html")
+	await expect(page.frameLocator("iframe").locator('[data-thread-id="first"]')).toBeVisible()
+	const site = page.frame({ name: "prismic:embedded-preview" })
+	const send = (data) =>
+		page.evaluate(
+			(data) => document.querySelector("iframe").contentWindow.postMessage(data, location.origin),
+			data,
+		)
+	const previewCookie = async () =>
+		(await page.context().cookies()).find((cookie) => cookie.name === "io.prismic.preview")?.value
+
+	await send({ type: "prismic:embedded-preview:set-ref", token: "live-1", reload: false })
+	await send({ type: "prismic:embedded-preview:set-ref", token: "live-1", reload: false })
+	await send({ type: "prismic:embedded-preview:set-ref", token: "live-2", reload: false })
+	await expect.poll(() => site.evaluate(() => window.previewUpdates)).toEqual(["live-1", "live-2"])
+	expect(await previewCookie()).toBe("live-2")
+	expect(siteLoads).toHaveLength(1)
+
+	// Refs without the flag keep the hard reload fallback for websites that do not handle the event.
+	await send({ type: "prismic:embedded-preview:set-ref", token: "legacy-1" })
+	await expect.poll(() => siteLoads).toHaveLength(2)
+	expect(await previewCookie()).toBe("legacy-1")
+})
+
 for (const active of [true, false]) {
 	test(`embedded polling (${active ? "active" : "inactive"}) stays independent of the editor connection`, async ({
 		page,

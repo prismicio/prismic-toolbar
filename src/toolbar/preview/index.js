@@ -51,10 +51,26 @@ export class Preview {
 		if (reload) this.reloadPreview(ref)
 	}
 
-	async updateFromRef(ref) {
+	async updateFromRef(ref, reload) {
+		if (reload === false) {
+			this.refreshFromRef(ref)
+			return
+		}
+
 		const { shouldReload } = await this.start(ref)
 
 		if (shouldReload) this.reloadPreview(ref)
+	}
+
+	// The editor keeps its preview mounted for these refs: store the ref and let the website update
+	// itself, but never hard reload, even when no handler cancels the event.
+	refreshFromRef(ref) {
+		const cookieRef = this.cookie.getRefForDomain()
+		if (ref === this.lastRefreshedRef && ref === cookieRef) return
+
+		this.lastRefreshedRef = ref
+		if (ref !== cookieRef) this.cookie.upsertPreviewForDomain(ref)
+		dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })
 	}
 
 	reloadPreview(ref) {

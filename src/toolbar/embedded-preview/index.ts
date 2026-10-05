@@ -5,7 +5,7 @@ import type { MessageHandler, PostMessage } from "./message-protocol"
 import { EmbeddedPreviewOverlay } from "./overlay"
 
 export interface EmbeddedPreviewOptions {
-	onRef?: (ref: string) => Promise<void>
+	onRef?: (ref: string, reload?: boolean) => Promise<void>
 }
 
 export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {}) {
@@ -24,7 +24,7 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 		subscribeToMessages(({ data }) => {
 			if (!isSetRefMessage(data)) return
 
-			onRef(data.token).catch((error) => {
+			onRef(data.token, data.reload).catch((error) => {
 				console.error("Failed to update embedded preview ref.", error)
 			})
 		})

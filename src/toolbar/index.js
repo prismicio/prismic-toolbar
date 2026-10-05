@@ -101,7 +101,7 @@ if (shouldRunToolbar) {
 			)
 			void loadEmbeddedPreview({
 				url: embeddedPreviewURL,
-				onRef: (ref) => preview.updateFromRef(ref),
+				onRef: (ref, reload) => preview.updateFromRef(ref, reload),
 			})
 			return
 		}

@@ -38,6 +38,8 @@ const ackMessageSchema = z.object({ type: z.literal(ackMessageType) })
 const setRefMessageSchema = z.object({
 	type: z.literal(setRefMessageType),
 	token: nonemptyStringSchema,
+	// `false` when the editor keeps the preview mounted and expects an in-place update.
+	reload: z.optional(z.boolean()),
 })
 
 const overlayScaleMessageSchema = z.object({
