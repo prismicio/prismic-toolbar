@@ -307,6 +307,41 @@ test("embedded polling on a loopback site in a cross-site editor stores its cook
 	).toMatchObject({ value: "poll-ref", sameSite: "None", secure: true })
 })
 
+test("embedded polling does not reload when the browser rejects the preview cookie", async ({
+	page,
+}) => {
+	const calls = []
+	const siteLoads = []
+	const warnings = []
+	await mockPreviewService(page, calls, "poll-ref")
+	// Drop every cookie write, like Safari on http://localhost or blocked third-party cookies.
+	await page.addInitScript(() => {
+		const { get } = Object.getOwnPropertyDescriptor(Document.prototype, "cookie")
+		Object.defineProperty(Document.prototype, "cookie", { get, set() {}, configurable: true })
+	})
+	await page.route("**/overlay.html", async (route) => {
+		const response = await route.fetch()
+		await route.fulfill({
+			response,
+			body: (await response.text()).replace(
+				'name="prismic:embedded-preview"',
+				'name="prismic:embedded-preview:poll"',
+			),
+		})
+	})
+	page.on("console", (message) => {
+		if (message.type() === "warning") warnings.push(message.text())
+	})
+	page.on("request", (request) => {
+		if (new URL(request.url()).pathname === "/site.html") siteLoads.push(request.url())
+	})
+
+	await page.goto("/overlay.html")
+
+	await expect.poll(() => warnings.join("\n")).toContain("The browser rejected the preview cookie")
+	expect(siteLoads).toHaveLength(1)
+})
+
 async function mockPreviewService(page, calls, ref, ready = Promise.resolve()) {
 	await page.exposeFunction("recordPreviewCall", (type) => calls.push(type))
 	await page.route("**/prismic-toolbar/*/iframe.html", async (route) => {
