@@ -21,6 +21,7 @@ export function useSliceOverlay(
 	const handleMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
 		if (isSliceOverlayMessage(data)) {
 			setSelectedSliceId(data.selectedSliceId)
+			if (!data.selectedSliceId) cancelReveal()
 			return
 		}
 
@@ -44,8 +45,11 @@ function useSliceScroll(slices: Slice[], uiScale: number) {
 
 	const reveal = useStableCallback(() => {
 		const slice = slices.find((slice) => slice.sliceId === pendingSliceIdRef.current)
+		// The website may still be rendering the requested slice.
+		if (!slice?.rect) return
+
 		pendingSliceIdRef.current = undefined
-		if (slice) scrollToSlice(slice, uiScale)
+		scrollToSlice(slice, uiScale)
 	})
 
 	// Opening an editor panel animates the preview size. Reveal once that size settles.
@@ -56,7 +60,7 @@ function useSliceScroll(slices: Slice[], uiScale: number) {
 		timeoutRef.current = window.setTimeout(reveal, 100)
 	})
 
-	useLayoutEffect(schedule, [schedule, uiScale])
+	useLayoutEffect(schedule, [schedule, slices, uiScale])
 
 	useLayoutEffect(() => {
 		const controller = new AbortController()
