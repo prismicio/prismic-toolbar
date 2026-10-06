@@ -122,8 +122,12 @@ if (shouldRunToolbar) {
 
 		// Skip cookie sync when inactive so we don't clear a preview owned by another tab.
 		if (isActive && previewCookieHelper.sync(initialRef)) {
-			reloadOrigin()
-			return
+			// A rejected write leaves the same stale cookie for the next load, so reloading would loop.
+			if (previewCookieHelper.getRefForDomain() === initialRef) {
+				reloadOrigin()
+				return
+			}
+			warn`The browser rejected the preview cookie. Check that cookies are allowed.`
 		}
 
 		if (isRegularToolbar && (isActive || previewState.auth)) {

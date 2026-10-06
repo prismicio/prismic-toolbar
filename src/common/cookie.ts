@@ -44,8 +44,21 @@ export function demolishCookie(name: string, options: CookieAttributes = {}) {
 	)
 }
 
+// Loopback hosts are secure contexts, so `Secure` cookies hold there over plain http. A local dev
+// server in a cross-site iframe would otherwise write `SameSite=Lax`, which the browser drops.
+function isPotentiallyTrustworthy(): boolean {
+	const { protocol, hostname } = window.location
+	return (
+		protocol === "https:" ||
+		hostname === "localhost" ||
+		hostname.endsWith(".localhost") ||
+		hostname === "127.0.0.1" ||
+		hostname === "[::1]"
+	)
+}
+
 function getSameSiteAttributes(): CookieAttributes {
-	if (window.self !== window.top && window.location.protocol === "https:") {
+	if (window.self !== window.top && isPotentiallyTrustworthy()) {
 		return { sameSite: "none", secure: true }
 	}
 
