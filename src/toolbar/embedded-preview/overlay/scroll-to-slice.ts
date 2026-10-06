@@ -1,42 +1,45 @@
 import { measureSliceMarkerRange } from "./slice-overlay-geometry"
-import type { SliceMarkerRange, SliceRect } from "./slice-overlay-geometry"
+import type { Slice, SliceRect } from "./slice-overlay-geometry"
 
-export function scrollToSlice(slice: SliceMarkerRange, uiScale: number) {
+export function scrollToSlice(slice: Slice, uiScale: number) {
 	const firstElement = slice.elements[0]
 	if (!firstElement) return
 
-	let sliceRect = measureSliceMarkerRange(slice)
+	let sliceRect = slice.rect
 	if (!sliceRect) return
 
 	const inset = 16 * uiScale
 
-	// Stop a previous smooth scroll before calculating viewport offsets.
+	// Stop a previous page scroll before revealing the slice in its containers.
 	window.scrollTo({ top: window.scrollY, behavior: "instant" })
 
 	// Reveal the slice in scrollable containers before scrolling the page.
-	let ancestor = firstElement.parentElement
-	while (ancestor && ancestor !== document.documentElement) {
+	for (
+		let ancestor = firstElement.parentElement;
+		ancestor && ancestor !== document.documentElement;
+		ancestor = ancestor.parentElement
+	) {
 		const overflow = getComputedStyle(ancestor).overflowY
 		if (
-			(overflow === "auto" || overflow === "scroll") &&
-			ancestor.scrollHeight > ancestor.clientHeight
-		) {
-			const viewportTop = ancestor.getBoundingClientRect().top + ancestor.clientTop
-			const scrollDelta = getSliceScrollDelta(
-				sliceRect,
-				viewportTop,
-				viewportTop + ancestor.clientHeight,
-				inset,
-			)
+			(overflow !== "auto" && overflow !== "scroll") ||
+			ancestor.scrollHeight <= ancestor.clientHeight
+		)
+			continue
 
-			if (scrollDelta !== 0) {
-				ancestor.scrollBy({ top: scrollDelta, behavior: "instant" })
-				sliceRect = measureSliceMarkerRange(slice)
-				if (!sliceRect) return
-			}
-		}
+		const viewportTop = ancestor.getBoundingClientRect().top + ancestor.clientTop
+		const scrollDelta = getSliceScrollDelta(
+			sliceRect,
+			viewportTop,
+			viewportTop + ancestor.clientHeight,
+			inset,
+		)
+		if (scrollDelta === 0) continue
 
-		ancestor = ancestor.parentElement
+		ancestor.scrollBy({ top: scrollDelta, behavior: "instant" })
+
+		// Scrolling a container changes the bounds used for the next outer container or page.
+		sliceRect = measureSliceMarkerRange(slice)
+		if (!sliceRect) return
 	}
 
 	const windowDelta = getSliceScrollDelta(sliceRect, 0, window.innerHeight, inset)
