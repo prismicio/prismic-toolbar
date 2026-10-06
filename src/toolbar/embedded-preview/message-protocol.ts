@@ -83,7 +83,6 @@ const scrollToPinMessageSchema = z.object({
 
 const sliceOverlayMessageSchema = z.object({
 	type: z.literal(setSliceOverlayMessageType),
-	sliceIds: z.array(nonemptyStringSchema),
 	selectedSliceId: z.optional(nonemptyStringSchema),
 })
 
@@ -110,7 +109,7 @@ type SetRefMessage = z.infer<typeof setRefMessageSchema>
 type SetOverlayScaleMessage = z.infer<typeof overlayScaleMessageSchema>
 export type SetCommentOverlayMessage = z.infer<typeof commentOverlayMessageSchema>
 type ScrollToPinMessage = z.infer<typeof scrollToPinMessageSchema>
-export type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
+type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
 type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
 interface PlaceCommentMessage {
