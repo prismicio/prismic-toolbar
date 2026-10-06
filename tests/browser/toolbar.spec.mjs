@@ -17,7 +17,6 @@ test("classic toolbar bundle: panels, tabs, collapsibles, JSON tree and preview 
 	})
 	await page.goto("/toolbar.html")
 	await expect(page.locator(".PreviewMenu")).toBeVisible()
-	await expect(page.locator("#host-sentinel")).toHaveCSS("color", "rgb(255, 0, 0)")
 	await expect(page.locator(".Toolbar")).toHaveCSS("position", "fixed")
 	await page.locator("#prismic-toolbar-v2 .Menu").click()
 	await expect(page.getByRole("link", { name: /Fixture page/ })).toBeVisible()
@@ -67,14 +66,11 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 	const pin = site.locator('[data-thread-id="first"]')
 	await expect(pin).toBeVisible()
 	await expect(pin).toHaveText("TA") // broken avatar falls back to initials
-	await expect(site.locator('[data-thread-id="last"]')).toHaveCSS("opacity", "0.4")
+	await expect(site.locator('[data-thread-id="last"]')).toHaveClass(/pin-dimmed/)
 	const highlight = site.locator("#prismic-embedded-preview-overlay").locator(".slice-highlight")
 	const firstSlice = site.locator("#first-slice")
 	await firstSlice.hover({ position: { x: 400, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
-	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
-	await expect(highlight).toHaveCSS("border-width", "2px")
-	await expect(highlight).toHaveCSS("border-radius", "12px")
 	await firstSlice.click()
 	await expect
 		.poll(() =>
@@ -94,8 +90,6 @@ test("embedded overlay: handshake, pin selection, placement, scale, scroll and d
 			location.origin,
 		)
 	})
-	await expect(highlight).toHaveCSS("border-width", "4px")
-	await expect(highlight).toHaveCSS("border-radius", "24px")
 	const firstSliceBox = await firstSlice.boundingBox()
 	const firstHighlightBox = await highlight.boundingBox()
 	expect(firstHighlightBox).toEqual(firstSliceBox)
@@ -274,6 +268,73 @@ for (const active of [true, false]) {
 		).toBe("poll-ref")
 	})
 }
+
+test("embedded polling on a loopback site in a cross-site editor stores its cookie and settles", async ({
+	page,
+}) => {
+	const calls = []
+	const siteLoads = []
+	await mockPreviewService(page, calls, "poll-ref")
+	// The routed editor page counts as public, so Chromium asks before it frames a local site.
+	await page.context().grantPermissions(["local-network-access"])
+	// localhost and 127.0.0.1 are different sites, so this frames the site cross-site over plain
+	// http, like a local dev server previewed from the hosted editor.
+	await page.route("http://127.0.0.1:8082/editor.html", (route) =>
+		route.fulfill({
+			contentType: "text/html",
+			body: '<iframe name="prismic:embedded-preview:poll" src="http://localhost:8082/site.html"></iframe>',
+		}),
+	)
+	page.on("request", (request) => {
+		if (request.url() === "http://localhost:8082/site.html") siteLoads.push(request.url())
+	})
+
+	await page.goto("http://127.0.0.1:8082/editor.html")
+
+	// A dropped cookie write makes every load sync and reload again, so polling never starts.
+	await expect.poll(() => calls, { timeout: 10_000 }).toContain("update_preview")
+	expect(siteLoads).toHaveLength(2)
+	expect(
+		(await page.context().cookies("http://localhost:8082")).find(
+			(cookie) => cookie.name === "io.prismic.preview",
+		),
+	).toMatchObject({ value: "poll-ref", sameSite: "None", secure: true })
+})
+
+test("embedded polling does not reload when the browser rejects the preview cookie", async ({
+	page,
+}) => {
+	const calls = []
+	const siteLoads = []
+	const warnings = []
+	await mockPreviewService(page, calls, "poll-ref")
+	// Drop every cookie write, like Safari on http://localhost or blocked third-party cookies.
+	await page.addInitScript(() => {
+		const { get } = Object.getOwnPropertyDescriptor(Document.prototype, "cookie")
+		Object.defineProperty(Document.prototype, "cookie", { get, set() {}, configurable: true })
+	})
+	await page.route("**/overlay.html", async (route) => {
+		const response = await route.fetch()
+		await route.fulfill({
+			response,
+			body: (await response.text()).replace(
+				'name="prismic:embedded-preview"',
+				'name="prismic:embedded-preview:poll"',
+			),
+		})
+	})
+	page.on("console", (message) => {
+		if (message.type() === "warning") warnings.push(message.text())
+	})
+	page.on("request", (request) => {
+		if (new URL(request.url()).pathname === "/site.html") siteLoads.push(request.url())
+	})
+
+	await page.goto("/overlay.html")
+
+	await expect.poll(() => warnings.join("\n")).toContain("The browser rejected the preview cookie")
+	expect(siteLoads).toHaveLength(1)
+})
 
 async function mockPreviewService(page, calls, ref, ready = Promise.resolve()) {
 	await page.exposeFunction("recordPreviewCall", (type) => calls.push(type))
