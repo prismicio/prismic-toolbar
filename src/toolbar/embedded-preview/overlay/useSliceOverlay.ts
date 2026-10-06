@@ -16,12 +16,12 @@ export function useSliceOverlay(
 	subscribeToMessages: SubscribeToMessages,
 ) {
 	const [selectedSliceId, setSelectedSliceId] = useState<string>()
-	const { revealSlice, cancelReveal } = useSliceScroll(slices, uiScale)
+	const { revealSlice, cancelReveal, cancelStaleReveal } = useSliceScroll(slices, uiScale)
 
 	const handleMessage = useStableCallback(({ data }: MessageEvent<unknown>) => {
 		if (isSliceOverlayMessage(data)) {
 			setSelectedSliceId(data.selectedSliceId)
-			if (!data.selectedSliceId) cancelReveal()
+			cancelStaleReveal(data.selectedSliceId)
 			return
 		}
 
@@ -41,6 +41,11 @@ function useSliceScroll(slices: Slice[], uiScale: number) {
 	const cancelReveal = useStableCallback(() => {
 		window.clearTimeout(timeoutRef.current)
 		pendingSliceIdRef.current = undefined
+	})
+
+	const cancelStaleReveal = useStableCallback((selectedSliceId: string | undefined) => {
+		// Keep a preview click's pending scroll when the editor acknowledges that selection.
+		if (pendingSliceIdRef.current !== selectedSliceId) cancelReveal()
 	})
 
 	const reveal = useStableCallback(() => {
@@ -80,5 +85,5 @@ function useSliceScroll(slices: Slice[], uiScale: number) {
 		schedule()
 	})
 
-	return { revealSlice, cancelReveal }
+	return { revealSlice, cancelReveal, cancelStaleReveal }
 }
