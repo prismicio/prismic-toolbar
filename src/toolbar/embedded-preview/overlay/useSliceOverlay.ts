@@ -68,15 +68,11 @@ function useSliceScroll(slices: Slice[], uiScale: number) {
 	useLayoutEffect(schedule, [schedule, slices, uiScale])
 
 	useLayoutEffect(() => {
-		const controller = new AbortController()
-		window.addEventListener("resize", schedule, { signal: controller.signal })
-		for (const event of ["wheel", "touchstart", "pointerdown", "keydown"]) {
-			window.addEventListener(event, cancelReveal, { capture: true, signal: controller.signal })
-		}
+		window.addEventListener("resize", schedule)
 
 		return () => {
 			cancelReveal()
-			controller.abort()
+			window.removeEventListener("resize", schedule)
 		}
 	}, [schedule, cancelReveal])
 
