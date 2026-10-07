@@ -65,7 +65,7 @@ describe("embedded preview connection", () => {
 			expect(handler).toHaveBeenCalledExactlyOnceWith(event)
 			expect(handler.mock.calls[0][0]).toBe(event)
 		}
-		expect(onRef).toHaveBeenCalledExactlyOnceWith("first")
+		expect(onRef).toHaveBeenCalledExactlyOnceWith("first", undefined)
 
 		unsubscribeFirst()
 		const nextRef = { ...ref, token: "second" }
@@ -76,7 +76,7 @@ describe("embedded preview connection", () => {
 			expect(handler).toHaveBeenLastCalledWith(nextEvent)
 		}
 		expect(onRef).toHaveBeenCalledTimes(2)
-		expect(onRef).toHaveBeenLastCalledWith("second")
+		expect(onRef).toHaveBeenLastCalledWith("second", undefined)
 	})
 
 	it("announces readiness and initializes once after a valid acknowledgement", async () => {
@@ -140,7 +140,11 @@ describe("embedded preview connection", () => {
 		receive({ ...ref, token: 42 })
 		expect(updateFromRef).not.toHaveBeenCalled()
 		receive(ref)
-		expect(updateFromRef).toHaveBeenCalledExactlyOnceWith("preview-token")
+		expect(updateFromRef).toHaveBeenCalledExactlyOnceWith("preview-token", undefined)
+		receive({ ...ref, token: "live-token", reload: false })
+		expect(updateFromRef).toHaveBeenLastCalledWith("live-token", false)
+		receive({ ...ref, token: "invalid-reload", reload: "no" })
+		expect(updateFromRef).toHaveBeenCalledTimes(2)
 	})
 
 	it("installs the listener before ready, so immediate acknowledgement and state are handled", async () => {
