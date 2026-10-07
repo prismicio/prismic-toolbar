@@ -6,6 +6,7 @@ export const readyMessage = { type: "prismic:embedded-preview:ready" } as const
 const setRefMessageType = "prismic:embedded-preview:set-ref"
 
 const setOverlayScaleMessageType = "prismic:embedded-preview:set-overlay-scale"
+const setSlicesMessageType = "prismic:embedded-preview:set-slices"
 
 const setCommentOverlayMessageType = "prismic:embedded-preview:set-comment-overlay"
 const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
@@ -47,6 +48,18 @@ const overlayScaleMessageSchema = z.object({
 	uiScale: z.number().check(z.gt(0)),
 })
 
+const sliceMetadataSchema = z.object({
+	sliceId: nonemptyStringSchema,
+	label: z.string(),
+	variation: z.optional(z.string()),
+})
+export type SliceMetadata = z.infer<typeof sliceMetadataSchema>
+
+const slicesMessageSchema = z.object({
+	type: z.literal(setSlicesMessageType),
+	slices: z.array(sliceMetadataSchema),
+})
+
 const draftPinSchema = z.object({
 	xRatio: ratioSchema,
 	yRatio: ratioSchema,
@@ -83,6 +96,7 @@ type ReadyMessage = typeof readyMessage
 type AckMessage = z.infer<typeof ackMessageSchema>
 type SetRefMessage = z.infer<typeof setRefMessageSchema>
 type SetOverlayScaleMessage = z.infer<typeof overlayScaleMessageSchema>
+type SetSlicesMessage = z.infer<typeof slicesMessageSchema>
 export type SetCommentOverlayMessage = z.infer<typeof commentOverlayMessageSchema>
 type ScrollToPinMessage = z.infer<typeof scrollToPinMessageSchema>
 
@@ -117,6 +131,7 @@ export type Message =
 	| AckMessage
 	| SetRefMessage
 	| SetOverlayScaleMessage
+	| SetSlicesMessage
 	| SetCommentOverlayMessage
 	| ScrollToPinMessage
 	| PlaceCommentMessage
@@ -170,6 +185,10 @@ export function isSetRefMessage(data: unknown): data is SetRefMessage {
 
 export function isOverlayScaleMessage(data: unknown): data is SetOverlayScaleMessage {
 	return z.validate(overlayScaleMessageSchema, data)
+}
+
+export function isSetSlicesMessage(data: unknown): data is SetSlicesMessage {
+	return z.validate(slicesMessageSchema, data)
 }
 
 export function isCommentOverlayMessage(data: unknown): data is SetCommentOverlayMessage {

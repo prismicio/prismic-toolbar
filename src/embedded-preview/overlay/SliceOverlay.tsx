@@ -99,15 +99,19 @@ interface SliceHighlightProps {
 
 function SliceHighlight(props: SliceHighlightProps) {
 	const { slice } = props
-	const { sliceId, rect } = slice
+	const { sliceId, rect, label, variation } = slice
 
 	if (!rect) return null
+
+	const title = variation ? `${label} • ${variation}` : label
 
 	return (
 		<div
 			className="slice-highlight"
 			data-slice-id={sliceId}
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
-		/>
+		>
+			<div className="slice-highlight-label">{title}</div>
+		</div>
 	)
 }

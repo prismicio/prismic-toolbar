@@ -241,6 +241,12 @@ export const comments = {
 	draftAuthor: author,
 }
 
+/** The edited document's slices, as the editor describes them. */
+export const slices = [
+	{ sliceId: "first-slice", label: "Hero", variation: "Default" },
+	{ sliceId: "second-slice", label: "Call to action", variation: "Centered" },
+]
+
 interface EditorOptions {
 	/** `poll` previews a website without live editing. */
 	mode?: "push" | "poll"
@@ -249,6 +255,8 @@ interface EditorOptions {
 	website?: string
 	/** The comment overlay's initial state. */
 	comments?: Record<string, unknown>
+	/** The edited document's slices. Others are neither highlighted nor selectable. */
+	slices?: { sliceId: string; label: string; variation?: string }[]
 	page?: Page
 }
 
@@ -261,7 +269,13 @@ export class Editor {
 		private readonly website: Website,
 		private readonly repository: Repository,
 	) {
-		this.options = { mode: "push", origin: repository.url, website: website.url, comments: {} }
+		this.options = {
+			mode: "push",
+			origin: repository.url,
+			website: website.url,
+			comments: {},
+			slices,
+		}
 	}
 
 	/** The previewed website. */
@@ -312,7 +326,7 @@ export class Editor {
 	}
 }
 
-function editorHTML({ mode, website, comments }: Required<Omit<EditorOptions, "page">>) {
+function editorHTML({ mode, website, comments, slices }: Required<Omit<EditorOptions, "page">>) {
 	const name = mode === "poll" ? "prismic:embedded-preview:poll" : "prismic:embedded-preview"
 
 	return `<!doctype html>
@@ -347,6 +361,7 @@ function editorHTML({ mode, website, comments }: Required<Omit<EditorOptions, "p
 		editor.messages.push(data)
 		if (data.type === "prismic:embedded-preview:ready") {
 			editor.send({ type: "prismic:embedded-preview:ack" })
+			editor.send({ type: "prismic:embedded-preview:set-slices", slices: ${JSON.stringify(slices)} })
 			editor.send(editor.comments)
 		} else if (data.type === "prismic:embedded-preview:select-pin") {
 			editor.updateComments({ selectedThreadId: data.pin.threadId })

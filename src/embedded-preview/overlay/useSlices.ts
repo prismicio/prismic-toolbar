@@ -1,14 +1,18 @@
 import { deepEqual } from "fast-equals"
 import { useLayoutEffect, useState } from "preact/hooks"
 
+import { isSetSlicesMessage } from "../message-protocol"
+import type { SliceMetadata, SubscribeToMessages } from "../message-protocol"
 import { findSliceMarkerRanges, measureSliceMarkerRange } from "./slice-overlay-geometry"
 import type { Slice, SliceMarkerRange } from "./slice-overlay-geometry"
 
-export function useSlices() {
+export function useSlices(subscribeToMessages: SubscribeToMessages) {
 	const [slices, setSlices] = useState<Slice[]>([])
 
 	useLayoutEffect(() => {
-		let ranges: SliceMarkerRange[] = []
+		// Only slices the editor describes belong to the edited document: others are left alone.
+		let metadata = new Map<string, SliceMetadata>()
+		let ranges: (SliceMarkerRange & SliceMetadata)[] = []
 		let observed = new Set<Element>()
 
 		function updateBounds() {
@@ -24,7 +28,10 @@ export function useSlices() {
 		const resizeObserver = new ResizeObserver(updateBounds)
 
 		function updateElements() {
-			ranges = findSliceMarkerRanges(document.body)
+			ranges = findSliceMarkerRanges(document.body).flatMap((range) => {
+				const slice = metadata.get(range.sliceId)
+				return slice ? [{ ...range, ...slice }] : []
+			})
 
 			const next = new Set([
 				document.body,
@@ -46,6 +53,12 @@ export function useSlices() {
 
 		const mutationObserver = new MutationObserver(updateElements)
 		mutationObserver.observe(document.body, { childList: true, characterData: true, subtree: true })
+		const unsubscribe = subscribeToMessages(({ data }) => {
+			if (!isSetSlicesMessage(data)) return
+
+			metadata = new Map(data.slices.map((slice) => [slice.sliceId, slice]))
+			updateElements()
+		})
 
 		updateElements()
 
@@ -55,6 +68,7 @@ export function useSlices() {
 		document.addEventListener("pointermove", updateBounds, { passive: true })
 		document.addEventListener("pointerover", updateBounds, { passive: true })
 		return () => {
+			unsubscribe()
 			mutationObserver.disconnect()
 			resizeObserver.disconnect()
 			window.removeEventListener("scroll", updateBounds, true)
@@ -62,7 +76,7 @@ export function useSlices() {
 			document.removeEventListener("pointermove", updateBounds)
 			document.removeEventListener("pointerover", updateBounds)
 		}
-	}, [])
+	}, [subscribeToMessages])
 
 	return slices
 }

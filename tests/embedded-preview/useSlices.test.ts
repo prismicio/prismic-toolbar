@@ -3,6 +3,7 @@ import { useLayoutEffect } from "preact/hooks"
 import { act } from "preact/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import type { MessageHandler, SliceMetadata } from "../../src/embedded-preview/message-protocol"
 import type { Slice } from "../../src/embedded-preview/overlay/slice-overlay-geometry"
 import { useSlices } from "../../src/embedded-preview/overlay/useSlices"
 
@@ -14,9 +15,23 @@ let resize: () => void
 const observe = vi.fn()
 const unobserve = vi.fn()
 const disconnect = vi.fn()
+let onMessage: MessageHandler
+
+function subscribeToMessages(handler: MessageHandler) {
+	onMessage = handler
+	return () => {}
+}
+
+function sendSlices(metadata: SliceMetadata[]) {
+	onMessage(
+		new MessageEvent("message", {
+			data: { type: "prismic:embedded-preview:set-slices", slices: metadata },
+		}),
+	)
+}
 
 function Harness() {
-	const currentSlices = useSlices()
+	const currentSlices = useSlices(subscribeToMessages)
 	useLayoutEffect(() => {
 		slices = currentSlices
 		publications += 1
@@ -50,6 +65,7 @@ beforeEach(() => {
 		},
 	)
 	act(() => render(h(Harness, {}), root))
+	act(() => sendSlices([{ sliceId: "slice", label: "Hero", variation: "Default" }]))
 	publications = 0
 })
 
@@ -60,6 +76,36 @@ afterEach(() => {
 })
 
 describe("shared slice model", () => {
+	it("tracks only slices the editor describes, with their latest metadata", () => {
+		act(() => sendSlices([]))
+		expect(slices).toEqual([])
+		expect(unobserve).toHaveBeenCalledWith(element)
+		vi.mocked(element.getBoundingClientRect).mockClear()
+		act(() => {
+			document.dispatchEvent(new Event("pointermove"))
+		})
+		expect(element.getBoundingClientRect).not.toHaveBeenCalled()
+
+		act(() => sendSlices([{ sliceId: "slice", label: "Call to action", variation: "Centered" }]))
+		expect(slices[0]).toMatchObject({ label: "Call to action", variation: "Centered" })
+		expect(observe).toHaveBeenLastCalledWith(element, { box: "border-box" })
+	})
+
+	it("ignores malformed metadata without losing the current slices", () => {
+		const previous = slices
+		act(() =>
+			onMessage(
+				new MessageEvent("message", {
+					data: {
+						type: "prismic:embedded-preview:set-slices",
+						slices: [{ sliceId: "slice", label: "Hero", variation: 42 }],
+					},
+				}),
+			),
+		)
+		expect(slices).toBe(previous)
+	})
+
 	it("does not publish unchanged slices", () => {
 		act(() => {
 			document.dispatchEvent(new Event("pointermove"))
@@ -103,10 +149,13 @@ describe("shared slice model", () => {
 				const marker = walker.currentNode as Comment
 				marker.data = marker.data.replace(":slice", ":renamed")
 			}
+			sendSlices([{ sliceId: "renamed", label: "Hero", variation: "Default" }])
 		})
 		expect(slices).toEqual([
 			{
 				sliceId: "renamed",
+				label: "Hero",
+				variation: "Default",
 				elements: [replacement],
 				rect: { top: 40, left: 30, width: 250, height: 150 },
 			},

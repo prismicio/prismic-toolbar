@@ -9,6 +9,11 @@ const sliceSelections = (editor: Editor) => editor.messages("select-slice")
 
 const selected = (sliceId: string) => ({ type: "prismic:embedded-preview:select-slice", sliceId })
 
+const setSlices = (
+	editor: Editor,
+	slices: { sliceId: string; label: string; variation?: string }[],
+) => editor.send({ type: "prismic:embedded-preview:set-slices", slices })
+
 test("highlights and selects slices, following the overlay's scale and scroll", async ({
 	editor,
 }) => {
@@ -19,14 +24,14 @@ test("highlights and selects slices, following the overlay's scale and scroll", 
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
 	await expect(highlight).toHaveCSS("border-width", "2px")
-	await expect(highlight).toHaveCSS("border-radius", "12px")
+	await expect(highlight).toHaveCSS("border-radius", "8px")
 
 	await slice.click()
 	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
 
 	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
 	await expect(highlight).toHaveCSS("border-width", "4px")
-	await expect(highlight).toHaveCSS("border-radius", "24px")
+	await expect(highlight).toHaveCSS("border-radius", "16px")
 	const box = await highlight.boundingBox()
 	expect(box).toEqual(await slice.boundingBox())
 
@@ -61,6 +66,7 @@ test("highlight refreshes position-only changes on pointer movement", async ({ e
 })
 
 test("highlight follows a slice inside a scrolling container", async ({ editor }) => {
+	await setSlices(editor, [{ sliceId: "scrolling-slice", label: "Scrolling slice" }])
 	await editor.preview.locator("body").evaluate((body) => {
 		const scroller = document.createElement("div")
 		scroller.id = "scroller"
@@ -102,6 +108,12 @@ test("highlight and selection use updated roots and marker IDs", async ({ editor
 			comment.data = comment.data.replace("first-slice", "renamed-slice")
 		}
 	})
+	// The editor has not described the renamed slice yet.
+	await expect(highlight).toHaveCount(0)
+	await setSlices(editor, [
+		{ sliceId: "renamed-slice", label: "Hero", variation: "Default" },
+		{ sliceId: "second-slice", label: "Call to action", variation: "Centered" },
+	])
 	await expect(highlight).toHaveAttribute("data-slice-id", "renamed-slice")
 	await editor.preview.locator("#first-slice").click({ position: { x: 500, y: 200 } })
 	await expect
@@ -286,6 +298,7 @@ test("links and button roles keep their actions without selecting the slice", as
 })
 
 test("slice roots are selectable but gaps and covering popups are not", async ({ editor }) => {
+	await setSlices(editor, [{ sliceId: "split", label: "Split" }])
 	const site = editor.preview
 	await site.locator("body").evaluate((body) => {
 		const container = document.createElement("div")
@@ -323,6 +336,10 @@ test("slice roots are selectable but gaps and covering popups are not", async ({
 })
 
 test("hover and click agree for nested gaps and overflowing content", async ({ editor }) => {
+	await setSlices(editor, [
+		{ sliceId: "outer", label: "Outer" },
+		{ sliceId: "inner", label: "Inner" },
+	])
 	const site = editor.preview
 	await site.locator("body").evaluate((body) => {
 		const container = document.createElement("div")
@@ -377,4 +394,89 @@ test("same-size DOM replacement remains highlightable and selectable", async ({ 
 	)
 	await slice.click({ position: { x: 501, y: 200 } })
 	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
+})
+
+test("labels the highlight with the slice's name and variation, inset and scaled", async ({
+	editor,
+}) => {
+	const highlight = editor.preview.locator(".slice-highlight")
+	const label = editor.preview.locator(".slice-highlight-label")
+	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
+	await expect(label).toHaveText("Hero • Default")
+	await expect(label).toBeInViewport()
+
+	const second = editor.preview.locator("#second-slice")
+	await second.hover({ position: { x: 500, y: 100 } })
+	await expect(label).toHaveText("Call to action • Centered")
+	const box = (await highlight.boundingBox())!
+	const labelBox = (await label.boundingBox())!
+	// Inside the 2px border, 4px from the highlight's corner.
+	expect(labelBox.x).toBe(box.x + 6)
+	expect(labelBox.y).toBe(box.y + 6)
+	expect(labelBox.height).toBe(24)
+
+	await second.evaluate(() => window.scrollBy(0, 40))
+	await expect.poll(async () => (await label.boundingBox())?.y).toBe(labelBox.y - 40)
+
+	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
+	await second.hover({ position: { x: 500, y: 100 } })
+	await expect.poll(async () => (await label.boundingBox())?.height).toBe(labelBox.height * 2)
+})
+
+test("labels slices without a variation with their name only", async ({ editor }) => {
+	await setSlices(editor, [{ sliceId: "first-slice", label: "Hero" }])
+	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
+	await expect(editor.preview.locator(".slice-highlight-label")).toHaveText("Hero")
+})
+
+test("follows the editor's slices, leaving other documents' slices alone", async ({ editor }) => {
+	const first = editor.preview.locator("#first-slice")
+	const second = editor.preview.locator("#second-slice")
+	const highlight = editor.preview.locator(".slice-highlight")
+	const label = editor.preview.locator(".slice-highlight-label")
+	await first.hover({ position: { x: 500, y: 200 } })
+	await expect(label).toHaveText("Hero • Default")
+
+	await setSlices(editor, [{ sliceId: "first-slice", label: "Banner", variation: "Wide" }])
+	await expect(label).toHaveText("Banner • Wide")
+	await second.hover({ position: { x: 500, y: 100 } })
+	await expect(highlight).toHaveCount(0)
+	await second.click({ position: { x: 500, y: 100 } })
+	expect(await sliceSelections(editor)).toEqual([])
+
+	await first.hover({ position: { x: 500, y: 200 } })
+	await setSlices(editor, [])
+	await expect(highlight).toHaveCount(0)
+	await first.click({ position: { x: 500, y: 200 } })
+	expect(await sliceSelections(editor)).toEqual([])
+
+	// The previous document's DOM can remain while the next one loads.
+	await setSlices(editor, [{ sliceId: "second-slice", label: "Footer" }])
+	await first.hover({ position: { x: 501, y: 200 } })
+	await expect(highlight).toHaveCount(0)
+	await second.hover({ position: { x: 500, y: 100 } })
+	await expect(label).toHaveText("Footer")
+	await second.click({ position: { x: 500, y: 100 } })
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("second-slice")])
+})
+
+test("highlights a newly rendered slice once the editor describes it", async ({ editor }) => {
+	await editor.preview.locator("body").evaluate((body) => {
+		const root = document.createElement("div")
+		root.innerHTML = `
+			<!--prismic-slice-start:added-->
+			<section id="added" style="position:absolute;top:100px;left:400px;width:300px;height:200px;background:white">Added slice</section>
+			<!--prismic-slice-end:added-->
+		`
+		body.append(root)
+	})
+	const added = editor.preview.locator("#added")
+	await added.hover()
+	await expect(editor.preview.locator(".slice-highlight")).toHaveCount(0)
+
+	await setSlices(editor, [{ sliceId: "added", label: "New slice", variation: "Default" }])
+	await expect(editor.preview.locator(".slice-highlight-label")).toHaveText("New slice • Default")
+
+	await added.evaluate((element) => element.parentElement?.remove())
+	await expect(editor.preview.locator(".slice-highlight")).toHaveCount(0)
 })
