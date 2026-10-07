@@ -66,6 +66,15 @@ describe("refs sent with reload: false", () => {
 		expect(updates).toEqual(["live-1"])
 		expect(readOwner()?.ref).toBe("live-1")
 	})
+
+	it("rewrite a website's JSON cookie holding the ref so website tabs see it as the editor's", async () => {
+		Cookies.set(previewCookieName, JSON.stringify({ [repository]: { preview: "live-1" } }))
+		const { push } = setup()
+
+		await push("live-1", false)
+
+		expect(Cookies.get(previewCookieName)).toBe("live-1")
+	})
 })
 
 describe("refs sent without the flag", () => {

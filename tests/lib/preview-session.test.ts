@@ -196,7 +196,7 @@ describe("startup", () => {
 		await starting
 		await vi.advanceTimersByTimeAsync(3000)
 
-		expect(events).toEqual([["prismicPreviewUpdate", "editor-ref"]])
+		expect(events).toEqual([["prismicPreviewStart", "editor-ref"]])
 		expect(reload).toHaveBeenCalledOnce()
 		expect(session.getSnapshot().status).toBe("reloading")
 		expect(storedCookie()).toBe("editor-ref")
@@ -449,6 +449,22 @@ describe("cookie changes from other tabs and the editor", () => {
 		await vi.advanceTimersByTimeAsync(1000)
 
 		expect(reload).toHaveBeenCalledOnce()
+	})
+
+	it("starts following a session another tab started", async () => {
+		cancelEvents = true
+		const state: BridgeState = { isAuthenticated: false }
+		const { session, bridge, server } = setup(state)
+		await session.start()
+
+		state.preview = { ref: "ref-1", title: "Spring launch" }
+		server.ref = "ref-1"
+		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		await vi.advanceTimersByTimeAsync(3250)
+
+		expect(events).toEqual([["prismicPreviewStart", "ref-1"]])
+		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-1" } })
+		expect(bridge.ping).toHaveBeenCalled()
 	})
 
 	it("does not watch inside the editor", async () => {

@@ -65,6 +65,7 @@ export function createPreviewSession({
 	let bridge: Bridge | undefined
 	let serverRef: string | undefined
 	let pollTimer: ReturnType<typeof setInterval> | undefined
+	let following = false
 
 	const currentRef = () => refFor(store.read(), repositoryHost)
 	// Read before anything can change the cookie: the closest guess of what the server rendered.
@@ -72,7 +73,11 @@ export function createPreviewSession({
 	let renderedRef = initialRef
 	// Watch before connecting so a change during startup is not mistaken for the rendered ref.
 	const unwatch = watch
-		? watchCookie(previewCookieName, () => reconcile("prismicPreviewUpdate"))
+		? watchCookie(previewCookieName, () => {
+				reconcile()
+				// A tab that was not previewing follows a session another tab or a share link started.
+				if (serverRef === undefined && currentRef() !== undefined) void follow()
+			})
 		: undefined
 
 	function setSnapshot(patch: Partial<PreviewSnapshot>) {
@@ -105,12 +110,18 @@ export function createPreviewSession({
 	}
 
 	/** Notifies the website when the cookie's ref differs from the one it renders. */
-	function reconcile(event: "prismicPreviewStart" | "prismicPreviewUpdate") {
+	function reconcile() {
 		const ref = currentRef()
 		if (isReloading() || ref === renderedRef) return
 
+		const event =
+			ref === undefined
+				? "prismicPreviewEnd"
+				: renderedRef === undefined
+					? "prismicPreviewStart"
+					: "prismicPreviewUpdate"
 		renderedRef = ref
-		if (dispatchPreviewEvent(ref === undefined ? "prismicPreviewEnd" : event, ref)) reloadPage()
+		if (dispatchPreviewEvent(event, ref)) reloadPage()
 	}
 
 	/**
@@ -122,8 +133,8 @@ export function createPreviewSession({
 		if (!watch || renderedRef !== initialRef) return
 		if (owner?.repository !== repositoryHost || owner.at <= navigationStart) return
 
-		renderedRef = undefined
-		reconcile("prismicPreviewUpdate")
+		renderedRef = currentRef()
+		if (dispatchPreviewEvent("prismicPreviewUpdate", renderedRef)) reloadPage()
 	}
 
 	function writeRef(ref: string) {
@@ -156,7 +167,7 @@ export function createPreviewSession({
 			setSnapshot({ status: "idle", preview: undefined })
 			if (ownsCookie) {
 				store.removeOwn()
-				reconcile("prismicPreviewUpdate")
+				reconcile()
 			}
 			return
 		}
@@ -168,48 +179,55 @@ export function createPreviewSession({
 		if (editorOwnsCookie) return
 
 		if (refFor(cookie, repositoryHost) !== nextRef && !writeRef(nextRef)) return
-		reconcile("prismicPreviewUpdate")
+		reconcile()
+	}
+
+	/** Connects, then follows the repository's preview session if one is active. */
+	async function follow() {
+		if (following) return
+		following = true
+		try {
+			bridge ??= await connect()
+			const state = await bridge.getState()
+			// A cookie change meanwhile may already be reloading the page.
+			if (isReloading()) return
+			setSnapshot({ authenticated: state.isAuthenticated })
+
+			if (!state.preview) {
+				// Clear a stale repository session, but leave the website's cookie: another tab or the
+				// editor may own it.
+				void bridge.closeSession().catch(() => {})
+				setSnapshot({ status: "idle" })
+				reconcileEditorPush()
+				return
+			}
+
+			serverRef = state.preview.ref
+			const cookie = store.read()
+			if (editorOwner(cookie)) {
+				reconcileEditorPush()
+				if (isReloading()) return
+			} else if (refFor(cookie, repositoryHost) !== serverRef) {
+				if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
+				renderedRef = serverRef
+				if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
+			} else if (cookie.kind === "plain" && codec === "json") {
+				// SDK preview routes store the raw ref, which already renders the session.
+				writeRef(serverRef)
+			}
+
+			setSnapshot({ status: "polling", preview: state.preview })
+			startPolling()
+		} catch (error) {
+			warn(`Could not reach the preview session.\n\n${String(error)}`)
+			setSnapshot({ status: "idle" })
+		} finally {
+			following = false
+		}
 	}
 
 	return {
-		async start() {
-			try {
-				bridge = await connect()
-				const state = await bridge.getState()
-				// A cookie change during startup may already be reloading the page.
-				if (isReloading()) return
-				setSnapshot({ authenticated: state.isAuthenticated })
-
-				if (!state.preview) {
-					// Clear a stale repository session, but leave the website's cookie: another tab or the
-					// editor may own it.
-					void bridge.closeSession().catch(() => {})
-					setSnapshot({ status: "idle" })
-					reconcileEditorPush()
-					return
-				}
-
-				serverRef = state.preview.ref
-				const cookie = store.read()
-				if (editorOwner(cookie)) {
-					reconcileEditorPush()
-					if (isReloading()) return
-				} else if (refFor(cookie, repositoryHost) !== serverRef) {
-					if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
-					renderedRef = serverRef
-					if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
-				} else if (cookie.kind === "plain" && codec === "json") {
-					// SDK preview routes store the raw ref, which already renders the session.
-					writeRef(serverRef)
-				}
-
-				setSnapshot({ status: "polling", preview: state.preview })
-				startPolling()
-			} catch (error) {
-				warn(`Could not reach the preview session.\n\n${String(error)}`)
-				setSnapshot({ status: "idle" })
-			}
-		},
+		start: follow,
 
 		async exit() {
 			stopPolling()

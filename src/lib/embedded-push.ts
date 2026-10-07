@@ -25,7 +25,8 @@ export function createEmbeddedPush({
 	let lastToken: string | undefined
 
 	return async (token, reloadPage) => {
-		const cookieRef = refFor(store.read(), repositoryHost)
+		const cookie = store.read()
+		const cookieRef = refFor(cookie, repositoryHost)
 
 		if (reloadPage === false) {
 			// The first push notifies even when the cookie already holds the ref: the editor may have
@@ -33,9 +34,11 @@ export function createEmbeddedPush({
 			if (token === lastToken && token === cookieRef) return
 			lastToken = token
 
-			// Claim before writing, so website tabs see the marker as soon as the ref lands.
+			// Claim before writing, so website tabs see the marker as soon as the ref lands. Website
+			// tabs only honor the marker on a plain cookie, so a website's JSON cookie is rewritten.
 			claimOwnership(repositoryHost, token, now())
-			if (token !== cookieRef && !writeRef(store, token)) return
+			const isPlainToken = cookie.kind === "plain" && cookie.raw === token
+			if (!isPlainToken && !writeRef(store, token)) return
 			dispatchPreviewEvent("prismicPreviewUpdate", token)
 			return
 		}
