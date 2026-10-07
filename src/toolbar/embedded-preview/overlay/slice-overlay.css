@@ -1,6 +1,23 @@
 .slice-highlight {
 	position: absolute;
 	border: calc(2px * var(--prismic-overlay-ui-scale)) solid #6e56cf;
-	border-radius: calc(12px * var(--prismic-overlay-ui-scale));
+	border-radius: calc(8px * var(--prismic-overlay-ui-scale));
+}
+
+.slice-highlight-label {
+	position: absolute;
+	top: calc(4px * var(--prismic-overlay-ui-scale));
+	left: calc(4px * var(--prismic-overlay-ui-scale));
+	width: fit-content;
+	max-width: calc(100% - 8px * var(--prismic-overlay-ui-scale));
+	padding: calc(4px * var(--prismic-overlay-ui-scale)) calc(8px * var(--prismic-overlay-ui-scale));
+	border-radius: calc(4px * var(--prismic-overlay-ui-scale));
+	background: #6e56cf;
+	color: white;
+	font-size: calc(12px * var(--prismic-overlay-ui-scale));
+	font-weight: 600;
+	line-height: calc(16px * var(--prismic-overlay-ui-scale));
+	white-space: nowrap;
 	overflow: hidden;
+	text-overflow: ellipsis;
 }
