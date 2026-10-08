@@ -101,7 +101,7 @@ if (shouldRunToolbar) {
 			)
 			void loadEmbeddedPreview({
 				url: embeddedPreviewURL,
-				onRef: (ref) => preview.updateFromRef(ref),
+				onRef: (ref, reload) => preview.updateFromRef(ref, reload),
 			})
 			return
 		}
@@ -123,11 +123,15 @@ if (shouldRunToolbar) {
 		// Skip cookie sync when inactive so we don't clear a preview owned by another tab.
 		if (isActive && previewCookieHelper.sync(initialRef)) {
 			// A rejected write leaves the same stale cookie for the next load, so reloading would loop.
-			if (previewCookieHelper.getRefForDomain() === initialRef) {
+			if (previewCookieHelper.getRefForDomain() !== initialRef) {
+				warn`The browser rejected the preview cookie. Check that cookies are allowed.`
+			} else if (dispatchToolbarEvent(toolbarEvents.previewStart, { ref: initialRef })) {
+				// Websites that load the new ref themselves cancel the event; others reload.
 				reloadOrigin()
 				return
+			} else {
+				preview.watchPreviewUpdates()
 			}
-			warn`The browser rejected the preview cookie. Check that cookies are allowed.`
 		}
 
 		if (isRegularToolbar && (isActive || previewState.auth)) {

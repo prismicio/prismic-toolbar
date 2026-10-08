@@ -33,7 +33,7 @@ export class Preview {
 	}
 
 	watchPreviewUpdates() {
-		if (this.active) {
+		if (this.active && !this.interval) {
 			this.interval = setInterval(() => {
 				// End only on a falsy ping ref (via start → end), not a missing site cookie.
 				if (document.visibilityState === "visible") this.updatePreview()
@@ -43,6 +43,7 @@ export class Preview {
 
 	cancelPreviewUpdates() {
 		if (this.interval) clearInterval(this.interval)
+		this.interval = undefined
 	}
 
 	async updatePreview() {
@@ -51,7 +52,18 @@ export class Preview {
 		if (reload) this.reloadPreview(ref)
 	}
 
-	async updateFromRef(ref) {
+	async updateFromRef(ref, reload) {
+		// The editor keeps its preview mounted for these refs: never hard reload, even when unhandled.
+		if (reload === false) {
+			const cookieRef = this.cookie.getRefForDomain()
+			if (ref === this.lastRefreshedRef && ref === cookieRef) return
+
+			this.lastRefreshedRef = ref
+			if (ref !== cookieRef) this.cookie.upsertPreviewForDomain(ref)
+			dispatchToolbarEvent(toolbarEvents.previewUpdate, { ref })
+			return
+		}
+
 		const { shouldReload } = await this.start(ref)
 
 		if (shouldReload) this.reloadPreview(ref)
