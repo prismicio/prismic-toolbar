@@ -65,7 +65,7 @@ export function createPreviewSession({
 	let bridge: Bridge | undefined
 	let serverRef: string | undefined
 	let pollTimer: ReturnType<typeof setInterval> | undefined
-	let following = false
+	let following = Promise.resolve()
 
 	const currentRef = () => refFor(store.read(), repositoryHost)
 	// Read before anything can change the cookie: the closest guess of what the server rendered.
@@ -76,7 +76,7 @@ export function createPreviewSession({
 		? watchCookie(previewCookieName, () => {
 				reconcile()
 				// A tab that was not previewing follows a session another tab or a share link started.
-				if (serverRef === undefined && currentRef() !== undefined) void follow()
+				if (currentRef() !== undefined) void follow(false)
 			})
 		: undefined
 
@@ -182,10 +182,11 @@ export function createPreviewSession({
 		reconcile()
 	}
 
-	/** Connects, then follows the repository's preview session if one is active. */
-	async function follow() {
-		if (following) return
-		following = true
+	/** Connects, then follows the repository's preview session if one is active. Runs one at a time. */
+	const follow = (startup: boolean) => (following = following.then(() => followOnce(startup)))
+
+	async function followOnce(startup: boolean) {
+		if (serverRef !== undefined) return
 		try {
 			bridge ??= await connect()
 			const state = await bridge.getState()
@@ -194,9 +195,9 @@ export function createPreviewSession({
 			setSnapshot({ authenticated: state.isAuthenticated })
 
 			if (!state.preview) {
-				// Clear a stale repository session, but leave the website's cookie: another tab or the
-				// editor may own it.
-				void bridge.closeSession().catch(() => {})
+				// On startup, clear a stale repository session, but leave the website's cookie: another
+				// tab or the editor may own it.
+				if (startup) void bridge.closeSession().catch(() => {})
 				setSnapshot({ status: "idle" })
 				reconcileEditorPush()
 				return
@@ -221,13 +222,11 @@ export function createPreviewSession({
 		} catch (error) {
 			warn(`Could not reach the preview session.\n\n${String(error)}`)
 			setSnapshot({ status: "idle" })
-		} finally {
-			following = false
 		}
 	}
 
 	return {
-		start: follow,
+		start: () => follow(true),
 
 		async exit() {
 			stopPolling()

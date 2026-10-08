@@ -467,6 +467,36 @@ describe("cookie changes from other tabs and the editor", () => {
 		expect(bridge.ping).toHaveBeenCalled()
 	})
 
+	it("follows a session started while starting up", async () => {
+		cancelEvents = true
+		const { session, bridge } = setup(active("ref-1"))
+		let answer = (_state: BridgeState) => {}
+		bridge.getState.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+
+		const starting = session.start()
+		await vi.advanceTimersByTimeAsync(0)
+		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		await vi.advanceTimersByTimeAsync(250)
+		answer({ isAuthenticated: false })
+		await starting
+		await vi.advanceTimersByTimeAsync(3000)
+
+		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-1" } })
+		expect(bridge.ping).toHaveBeenCalled()
+	})
+
+	it("does not close the repository session when a cookie change finds none", async () => {
+		cancelEvents = true
+		const { session, bridge } = setup({ isAuthenticated: false })
+		await session.start()
+
+		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		await vi.advanceTimersByTimeAsync(250)
+
+		expect(bridge.getState).toHaveBeenCalledTimes(2)
+		expect(bridge.closeSession).toHaveBeenCalledOnce()
+	})
+
 	it("does not watch inside the editor", async () => {
 		const { session } = setup({ isAuthenticated: false }, { watchCookie: false, codec: "plain" })
 		await session.start()

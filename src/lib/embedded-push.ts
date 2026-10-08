@@ -34,11 +34,11 @@ export function createEmbeddedPush({
 			if (token === lastToken && token === cookieRef) return
 			lastToken = token
 
-			// Claim before writing, so website tabs see the marker as soon as the ref lands. Website
-			// tabs only honor the marker on a plain cookie, so a website's JSON cookie is rewritten.
+			// Claim before writing, so website tabs see the marker as soon as the ref lands. They only
+			// honor it on a plain cookie, so a JSON cookie holding the ref is rewritten too.
 			claimOwnership(repositoryHost, token, now())
-			const isPlainToken = cookie.kind === "plain" && cookie.raw === token
-			if (!isPlainToken && !writeRef(store, token)) return
+			const isPlain = cookie.kind === "plain" && cookie.raw === token
+			if (!isPlain && !writeRef(store, token)) return
 			dispatchPreviewEvent("prismicPreviewUpdate", token)
 			return
 		}
