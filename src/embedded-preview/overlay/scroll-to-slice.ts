@@ -2,9 +2,6 @@ import { measureSliceMarkerRange } from "./slice-overlay-geometry"
 import type { Slice, SliceRect } from "./slice-overlay-geometry"
 
 export function scrollToSlice(slice: Slice, uiScale: number) {
-	const firstElement = slice.elements[0]
-	if (!firstElement) return
-
 	let sliceRect = slice.rect
 	if (!sliceRect) return
 
@@ -13,9 +10,8 @@ export function scrollToSlice(slice: Slice, uiScale: number) {
 	// Stop a previous page scroll before revealing the slice in its containers.
 	window.scrollTo({ top: window.scrollY, behavior: "instant" })
 
-	// Reveal the slice in scrollable containers before scrolling the page.
 	for (
-		let ancestor = firstElement.parentElement;
+		let ancestor = slice.elements[0]?.parentElement;
 		ancestor && ancestor !== document.documentElement;
 		ancestor = ancestor.parentElement
 	) {
@@ -42,13 +38,11 @@ export function scrollToSlice(slice: Slice, uiScale: number) {
 		if (!sliceRect) return
 	}
 
-	const windowDelta = getSliceScrollDelta(sliceRect, 0, window.innerHeight, inset)
-	if (windowDelta === 0) return
-
-	const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches
-		? "instant"
-		: "smooth"
-	window.scrollBy({ top: windowDelta, behavior })
+	const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches
+	window.scrollBy({
+		top: getSliceScrollDelta(sliceRect, 0, window.innerHeight, inset),
+		behavior: reduceMotion ? "instant" : "smooth",
+	})
 }
 
 // Leave visible slices in place, centre clipped slices, and top-align tall slices.

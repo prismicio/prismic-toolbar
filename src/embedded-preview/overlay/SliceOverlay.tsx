@@ -5,7 +5,7 @@ import {
 	isScrollToSliceMessage,
 	isSliceOverlayMessage,
 } from "../message-protocol"
-import type { PostMessage, SubscribeToMessages } from "../message-protocol"
+import type { MessageHandler, PostMessage, SubscribeToMessages } from "../message-protocol"
 import { scrollToSlice } from "./scroll-to-slice"
 import { findSliceAtElement } from "./slice-overlay-geometry"
 import type { Slice } from "./slice-overlay-geometry"
@@ -125,16 +125,13 @@ function useScrollToSlice(
 	uiScale: number,
 	subscribeToMessages: SubscribeToMessages,
 ) {
-	const onScrollToSlice = useStableCallback((sliceId: string) => {
-		const slice = slices.find((slice) => slice.sliceId === sliceId)
+	const onMessage = useStableCallback<MessageHandler>(({ data }) => {
+		if (!isScrollToSliceMessage(data)) return
+		const slice = slices.find((slice) => slice.sliceId === data.sliceId)
 		if (slice) scrollToSlice(slice, uiScale)
 	})
 
-	useLayoutEffect(() => {
-		return subscribeToMessages(({ data }) => {
-			if (isScrollToSliceMessage(data)) onScrollToSlice(data.sliceId)
-		})
-	}, [subscribeToMessages, onScrollToSlice])
+	useLayoutEffect(() => subscribeToMessages(onMessage), [subscribeToMessages, onMessage])
 }
 
 interface SliceHighlightProps {

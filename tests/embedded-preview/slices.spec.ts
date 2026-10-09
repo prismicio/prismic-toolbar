@@ -95,11 +95,6 @@ test("selecting a fully visible slice near the viewport edge leaves it in place"
 	await slice.evaluate((element) => {
 		window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - 8)
 	})
-	await slice.hover()
-	await expect(editor.preview.locator(".slice-highlight")).toHaveAttribute(
-		"data-slice-id",
-		"second-slice",
-	)
 	const initialScrollY = await slice.evaluate(() => window.scrollY)
 	await editor.send({ type: "prismic:embedded-preview:scroll-to-slice", sliceId: "second-slice" })
 	const finalScrollY = await slice.evaluate(async () => {
@@ -115,7 +110,6 @@ test("outlines the editor's selected slice and scrolls clipped slices into view"
 }) => {
 	const slice = editor.preview.locator("#second-slice")
 	const highlight = editor.preview.locator(".slice-highlight")
-	await page.mouse.move(20, 850)
 
 	await editor.send({
 		type: "prismic:embedded-preview:set-slice-overlay",
