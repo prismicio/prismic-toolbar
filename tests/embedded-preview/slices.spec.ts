@@ -88,6 +88,55 @@ test("highlight follows a slice inside a scrolling container", async ({ editor }
 	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
 })
 
+test("selecting a fully visible slice near the viewport edge leaves it in place", async ({
+	editor,
+}) => {
+	const slice = editor.preview.locator("#second-slice")
+	await slice.evaluate((element) => {
+		window.scrollTo(0, element.getBoundingClientRect().top + window.scrollY - 8)
+	})
+	await slice.hover()
+	await expect(editor.preview.locator(".slice-highlight")).toHaveAttribute(
+		"data-slice-id",
+		"second-slice",
+	)
+	const initialScrollY = await slice.evaluate(() => window.scrollY)
+	await editor.send({ type: "prismic:embedded-preview:scroll-to-slice", sliceId: "second-slice" })
+	const finalScrollY = await slice.evaluate(async () => {
+		await new Promise((resolve) => setTimeout(resolve, 250))
+		return window.scrollY
+	})
+	expect(finalScrollY).toBe(initialScrollY)
+})
+
+test("outlines the editor's selected slice and scrolls clipped slices into view", async ({
+	editor,
+	page,
+}) => {
+	const slice = editor.preview.locator("#second-slice")
+	const highlight = editor.preview.locator(".slice-highlight")
+	await page.mouse.move(20, 850)
+
+	await editor.send({
+		type: "prismic:embedded-preview:set-slice-overlay",
+		selectedSliceId: "second-slice",
+	})
+	await expect(highlight).toHaveAttribute("data-slice-id", "second-slice")
+
+	// Hovering another slice outlines it alongside the selected one.
+	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
+	await expect(highlight).toHaveCount(2)
+
+	await slice.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+	await expect(slice).not.toBeInViewport()
+	await editor.send({ type: "prismic:embedded-preview:scroll-to-slice", sliceId: "second-slice" })
+	await expect(slice).toBeInViewport({ ratio: 1 })
+
+	await editor.send({ type: "prismic:embedded-preview:set-slice-overlay" })
+	await page.mouse.move(20, 850)
+	await expect(highlight).toHaveCount(0)
+})
+
 test("highlight and selection use updated roots and marker IDs", async ({ editor }) => {
 	const highlight = editor.preview.locator(".slice-highlight")
 	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })

@@ -19,7 +19,12 @@ export function Overlay(props: OverlayProps) {
 
 	return (
 		<div style={{ "--prismic-overlay-ui-scale": uiScale }}>
-			<SliceOverlay postMessage={postMessage} slices={slices} />
+			<SliceOverlay
+				postMessage={postMessage}
+				slices={slices}
+				subscribeToMessages={subscribeToMessages}
+				uiScale={uiScale}
+			/>
 			<CommentOverlay
 				uiScale={uiScale}
 				subscribeToMessages={subscribeToMessages}

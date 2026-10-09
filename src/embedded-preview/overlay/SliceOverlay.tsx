@@ -1,24 +1,38 @@
 import { useLayoutEffect, useMemo, useState } from "preact/hooks"
 
-import { createSelectSliceMessage } from "../message-protocol"
-import type { PostMessage } from "../message-protocol"
+import {
+	createSelectSliceMessage,
+	isScrollToSliceMessage,
+	isSliceOverlayMessage,
+} from "../message-protocol"
+import type { PostMessage, SubscribeToMessages } from "../message-protocol"
+import { scrollToSlice } from "./scroll-to-slice"
 import { findSliceAtElement } from "./slice-overlay-geometry"
 import type { Slice } from "./slice-overlay-geometry"
 import { useStableCallback } from "./useStableCallback"
 
 interface SliceOverlayProps {
 	postMessage: PostMessage
+	subscribeToMessages: SubscribeToMessages
+	uiScale: number
 	slices: Slice[]
 }
 
-export function SliceOverlay({ postMessage, slices }: SliceOverlayProps) {
-	const slice = useHoveredSlice(slices)
+export function SliceOverlay(props: SliceOverlayProps) {
+	const { postMessage, slices, subscribeToMessages, uiScale } = props
 
-	useSliceSelection(slices, postMessage)
+	const selectedSlice = useSelectedSlice(slices, subscribeToMessages)
+	const hoveredSlice = useHoveredSlice(slices)
 
-	if (!slice) return null
+	useSliceSelection(slices, uiScale, postMessage)
+	useScrollToSlice(slices, uiScale, subscribeToMessages)
 
-	return <SliceHighlight slice={slice} />
+	return (
+		<>
+			{selectedSlice && <SliceHighlight slice={selectedSlice} />}
+			{hoveredSlice && hoveredSlice !== selectedSlice && <SliceHighlight slice={hoveredSlice} />}
+		</>
+	)
 }
 
 function useHoveredSlice(slices: Slice[]) {
@@ -67,7 +81,7 @@ const interactiveElementSelector = [
 	'[role="link"]',
 ].join(",")
 
-function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
+function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMessage) {
 	const selectSlice = useStableCallback((event: MouseEvent) => {
 		// Don't select a slice if the user is interacting with the UI or has selected text.
 		if (event.defaultPrevented || window.getSelection()?.isCollapsed === false) return
@@ -85,12 +99,42 @@ function useSliceSelection(slices: Slice[], postMessage: PostMessage) {
 		event.stopPropagation()
 
 		postMessage(createSelectSliceMessage(slice.sliceId))
+		scrollToSlice(slice, uiScale)
 	})
 
 	useLayoutEffect(() => {
 		document.addEventListener("click", selectSlice)
 		return () => document.removeEventListener("click", selectSlice)
 	}, [selectSlice])
+}
+
+function useSelectedSlice(slices: Slice[], subscribeToMessages: SubscribeToMessages) {
+	const [selectedSliceId, setSelectedSliceId] = useState<string>()
+
+	useLayoutEffect(() => {
+		return subscribeToMessages(({ data }) => {
+			if (isSliceOverlayMessage(data)) setSelectedSliceId(data.selectedSliceId)
+		})
+	}, [subscribeToMessages])
+
+	return slices.find((slice) => slice.sliceId === selectedSliceId)
+}
+
+function useScrollToSlice(
+	slices: Slice[],
+	uiScale: number,
+	subscribeToMessages: SubscribeToMessages,
+) {
+	const onScrollToSlice = useStableCallback((sliceId: string) => {
+		const slice = slices.find((slice) => slice.sliceId === sliceId)
+		if (slice) scrollToSlice(slice, uiScale)
+	})
+
+	useLayoutEffect(() => {
+		return subscribeToMessages(({ data }) => {
+			if (isScrollToSliceMessage(data)) onScrollToSlice(data.sliceId)
+		})
+	}, [subscribeToMessages, onScrollToSlice])
 }
 
 interface SliceHighlightProps {

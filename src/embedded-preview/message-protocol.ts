@@ -11,6 +11,8 @@ const setSlicesMessageType = "prismic:embedded-preview:set-slices"
 const setCommentOverlayMessageType = "prismic:embedded-preview:set-comment-overlay"
 const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
 const placeCommentMessageType = "prismic:embedded-preview:place-comment"
+const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
+const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
@@ -80,6 +82,16 @@ const scrollToPinMessageSchema = z.object({
 	threadId: nonemptyStringSchema,
 })
 
+const sliceOverlayMessageSchema = z.object({
+	type: z.literal(setSliceOverlayMessageType),
+	selectedSliceId: z.optional(nonemptyStringSchema),
+})
+
+const scrollToSliceMessageSchema = z.object({
+	type: z.literal(scrollToSliceMessageType),
+	sliceId: nonemptyStringSchema,
+})
+
 export type Author = z.infer<typeof authorSchema>
 
 export const draftPinIdentity = { type: "draft" } as const
@@ -99,6 +111,8 @@ type SetOverlayScaleMessage = z.infer<typeof overlayScaleMessageSchema>
 type SetSlicesMessage = z.infer<typeof slicesMessageSchema>
 export type SetCommentOverlayMessage = z.infer<typeof commentOverlayMessageSchema>
 type ScrollToPinMessage = z.infer<typeof scrollToPinMessageSchema>
+type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
+type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
 interface PlaceCommentMessage {
 	type: typeof placeCommentMessageType
@@ -132,6 +146,8 @@ export type Message =
 	| SetRefMessage
 	| SetOverlayScaleMessage
 	| SetSlicesMessage
+	| SetSliceOverlayMessage
+	| ScrollToSliceMessage
 	| SetCommentOverlayMessage
 	| ScrollToPinMessage
 	| PlaceCommentMessage
@@ -197,4 +213,12 @@ export function isCommentOverlayMessage(data: unknown): data is SetCommentOverla
 
 export function isScrollToPinMessage(data: unknown): data is ScrollToPinMessage {
 	return z.validate(scrollToPinMessageSchema, data)
+}
+
+export function isSliceOverlayMessage(data: unknown): data is SetSliceOverlayMessage {
+	return z.validate(sliceOverlayMessageSchema, data)
+}
+
+export function isScrollToSliceMessage(data: unknown): data is ScrollToSliceMessage {
+	return z.validate(scrollToSliceMessageSchema, data)
 }
