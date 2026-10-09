@@ -30,14 +30,26 @@ describe("getState", () => {
 		expect(fetch).not.toHaveBeenCalled()
 	})
 
-	it("reports the active preview once, without exposing the CSRF token", async () => {
-		const { handlers, fetch } = setup(session, { [statePath]: previewState })
+	it("reports the active preview, without exposing the CSRF token", async () => {
+		const { handlers } = setup(session, { [statePath]: previewState })
 		await expect(handlers.getState()).resolves.toEqual({
 			isAuthenticated: true,
 			preview: { ref: "ref-1", title: "Spring launch" },
 		})
-		await handlers.getState()
-		expect(fetch).toHaveBeenCalledOnce()
+	})
+
+	it("reports a session started after an earlier call found none", async () => {
+		const responses: Record<string, unknown> = {
+			[statePath]: { isAuthenticated: true, previewState: null },
+		}
+		const { handlers } = setup(session, responses)
+		await expect(handlers.getState()).resolves.toEqual({ isAuthenticated: true })
+
+		responses[statePath] = previewState
+		await expect(handlers.getState()).resolves.toEqual({
+			isAuthenticated: true,
+			preview: { ref: "ref-1", title: "Spring launch" },
+		})
 	})
 
 	it("reports a signed-in user without a preview", async () => {
@@ -48,11 +60,9 @@ describe("getState", () => {
 		await expect(handlers.getState()).resolves.toEqual({ isAuthenticated: true })
 	})
 
-	it("retries after a failed request", async () => {
-		const { handlers, fetch } = setup(session)
+	it("rejects when Prismic fails", async () => {
+		const { handlers } = setup(session)
 		await expect(handlers.getState()).rejects.toThrow("/toolbar/state responded 404")
-		await expect(handlers.getState()).rejects.toThrow()
-		expect(fetch).toHaveBeenCalledTimes(2)
 	})
 })
 
@@ -78,15 +88,13 @@ describe("ping", () => {
 	})
 })
 
-it("closes the session by deleting its cookie and forgets the cached state", async () => {
-	const { handlers, fetch } = setup(session, { [statePath]: previewState })
+it("closes the session by deleting its cookie", async () => {
+	const { handlers } = setup(session, { [statePath]: previewState })
 
-	await handlers.getState()
 	await handlers.closeSession()
 
 	expect(Cookies.get(sessionCookieName)).toBeUndefined()
 	await expect(handlers.getState()).resolves.toEqual({ isAuthenticated: false })
-	expect(fetch).toHaveBeenCalledOnce()
 })
 
 describe("share", () => {
@@ -112,6 +120,20 @@ describe("share", () => {
 			imageName: "blog/post#introsession.jpg",
 			_: "csrf-token",
 		})
+	})
+
+	it("creates a new link for a later session on the same page", async () => {
+		const responses: Record<string, unknown> = {
+			[statePath]: previewState,
+			"/previews/s": { url: "https://share.link/1", hasPreviewImage: false },
+		}
+		const { handlers } = setup(session, responses)
+		await expect(handlers.share("https://example.com/")).resolves.toBe("https://share.link/1")
+
+		await handlers.closeSession()
+		Cookies.set(sessionCookieName, "later-session", { path: "/" })
+		responses["/previews/s"] = { url: "https://share.link/2", hasPreviewImage: false }
+		await expect(handlers.share("https://example.com/")).resolves.toBe("https://share.link/2")
 	})
 
 	it("uses the current session's title and CSRF token", async () => {

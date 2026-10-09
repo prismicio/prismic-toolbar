@@ -15,17 +15,8 @@ export const sessionCookieName = "io.prismic.previewSession"
 
 /** Implements the bridge on the repository host, with relative requests to Prismic. */
 export function createBridgeHandlers(): BridgeMethods {
-	let state: Promise<BridgeState & { csrf?: string }> | undefined
 	let ping: Promise<{ ref: string | null }> | undefined
 	const shares = new Map<string, Promise<string>>()
-
-	function loadState() {
-		state ??= fetchState().catch((error: unknown) => {
-			state = undefined
-			throw error
-		})
-		return state
-	}
 
 	async function createShareLink(pageURL: string): Promise<string> {
 		const session = Cookies.get(sessionCookieName)
@@ -50,7 +41,8 @@ export function createBridgeHandlers(): BridgeMethods {
 
 	return {
 		async getState() {
-			const { isAuthenticated, preview } = await loadState()
+			// Fresh, so a session started since the last call is followed.
+			const { isAuthenticated, preview } = await fetchState()
 			return preview ? { isAuthenticated, preview } : { isAuthenticated }
 		},
 
@@ -74,15 +66,16 @@ export function createBridgeHandlers(): BridgeMethods {
 
 		async closeSession() {
 			deleteSessionCookie()
-			state = undefined
 		},
 
 		share(pageURL) {
-			let share = shares.get(pageURL)
+			// A later session on the same page needs its own link.
+			const key = `${Cookies.get(sessionCookieName)} ${pageURL}`
+			let share = shares.get(key)
 			if (!share) {
 				share = createShareLink(pageURL)
-				share.catch(() => shares.delete(pageURL))
-				shares.set(pageURL, share)
+				share.catch(() => shares.delete(key))
+				shares.set(key, share)
 			}
 			return share
 		},
