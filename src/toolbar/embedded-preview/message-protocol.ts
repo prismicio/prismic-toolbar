@@ -16,6 +16,9 @@ const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
+const hoverPinMessageType = "prismic:embedded-preview:hover-pin"
+const leavePinMessageType = "prismic:embedded-preview:leave-pin"
+const dismissPinPreviewMessageType = "prismic:embedded-preview:dismiss-pin-preview"
 const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
@@ -133,6 +136,18 @@ interface DeselectPinMessage {
 	type: typeof deselectPinMessageType
 	pin: PinIdentity
 }
+interface HoverPinMessage {
+	type: typeof hoverPinMessageType
+	pin: ThreadPinIdentity
+	rect: PinRect
+}
+interface LeavePinMessage {
+	type: typeof leavePinMessageType
+	pin: ThreadPinIdentity
+}
+interface DismissPinPreviewMessage {
+	type: typeof dismissPinPreviewMessageType
+}
 interface ReportSelectedPinPositionMessage {
 	type: typeof reportSelectedPinPositionMessageType
 	pin: PinIdentity
@@ -154,6 +169,9 @@ export type Message =
 	| SelectPinMessage
 	| SelectSliceMessage
 	| DeselectPinMessage
+	| HoverPinMessage
+	| LeavePinMessage
+	| DismissPinPreviewMessage
 	| ReportSelectedPinPositionMessage
 
 export type MessageHandler = (event: MessageEvent<unknown>) => void
@@ -181,6 +199,21 @@ export function createSelectPinMessage({
 
 export function createDeselectPinMessage(pin: PinIdentity): DeselectPinMessage {
 	return { type: deselectPinMessageType, pin }
+}
+
+export function createHoverPinMessage({
+	pin,
+	rect,
+}: Omit<HoverPinMessage, "type">): HoverPinMessage {
+	return { type: hoverPinMessageType, pin, rect }
+}
+
+export function createLeavePinMessage(pin: ThreadPinIdentity): LeavePinMessage {
+	return { type: leavePinMessageType, pin }
+}
+
+export function createDismissPinPreviewMessage(): DismissPinPreviewMessage {
+	return { type: dismissPinPreviewMessageType }
 }
 
 export function createReportSelectedPinPositionMessage({
