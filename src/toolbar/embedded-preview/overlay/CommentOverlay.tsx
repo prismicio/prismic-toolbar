@@ -169,11 +169,19 @@ interface ThreadPinProps {
 }
 
 function ThreadPin(props: ThreadPinProps) {
-	const { pin, selected, documentSize, uiScale, postMessage, subscribeToMessages, previewMessages } = props
+	const {
+		pin,
+		selected,
+		documentSize,
+		uiScale,
+		postMessage,
+		subscribeToMessages,
+		previewMessages,
+	} = props
 
 	const pinRef = useRef<HTMLButtonElement>(null)
-	const hovered = useRef(false)
-	const focused = useRef(false)
+	const hoveredRef = useRef(false)
+	const focusedRef = useRef(false)
 	const identity = useMemo(
 		() => ({ type: "thread", threadId: pin.threadId }) as const,
 		[pin.threadId],
@@ -199,26 +207,26 @@ function ThreadPin(props: ThreadPinProps) {
 	}
 
 	function leave() {
-		if (!hovered.current && !focused.current) previewMessages.leave(identity)
+		if (!hoveredRef.current && !focusedRef.current) previewMessages.leave(identity)
 	}
 
 	function onMouseEnter() {
-		hovered.current = true
+		hoveredRef.current = true
 		enter()
 	}
 
 	function onMouseLeave() {
-		hovered.current = false
+		hoveredRef.current = false
 		leave()
 	}
 
 	function onFocus() {
-		focused.current = true
+		focusedRef.current = true
 		enter()
 	}
 
 	function onBlur() {
-		focused.current = false
+		focusedRef.current = false
 		leave()
 	}
 
@@ -376,10 +384,10 @@ interface PinPreviewMessages {
 }
 
 function usePinPreviewMessages(postMessage: PostMessage): PinPreviewMessages {
-	const active = useRef(false)
+	const activeRef = useRef(false)
 	const dismiss = useCallback(() => {
-		if (!active.current) return
-		active.current = false
+		if (!activeRef.current) return
+		activeRef.current = false
 		postMessage(createDismissPinPreviewMessage())
 	}, [postMessage])
 
@@ -404,7 +412,7 @@ function usePinPreviewMessages(postMessage: PostMessage): PinPreviewMessages {
 
 	return {
 		enter(pin, rect) {
-			active.current = true
+			activeRef.current = true
 			postMessage(createHoverPinMessage({ pin, rect }))
 		},
 		leave(pin) {
