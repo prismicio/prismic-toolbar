@@ -397,16 +397,12 @@ function usePinPreviewMessages(postMessage: PostMessage): PinPreviewMessages {
 		}
 
 		window.addEventListener("scroll", dismiss, true)
-		window.addEventListener("wheel", dismiss, { passive: true })
 		window.addEventListener("resize", dismiss)
 		document.addEventListener("keydown", onKeyDown)
-		document.addEventListener("click", dismiss)
 		return () => {
 			window.removeEventListener("scroll", dismiss, true)
-			window.removeEventListener("wheel", dismiss)
 			window.removeEventListener("resize", dismiss)
 			document.removeEventListener("keydown", onKeyDown)
-			document.removeEventListener("click", dismiss)
 		}
 	}, [dismiss])
 
