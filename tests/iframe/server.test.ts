@@ -82,9 +82,23 @@ describe("ping", () => {
 		expect(fetch).toHaveBeenCalledExactlyOnceWith("/previews/session/ping?ref=ref%201", undefined)
 	})
 
-	it("returns null once Prismic closes the session", async () => {
+	it("returns null and closes the session once Prismic closes it", async () => {
 		const { handlers } = setup(session, { [ping]: { reload: false, close: true } })
 		await expect(handlers.ping("ref-1")).resolves.toEqual({ ref: null })
+		expect(Cookies.get(sessionCookieName)).toBeUndefined()
+	})
+
+	it("ignores an answer for a session another tab replaced meanwhile", async () => {
+		const { handlers, fetch } = setup(session)
+		let answer = (_response: Response) => {}
+		fetch.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+
+		const pending = handlers.ping("ref-1")
+		Cookies.set(sessionCookieName, "next-session", { path: "/" })
+		answer(Response.json({ reload: false, close: true }))
+
+		await expect(pending).resolves.toEqual({ ref: "ref-1" })
+		expect(Cookies.get(sessionCookieName)).toBe("next-session")
 	})
 })
 

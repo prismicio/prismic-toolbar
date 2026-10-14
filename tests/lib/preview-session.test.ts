@@ -351,7 +351,8 @@ describe("polling", () => {
 		await vi.advanceTimersByTimeAsync(3000)
 
 		expect(storedCookie()).toBeUndefined()
-		expect(bridge.closeSession).toHaveBeenCalledOnce()
+		// The iframe closes the session itself when its ping finds it ended.
+		expect(bridge.closeSession).not.toHaveBeenCalled()
 		expect(events).toEqual([["prismicPreviewEnd", null]])
 		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
 	})

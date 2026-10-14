@@ -55,9 +55,15 @@ export function createBridgeHandlers(): BridgeMethods {
 			ping ??= fetchJSON<{ ref?: unknown }>(
 				`/previews/${session}/ping?ref=${encodeURIComponent(ref)}`,
 			)
-				.then((response) => ({
-					ref: typeof response.ref === "string" && response.ref ? response.ref : null,
-				}))
+				.then((response) => {
+					// Another tab replaced the session meanwhile: report no change, so the next ping follows it.
+					if (Cookies.get(sessionCookieName) !== session) return { ref }
+					if (typeof response.ref === "string" && response.ref) return { ref: response.ref }
+
+					// Checked and deleted in one step, so a session started meanwhile cannot be deleted.
+					deleteSessionCookie()
+					return { ref: null }
+				})
 				.finally(() => {
 					ping = undefined
 				})

@@ -17,7 +17,7 @@ export interface BridgeState {
 
 export interface BridgeMethods {
 	getState(): Promise<BridgeState>
-	/** Returns the session's current ref, or `null` once the session ended. */
+	/** Returns the session's current ref, or `null` once the session ended, which also closes it. */
 	ping(ref: string): Promise<{ ref: string | null }>
 	closeSession(): Promise<void>
 	/** Returns a shareable link to the preview session on `pageURL`. */

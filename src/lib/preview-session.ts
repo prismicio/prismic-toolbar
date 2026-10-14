@@ -162,7 +162,6 @@ export function createPreviewSession({
 			// The session ended. Clear the cookie only when it still holds this session's ref.
 			const ownsCookie = !editorOwnsCookie && refFor(cookie, repositoryHost) === serverRef
 			stopPolling()
-			void bridge.closeSession().catch(() => {})
 			serverRef = undefined
 			setSnapshot({ status: "idle", preview: undefined })
 			if (ownsCookie) {
