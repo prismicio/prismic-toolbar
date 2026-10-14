@@ -34,7 +34,7 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 
 - `node --run dev` builds the toolbar on change, serves it at `http://localhost:8081/prismic-toolbar/<version>/`, and runs the [playground](./playground/README.md) with it at `http://localhost:3000`.
 - Development builds also accept an editor on `localhost` in the embedded preview. Set `TOOLBAR_LOCAL_EDITOR=true` to allow it in a production build.
-- Websites load `iframe.html` from the repository host, from the same folder as `prismic.js`. Local builds use the `package.json` version, which has no folder on Prismic: set `TOOLBAR_VERSION` to a deployed commit or pull request preview, like `pr-149`, to reuse its iframe.
+- Websites load `iframe.html` from the repository host, from the same folder as `prismic.js`. Local builds are never deployed, so `node --run dev` names its build after the last commit deployed from `origin/master` to reuse that iframe. To test changes to `src/iframe`, set `TOOLBAR_VERSION` to your pull request preview, like `pr-149`.
 - With a local Prismic behind a proxy, set `CDN_HOST` so bundles load through it, and qualify the repository with the proxy domain:
 
   ```sh
