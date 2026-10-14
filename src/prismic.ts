@@ -7,7 +7,7 @@ import { createPreviewSession } from "./lib/preview-session"
 // Replaced at build time, see `vite.config.ts`.
 /** Origin the toolbar's versioned assets are served from, such as `https://prismic.io`. */
 declare const CDN_HOST: string
-/** The asset folder: the `package.json` version, or `pr-<number>` for pull request previews. */
+/** The asset folder, such as a commit's short SHA or `pr-<number>`. See `vite.config.ts`. */
 declare const __TOOLBAR_VERSION__: string
 
 const mode = detectMode()

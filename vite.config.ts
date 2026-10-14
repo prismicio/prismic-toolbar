@@ -6,7 +6,7 @@ import { defineConfig } from "vitest/config"
 import packageJSON from "./package.json" with { type: "json" }
 
 // Asset folder name: the commit's short SHA in production, `pr-<number>` for pull request previews,
-// and the package version locally.
+// and the last SHA deployed from master locally (see `scripts/dev.ts`).
 export const version = process.env.TOOLBAR_VERSION || packageJSON.version
 
 /** Each entry builds `src/<entry>.ts` into `<entry>.js`. */
