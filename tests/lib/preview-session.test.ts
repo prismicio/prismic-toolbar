@@ -400,6 +400,28 @@ describe("polling", () => {
 		expect(bridge.ping).toHaveBeenCalledOnce()
 	})
 
+	it("ignores a ping that answers after following another session", async () => {
+		const { bridge, session } = await startPolling()
+		let answer = (_response: { ref: string | null }) => {}
+		bridge.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		await vi.advanceTimersByTimeAsync(3000)
+
+		// Another tab exits, so the next ping finds the session ended, then a new session starts.
+		bridge.ping.mockResolvedValueOnce({ ref: null })
+		document.dispatchEvent(new Event("visibilitychange"))
+		await vi.advanceTimersByTimeAsync(0)
+		bridge.getState.mockResolvedValue(active("ref-2"))
+		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
+		await vi.advanceTimersByTimeAsync(250)
+		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-2" } })
+
+		answer({ ref: "ref-1" })
+		await vi.advanceTimersByTimeAsync(0)
+
+		expect(storedJSON()).toEqual({ [repository]: { preview: "ref-2" } })
+		expect(session.getSnapshot().preview?.ref).toBe("ref-2")
+	})
+
 	it("ignores a ping that answers after exiting", async () => {
 		const { bridge, session } = await startPolling()
 		let answer = (_response: { ref: string | null }) => {}

@@ -56,8 +56,11 @@ export function createBridgeHandlers(): BridgeMethods {
 				`/previews/${session}/ping?ref=${encodeURIComponent(ref)}`,
 			)
 				.then((response) => {
+					const current = Cookies.get(sessionCookieName)
+					// Another tab closed the session meanwhile.
+					if (!current) return { ref: null }
 					// Another tab replaced the session meanwhile: report no change, so the next ping follows it.
-					if (Cookies.get(sessionCookieName) !== session) return { ref }
+					if (current !== session) return { ref }
 					if (typeof response.ref === "string" && response.ref) return { ref: response.ref }
 
 					// Checked and deleted in one step, so a session started meanwhile cannot be deleted.

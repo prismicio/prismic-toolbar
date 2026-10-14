@@ -100,6 +100,18 @@ describe("ping", () => {
 		await expect(pending).resolves.toEqual({ ref: "ref-1" })
 		expect(Cookies.get(sessionCookieName)).toBe("next-session")
 	})
+
+	it("reports an ended session when another tab closed it meanwhile", async () => {
+		const { handlers, fetch } = setup(session)
+		let answer = (_response: Response) => {}
+		fetch.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+
+		const pending = handlers.ping("ref-1")
+		Cookies.remove(sessionCookieName, { path: "/" })
+		answer(Response.json({ ref: "ref-2", reload: true }))
+
+		await expect(pending).resolves.toEqual({ ref: null })
+	})
 })
 
 it("closes the session by deleting its cookie", async () => {

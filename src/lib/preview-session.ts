@@ -146,14 +146,16 @@ export function createPreviewSession({
 	async function tick() {
 		if (!bridge || serverRef === undefined || document.visibilityState !== "visible") return
 
+		const pingedRef = serverRef
 		let nextRef: string | null
 		try {
-			nextRef = (await bridge.ping(serverRef)).ref
+			nextRef = (await bridge.ping(pingedRef)).ref
 		} catch {
 			return // Transient failure: try again on the next tick.
 		}
-		// Polling may have stopped during the ping, such as on exit or reload.
-		if (pollTimer === undefined || nextRef === serverRef) return
+		// Polling may have stopped or followed another session during the ping, such as on exit,
+		// reload, or a session another tab started.
+		if (pollTimer === undefined || serverRef !== pingedRef || nextRef === serverRef) return
 
 		const cookie = store.read()
 		const editorOwnsCookie = Boolean(editorOwner(cookie))
