@@ -37,11 +37,11 @@ For full documentation, visit the official Prismic documentation for your framew
 
 To integrate the toolbar with another framework, listen to its preview events. The toolbar dispatches them on `window` and reloads the page unless one is cancelled.
 
-| Event                  | `detail`  | When                                                                                |
-| ---------------------- | --------- | ----------------------------------------------------------------------------------- |
-| `prismicPreviewStart`  | `{ ref }` | A preview session starts on a page that does not show it yet, such as a share link. |
-| `prismicPreviewUpdate` | `{ ref }` | The preview ref changed: new edits, a push from the editor, or another tab.         |
-| `prismicPreviewEnd`    | `null`    | The preview ended.                                                                  |
+| Event                  | `detail`  | When                                                                                                                                  |
+| ---------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `prismicPreviewStart`  | `{ ref }` | A preview session starts on a page that does not show it yet, such as a share link. If not cancelled, `prismicPreviewUpdate` follows. |
+| `prismicPreviewUpdate` | `{ ref }` | The preview ref changed: new edits, a push from the editor, or another tab.                                                           |
+| `prismicPreviewEnd`    | `null`    | The preview ended.                                                                                                                    |
 
 ```js
 window.addEventListener("prismicPreviewUpdate", (event) => {
