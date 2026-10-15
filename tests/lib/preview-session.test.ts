@@ -99,9 +99,24 @@ describe("startup", () => {
 		await session.start()
 
 		expect(storedJSON()).toEqual({ [repository]: { preview: "ref-1" } })
-		expect(events).toEqual([["prismicPreviewStart", "ref-1"]])
+		expect(events).toEqual([
+			["prismicPreviewStart", "ref-1"],
+			["prismicPreviewUpdate", "ref-1"],
+		])
 		expect(reload).toHaveBeenCalledOnce()
 		expect(session.getSnapshot().status).toBe("reloading")
+	})
+
+	it("lets integrations older than v5 handle the start as an update", async () => {
+		const handleUpdate = (event: Event) => event.preventDefault()
+		window.addEventListener("prismicPreviewUpdate", handleUpdate)
+		const { session, reload } = setup(active("ref-1"))
+
+		await session.start()
+		window.removeEventListener("prismicPreviewUpdate", handleUpdate)
+
+		expect(reload).not.toHaveBeenCalled()
+		expect(session.getSnapshot().status).toBe("polling")
 	})
 
 	it("lets the website enter the preview itself and polls from there", async () => {
@@ -196,7 +211,10 @@ describe("startup", () => {
 		await starting
 		await vi.advanceTimersByTimeAsync(3000)
 
-		expect(events).toEqual([["prismicPreviewStart", "editor-ref"]])
+		expect(events).toEqual([
+			["prismicPreviewStart", "editor-ref"],
+			["prismicPreviewUpdate", "editor-ref"],
+		])
 		expect(reload).toHaveBeenCalledOnce()
 		expect(session.getSnapshot().status).toBe("reloading")
 		expect(storedCookie()).toBe("editor-ref")

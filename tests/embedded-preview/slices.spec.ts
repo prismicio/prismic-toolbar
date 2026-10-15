@@ -111,6 +111,8 @@ test("outlines the editor's selected slice and scrolls clipped slices into view"
 	const slice = editor.preview.locator("#second-slice")
 	const highlight = editor.preview.locator(".slice-highlight")
 
+	// Away from the preview, so the cursor does not hover a slice.
+	await page.mouse.move(20, 850)
 	await editor.send({
 		type: "prismic:embedded-preview:set-slice-overlay",
 		selectedSliceId: "second-slice",
