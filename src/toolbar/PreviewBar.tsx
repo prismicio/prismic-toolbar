@@ -61,12 +61,12 @@ type ShareState =
 	| { kind: "idle" | "loading" | "copied" | "failed" }
 	| { kind: "manual"; url: string }
 
-// Short labels to show, and longer ones for screen readers. Loading shows a spinner.
+// Loading shows a spinner.
 const shareLabels = {
-	idle: ["Share", "Copy share link"],
-	loading: ["", "Getting link…"],
-	copied: ["Copied", "Link copied"],
-	failed: ["Failed", "Sharing failed"],
+	idle: "Share",
+	loading: "",
+	copied: "Copied",
+	failed: "Failed",
 }
 
 function ShareButton({ session }: { session: PreviewSession }) {
@@ -115,18 +115,13 @@ function ShareButton({ session }: { session: PreviewSession }) {
 			class="share"
 			type="button"
 			disabled={state.kind === "loading"}
-			aria-label={shareLabels[state.kind][1]}
 			aria-live="polite"
 			onClick={() => void share()}
 		>
 			{/* Every label takes space, so the button keeps its width when its label changes. */}
-			{Object.entries(shareLabels).map(([kind, [label]]) => (
-				<span
-					key={kind}
-					class={kind === state.kind ? `label-${kind}` : `label-${kind} inactive`}
-					aria-hidden="true"
-				>
-					{label || <span class="spinner" />}
+			{Object.entries(shareLabels).map(([kind, label]) => (
+				<span key={kind} class={kind === state.kind ? `label-${kind}` : `label-${kind} inactive`}>
+					{label || <span class="spinner" role="img" aria-label="Getting link…" />}
 				</span>
 			))}
 		</button>

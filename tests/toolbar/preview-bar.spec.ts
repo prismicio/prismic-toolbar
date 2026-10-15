@@ -49,12 +49,12 @@ test("shows that the preview is updating while the page reloads", async ({
 test("copies a share link to the current page", async ({ repository, website }) => {
 	await repository.startPreview("ref-1")
 	await website.goto()
-	const button = website.previewBar.getByRole("button", { name: "Copy share link" })
+	const button = website.previewBar.getByRole("button", { name: "Share" })
 	const width = (await button.boundingBox())?.width
 
 	await button.click()
 
-	await expect(website.previewBar.getByRole("button", { name: "Link copied" })).toBeVisible()
+	await expect(website.previewBar.getByRole("button", { name: "Copied" })).toBeVisible()
 	// The bar does not shift when the label changes.
 	expect((await button.boundingBox())?.width).toBe(width)
 	expect(await website.page.evaluate(() => sessionStorage.getItem("clipboard"))).toBe(
@@ -79,7 +79,7 @@ test("shows the share link when the browser cannot copy it", async ({ repository
 		navigator.clipboard.writeText = () => Promise.reject(new Error("Denied"))
 	})
 
-	await website.previewBar.getByRole("button", { name: "Copy share link" }).click()
+	await website.previewBar.getByRole("button", { name: "Share" }).click()
 
 	await expect(website.previewBar.getByRole("textbox", { name: "Share link" })).toHaveValue(
 		`${repository.url}/previews/s/share-id`,
@@ -98,9 +98,9 @@ test("reports when Prismic cannot create a share link", async ({
 	await repository.startPreview("ref-1")
 	await website.goto()
 
-	await website.previewBar.getByRole("button", { name: "Copy share link" }).click()
+	await website.previewBar.getByRole("button", { name: "Share" }).click()
 
-	await expect(website.previewBar.getByRole("button", { name: "Sharing failed" })).toBeVisible()
+	await expect(website.previewBar.getByRole("button", { name: "Failed" })).toBeVisible()
 })
 
 test("offers share link visitors no share link", async ({ repository, website }) => {
@@ -108,7 +108,7 @@ test("offers share link visitors no share link", async ({ repository, website })
 	await website.goto()
 
 	await expect(website.previewBar.getByRole("link", { name: "Powered by Prismic" })).toBeVisible()
-	await expect(website.previewBar.getByRole("button", { name: "Copy share link" })).toHaveCount(0)
+	await expect(website.previewBar.getByRole("button", { name: "Share" })).toHaveCount(0)
 	await expect(
 		website.previewBar.getByRole("link", { name: "Open the repository in Prismic" }),
 	).toHaveCount(0)
