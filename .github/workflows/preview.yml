@@ -1,20 +1,21 @@
 name: Preview
 run-name: Preview toolbar for pull request ${{ github.event.pull_request.number }}
 
-# Uploads each pull request build to its own immutable folder, `pr-<number>`, so it can be tested on
-# any website before release. The public `prismic.js` is untouched.
+# Uploads each pull request build to its own folder, `pr-<number>`, so it can be tested on any website
+# before release. The public `prismic.js` is untouched. Folders are kept after the pull request closes:
+# the preview role cannot delete objects.
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, closed]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
 
 jobs:
   preview:
-    # Pull requests from forks get no AWS credentials.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+    # Pull requests from forks and runs triggered by Dependabot get no AWS credentials.
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     environment: preview
     concurrency:
@@ -32,19 +33,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Remove the preview
-        if: github.event.action == 'closed'
-        run: aws s3 rm "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION" --recursive
-
       - uses: actions/checkout@v7
-        if: github.event.action != 'closed'
       - uses: actions/setup-node@v7
-        if: github.event.action != 'closed'
         with:
           node-version-file: package.json
           cache: npm
       - name: Build the preview
-        if: github.event.action != 'closed'
         run: |
           npm ci
           npm run build
@@ -52,16 +46,14 @@ jobs:
           CDN_HOST: https://prismic.io
 
       - name: Upload the preview
-        if: github.event.action != 'closed'
-        # Rebuilt on every push under the same folder, so it must not be cached.
+        # Rebuilt on every push under the same folder, so it must not be cached. No `--delete`: the
+        # preview role cannot delete objects, and every build writes the same files.
         run: |
           aws s3 sync "dist/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION" \
-            --delete \
             --acl public-read \
             --cache-control "no-store"
 
       - name: Comment the preview snippet
-        if: github.event.action != 'closed'
         uses: actions/github-script@v7
         with:
           script: |
