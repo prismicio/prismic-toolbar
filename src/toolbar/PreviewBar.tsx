@@ -112,7 +112,7 @@ function ShareButton({ session }: { session: PreviewSession }) {
 
 	return (
 		<button
-			class={state.kind === "copied" ? "share copied" : "share"}
+			class="share"
 			type="button"
 			disabled={state.kind === "loading"}
 			aria-label={shareLabels[state.kind][1]}

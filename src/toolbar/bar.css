@@ -5,7 +5,6 @@
 	--grey1: rgb(255 255 255);
 	--grey3: rgb(244 242 244);
 	--grey7: rgb(220 219 221);
-	--grey10: rgb(134 132 141);
 	--grey11: rgb(111 110 119);
 	--grey12: rgb(26 21 35);
 	--purple9: rgb(110 86 207);
@@ -96,7 +95,7 @@
 .share,
 .exit {
 	margin: 0;
-	padding: 0 11px;
+	padding: 0;
 	color: var(--grey12);
 	font: inherit;
 	background: transparent;
@@ -107,6 +106,7 @@
 .share {
 	display: grid;
 	place-items: center;
+	padding: 0 11px;
 }
 
 .share > span {
@@ -126,15 +126,7 @@
 		visibility 150ms;
 }
 
-@media (prefers-reduced-motion: reduce) {
-	.share > .label-copied,
-	.share > .label-idle:not(.inactive) {
-		transition: none;
-	}
-}
-
-.share.copied,
-.share.copied:hover:not(:disabled) {
+.share > .label-copied {
 	color: var(--grey11);
 }
 
@@ -163,12 +155,10 @@
 	align-items: center;
 	justify-content: center;
 	width: var(--size-button);
-	padding: 0;
 	color: var(--grey11);
 }
 
-.share + .exit,
-.share-url + .exit {
+.exit:not(:only-child) {
 	border-left: 1px solid var(--grey7);
 }
 
