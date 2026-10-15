@@ -1,1 +1,0 @@
-export { ScrollingName } from "./ScrollingName"

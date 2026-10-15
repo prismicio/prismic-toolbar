@@ -4,23 +4,23 @@
 		"trackBranches": ["master"]
 	},
 	"defaultCompression": "none",
-	"normalizeFilenames": "(^\\./build/prismic-toolbar/[^/]+/).+$",
+	"normalizeFilenames": "(^\\./dist/prismic-toolbar/[^/]+/).+$",
 	"files": [
 		{
-			"path": "./build/prismic-toolbar/*/prismic.js",
-			"maxSize": "25KB"
+			"path": "./dist/prismic-toolbar/*/prismic.js",
+			"maxSize": "15KB"
 		},
 		{
-			"path": "./build/prismic-toolbar/*/embedded-preview.js",
+			"path": "./dist/prismic-toolbar/*/embedded-preview.js",
 			"maxSize": "60KB"
 		},
 		{
-			"path": "./build/prismic-toolbar/*/toolbar.js",
-			"maxSize": "340KB"
+			"path": "./dist/prismic-toolbar/*/toolbar.js",
+			"maxSize": "25KB"
 		},
 		{
-			"path": "./build/prismic-toolbar/*/iframe.html",
-			"maxSize": "15KB"
+			"path": "./dist/prismic-toolbar/*/iframe.html",
+			"maxSize": "6KB"
 		}
 	]
 }
