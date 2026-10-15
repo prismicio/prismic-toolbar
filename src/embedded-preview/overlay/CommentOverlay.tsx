@@ -1,9 +1,13 @@
-import type { RefObject, TargetedFocusEvent, TargetedMouseEvent } from "preact"
+import type {
+	RefObject,
+	TargetedFocusEvent,
+	TargetedKeyboardEvent,
+	TargetedMouseEvent,
+} from "preact"
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
 	createDeselectPinMessage,
-	createDismissPinPreviewMessage,
 	createHoverPinMessage,
 	createLeavePinMessage,
 	createPlaceCommentMessage,
@@ -49,7 +53,6 @@ export function CommentOverlay(props: CommentOverlayProps) {
 	const selectedPin = getSelectedPinIdentity(state)
 
 	useDismissOnClick(placementEnabled ? undefined : selectedPin, postMessage)
-	const previewMessages = usePinPreviewMessages(postMessage)
 
 	return (
 		<>
@@ -66,7 +69,6 @@ export function CommentOverlay(props: CommentOverlayProps) {
 					key={pin.threadId}
 					pin={pin}
 					selected={!draftPin && pin.threadId === selectedThreadId}
-					previewMessages={previewMessages}
 					subscribeToMessages={subscribeToMessages}
 					documentSize={documentSize}
 					uiScale={uiScale}
@@ -165,19 +167,10 @@ interface ThreadPinProps {
 	documentSize: DocumentSize
 	uiScale: number
 	postMessage: PostMessage
-	previewMessages: PinPreviewMessages
 }
 
 function ThreadPin(props: ThreadPinProps) {
-	const {
-		pin,
-		selected,
-		documentSize,
-		uiScale,
-		postMessage,
-		subscribeToMessages,
-		previewMessages,
-	} = props
+	const { pin, selected, documentSize, uiScale, postMessage, subscribeToMessages } = props
 
 	const pinRef = useRef<HTMLButtonElement>(null)
 	const hoveredRef = useRef(false)
@@ -191,7 +184,6 @@ function ThreadPin(props: ThreadPinProps) {
 
 	function handleClick(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
-		previewMessages.dismiss()
 
 		if (selected) {
 			postMessage(createDeselectPinMessage(identity))
@@ -203,11 +195,11 @@ function ThreadPin(props: ThreadPinProps) {
 
 	function enter() {
 		if (selected || !pinRef.current) return
-		previewMessages.enter(identity, getPinRect(pinRef.current))
+		postMessage(createHoverPinMessage({ pin: identity, rect: getPinRect(pinRef.current) }))
 	}
 
 	function leave() {
-		if (!hoveredRef.current && !focusedRef.current) previewMessages.leave(identity)
+		if (!hoveredRef.current && !focusedRef.current) postMessage(createLeavePinMessage(identity))
 	}
 
 	function onMouseEnter() {
@@ -247,6 +239,9 @@ function ThreadPin(props: ThreadPinProps) {
 				onMouseLeave={onMouseLeave}
 				onFocus={onFocus}
 				onBlur={onBlur}
+				onKeyDown={(event) => {
+					if (event.key === "Escape") postMessage(createLeavePinMessage(identity))
+				}}
 			/>
 			{selected && (
 				<PinPositionReporter
@@ -311,6 +306,7 @@ interface PinProps {
 	onMouseLeave?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
 	onFocus?: (event: TargetedFocusEvent<HTMLButtonElement>) => void
 	onBlur?: (event: TargetedFocusEvent<HTMLButtonElement>) => void
+	onKeyDown?: (event: TargetedKeyboardEvent<HTMLButtonElement>) => void
 	"aria-label"?: string
 	"aria-pressed"?: boolean
 	"data-thread-id"?: string
@@ -375,48 +371,6 @@ function useDismissOnClick(pin: PinIdentity | undefined, postMessage: PostMessag
 		document.addEventListener("click", deselectPin)
 		return () => document.removeEventListener("click", deselectPin)
 	}, [pin, postMessage])
-}
-
-interface PinPreviewMessages {
-	enter: (pin: { type: "thread"; threadId: string }, rect: ReturnType<typeof getPinRect>) => void
-	leave: (pin: { type: "thread"; threadId: string }) => void
-	dismiss: () => void
-}
-
-function usePinPreviewMessages(postMessage: PostMessage): PinPreviewMessages {
-	const activeRef = useRef(false)
-	const dismiss = useCallback(() => {
-		if (!activeRef.current) return
-		activeRef.current = false
-		postMessage(createDismissPinPreviewMessage())
-	}, [postMessage])
-
-	useLayoutEffect(() => {
-		function onKeyDown(event: KeyboardEvent) {
-			if (event.key === "Escape") dismiss()
-		}
-
-		window.addEventListener("scroll", dismiss, true)
-		window.addEventListener("resize", dismiss)
-		document.addEventListener("keydown", onKeyDown)
-		return () => {
-			window.removeEventListener("scroll", dismiss, true)
-			window.removeEventListener("resize", dismiss)
-			document.removeEventListener("keydown", onKeyDown)
-		}
-	}, [dismiss])
-
-	return {
-		enter(pin, rect) {
-			activeRef.current = true
-			postMessage(createHoverPinMessage({ pin, rect }))
-		},
-		leave(pin) {
-			// Keep dismissal armed while the pointer crosses into the editor's card.
-			postMessage(createLeavePinMessage(pin))
-		},
-		dismiss,
-	}
 }
 
 function useScrollToThreadPin(

@@ -18,7 +18,6 @@ const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
 const hoverPinMessageType = "prismic:embedded-preview:hover-pin"
 const leavePinMessageType = "prismic:embedded-preview:leave-pin"
-const dismissPinPreviewMessageType = "prismic:embedded-preview:dismiss-pin-preview"
 const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
@@ -145,9 +144,6 @@ interface LeavePinMessage {
 	type: typeof leavePinMessageType
 	pin: ThreadPinIdentity
 }
-interface DismissPinPreviewMessage {
-	type: typeof dismissPinPreviewMessageType
-}
 interface ReportSelectedPinPositionMessage {
 	type: typeof reportSelectedPinPositionMessageType
 	pin: PinIdentity
@@ -171,7 +167,6 @@ export type Message =
 	| DeselectPinMessage
 	| HoverPinMessage
 	| LeavePinMessage
-	| DismissPinPreviewMessage
 	| ReportSelectedPinPositionMessage
 
 export type MessageHandler = (event: MessageEvent<unknown>) => void
@@ -210,10 +205,6 @@ export function createHoverPinMessage({
 
 export function createLeavePinMessage(pin: ThreadPinIdentity): LeavePinMessage {
 	return { type: leavePinMessageType, pin }
-}
-
-export function createDismissPinPreviewMessage(): DismissPinPreviewMessage {
-	return { type: dismissPinPreviewMessageType }
 }
 
 export function createReportSelectedPinPositionMessage({
