@@ -1,55 +1,48 @@
 {
 	"name": "prismic-toolbar",
-	"version": "4.1.17",
-	"description": "Prismic Toolbar",
+	"version": "5.0.0",
+	"description": "Prismic Toolbar: website previews for Prismic repositories",
 	"license": "Apache-2.0",
+	"repository": {
+		"type": "git",
+		"url": "ssh://git@github.com/prismicio/prismic-toolbar.git"
+	},
+	"type": "module",
 	"scripts": {
-		"start": "node scripts/build.mjs --watch",
-		"build": "node scripts/build.mjs",
+		"build": "npx tsx scripts/build.ts",
+		"dev": "npx tsx scripts/dev.ts",
 		"bundlewatch": "bundlewatch --config bundlewatch.config.json",
-		"serve": "http-server -p 8081 -g -c-1 build/",
-		"test": "vitest run",
-		"test:watch": "vitest",
-		"test:browser": "playwright test",
-		"typecheck": "tsc --noEmit",
-		"lint": "oxlint --deny-warnings",
-		"lint:fix": "oxlint --fix --deny-warnings",
+		"e2e": "playwright test",
+		"e2e:ui": "npm run e2e -- --ui",
 		"format": "oxfmt",
-		"format:check": "oxfmt --check"
+		"lint": "oxlint --deny-warnings",
+		"types": "tsc --noEmit",
+		"unit": "vitest run --coverage",
+		"unit:watch": "vitest watch",
+		"test": "npm run lint && npm run types && npm run unit && npm run build && npm run e2e"
 	},
 	"dependencies": {
 		"fast-equals": "6.0.0",
 		"js-cookie": "3.0.8",
 		"preact": "10.29.8",
-		"react-collapsible": "2.6.2",
-		"react-tabs": "3.1.0",
-		"react-transition-group": "2.9.0",
-		"react-treebeard": "2.1.0",
 		"zod": "4.6.5"
 	},
 	"devDependencies": {
 		"@playwright/test": "1.63.0",
 		"@types/js-cookie": "3.0.6",
-		"@types/node": "24.13.5",
-		"browserslist-to-esbuild": "2.1.1",
+		"@types/node": "26.6.4",
+		"@vitest/coverage-v8": "5.0.3",
 		"bundlewatch": "0.4.2",
 		"http-server": "14.1.1",
 		"jsdom": "30.0.1",
 		"oxfmt": "0.68.0",
 		"oxlint": "1.83.0",
-		"postcss": "8.5.28",
-		"postcss-import": "17.0.0",
-		"postcss-preset-env": "11.5.3",
-		"postcss-url": "10.1.4",
+		"tsx": "4.23.15",
 		"typescript": "7.0.2",
 		"vite": "8.3.0",
-		"vitest": "5.0.1"
-	},
-	"overrides": {
-		"react": "16.14.0",
-		"react-dom": "16.14.0"
+		"vitest": "5.0.3"
 	},
 	"engines": {
-		"node": "24"
+		"node": "26"
 	}
 }

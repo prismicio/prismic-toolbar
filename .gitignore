@@ -2,7 +2,11 @@
 node_modules/
 
 # Build
-build/
+dist/
+.next/
+.vercel/
+next-env.d.ts
+*.tsbuildinfo
 
 # Test output
 test-results/
