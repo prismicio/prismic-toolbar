@@ -1,5 +1,6 @@
 import type {
 	RefObject,
+	TargetedEvent,
 	TargetedFocusEvent,
 	TargetedKeyboardEvent,
 	TargetedMouseEvent,
@@ -173,8 +174,6 @@ function ThreadPin(props: ThreadPinProps) {
 	const { pin, selected, documentSize, uiScale, postMessage, subscribeToMessages } = props
 
 	const pinRef = useRef<HTMLButtonElement>(null)
-	const hoveredRef = useRef(false)
-	const focusedRef = useRef(false)
 	const identity = useMemo(
 		() => ({ type: "thread", threadId: pin.threadId }) as const,
 		[pin.threadId],
@@ -193,33 +192,17 @@ function ThreadPin(props: ThreadPinProps) {
 		postMessage(createSelectPinMessage({ pin: identity, rect: getPinRect(event.currentTarget) }))
 	}
 
-	function enter() {
-		if (selected || !pinRef.current) return
-		postMessage(createHoverPinMessage({ pin: identity, rect: getPinRect(pinRef.current) }))
+	function onEnter(event: TargetedEvent<HTMLButtonElement>) {
+		if (selected) return
+		postMessage(createHoverPinMessage({ pin: identity, rect: getPinRect(event.currentTarget) }))
 	}
 
-	function leave() {
-		if (!hoveredRef.current && !focusedRef.current) postMessage(createLeavePinMessage(identity))
+	function onLeave(event: TargetedEvent<HTMLButtonElement>) {
+		if (!event.currentTarget.matches(":hover, :focus")) postMessage(createLeavePinMessage(identity))
 	}
 
-	function onMouseEnter() {
-		hoveredRef.current = true
-		enter()
-	}
-
-	function onMouseLeave() {
-		hoveredRef.current = false
-		leave()
-	}
-
-	function onFocus() {
-		focusedRef.current = true
-		enter()
-	}
-
-	function onBlur() {
-		focusedRef.current = false
-		leave()
+	function onKeyDown(event: TargetedKeyboardEvent<HTMLButtonElement>) {
+		if (event.key === "Escape") postMessage(createLeavePinMessage(identity))
 	}
 
 	return (
@@ -235,13 +218,11 @@ function ThreadPin(props: ThreadPinProps) {
 				aria-label={`Open comment by ${pin.author.name || pin.author.id}`}
 				aria-pressed={selected}
 				onClick={handleClick}
-				onMouseEnter={onMouseEnter}
-				onMouseLeave={onMouseLeave}
-				onFocus={onFocus}
-				onBlur={onBlur}
-				onKeyDown={(event) => {
-					if (event.key === "Escape") postMessage(createLeavePinMessage(identity))
-				}}
+				onMouseEnter={onEnter}
+				onMouseLeave={onLeave}
+				onFocus={onEnter}
+				onBlur={onLeave}
+				onKeyDown={onKeyDown}
 			/>
 			{selected && (
 				<PinPositionReporter
