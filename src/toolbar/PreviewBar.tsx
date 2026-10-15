@@ -34,27 +34,25 @@ export function PreviewBar({ session, repositoryHost }: MountToolbarOptions) {
 				<p class="title" title={title}>
 					{title}
 				</p>
-				<p class="status">
-					<span class={updating ? "dot" : "dot live"} aria-hidden="true" />
-					{updating ? "Updating…" : "Live preview"}
-				</p>
+				<p class="status">{updating ? "Updating…" : "Live preview"}</p>
 			</div>
-			{snapshot.authenticated ? (
-				<ShareButton session={session} />
-			) : (
+			{!snapshot.authenticated && (
 				<a class="powered" href="https://prismic.io" target="_blank" rel="noopener noreferrer">
 					Powered by Prismic
 				</a>
 			)}
-			<button
-				class="exit"
-				type="button"
-				aria-label="Exit preview"
-				title="Exit preview"
-				onClick={() => void session.exit()}
-			>
-				<CloseIcon />
-			</button>
+			<div class="actions">
+				{snapshot.authenticated && <ShareButton session={session} />}
+				<button
+					class="exit"
+					type="button"
+					aria-label="Exit preview"
+					title="Exit preview"
+					onClick={() => void session.exit()}
+				>
+					<CloseIcon />
+				</button>
+			</div>
 		</section>
 	)
 }
@@ -63,16 +61,19 @@ type ShareState =
 	| { kind: "idle" | "loading" | "copied" | "failed" }
 	| { kind: "manual"; url: string }
 
+// Short labels to show, and longer ones for screen readers. Loading shows a spinner.
 const shareLabels = {
-	idle: "Copy share link",
-	loading: "Getting link…",
-	copied: "Link copied",
-	failed: "Sharing failed",
+	idle: ["Share", "Copy share link"],
+	loading: ["", "Getting link…"],
+	copied: ["Copied", "Link copied"],
+	failed: ["Failed", "Sharing failed"],
 }
 
 function ShareButton({ session }: { session: PreviewSession }) {
 	const [state, setState] = useState<ShareState>({ kind: "idle" })
 	const input = useRef<HTMLInputElement>(null)
+	// Share links by page, so copying a link again needs no spinner.
+	const [links] = useState(() => new Map<string, string>())
 
 	useEffect(() => {
 		if (state.kind === "manual") input.current?.select()
@@ -82,9 +83,12 @@ function ShareButton({ session }: { session: PreviewSession }) {
 	}, [state])
 
 	async function share() {
-		setState({ kind: "loading" })
+		const pageURL = window.location.href
+		const cached = links.get(pageURL)
+		if (!cached) setState({ kind: "loading" })
 		try {
-			const url = await session.share()
+			const url = cached ?? (await session.share(pageURL))
+			links.set(pageURL, url)
 			// Copying can fail once the click is too old; show the link to copy by hand instead.
 			setState((await copyText(url)) ? { kind: "copied" } : { kind: "manual", url })
 		} catch {
@@ -108,16 +112,21 @@ function ShareButton({ session }: { session: PreviewSession }) {
 
 	return (
 		<button
-			class="share"
+			class={state.kind === "copied" ? "share copied" : "share"}
 			type="button"
 			disabled={state.kind === "loading"}
+			aria-label={shareLabels[state.kind][1]}
 			aria-live="polite"
 			onClick={() => void share()}
 		>
 			{/* Every label takes space, so the button keeps its width when its label changes. */}
-			{Object.entries(shareLabels).map(([kind, label]) => (
-				<span key={kind} class={kind === state.kind ? undefined : "inactive"}>
-					{label}
+			{Object.entries(shareLabels).map(([kind, [label]]) => (
+				<span
+					key={kind}
+					class={kind === state.kind ? `label-${kind}` : `label-${kind} inactive`}
+					aria-hidden="true"
+				>
+					{label || <span class="spinner" />}
 				</span>
 			))}
 		</button>
