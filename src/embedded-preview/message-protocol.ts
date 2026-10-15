@@ -16,8 +16,8 @@ const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
-const hoverPinMessageType = "prismic:embedded-preview:hover-pin"
-const leavePinMessageType = "prismic:embedded-preview:leave-pin"
+const showPinPreviewMessageType = "prismic:embedded-preview:show-pin-preview"
+const hidePinPreviewMessageType = "prismic:embedded-preview:hide-pin-preview"
 const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
@@ -135,13 +135,13 @@ interface DeselectPinMessage {
 	type: typeof deselectPinMessageType
 	pin: PinIdentity
 }
-interface HoverPinMessage {
-	type: typeof hoverPinMessageType
+interface ShowPinPreviewMessage {
+	type: typeof showPinPreviewMessageType
 	pin: ThreadPinIdentity
 	rect: PinRect
 }
-interface LeavePinMessage {
-	type: typeof leavePinMessageType
+interface HidePinPreviewMessage {
+	type: typeof hidePinPreviewMessageType
 	pin: ThreadPinIdentity
 }
 interface ReportSelectedPinPositionMessage {
@@ -165,8 +165,8 @@ export type Message =
 	| SelectPinMessage
 	| SelectSliceMessage
 	| DeselectPinMessage
-	| HoverPinMessage
-	| LeavePinMessage
+	| ShowPinPreviewMessage
+	| HidePinPreviewMessage
 	| ReportSelectedPinPositionMessage
 
 export type MessageHandler = (event: MessageEvent<unknown>) => void
@@ -196,15 +196,15 @@ export function createDeselectPinMessage(pin: PinIdentity): DeselectPinMessage {
 	return { type: deselectPinMessageType, pin }
 }
 
-export function createHoverPinMessage({
+export function createShowPinPreviewMessage({
 	pin,
 	rect,
-}: Omit<HoverPinMessage, "type">): HoverPinMessage {
-	return { type: hoverPinMessageType, pin, rect }
+}: Omit<ShowPinPreviewMessage, "type">): ShowPinPreviewMessage {
+	return { type: showPinPreviewMessageType, pin, rect }
 }
 
-export function createLeavePinMessage(pin: ThreadPinIdentity): LeavePinMessage {
-	return { type: leavePinMessageType, pin }
+export function createHidePinPreviewMessage(pin: ThreadPinIdentity): HidePinPreviewMessage {
+	return { type: hidePinPreviewMessageType, pin }
 }
 
 export function createReportSelectedPinPositionMessage({

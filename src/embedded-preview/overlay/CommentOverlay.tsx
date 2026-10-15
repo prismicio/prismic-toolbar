@@ -9,8 +9,8 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "preact/
 
 import {
 	createDeselectPinMessage,
-	createHoverPinMessage,
-	createLeavePinMessage,
+	createShowPinPreviewMessage,
+	createHidePinPreviewMessage,
 	createPlaceCommentMessage,
 	createReportSelectedPinPositionMessage,
 	createSelectPinMessage,
@@ -194,15 +194,18 @@ function ThreadPin(props: ThreadPinProps) {
 
 	function onEnter(event: TargetedEvent<HTMLButtonElement>) {
 		if (selected) return
-		postMessage(createHoverPinMessage({ pin: identity, rect: getPinRect(event.currentTarget) }))
+		postMessage(
+			createShowPinPreviewMessage({ pin: identity, rect: getPinRect(event.currentTarget) }),
+		)
 	}
 
 	function onLeave(event: TargetedEvent<HTMLButtonElement>) {
-		if (!event.currentTarget.matches(":hover, :focus")) postMessage(createLeavePinMessage(identity))
+		if (!event.currentTarget.matches(":hover, :focus"))
+			postMessage(createHidePinPreviewMessage(identity))
 	}
 
 	function onKeyDown(event: TargetedKeyboardEvent<HTMLButtonElement>) {
-		if (event.key === "Escape") postMessage(createLeavePinMessage(identity))
+		if (event.key === "Escape") postMessage(createHidePinPreviewMessage(identity))
 	}
 
 	return (
