@@ -1,7 +1,7 @@
 // Reads and writes cookies like js-cookie 3: SDKs and servers parse these cookies, some with regular
 // expressions, so their format must not change.
 
-export interface CookieAttributes {
+export type CookieAttributes = {
 	/** `undefined` writes no `path`, so the browser uses the current one. */
 	path: string | undefined
 	domain?: string
