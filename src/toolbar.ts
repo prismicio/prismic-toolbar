@@ -5,11 +5,8 @@ import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
 
 import styles from "./toolbar.css?inline"
 
-/**
- * Shows the preview bar while the session previews, in its own shadow root, isolated from the
- * website's styles. Returns a function that removes it.
- */
-export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): () => void {
+/** Shows the preview bar while previewing, in a shadow root isolated from the website's styles. */
+export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): void {
 	const root = shadow({
 		id: "prismic-toolbar",
 		style: { position: "fixed", zIndex: 2147483647, bottom: 0, left: 0 },
@@ -85,12 +82,7 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 	}
 
 	update(session.getSnapshot())
-	const unsubscribe = session.subscribe(update)
-	return () => {
-		unsubscribe()
-		if (root instanceof ShadowRoot) root.host.remove()
-		else root.remove()
-	}
+	session.subscribe(update)
 }
 
 registerChunk("mountToolbar", mountToolbar)
