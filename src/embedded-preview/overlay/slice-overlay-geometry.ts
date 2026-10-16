@@ -15,10 +15,7 @@ export interface SliceRect {
 	height: number
 }
 
-export interface Slice extends SliceMarkerRange, SliceMetadata {
-	/** Bounds in document coordinates. */
-	rect: SliceRect | undefined
-}
+export interface Slice extends SliceMarkerRange, SliceMetadata {}
 
 interface OpenSliceMarker {
 	sliceId: string
@@ -62,6 +59,7 @@ export function findSliceMarkerRanges(root: Node): SliceMarkerRange[] {
 	return ranges
 }
 
+/** Bounds in document coordinates. */
 export function measureSliceMarkerRange(range: SliceMarkerRange): SliceRect | undefined {
 	let top = Number.POSITIVE_INFINITY
 	let left = Number.POSITIVE_INFINITY

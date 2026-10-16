@@ -133,6 +133,32 @@ test("outlines the editor's selected slice and scrolls clipped slices into view"
 	await expect(highlight).toHaveCount(0)
 })
 
+test("the selected slice's highlight follows layout shifts and window resizes", async ({
+	editor,
+	page,
+}) => {
+	const slice = editor.preview.locator("#second-slice")
+	const highlight = editor.preview.locator(".slice-highlight")
+	await page.mouse.move(20, 850)
+	await editor.send({
+		type: "prismic:embedded-preview:set-slice-overlay",
+		selectedSliceId: "second-slice",
+	})
+	await expect(highlight).toHaveAttribute("data-slice-id", "second-slice")
+	const box = (await slice.boundingBox())!
+
+	// A slice above grows without any DOM change.
+	await editor.preview
+		.locator("#first-slice")
+		.evaluate((element) => (element.style.height = "460px"))
+	await expect.poll(async () => (await slice.boundingBox())?.y).toBe(box.y + 60)
+	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
+
+	await page.setViewportSize({ width: 1000, height: 900 })
+	await expect.poll(async () => (await slice.boundingBox())?.width).not.toBe(box.width)
+	await expect.poll(() => highlight.boundingBox()).toEqual(await slice.boundingBox())
+})
+
 test("highlight and selection use updated roots and marker IDs", async ({ editor }) => {
 	const highlight = editor.preview.locator(".slice-highlight")
 	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
@@ -200,6 +226,13 @@ test("highlight does not poll while idle and clears outside the preview", async 
 	await page.mouse.move(20, 850)
 	await expect(highlight).toHaveCount(0)
 	expect(await countMeasurements()).toBe(0)
+	// Slices without a highlight are not measured.
+	const scrollMeasurements = await slice.evaluate((element: Measured) => {
+		const before = element.measurements
+		window.dispatchEvent(new Event("scroll"))
+		return element.measurements - before
+	})
+	expect(scrollMeasurements).toBe(0)
 
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
