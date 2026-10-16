@@ -4,10 +4,7 @@ import { renderPreviewBar } from "./toolbar/preview-bar"
 
 import styles from "./toolbar/bar.css?inline"
 
-/**
- * Renders the preview bar in its own shadow root, isolated from the website's styles. Returns a
- * function that removes the bar and stops following the session.
- */
+/** Renders the preview bar in its own shadow root, isolated from the website's styles. */
 export function mountToolbar(options: MountToolbarOptions): () => void {
 	const root = shadow({
 		id: "prismic-toolbar",

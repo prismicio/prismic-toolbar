@@ -16,7 +16,7 @@
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/toolbar.js",
-			"maxSize": "11KB"
+			"maxSize": "10KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/iframe.html",

@@ -3,47 +3,30 @@ import { repositoryOrigin } from "../lib/env"
 import type { PreviewSession, PreviewSnapshot } from "../lib/preview-session"
 import { closeIcon, prismicLogo } from "./icons"
 
-/**
- * Renders the preview bar in `root` while the session previews, updating it in place with each
- * snapshot. Returns a function that removes it and stops following the session.
- */
+/** Shows the preview bar in `root` while the session previews. Returns a function that removes it. */
 export function renderPreviewBar(
 	root: ParentNode,
 	{ session, repositoryHost }: MountToolbarOptions,
 ): () => void {
-	const title = el("p", { class: "title" })
-	const status = el("p", { class: "status" })
-	const details = el("div", { class: "details" }, title, status)
-	const powered = el(
-		"a",
-		{ class: "powered", href: "https://prismic.io", target: "_blank", rel: "noopener noreferrer" },
-		"Powered by Prismic",
-	)
-	const exit = el(
-		"button",
-		{ class: "exit", type: "button", "aria-label": "Exit preview", title: "Exit preview" },
-		closeIcon(),
-	)
-	exit.addEventListener("click", () => void session.exit())
-	const actions = el("div", { class: "actions" }, exit)
-	const bar = el("section", { class: "bar", "aria-label": "Prismic preview" }, details, actions)
-
-	let authenticated: boolean | undefined
-	let logo: Element | undefined
-	let share: ShareButton | undefined
+	let bar: HTMLElement | undefined
+	let authenticated = false
 
 	function update(snapshot: PreviewSnapshot) {
-		if (!snapshot.preview) {
-			bar.remove()
-			share?.remove()
-			share = authenticated = undefined
-			return
+		if (!snapshot.preview || snapshot.authenticated !== authenticated) {
+			bar?.remove()
+			bar = undefined
 		}
+		if (!snapshot.preview) return
 
-		if (snapshot.authenticated !== authenticated) {
+		if (!bar) {
 			authenticated = snapshot.authenticated
-			logo?.remove()
-			logo = authenticated
+			const exit = el(
+				"button",
+				{ class: "exit", type: "button", "aria-label": "Exit preview", title: "Exit preview" },
+				closeIcon(),
+			)
+			exit.onclick = () => void session.exit()
+			const logo = authenticated
 				? el(
 						"a",
 						{
@@ -57,121 +40,109 @@ export function renderPreviewBar(
 						prismicLogo(),
 					)
 				: el("span", { class: "logo" }, prismicLogo())
-			bar.prepend(logo)
-			if (authenticated) powered.remove()
-			else details.after(powered)
-			share?.remove()
-			share = authenticated ? createShareButton(session, actions) : undefined
+			const powered = el(
+				"a",
+				{
+					class: "powered",
+					href: "https://prismic.io",
+					target: "_blank",
+					rel: "noopener noreferrer",
+				},
+				"Powered by Prismic",
+			)
+			bar = el(
+				"section",
+				{ class: "bar", "aria-label": "Prismic preview" },
+				logo,
+				el("div", { class: "details" }, el("p", { class: "title" }), el("p", { class: "status" })),
+				!authenticated && powered,
+				el("div", { class: "actions" }, authenticated && shareButton(session), exit),
+			)
+			// Before the styles, where earlier versions rendered it.
+			root.prepend(bar)
 		}
 
+		// Only changed text is replaced, so updates keep the visitor's text selection.
+		const title = bar.querySelector<HTMLElement>(".title")!
 		const text = snapshot.preview.title || "Preview"
 		if (title.textContent !== text) title.textContent = title.title = text
+		const status = bar.querySelector(".status")!
 		const label = snapshot.status === "reloading" ? "Updating…" : "Live preview"
 		if (status.textContent !== label) status.textContent = label
-
-		// Before the styles, where earlier versions rendered it.
-		if (!bar.parentNode) root.prepend(bar)
 	}
 
 	update(session.getSnapshot())
 	const unsubscribe = session.subscribe(update)
-
 	return () => {
 		unsubscribe()
-		update({ status: "idle", authenticated: false })
+		bar?.remove()
 	}
 }
 
-type ShareButton = { remove(): void }
-
-type ShareState = keyof typeof shareLabels
-
 // Loading shows a spinner.
-const shareLabels = {
-	idle: "Share",
-	loading: "",
-	copied: "Copied",
-	failed: "Failed",
-}
+const shareLabels = { idle: "Share", loading: "", copied: "Copied", failed: "Failed" }
 
-/** Adds a share button at the start of `parent`. */
-function createShareButton(session: PreviewSession, parent: Element): ShareButton {
-	const button = el("button", { class: "share", type: "button", "aria-live": "polite" })
+function shareButton(session: PreviewSession): HTMLButtonElement {
 	// Every label takes space, so the button keeps its width when its label changes.
 	const labels = Object.entries(shareLabels).map(([kind, label]) => {
 		const spinner = el("span", { class: "spinner", role: "img", "aria-label": "Getting link…" })
 		return [kind, el("span", {}, label || spinner)] as const
 	})
-	button.append(...labels.map(([, span]) => span))
-	button.addEventListener("click", () => void share())
-	parent.prepend(button)
-
-	let element: Element = button
-	let timer: ReturnType<typeof setTimeout> | undefined
-	let removed = false
+	const button = el(
+		"button",
+		{ class: "share", type: "button", "aria-live": "polite" },
+		...labels.map(([, span]) => span),
+	)
 	// Share links by page, so copying a link again needs no spinner.
 	const links = new Map<string, string>()
+	let timer: ReturnType<typeof setTimeout> | undefined
 
-	function setState(state: ShareState) {
+	function show(state: keyof typeof shareLabels) {
 		clearTimeout(timer)
 		button.disabled = state === "loading"
 		for (const [kind, span] of labels) {
 			span.className = kind === state ? `label-${kind}` : `label-${kind} inactive`
 		}
-		if (state === "copied" || state === "failed") timer = setTimeout(() => setState("idle"), 2000)
+		if (state === "copied" || state === "failed") timer = setTimeout(() => show("idle"), 2000)
 	}
 
-	function showLink(url: string) {
-		clearTimeout(timer)
-		const input = el("input", {
-			class: "share-url",
-			type: "text",
-			readonly: "",
-			"aria-label": "Share link",
-		})
-		input.value = url
-		input.addEventListener("focus", () => input.select())
-		button.replaceWith(input)
-		element = input
-		input.select()
-	}
-
-	async function share() {
+	button.onclick = async () => {
 		const pageURL = window.location.href
 		const cached = links.get(pageURL)
-		if (!cached) setState("loading")
+		if (!cached) show("loading")
 		try {
 			const url = cached ?? (await session.share(pageURL))
 			links.set(pageURL, url)
+			if (await copyText(url)) return show("copied")
+
 			// Copying can fail once the click is too old; show the link to copy by hand instead.
-			const copied = await copyText(url)
-			if (removed) return
-			if (copied) setState("copied")
-			else showLink(url)
+			const input = el("input", {
+				class: "share-url",
+				type: "text",
+				readonly: "",
+				"aria-label": "Share link",
+			})
+			input.value = url
+			input.onfocus = () => input.select()
+			button.replaceWith(input)
+			input.select()
 		} catch {
-			if (!removed) setState("failed")
+			show("failed")
 		}
 	}
 
-	setState("idle")
-
-	return {
-		remove() {
-			removed = true
-			clearTimeout(timer)
-			element.remove()
-		},
-	}
+	show("idle")
+	return button
 }
 
 function el<Tag extends keyof HTMLElementTagNameMap>(
 	tag: Tag,
 	attributes: Record<string, string>,
-	...children: (Node | string)[]
+	...children: (Node | string | false)[]
 ): HTMLElementTagNameMap[Tag] {
 	const element = document.createElement(tag)
 	for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value)
-	element.append(...children)
+	for (const child of children) if (child) element.append(child)
 	return element
 }
 

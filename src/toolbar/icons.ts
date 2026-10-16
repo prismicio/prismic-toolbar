@@ -1,20 +1,17 @@
 const svgNS = "http://www.w3.org/2000/svg"
 
-// Built with DOM methods rather than `innerHTML`, which websites enforcing Trusted Types block.
-function icon(path: string): SVGSVGElement {
+// Built with DOM methods: websites enforcing Trusted Types block `innerHTML`.
+function icon(d: string): SVGSVGElement {
 	const svg = document.createElementNS(svgNS, "svg")
-	const attributes = {
-		width: "18",
-		height: "18",
-		viewBox: "0 0 24 24",
-		"aria-hidden": "true",
-		focusable: "false",
-	}
-	for (const [name, value] of Object.entries(attributes)) svg.setAttribute(name, value)
-	const element = document.createElementNS(svgNS, "path")
-	element.setAttribute("fill", "currentColor")
-	element.setAttribute("d", path)
-	svg.append(element)
+	svg.setAttribute("width", "18")
+	svg.setAttribute("height", "18")
+	svg.setAttribute("viewBox", "0 0 24 24")
+	svg.setAttribute("aria-hidden", "true")
+	svg.setAttribute("focusable", "false")
+	const path = document.createElementNS(svgNS, "path")
+	path.setAttribute("fill", "currentColor")
+	path.setAttribute("d", d)
+	svg.append(path)
 	return svg
 }
 
