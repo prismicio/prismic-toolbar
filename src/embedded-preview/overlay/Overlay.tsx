@@ -15,13 +15,14 @@ export function Overlay(props: OverlayProps) {
 	const { postMessage, subscribeToMessages } = props
 
 	const uiScale = useUIScale(subscribeToMessages)
-	const slices = useSlices(subscribeToMessages)
+	const { slices, subscribeToLayoutChanges } = useSlices(subscribeToMessages)
 
 	return (
 		<div style={{ "--prismic-overlay-ui-scale": uiScale }}>
 			<SliceOverlay
 				postMessage={postMessage}
 				slices={slices}
+				subscribeToLayoutChanges={subscribeToLayoutChanges}
 				subscribeToMessages={subscribeToMessages}
 				uiScale={uiScale}
 			/>
