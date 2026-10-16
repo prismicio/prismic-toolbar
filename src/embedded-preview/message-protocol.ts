@@ -187,7 +187,6 @@ function isBoolean(value: unknown): value is boolean {
 	return typeof value === "boolean"
 }
 
-/** Rejects `NaN` and infinities. */
 function isNumber(value: unknown): value is number {
 	return Number.isFinite(value)
 }
@@ -196,16 +195,13 @@ function isRatio(value: unknown): value is number {
 	return isNumber(value) && value >= 0 && value <= 1
 }
 
-/** Accepts a missing key or `undefined`. */
 function isOptional<T>(value: unknown, guard: Guard<T>): value is T | undefined {
 	return value === undefined || guard(value)
 }
 
-/** Uses `for...of` so holes in sparse arrays are checked as `undefined`. */
 function isArrayOf<T>(value: unknown, guard: Guard<T>): value is T[] {
-	if (!Array.isArray(value)) return false
-	for (const item of value) if (!guard(item)) return false
-	return true
+	// Spreading turns holes into `undefined`, which `every` would otherwise skip.
+	return Array.isArray(value) && [...value].every(guard)
 }
 
 function isMessage(data: unknown, type: string): data is UnknownObject {
