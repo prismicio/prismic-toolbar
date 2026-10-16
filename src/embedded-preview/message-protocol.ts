@@ -1,20 +1,4 @@
-const ackMessageType = "prismic:embedded-preview:ack"
 export const readyMessage = { type: "prismic:embedded-preview:ready" } as const
-
-const setRefMessageType = "prismic:embedded-preview:set-ref"
-
-const setOverlayScaleMessageType = "prismic:embedded-preview:set-overlay-scale"
-const setSlicesMessageType = "prismic:embedded-preview:set-slices"
-
-const setCommentOverlayMessageType = "prismic:embedded-preview:set-comment-overlay"
-const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
-const placeCommentMessageType = "prismic:embedded-preview:place-comment"
-const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
-const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
-const selectSliceMessageType = "prismic:embedded-preview:select-slice"
-const selectPinMessageType = "prismic:embedded-preview:select-pin"
-const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
-const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 export type Author = {
 	id: string
@@ -53,24 +37,24 @@ export type PinRect = {
 }
 type ReadyMessage = typeof readyMessage
 type AckMessage = {
-	type: typeof ackMessageType
+	type: "prismic:embedded-preview:ack"
 }
 type SetRefMessage = {
-	type: typeof setRefMessageType
+	type: "prismic:embedded-preview:set-ref"
 	token: string
 	// `false` when the editor keeps the preview mounted and expects an in-place update.
 	reload?: boolean
 }
 type SetOverlayScaleMessage = {
-	type: typeof setOverlayScaleMessageType
+	type: "prismic:embedded-preview:set-overlay-scale"
 	uiScale: number
 }
 type SetSlicesMessage = {
-	type: typeof setSlicesMessageType
+	type: "prismic:embedded-preview:set-slices"
 	slices: SliceMetadata[]
 }
 export type SetCommentOverlayMessage = {
-	type: typeof setCommentOverlayMessageType
+	type: "prismic:embedded-preview:set-comment-overlay"
 	placementEnabled: boolean
 	pins: ThreadPinData[]
 	draftAuthor?: Author
@@ -78,39 +62,39 @@ export type SetCommentOverlayMessage = {
 	draftPin?: PinPosition
 }
 type ScrollToPinMessage = {
-	type: typeof scrollToPinMessageType
+	type: "prismic:embedded-preview:scroll-to-pin"
 	threadId: string
 }
 type SetSliceOverlayMessage = {
-	type: typeof setSliceOverlayMessageType
+	type: "prismic:embedded-preview:set-slice-overlay"
 	selectedSliceId?: string
 }
 type ScrollToSliceMessage = {
-	type: typeof scrollToSliceMessageType
+	type: "prismic:embedded-preview:scroll-to-slice"
 	sliceId: string
 }
 
 type PlaceCommentMessage = {
-	type: typeof placeCommentMessageType
+	type: "prismic:embedded-preview:place-comment"
 	xRatio: number
 	yRatio: number
 	rect: PinRect
 }
 type SelectSliceMessage = {
-	type: typeof selectSliceMessageType
+	type: "prismic:embedded-preview:select-slice"
 	sliceId: string
 }
 type SelectPinMessage = {
-	type: typeof selectPinMessageType
+	type: "prismic:embedded-preview:select-pin"
 	pin: ThreadPinIdentity
 	rect: PinRect
 }
 type DeselectPinMessage = {
-	type: typeof deselectPinMessageType
+	type: "prismic:embedded-preview:deselect-pin"
 	pin: PinIdentity
 }
 type ReportSelectedPinPositionMessage = {
-	type: typeof reportSelectedPinPositionMessageType
+	type: "prismic:embedded-preview:report-selected-pin-position"
 	pin: PinIdentity
 	rect: PinRect
 	visible: boolean
@@ -135,37 +119,6 @@ export type Message =
 export type MessageHandler = (event: MessageEvent<unknown>) => void
 export type SubscribeToMessages = (handler: MessageHandler) => () => void
 export type PostMessage = (message: Message) => void
-
-export function createPlaceCommentMessage({
-	xRatio,
-	yRatio,
-	rect,
-}: Omit<PlaceCommentMessage, "type">): PlaceCommentMessage {
-	return { type: placeCommentMessageType, xRatio, yRatio, rect }
-}
-
-export function createSelectSliceMessage(sliceId: string): SelectSliceMessage {
-	return { type: selectSliceMessageType, sliceId }
-}
-
-export function createSelectPinMessage({
-	pin,
-	rect,
-}: Omit<SelectPinMessage, "type">): SelectPinMessage {
-	return { type: selectPinMessageType, pin, rect }
-}
-
-export function createDeselectPinMessage(pin: PinIdentity): DeselectPinMessage {
-	return { type: deselectPinMessageType, pin }
-}
-
-export function createReportSelectedPinPositionMessage({
-	pin,
-	rect,
-	visible,
-}: Omit<ReportSelectedPinPositionMessage, "type">): ReportSelectedPinPositionMessage {
-	return { type: reportSelectedPinPositionMessageType, pin, rect, visible }
-}
 
 // The editor is deployed on its own schedule: guards ignore unknown keys so it can add fields.
 type UnknownObject = Record<string, unknown>
@@ -204,7 +157,7 @@ function isArrayOf<T>(value: unknown, guard: Guard<T>): value is T[] {
 	return Array.isArray(value) && [...value].every(guard)
 }
 
-function isMessage(data: unknown, type: string): data is UnknownObject {
+function isMessage(data: unknown, type: Message["type"]): data is UnknownObject {
 	return isObject(data) && data.type === type
 }
 
@@ -242,28 +195,35 @@ function isSliceMetadata(value: unknown): value is SliceMetadata {
 }
 
 export function isAckMessage(data: unknown): data is AckMessage {
-	return isMessage(data, ackMessageType)
+	return isMessage(data, "prismic:embedded-preview:ack")
 }
 
 export function isSetRefMessage(data: unknown): data is SetRefMessage {
 	return (
-		isMessage(data, setRefMessageType) &&
+		isMessage(data, "prismic:embedded-preview:set-ref") &&
 		isNonEmptyString(data.token) &&
 		isOptional(data.reload, isBoolean)
 	)
 }
 
 export function isOverlayScaleMessage(data: unknown): data is SetOverlayScaleMessage {
-	return isMessage(data, setOverlayScaleMessageType) && isNumber(data.uiScale) && data.uiScale > 0
+	return (
+		isMessage(data, "prismic:embedded-preview:set-overlay-scale") &&
+		isNumber(data.uiScale) &&
+		data.uiScale > 0
+	)
 }
 
 export function isSetSlicesMessage(data: unknown): data is SetSlicesMessage {
-	return isMessage(data, setSlicesMessageType) && isArrayOf(data.slices, isSliceMetadata)
+	return (
+		isMessage(data, "prismic:embedded-preview:set-slices") &&
+		isArrayOf(data.slices, isSliceMetadata)
+	)
 }
 
 export function isCommentOverlayMessage(data: unknown): data is SetCommentOverlayMessage {
 	return (
-		isMessage(data, setCommentOverlayMessageType) &&
+		isMessage(data, "prismic:embedded-preview:set-comment-overlay") &&
 		isBoolean(data.placementEnabled) &&
 		isArrayOf(data.pins, isThreadPin) &&
 		isOptional(data.draftAuthor, isAuthor) &&
@@ -273,16 +233,20 @@ export function isCommentOverlayMessage(data: unknown): data is SetCommentOverla
 }
 
 export function isScrollToPinMessage(data: unknown): data is ScrollToPinMessage {
-	return isMessage(data, scrollToPinMessageType) && isNonEmptyString(data.threadId)
+	return (
+		isMessage(data, "prismic:embedded-preview:scroll-to-pin") && isNonEmptyString(data.threadId)
+	)
 }
 
 export function isSliceOverlayMessage(data: unknown): data is SetSliceOverlayMessage {
 	return (
-		isMessage(data, setSliceOverlayMessageType) &&
+		isMessage(data, "prismic:embedded-preview:set-slice-overlay") &&
 		isOptional(data.selectedSliceId, isNonEmptyString)
 	)
 }
 
 export function isScrollToSliceMessage(data: unknown): data is ScrollToSliceMessage {
-	return isMessage(data, scrollToSliceMessageType) && isNonEmptyString(data.sliceId)
+	return (
+		isMessage(data, "prismic:embedded-preview:scroll-to-slice") && isNonEmptyString(data.sliceId)
+	)
 }
