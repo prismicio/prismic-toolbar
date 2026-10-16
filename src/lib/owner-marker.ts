@@ -1,6 +1,4 @@
-import Cookies from "js-cookie"
-
-import { deleteCookie, setCookie } from "./cookie"
+import { deleteCookie, getCookie, setCookie } from "./cookie"
 import type { SiteCookie } from "./site-cookie"
 
 /**
@@ -21,7 +19,7 @@ export interface Owner {
 
 export function readOwner(): Owner | undefined {
 	try {
-		const owner = JSON.parse(Cookies.get(ownerCookieName) ?? "null") as Partial<Owner> | null
+		const owner = JSON.parse(getCookie(ownerCookieName) ?? "null") as Partial<Owner> | null
 		if (
 			owner?.version === 2 &&
 			typeof owner.repository === "string" &&

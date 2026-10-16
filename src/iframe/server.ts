@@ -1,5 +1,3 @@
-import Cookies from "js-cookie"
-
 import {
 	connectMessageType,
 	isBridgeRequest,
@@ -9,6 +7,7 @@ import {
 	type BridgeResponse,
 	type BridgeState,
 } from "../lib/bridge-protocol"
+import { deleteCookie, getCookie } from "../lib/cookie"
 
 /** Set by Prismic on the repository host when a preview session starts. */
 export const sessionCookieName = "io.prismic.previewSession"
@@ -19,7 +18,7 @@ export function createBridgeHandlers(): BridgeMethods {
 	const shares = new Map<string, Promise<string>>()
 
 	async function createShareLink(pageURL: string): Promise<string> {
-		const session = Cookies.get(sessionCookieName)
+		const session = getCookie(sessionCookieName)
 		// Fresh, so the link gets the current session's title and CSRF token.
 		const { csrf, preview } = await fetchState()
 		if (!session || !preview) throw new Error("No active preview session to share.")
@@ -48,7 +47,7 @@ export function createBridgeHandlers(): BridgeMethods {
 
 		async ping(ref) {
 			// Read the session on every ping: another tab may have replaced or closed it.
-			const session = Cookies.get(sessionCookieName)
+			const session = getCookie(sessionCookieName)
 			if (!session) return { ref: null }
 
 			// Prismic answers `{ ref, reload }`, or `{ close: true }` once the session ended.
@@ -56,7 +55,7 @@ export function createBridgeHandlers(): BridgeMethods {
 				`/previews/${session}/ping?ref=${encodeURIComponent(ref)}`,
 			)
 				.then((response) => {
-					const current = Cookies.get(sessionCookieName)
+					const current = getCookie(sessionCookieName)
 					// Another tab closed the session meanwhile.
 					if (!current) return { ref: null }
 					// Another tab replaced the session meanwhile: report no change, so the next ping follows it.
@@ -79,7 +78,7 @@ export function createBridgeHandlers(): BridgeMethods {
 
 		share(pageURL) {
 			// A later session on the same page needs its own link.
-			const key = `${Cookies.get(sessionCookieName)} ${pageURL}`
+			const key = `${getCookie(sessionCookieName)} ${pageURL}`
 			let share = shares.get(key)
 			if (!share) {
 				share = createShareLink(pageURL)
@@ -118,7 +117,7 @@ export function servePort(port: MessagePort, handlers: BridgeMethods): void {
 
 async function fetchState(): Promise<BridgeState & { csrf?: string }> {
 	// Without these cookies, Prismic has nothing to report.
-	if (!Cookies.get("is-logged-in") && !Cookies.get(sessionCookieName)) {
+	if (!getCookie("is-logged-in") && !getCookie(sessionCookieName)) {
 		return { isAuthenticated: false }
 	}
 
@@ -162,7 +161,7 @@ function deleteSessionCookie() {
 
 	for (const domain of [undefined, ...domains]) {
 		for (const path of [undefined, "/", ...paths]) {
-			Cookies.remove(sessionCookieName, { domain, path, sameSite: "none", secure: true })
+			deleteCookie(sessionCookieName, { domain, path, sameSite: "none", secure: true })
 		}
 	}
 }

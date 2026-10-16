@@ -1,11 +1,11 @@
-import Cookies from "js-cookie"
 import { describe, expect, it, vi } from "vitest"
 
 import { createBridgeHandlers, sessionCookieName } from "../../src/iframe/server"
+import { deleteCookie, getCookie, setCookie } from "../../src/lib/cookie"
 
 /** Sets cookies on the repository host and answers Prismic requests by path. */
 function setup(cookies: Record<string, string>, responses: Record<string, unknown> = {}) {
-	for (const [name, value] of Object.entries(cookies)) Cookies.set(name, value, { path: "/" })
+	for (const [name, value] of Object.entries(cookies)) setCookie(name, value)
 	const fetch = vi.fn(async (url: string, _init?: RequestInit) => {
 		const path = url.split("?")[0] as string
 		if (!(path in responses)) return new Response("Not found", { status: 404 })
@@ -85,7 +85,7 @@ describe("ping", () => {
 	it("returns null and closes the session once Prismic closes it", async () => {
 		const { handlers } = setup(session, { [ping]: { reload: false, close: true } })
 		await expect(handlers.ping("ref-1")).resolves.toEqual({ ref: null })
-		expect(Cookies.get(sessionCookieName)).toBeUndefined()
+		expect(getCookie(sessionCookieName)).toBeUndefined()
 	})
 
 	it("ignores an answer for a session another tab replaced meanwhile", async () => {
@@ -94,11 +94,11 @@ describe("ping", () => {
 		fetch.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 
 		const pending = handlers.ping("ref-1")
-		Cookies.set(sessionCookieName, "next-session", { path: "/" })
+		setCookie(sessionCookieName, "next-session")
 		answer(Response.json({ reload: false, close: true }))
 
 		await expect(pending).resolves.toEqual({ ref: "ref-1" })
-		expect(Cookies.get(sessionCookieName)).toBe("next-session")
+		expect(getCookie(sessionCookieName)).toBe("next-session")
 	})
 
 	it("reports an ended session when another tab closed it meanwhile", async () => {
@@ -107,7 +107,7 @@ describe("ping", () => {
 		fetch.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 
 		const pending = handlers.ping("ref-1")
-		Cookies.remove(sessionCookieName, { path: "/" })
+		deleteCookie(sessionCookieName)
 		answer(Response.json({ ref: "ref-2", reload: true }))
 
 		await expect(pending).resolves.toEqual({ ref: null })
@@ -119,7 +119,7 @@ it("closes the session by deleting its cookie", async () => {
 
 	await handlers.closeSession()
 
-	expect(Cookies.get(sessionCookieName)).toBeUndefined()
+	expect(getCookie(sessionCookieName)).toBeUndefined()
 	await expect(handlers.getState()).resolves.toEqual({ isAuthenticated: false })
 })
 
@@ -208,7 +208,7 @@ describe("share", () => {
 		await expect(handlers.share("https://example.com/")).resolves.toBe("https://share.link/1")
 
 		await handlers.closeSession()
-		Cookies.set(sessionCookieName, "later-session", { path: "/" })
+		setCookie(sessionCookieName, "later-session")
 		responses["/previews/s"] = { url: "https://share.link/2", hasPreviewImage: false }
 		await expect(handlers.share("https://example.com/")).resolves.toBe("https://share.link/2")
 	})
