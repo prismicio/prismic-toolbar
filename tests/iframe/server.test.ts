@@ -127,7 +127,7 @@ it("deletes the session cookie on every domain and path that could hold it", asy
 	vi.useFakeTimers({ now: new Date("2026-01-02T03:04:05Z"), toFake: ["Date"] })
 	const initialLocation = window.location
 	Object.defineProperty(window, "location", {
-		value: new URL("https://repo.prismic.io/x;y/z"),
+		value: new URL("https://prismic.io/x;y"),
 		configurable: true,
 	})
 	const set = vi.spyOn(document, "cookie", "set")
@@ -144,30 +144,12 @@ it("deletes the session cookie on every domain and path that could hold it", asy
 		  "io.prismic.previewSession=; path=/; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
 		]

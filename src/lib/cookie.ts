@@ -1,26 +1,24 @@
-// Reads and writes cookies like js-cookie 3 did: SDKs and servers read these cookies, some with
-// regular expressions, so their format must not change.
+// Reads and writes cookies like js-cookie 3: SDKs and servers parse these cookies, some with regular
+// expressions, so their format must not change.
 
 export interface CookieAttributes {
-	/** Omitted when `undefined`: the browser then uses the current path. */
+	/** `undefined` writes no `path`, so the browser uses the current one. */
 	path: string | undefined
 	domain?: string
 	sameSite: "lax" | "none"
 	secure?: true
 }
 
-/**
- * Returns the value of the first cookie whose decoded name matches, skipping cookies that fail to
- * decode.
- */
+/** Returns the first cookie whose decoded name matches, skipping those that fail to decode. */
 export function getCookie(name: string): string | undefined {
 	for (const cookie of document.cookie.split("; ")) {
-		const [encodedName = "", ...value] = cookie.split("=")
+		const [rawName = "", ...rest] = cookie.split("=")
+		const value = rest.join("=")
 		try {
-			if (decodeURIComponent(encodedName) === name) return decodeValue(value.join("="))
-		} catch {
-			// Malformed escape sequence.
-		}
+			if (decodeURIComponent(rawName) !== name) continue
+			const unquoted = value[0] === '"' ? value.slice(1, -1) : value
+			return unquoted.replace(/(%[\dA-F]{2})+/gi, decodeURIComponent)
+		} catch {}
 	}
 }
 
@@ -40,29 +38,21 @@ export function deleteCookie(
 	writeCookie(name, "", attributes, new Date(Date.now() - 864e5).toUTCString())
 }
 
-// Names are constants that need no encoding.
-function writeCookie(name: string, value: string, attributes: CookieAttributes, expires?: string) {
-	const { path, domain, sameSite, secure } = attributes
-	let cookie = `${name}=${encodeValue(value)}`
+// Names are constants that need no encoding. Values keep the characters cookies allow unescaped.
+function writeCookie(
+	name: string,
+	value: string,
+	{ path, domain, sameSite, secure }: CookieAttributes,
+	expires?: string,
+) {
+	const encoded = encodeURIComponent(value)
+	let cookie = `${name}=${encoded.replace(/%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g, decodeURIComponent)}`
 	for (const [key, attribute] of Object.entries({ path, domain, sameSite, secure, expires })) {
-		if (!attribute) continue
+		if (attribute === true) cookie += `; ${key}`
 		// A `;` would start another attribute.
-		cookie += attribute === true ? `; ${key}` : `; ${key}=${attribute.split(";")[0]}`
+		else if (attribute) cookie += `; ${key}=${attribute.split(";")[0]}`
 	}
 	document.cookie = cookie
-}
-
-// Escapes like `encodeURIComponent`, except characters cookie values allow.
-function encodeValue(value: string): string {
-	return encodeURIComponent(value).replace(
-		/%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g,
-		decodeURIComponent,
-	)
-}
-
-function decodeValue(value: string): string {
-	if (value[0] === '"') value = value.slice(1, -1)
-	return value.replace(/(%[\dA-F]{2})+/gi, decodeURIComponent)
 }
 
 // Cookies written from a cross-site iframe need `SameSite=None; Secure`. Loopback hosts are secure
