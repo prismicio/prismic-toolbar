@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "preact/hooks"
 import type { MountToolbarOptions } from "../lib/chunks"
 import { repositoryOrigin } from "../lib/env"
 import type { PreviewSession, PreviewSnapshot } from "../lib/preview-session"
-import { CloseIcon, PrismicLogo } from "./icons"
+import { CloseIcon } from "./icons"
 
 export function PreviewBar({ session, repositoryHost }: MountToolbarOptions) {
 	const snapshot = useSnapshot(session)
@@ -23,11 +23,11 @@ export function PreviewBar({ session, repositoryHost }: MountToolbarOptions) {
 					aria-label="Open the repository in Prismic"
 					title="Open the repository in Prismic"
 				>
-					<PrismicLogo />
+					<span class="spinner" role="img" aria-label="Loading…" />
 				</a>
 			) : (
 				<span class="logo">
-					<PrismicLogo />
+					<span class="spinner" role="img" aria-label="Loading…" />
 				</span>
 			)}
 			<div class="details">
