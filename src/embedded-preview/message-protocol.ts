@@ -10,8 +10,13 @@ const setSlicesMessageType = "prismic:embedded-preview:set-slices"
 
 const setCommentOverlayMessageType = "prismic:embedded-preview:set-comment-overlay"
 const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
+const placeCommentMessageType = "prismic:embedded-preview:place-comment"
 const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
 const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
+const selectSliceMessageType = "prismic:embedded-preview:select-slice"
+const selectPinMessageType = "prismic:embedded-preview:select-pin"
+const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
+const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
 const ratioSchema = z.number().check(z.gte(0), z.lte(1))
@@ -110,26 +115,26 @@ type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
 type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
 type PlaceCommentMessage = {
-	type: "prismic:embedded-preview:place-comment"
+	type: typeof placeCommentMessageType
 	xRatio: number
 	yRatio: number
 	rect: PinRect
 }
 type SelectSliceMessage = {
-	type: "prismic:embedded-preview:select-slice"
+	type: typeof selectSliceMessageType
 	sliceId: string
 }
 type SelectPinMessage = {
-	type: "prismic:embedded-preview:select-pin"
+	type: typeof selectPinMessageType
 	pin: ThreadPinIdentity
 	rect: PinRect
 }
 type DeselectPinMessage = {
-	type: "prismic:embedded-preview:deselect-pin"
+	type: typeof deselectPinMessageType
 	pin: PinIdentity
 }
 type ReportSelectedPinPositionMessage = {
-	type: "prismic:embedded-preview:report-selected-pin-position"
+	type: typeof reportSelectedPinPositionMessageType
 	pin: PinIdentity
 	rect: PinRect
 	visible: boolean
