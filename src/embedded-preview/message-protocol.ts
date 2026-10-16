@@ -16,6 +16,8 @@ const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
+const showPinPreviewMessageType = "prismic:embedded-preview:show-pin-preview"
+const hidePinPreviewMessageType = "prismic:embedded-preview:hide-pin-preview"
 const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
@@ -133,6 +135,15 @@ type DeselectPinMessage = {
 	type: typeof deselectPinMessageType
 	pin: PinIdentity
 }
+type ShowPinPreviewMessage = {
+	type: typeof showPinPreviewMessageType
+	pin: ThreadPinIdentity
+	rect: PinRect
+}
+type HidePinPreviewMessage = {
+	type: typeof hidePinPreviewMessageType
+	pin: ThreadPinIdentity
+}
 type ReportSelectedPinPositionMessage = {
 	type: typeof reportSelectedPinPositionMessageType
 	pin: PinIdentity
@@ -154,6 +165,8 @@ export type Message =
 	| SelectPinMessage
 	| SelectSliceMessage
 	| DeselectPinMessage
+	| ShowPinPreviewMessage
+	| HidePinPreviewMessage
 	| ReportSelectedPinPositionMessage
 
 export type MessageHandler = (event: MessageEvent<unknown>) => void

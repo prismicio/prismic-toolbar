@@ -1,4 +1,10 @@
-import type { RefObject, TargetedMouseEvent } from "preact"
+import type {
+	RefObject,
+	TargetedEvent,
+	TargetedFocusEvent,
+	TargetedKeyboardEvent,
+	TargetedMouseEvent,
+} from "preact"
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
@@ -183,6 +189,25 @@ function ThreadPin(props: ThreadPinProps) {
 		})
 	}
 
+	function onEnter(event: TargetedEvent<HTMLButtonElement>) {
+		if (selected) return
+		postMessage({
+			type: "prismic:embedded-preview:show-pin-preview",
+			pin: identity,
+			rect: getPinRect(event.currentTarget),
+		})
+	}
+
+	function onLeave(event: TargetedEvent<HTMLButtonElement>) {
+		if (!event.currentTarget.matches(":hover, :focus"))
+			postMessage({ type: "prismic:embedded-preview:hide-pin-preview", pin: identity })
+	}
+
+	function onKeyDown(event: TargetedKeyboardEvent<HTMLButtonElement>) {
+		if (event.key === "Escape")
+			postMessage({ type: "prismic:embedded-preview:hide-pin-preview", pin: identity })
+	}
+
 	return (
 		<>
 			<Pin
@@ -196,6 +221,11 @@ function ThreadPin(props: ThreadPinProps) {
 				aria-label={`Open comment by ${pin.author.name || pin.author.id}`}
 				aria-pressed={selected}
 				onClick={handleClick}
+				onMouseEnter={onEnter}
+				onMouseLeave={onLeave}
+				onFocus={onEnter}
+				onBlur={onLeave}
+				onKeyDown={onKeyDown}
 			/>
 			{selected && (
 				<PinPositionReporter
@@ -256,6 +286,11 @@ interface PinProps {
 	dimmed?: boolean
 	disabled?: boolean
 	onClick?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	onMouseEnter?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	onMouseLeave?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	onFocus?: (event: TargetedFocusEvent<HTMLButtonElement>) => void
+	onBlur?: (event: TargetedFocusEvent<HTMLButtonElement>) => void
+	onKeyDown?: (event: TargetedKeyboardEvent<HTMLButtonElement>) => void
 	"aria-label"?: string
 	"aria-pressed"?: boolean
 	"data-thread-id"?: string
