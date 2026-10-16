@@ -1,6 +1,6 @@
-import Cookies from "js-cookie"
 import { afterEach, beforeEach, expect, it, vi } from "vitest"
 
+import { deleteCookie, setCookie } from "../../src/lib/cookie"
 import { watchCookie } from "../../src/lib/cookie-watcher"
 
 const name = "watched-cookie"
@@ -22,12 +22,12 @@ it("polls for changes and deletions while the page is visible", async () => {
 	const onChange = vi.fn()
 	const stop = watchCookie(name, onChange)
 
-	Cookies.set(name, "first")
+	setCookie(name, "first")
 	await vi.advanceTimersByTimeAsync(1000)
 	expect(onChange).toHaveBeenCalledTimes(1)
 
 	visibility("hidden")
-	Cookies.remove(name)
+	deleteCookie(name)
 	await vi.advanceTimersByTimeAsync(1000)
 	expect(onChange).toHaveBeenCalledTimes(1)
 
@@ -36,7 +36,7 @@ it("polls for changes and deletions while the page is visible", async () => {
 	expect(onChange).toHaveBeenCalledTimes(2)
 
 	stop()
-	Cookies.set(name, "after-stop")
+	setCookie(name, "after-stop")
 	await vi.advanceTimersByTimeAsync(1000)
 	expect(onChange).toHaveBeenCalledTimes(2)
 })
@@ -47,7 +47,7 @@ it("uses Cookie Store change events instead of polling when available", async ()
 	const onChange = vi.fn()
 	stops.push(watchCookie(name, onChange))
 
-	Cookies.set(name, "pushed")
+	setCookie(name, "pushed")
 	await vi.advanceTimersByTimeAsync(1000)
 	expect(onChange).not.toHaveBeenCalled()
 
