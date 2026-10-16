@@ -1,15 +1,11 @@
-import { afterEach, beforeEach, expect, it, vi } from "vitest"
+import { afterEach, expect, it, vi } from "vitest"
 
 import { deleteCookie, getCookie, setCookie } from "../../src/lib/cookie"
 
 const topWindow = window.top
 const initialLocation = window.location
 const name = "io.prismic.preview"
-const expired = "expires=Thu, 01 Jan 2026 03:04:05 GMT"
-
-beforeEach(() => {
-	vi.useFakeTimers({ now: new Date("2026-01-02T03:04:05Z"), toFake: ["Date"] })
-})
+const expired = "expires=Thu, 01 Jan 1970 00:00:00 GMT"
 
 afterEach(() => {
 	Object.defineProperty(window, "top", { value: topWindow, configurable: true })

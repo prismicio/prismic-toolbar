@@ -35,7 +35,7 @@ export function deleteCookie(
 	name: string,
 	attributes: CookieAttributes = { path: "/", ...sameSiteAttributes() },
 ): void {
-	writeCookie(name, "", attributes, new Date(Date.now() - 864e5).toUTCString())
+	writeCookie(name, "", attributes, "Thu, 01 Jan 1970 00:00:00 GMT")
 }
 
 // Names are constants that need no encoding. Values keep the characters cookies allow unescaped.

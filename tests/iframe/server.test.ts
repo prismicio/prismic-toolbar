@@ -124,7 +124,6 @@ it("closes the session by deleting its cookie", async () => {
 })
 
 it("deletes the session cookie on every domain and path that could hold it", async () => {
-	vi.useFakeTimers({ now: new Date("2026-01-02T03:04:05Z"), toFake: ["Date"] })
 	const initialLocation = window.location
 	Object.defineProperty(window, "location", {
 		value: new URL("https://prismic.io/x;y"),
@@ -140,18 +139,18 @@ it("deletes the session cookie on every domain and path that could hold it", asy
 
 	expect(set.mock.calls.map(([cookie]) => cookie)).toMatchInlineSnapshot(`
 		[
-		  "io.prismic.previewSession=; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
-		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 1970 00:00:00 GMT",
 		]
 	`)
 })
