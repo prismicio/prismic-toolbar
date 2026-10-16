@@ -10,13 +10,8 @@ const setSlicesMessageType = "prismic:embedded-preview:set-slices"
 
 const setCommentOverlayMessageType = "prismic:embedded-preview:set-comment-overlay"
 const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
-const placeCommentMessageType = "prismic:embedded-preview:place-comment"
 const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
 const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
-const selectSliceMessageType = "prismic:embedded-preview:select-slice"
-const selectPinMessageType = "prismic:embedded-preview:select-pin"
-const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
-const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
 const ratioSchema = z.number().check(z.gte(0), z.lte(1))
@@ -98,7 +93,7 @@ export const draftPinIdentity = { type: "draft" } as const
 type DraftPinIdentity = typeof draftPinIdentity
 type ThreadPinIdentity = { type: "thread"; threadId: string }
 export type PinIdentity = DraftPinIdentity | ThreadPinIdentity
-export interface PinRect {
+export type PinRect = {
 	xRatio: number
 	yRatio: number
 	widthRatio: number
@@ -114,27 +109,27 @@ type ScrollToPinMessage = z.infer<typeof scrollToPinMessageSchema>
 type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
 type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
-interface PlaceCommentMessage {
-	type: typeof placeCommentMessageType
+type PlaceCommentMessage = {
+	type: "prismic:embedded-preview:place-comment"
 	xRatio: number
 	yRatio: number
 	rect: PinRect
 }
-interface SelectSliceMessage {
-	type: typeof selectSliceMessageType
+type SelectSliceMessage = {
+	type: "prismic:embedded-preview:select-slice"
 	sliceId: string
 }
-interface SelectPinMessage {
-	type: typeof selectPinMessageType
+type SelectPinMessage = {
+	type: "prismic:embedded-preview:select-pin"
 	pin: ThreadPinIdentity
 	rect: PinRect
 }
-interface DeselectPinMessage {
-	type: typeof deselectPinMessageType
+type DeselectPinMessage = {
+	type: "prismic:embedded-preview:deselect-pin"
 	pin: PinIdentity
 }
-interface ReportSelectedPinPositionMessage {
-	type: typeof reportSelectedPinPositionMessageType
+type ReportSelectedPinPositionMessage = {
+	type: "prismic:embedded-preview:report-selected-pin-position"
 	pin: PinIdentity
 	rect: PinRect
 	visible: boolean
@@ -159,37 +154,6 @@ export type Message =
 export type MessageHandler = (event: MessageEvent<unknown>) => void
 export type SubscribeToMessages = (handler: MessageHandler) => () => void
 export type PostMessage = (message: Message) => void
-
-export function createPlaceCommentMessage({
-	xRatio,
-	yRatio,
-	rect,
-}: Omit<PlaceCommentMessage, "type">): PlaceCommentMessage {
-	return { type: placeCommentMessageType, xRatio, yRatio, rect }
-}
-
-export function createSelectSliceMessage(sliceId: string): SelectSliceMessage {
-	return { type: selectSliceMessageType, sliceId }
-}
-
-export function createSelectPinMessage({
-	pin,
-	rect,
-}: Omit<SelectPinMessage, "type">): SelectPinMessage {
-	return { type: selectPinMessageType, pin, rect }
-}
-
-export function createDeselectPinMessage(pin: PinIdentity): DeselectPinMessage {
-	return { type: deselectPinMessageType, pin }
-}
-
-export function createReportSelectedPinPositionMessage({
-	pin,
-	rect,
-	visible,
-}: Omit<ReportSelectedPinPositionMessage, "type">): ReportSelectedPinPositionMessage {
-	return { type: reportSelectedPinPositionMessageType, pin, rect, visible }
-}
 
 export function isAckMessage(data: unknown): data is AckMessage {
 	return z.validate(ackMessageSchema, data)
