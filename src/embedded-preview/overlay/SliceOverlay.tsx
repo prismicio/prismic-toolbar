@@ -1,10 +1,6 @@
 import { useLayoutEffect, useMemo, useState } from "preact/hooks"
 
-import {
-	createSelectSliceMessage,
-	isScrollToSliceMessage,
-	isSliceOverlayMessage,
-} from "../message-protocol"
+import { isScrollToSliceMessage, isSliceOverlayMessage } from "../message-protocol"
 import type { MessageHandler, PostMessage, SubscribeToMessages } from "../message-protocol"
 import { scrollToSlice } from "./scroll-to-slice"
 import { findSliceAtElement } from "./slice-overlay-geometry"
@@ -98,7 +94,7 @@ function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMe
 		event.preventDefault()
 		event.stopPropagation()
 
-		postMessage(createSelectSliceMessage(slice.sliceId))
+		postMessage({ type: "prismic:embedded-preview:select-slice", sliceId: slice.sliceId })
 		scrollToSlice(slice, uiScale)
 	})
 
