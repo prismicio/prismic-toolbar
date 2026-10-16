@@ -121,25 +121,30 @@ function shareButton(session: PreviewSession): HTMLButtonElement {
 		const pageURL = window.location.href
 		const cached = links.get(pageURL)
 		if (!cached) show("loading")
+		let url: string
 		try {
-			const url = cached ?? (await session.share(pageURL))
-			links.set(pageURL, url)
-			if (await copyText(url)) return show("copied")
-
-			// Copying can fail once the click is too old; show the link to copy by hand instead.
-			const input = el("input", {
-				class: "share-url",
-				type: "text",
-				readonly: "",
-				"aria-label": "Share link",
-			})
-			input.value = url
-			input.onfocus = () => input.select()
-			button.replaceWith(input)
-			input.select()
+			url = cached ?? (await session.share(pageURL))
 		} catch {
-			show("failed")
+			return show("failed")
 		}
+		links.set(pageURL, url)
+
+		try {
+			await navigator.clipboard.writeText(url)
+			return show("copied")
+		} catch {
+			// Copying can fail once the click is too old; show the link to copy by hand instead.
+		}
+		const input = el("input", {
+			class: "share-url",
+			type: "text",
+			readonly: "",
+			"aria-label": "Share link",
+		})
+		input.value = url
+		input.onfocus = () => input.select()
+		button.replaceWith(input)
+		input.select()
 	}
 
 	show("idle")
@@ -155,15 +160,6 @@ function el<Tag extends keyof HTMLElementTagNameMap>(
 	for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value)
 	for (const child of children) if (child) element.append(child)
 	return element
-}
-
-async function copyText(text: string): Promise<boolean> {
-	try {
-		await navigator.clipboard.writeText(text)
-		return true
-	} catch {
-		return false
-	}
 }
 
 const svgNS = "http://www.w3.org/2000/svg"
