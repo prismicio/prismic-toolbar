@@ -1,9 +1,9 @@
 import { beforeEach, expect, it, vi } from "vitest"
 
 import type { PreviewSession, PreviewSnapshot } from "../../src/lib/preview-session"
-import { renderPreviewBar } from "../../src/toolbar/preview-bar"
+import { mountToolbar } from "../../src/toolbar"
 
-const root = document.createElement("div")
+let root: ShadowRoot
 const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 let snapshot: PreviewSnapshot
 let unmount: () => void
@@ -25,7 +25,8 @@ beforeEach(() => {
 			return () => listeners.delete(listener)
 		},
 	} as Partial<PreviewSession> as PreviewSession
-	unmount = renderPreviewBar(root, { session, repositoryHost: "example.prismic.io" })
+	unmount = mountToolbar({ session, repositoryHost: "example.prismic.io" })
+	root = document.querySelector("#prismic-toolbar")!.shadowRoot!
 })
 
 it("updates the bar in place", () => {
@@ -50,7 +51,7 @@ it("shows the bar while previewing, with a share button for Prismic users only",
 it("shows the share label again two seconds after copying", async () => {
 	vi.useFakeTimers()
 	const button = root.querySelector<HTMLButtonElement>(".share")!
-	const label = () => button.querySelector(":scope > :not(.inactive)")?.className
+	const label = () => [...button.children].find((span) => !span.matches(".inactive"))?.className
 
 	button.click()
 	expect(label()).toBe("label-loading")
@@ -63,5 +64,5 @@ it("stops following the session once removed", () => {
 	unmount()
 
 	expect(listeners.size).toBe(0)
-	expect(root.querySelector(".bar")).toBeNull()
+	expect(document.querySelector("#prismic-toolbar")).toBeNull()
 })
