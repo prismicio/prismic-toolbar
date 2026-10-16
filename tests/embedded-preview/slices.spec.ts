@@ -226,6 +226,13 @@ test("highlight does not poll while idle and clears outside the preview", async 
 	await page.mouse.move(20, 850)
 	await expect(highlight).toHaveCount(0)
 	expect(await countMeasurements()).toBe(0)
+	// Slices without a highlight are not measured.
+	const scrollMeasurements = await slice.evaluate((element: Measured) => {
+		const before = element.measurements
+		window.dispatchEvent(new Event("scroll"))
+		return element.measurements - before
+	})
+	expect(scrollMeasurements).toBe(0)
 
 	await slice.hover({ position: { x: 500, y: 200 } })
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
