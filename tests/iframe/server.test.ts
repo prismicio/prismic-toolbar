@@ -123,6 +123,57 @@ it("closes the session by deleting its cookie", async () => {
 	await expect(handlers.getState()).resolves.toEqual({ isAuthenticated: false })
 })
 
+it("deletes the session cookie on every domain and path that could hold it", async () => {
+	vi.useFakeTimers({ now: new Date("2026-01-02T03:04:05Z"), toFake: ["Date"] })
+	const initialLocation = window.location
+	Object.defineProperty(window, "location", {
+		value: new URL("https://repo.prismic.io/x;y/z"),
+		configurable: true,
+	})
+	const set = vi.spyOn(document, "cookie", "set")
+
+	try {
+		await createBridgeHandlers().closeSession()
+	} finally {
+		Object.defineProperty(window, "location", { value: initialLocation, configurable: true })
+	}
+
+	expect(set.mock.calls.map(([cookie]) => cookie)).toMatchInlineSnapshot(`
+		[
+		  "io.prismic.previewSession=; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.repo.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		  "io.prismic.previewSession=; path=/x; domain=.prismic.io; sameSite=none; secure; expires=Thu, 01 Jan 2026 03:04:05 GMT",
+		]
+	`)
+})
+
 describe("share", () => {
 	it("creates one share link per page, without uploading a screenshot", async () => {
 		const { handlers, fetch } = setup(session, {
