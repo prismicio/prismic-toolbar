@@ -45,7 +45,7 @@ function set(payload: Payload, path: string, value: unknown): Payload {
 	return copy
 }
 
-interface Case {
+type Case = {
 	guard: (data: unknown) => boolean
 	/** Accepted payloads. Invalid ones are built from the first. */
 	valid: Payload[]

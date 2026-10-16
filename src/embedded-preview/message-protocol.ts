@@ -16,13 +16,13 @@ const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
 const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
-export interface Author {
+export type Author = {
 	id: string
 	name?: string
 	avatarUrl?: string
 }
 
-export interface ThreadPinData {
+export type ThreadPinData = {
 	threadId: string
 	author: Author
 	resolved: boolean
@@ -30,13 +30,13 @@ export interface ThreadPinData {
 	yRatio: number
 }
 
-export interface SliceMetadata {
+export type SliceMetadata = {
 	sliceId: string
 	label: string
 	variation?: string
 }
 
-export interface PinPosition {
+export type PinPosition = {
 	xRatio: number
 	yRatio: number
 }
@@ -45,31 +45,31 @@ export const draftPinIdentity = { type: "draft" } as const
 type DraftPinIdentity = typeof draftPinIdentity
 type ThreadPinIdentity = { type: "thread"; threadId: string }
 export type PinIdentity = DraftPinIdentity | ThreadPinIdentity
-export interface PinRect {
+export type PinRect = {
 	xRatio: number
 	yRatio: number
 	widthRatio: number
 	heightRatio: number
 }
 type ReadyMessage = typeof readyMessage
-interface AckMessage {
+type AckMessage = {
 	type: typeof ackMessageType
 }
-interface SetRefMessage {
+type SetRefMessage = {
 	type: typeof setRefMessageType
 	token: string
 	// `false` when the editor keeps the preview mounted and expects an in-place update.
 	reload?: boolean
 }
-interface SetOverlayScaleMessage {
+type SetOverlayScaleMessage = {
 	type: typeof setOverlayScaleMessageType
 	uiScale: number
 }
-interface SetSlicesMessage {
+type SetSlicesMessage = {
 	type: typeof setSlicesMessageType
 	slices: SliceMetadata[]
 }
-export interface SetCommentOverlayMessage {
+export type SetCommentOverlayMessage = {
 	type: typeof setCommentOverlayMessageType
 	placementEnabled: boolean
 	pins: ThreadPinData[]
@@ -77,39 +77,39 @@ export interface SetCommentOverlayMessage {
 	selectedThreadId?: string
 	draftPin?: PinPosition
 }
-interface ScrollToPinMessage {
+type ScrollToPinMessage = {
 	type: typeof scrollToPinMessageType
 	threadId: string
 }
-interface SetSliceOverlayMessage {
+type SetSliceOverlayMessage = {
 	type: typeof setSliceOverlayMessageType
 	selectedSliceId?: string
 }
-interface ScrollToSliceMessage {
+type ScrollToSliceMessage = {
 	type: typeof scrollToSliceMessageType
 	sliceId: string
 }
 
-interface PlaceCommentMessage {
+type PlaceCommentMessage = {
 	type: typeof placeCommentMessageType
 	xRatio: number
 	yRatio: number
 	rect: PinRect
 }
-interface SelectSliceMessage {
+type SelectSliceMessage = {
 	type: typeof selectSliceMessageType
 	sliceId: string
 }
-interface SelectPinMessage {
+type SelectPinMessage = {
 	type: typeof selectPinMessageType
 	pin: ThreadPinIdentity
 	rect: PinRect
 }
-interface DeselectPinMessage {
+type DeselectPinMessage = {
 	type: typeof deselectPinMessageType
 	pin: PinIdentity
 }
-interface ReportSelectedPinPositionMessage {
+type ReportSelectedPinPositionMessage = {
 	type: typeof reportSelectedPinPositionMessageType
 	pin: PinIdentity
 	rect: PinRect
