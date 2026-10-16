@@ -5,11 +5,8 @@
 	--grey1: rgb(255 255 255);
 	--grey3: rgb(244 242 244);
 	--grey7: rgb(220 219 221);
-	--grey9: rgb(144 142 150);
-	--grey10: rgb(134 132 141);
 	--grey11: rgb(111 110 119);
 	--grey12: rgb(26 21 35);
-	--green9: rgb(48 164 108);
 	--purple9: rgb(110 86 207);
 
 	--box-shadow-1: 0 1px 0 0 rgb(0 0 0 / 4%);
@@ -18,7 +15,7 @@
 	--font-family-body:
 		-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell",
 		"Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
-	--size-small: 28px;
+	--size-button: 32px;
 }
 
 * {
@@ -27,30 +24,43 @@
 
 .bar {
 	position: fixed;
-	bottom: 24px;
-	left: 24px;
+	/* The outline shadow adds 1px outside the box, so the visible edge sits 20px in. */
+	bottom: 19px;
+	left: 19px;
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	max-width: calc(100vw - 48px);
-	padding: 8px 8px 8px 12px;
+	gap: 10px;
+	min-width: min(340px, 100vw - 40px);
+	max-width: calc(100vw - 40px);
+	padding: 10px;
 	color: var(--grey12);
 	font: 500 13px/1.3 var(--font-family-body);
-	background: var(--grey1);
-	border: 1px solid var(--grey7);
+	background: rgb(255 255 255 / 92%);
+	-webkit-backdrop-filter: blur(8px);
+	backdrop-filter: blur(8px);
 	border-radius: 12px;
-	box-shadow: var(--box-shadow-3);
+	/* A transparent outline, so the bar's edge darkens what's behind it. */
+	box-shadow:
+		0 0 0 1px rgb(0 0 0 / 8%),
+		var(--box-shadow-3);
 }
 
 .logo {
-	display: flex;
+	display: grid;
 	flex: none;
-	color: var(--grey12);
-	border-radius: 6px;
+	place-items: center;
+	width: var(--size-button);
+	height: var(--size-button);
+	color: var(--grey1);
+	background: var(--grey12);
+	border-radius: 8px;
 }
 
 .details {
+	flex: 1;
 	min-width: 0;
+	font-size: 12px;
+	line-height: 16px;
 }
 
 .title {
@@ -62,45 +72,38 @@
 }
 
 .status {
-	display: flex;
-	gap: 6px;
-	align-items: center;
-	margin: 2px 0 0;
+	margin: 0;
 	color: var(--grey11);
-	font-size: 12px;
 	font-weight: 400;
 }
 
-.dot {
-	width: 8px;
-	height: 8px;
-	background: var(--grey9);
-	border-radius: 50%;
-}
-
-.dot.live {
-	background: var(--green9);
-}
-
-/* Like the editor's grey buttons and inputs. */
-.share,
-.share-url {
-	height: var(--size-small);
-	padding: 0 8px;
-	color: var(--grey12);
-	font: inherit;
+/* One outlined pill, like the editor's grey buttons, split by a divider. */
+.actions {
+	display: flex;
+	flex: none;
+	height: var(--size-button);
+	overflow: hidden;
 	background: var(--grey1);
 	border: 1px solid var(--grey7);
-	border-radius: 6px;
+	border-radius: 8px;
 	box-shadow: var(--box-shadow-1);
 }
 
-.share {
+.share,
+.exit {
 	display: grid;
-	flex: none;
 	place-items: center;
 	margin: 0;
+	padding: 0;
+	color: var(--grey12);
+	font: inherit;
+	background: transparent;
+	border: none;
 	cursor: pointer;
+}
+
+.share {
+	padding: 0 11px;
 }
 
 .share > span {
@@ -109,50 +112,72 @@
 
 .share > .inactive {
 	visibility: hidden;
+	opacity: 0;
 }
 
-.share:hover:not(:disabled) {
-	background: var(--grey3);
+/* "Copied" fades in and out, and "Share" fades back in. The spinner shows at once. */
+.share > .label-copied,
+.share > .label-idle:not(.inactive) {
+	transition:
+		opacity 150ms,
+		visibility 150ms;
+}
+
+.share > .label-copied {
+	color: var(--grey11);
 }
 
 .share:disabled {
-	cursor: progress;
-	opacity: 0.5;
+	cursor: default;
+}
+
+.spinner {
+	display: block;
+	width: 14px;
+	height: 14px;
+	border: 2px solid var(--grey7);
+	border-top-color: var(--grey11);
+	border-radius: 50%;
+	animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+.exit {
+	width: var(--size-button);
+	color: var(--grey11);
+}
+
+.exit:not(:only-child) {
+	border-left: 1px solid var(--grey7);
+}
+
+.share:hover:not(:disabled),
+.exit:hover {
+	color: var(--grey12);
+	background: var(--grey3);
 }
 
 .share-url {
 	width: 220px;
+	padding: 0 12px;
+	color: var(--grey12);
+	font: inherit;
 	font-weight: 400;
-}
-
-/* Like the editor's invisible icon buttons. */
-.exit {
-	display: flex;
-	flex: none;
-	align-items: center;
-	justify-content: center;
-	width: var(--size-small);
-	height: var(--size-small);
-	margin: 0;
-	padding: 0;
-	color: var(--grey11);
 	background: transparent;
-	border: 1px solid transparent;
-	border-radius: 6px;
-	cursor: pointer;
+	border: none;
 }
 
-.exit:hover {
-	color: var(--grey10);
-	border-color: var(--grey7);
-}
-
+/* The pill clips outer shadows, so the focus ring is drawn inside. */
 .share:focus-visible,
 .share-url:focus-visible,
 .exit:focus-visible {
-	border-color: var(--purple9);
 	outline: none;
-	box-shadow: var(--box-shadow-purple-focus);
+	box-shadow: inset 0 0 0 2px var(--purple9);
 }
 
 .logo:focus-visible,
@@ -180,9 +205,5 @@
 		bottom: 12px;
 		left: 12px;
 		max-width: none;
-	}
-
-	.details {
-		flex: 1;
 	}
 }
