@@ -6,7 +6,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 import type { MessageHandler, SliceMetadata } from "../../src/embedded-preview/message-protocol"
 import type { Slice, SliceRect } from "../../src/embedded-preview/overlay/slice-overlay-geometry"
 import { useSliceRect, useSlices } from "../../src/embedded-preview/overlay/useSlices"
-import type { SubscribeToLayoutChanges } from "../../src/embedded-preview/overlay/useSlices"
 
 let slices: Slice[]
 let rect: SliceRect | undefined
@@ -35,17 +34,17 @@ function sendSlices(metadata: SliceMetadata[]) {
 
 // Measures the first slice, as a highlight would.
 function Harness() {
-	const { slices: currentSlices, subscribeToLayoutChanges } = useSlices(subscribeToMessages)
+	const { slices: currentSlices, layout } = useSlices(subscribeToMessages)
 	useLayoutEffect(() => {
 		slices = currentSlices
 		publications += 1
 	}, [currentSlices])
 	const slice = currentSlices[0]
-	return slice ? h(Rect, { slice, subscribeToLayoutChanges }) : null
+	return slice ? h(Rect, { slice, layout }) : null
 }
 
-function Rect(props: { slice: Slice; subscribeToLayoutChanges: SubscribeToLayoutChanges }) {
-	const currentRect = useSliceRect(props.slice, props.subscribeToLayoutChanges)
+function Rect(props: { slice: Slice; layout: EventTarget }) {
+	const currentRect = useSliceRect(props.slice, props.layout)
 	useLayoutEffect(() => {
 		rect = currentRect
 		rectPublications += 1

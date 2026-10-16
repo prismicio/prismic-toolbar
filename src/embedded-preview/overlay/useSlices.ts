@@ -1,39 +1,22 @@
-import { useCallback, useLayoutEffect, useState } from "preact/hooks"
+import { useLayoutEffect, useState } from "preact/hooks"
 
 import { isSetSlicesMessage } from "../message-protocol"
 import type { SliceMetadata, SubscribeToMessages } from "../message-protocol"
 import { findSliceMarkerRanges, measureSliceMarkerRange } from "./slice-overlay-geometry"
 import type { Slice, SliceRect } from "./slice-overlay-geometry"
 
-export type SubscribeToLayoutChanges = (listener: () => void) => () => void
-
-/**
- * Tracks the slices the editor describes and signals when their layout may have changed. Slices are
- * not measured here: only highlighted slices are, with `useSliceRect`.
- */
+/** Tracks the editor's slices. `layout` fires when they may have moved: see `useSliceRect`. */
 export function useSlices(subscribeToMessages: SubscribeToMessages) {
 	const [slices, setSlices] = useState<Slice[]>([])
-	const [layoutListeners] = useState(() => new Set<() => void>())
-
-	const subscribeToLayoutChanges = useCallback<SubscribeToLayoutChanges>(
-		(listener) => {
-			layoutListeners.add(listener)
-			return () => layoutListeners.delete(listener)
-		},
-		[layoutListeners],
-	)
+	const [layout] = useState(() => new EventTarget())
 
 	useLayoutEffect(() => {
 		// Only slices the editor describes belong to the edited document: others are left alone.
 		let metadata = new Map<string, SliceMetadata>()
 		let observed = new Set<Element>()
 
-		function notifyLayoutChange() {
-			for (const listener of layoutListeners) listener()
-		}
-
-		// Observing every slice root is cheap: callbacks only fire when one resizes, which can move
-		// the highlighted slices.
+		const notifyLayoutChange = () => layout.dispatchEvent(new Event("change"))
+		// Any slice resizing can move the highlighted ones.
 		const resizeObserver = new ResizeObserver(notifyLayoutChange)
 
 		function updateElements() {
@@ -90,24 +73,25 @@ export function useSlices(subscribeToMessages: SubscribeToMessages) {
 			document.removeEventListener("pointermove", notifyLayoutChange)
 			document.removeEventListener("pointerover", notifyLayoutChange)
 		}
-	}, [subscribeToMessages, layoutListeners])
+	}, [subscribeToMessages, layout])
 
-	return { slices, subscribeToLayoutChanges }
+	return { slices, layout }
 }
 
-/** Measures a slice in document coordinates, again whenever its layout may have changed. */
-export function useSliceRect(slice: Slice, subscribeToLayoutChanges: SubscribeToLayoutChanges) {
+/** Measures a highlighted slice, again whenever `layout` fires. */
+export function useSliceRect(slice: Slice, layout: EventTarget) {
 	const [rect, setRect] = useState<SliceRect>()
 
 	useLayoutEffect(() => {
 		function updateRect() {
-			const nextRect = measureSliceMarkerRange(slice)
-			setRect((currentRect) => (isSameRect(currentRect, nextRect) ? currentRect : nextRect))
+			const next = measureSliceMarkerRange(slice)
+			setRect((rect) => (rect && next && isSameRect(rect, next) ? rect : next))
 		}
 
 		updateRect()
-		return subscribeToLayoutChanges(updateRect)
-	}, [slice, subscribeToLayoutChanges])
+		layout.addEventListener("change", updateRect)
+		return () => layout.removeEventListener("change", updateRect)
+	}, [slice, layout])
 
 	return rect
 }
@@ -115,28 +99,19 @@ export function useSliceRect(slice: Slice, subscribeToLayoutChanges: SubscribeTo
 function isSameSlices(a: Slice[], b: Slice[]) {
 	return (
 		a.length === b.length &&
-		a.every((slice, index) => {
-			const other = b[index]
+		a.every((slice, i) => {
+			const other = b[i]!
 			return (
-				other !== undefined &&
 				slice.sliceId === other.sliceId &&
 				slice.label === other.label &&
 				slice.variation === other.variation &&
 				slice.elements.length === other.elements.length &&
-				slice.elements.every((element, index) => element === other.elements[index])
+				slice.elements.every((element, j) => element === other.elements[j])
 			)
 		})
 	)
 }
 
-function isSameRect(a: SliceRect | undefined, b: SliceRect | undefined) {
-	return (
-		a === b ||
-		(a !== undefined &&
-			b !== undefined &&
-			a.top === b.top &&
-			a.left === b.left &&
-			a.width === b.width &&
-			a.height === b.height)
-	)
+function isSameRect(a: SliceRect, b: SliceRect) {
+	return a.top === b.top && a.left === b.left && a.width === b.width && a.height === b.height
 }
