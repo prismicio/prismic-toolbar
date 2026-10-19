@@ -1,6 +1,6 @@
-import { loadChunk } from "./chunks"
-import { warn } from "./env"
-import { createPreviewSession, type PreviewSessionOptions } from "./preview-session"
+import { loadChunk } from "./lib/chunks"
+import { warn } from "./lib/env"
+import { createPreviewSession, type PreviewSessionOptions } from "./lib/preview-session"
 
 /** Runs website previews through the repository's iframe, with the JSON preview cookie. */
 export function startLegacy({
