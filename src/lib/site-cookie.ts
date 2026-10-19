@@ -1,6 +1,4 @@
-import Cookies from "js-cookie"
-
-import { deleteCookie, setCookie } from "./cookie"
+import { deleteCookie, getCookie, setCookie } from "./cookie"
 
 /** `@prismicio/client` sends this cookie's whole value as the Content API ref. */
 export const previewCookieName = "io.prismic.preview"
@@ -57,7 +55,7 @@ export interface SiteCookieStore {
 }
 
 export function createSiteCookieStore(repositoryHost: string): SiteCookieStore {
-	const read = () => parseSiteCookie(Cookies.get(previewCookieName))
+	const read = () => parseSiteCookie(getCookie(previewCookieName))
 
 	function writeJSON(tracker: string | undefined, refs: Record<string, string>) {
 		const entries = Object.entries(refs).map(([host, preview]) => [host, { preview }])

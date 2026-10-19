@@ -1,6 +1,6 @@
-import Cookies from "js-cookie"
 import { describe, expect, it } from "vitest"
 
+import { setCookie } from "../../src/lib/cookie"
 import {
 	claimOwnership,
 	liveOwner,
@@ -32,7 +32,7 @@ describe("owner marker", () => {
 		// Markers without a timestamp come from unreleased builds of #131.
 		JSON.stringify({ version: 2, repository: "example.prismic.io", ref: "ref" }),
 	])("ignores malformed markers: %s", (value) => {
-		Cookies.set(ownerCookieName, value)
+		setCookie(ownerCookieName, value)
 		expect(readOwner()).toBeUndefined()
 	})
 

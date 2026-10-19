@@ -8,7 +8,7 @@
 	"files": [
 		{
 			"path": "./dist/prismic-toolbar/*/prismic.js",
-			"maxSize": "15KB"
+			"maxSize": "10KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/embedded-preview.js",
@@ -20,7 +20,7 @@
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/iframe.html",
-			"maxSize": "6KB"
+			"maxSize": "4KB"
 		}
 	]
 }

@@ -16,6 +16,8 @@ const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
+const showPinPreviewMessageType = "prismic:embedded-preview:show-pin-preview"
+const hidePinPreviewMessageType = "prismic:embedded-preview:hide-pin-preview"
 const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
@@ -98,7 +100,7 @@ export const draftPinIdentity = { type: "draft" } as const
 type DraftPinIdentity = typeof draftPinIdentity
 type ThreadPinIdentity = { type: "thread"; threadId: string }
 export type PinIdentity = DraftPinIdentity | ThreadPinIdentity
-export interface PinRect {
+export type PinRect = {
 	xRatio: number
 	yRatio: number
 	widthRatio: number
@@ -114,26 +116,35 @@ type ScrollToPinMessage = z.infer<typeof scrollToPinMessageSchema>
 type SetSliceOverlayMessage = z.infer<typeof sliceOverlayMessageSchema>
 type ScrollToSliceMessage = z.infer<typeof scrollToSliceMessageSchema>
 
-interface PlaceCommentMessage {
+type PlaceCommentMessage = {
 	type: typeof placeCommentMessageType
 	xRatio: number
 	yRatio: number
 	rect: PinRect
 }
-interface SelectSliceMessage {
+type SelectSliceMessage = {
 	type: typeof selectSliceMessageType
 	sliceId: string
 }
-interface SelectPinMessage {
+type SelectPinMessage = {
 	type: typeof selectPinMessageType
 	pin: ThreadPinIdentity
 	rect: PinRect
 }
-interface DeselectPinMessage {
+type DeselectPinMessage = {
 	type: typeof deselectPinMessageType
 	pin: PinIdentity
 }
-interface ReportSelectedPinPositionMessage {
+type ShowPinPreviewMessage = {
+	type: typeof showPinPreviewMessageType
+	pin: ThreadPinIdentity
+	rect: PinRect
+}
+type HidePinPreviewMessage = {
+	type: typeof hidePinPreviewMessageType
+	pin: ThreadPinIdentity
+}
+type ReportSelectedPinPositionMessage = {
 	type: typeof reportSelectedPinPositionMessageType
 	pin: PinIdentity
 	rect: PinRect
@@ -154,42 +165,13 @@ export type Message =
 	| SelectPinMessage
 	| SelectSliceMessage
 	| DeselectPinMessage
+	| ShowPinPreviewMessage
+	| HidePinPreviewMessage
 	| ReportSelectedPinPositionMessage
 
 export type MessageHandler = (event: MessageEvent<unknown>) => void
 export type SubscribeToMessages = (handler: MessageHandler) => () => void
 export type PostMessage = (message: Message) => void
-
-export function createPlaceCommentMessage({
-	xRatio,
-	yRatio,
-	rect,
-}: Omit<PlaceCommentMessage, "type">): PlaceCommentMessage {
-	return { type: placeCommentMessageType, xRatio, yRatio, rect }
-}
-
-export function createSelectSliceMessage(sliceId: string): SelectSliceMessage {
-	return { type: selectSliceMessageType, sliceId }
-}
-
-export function createSelectPinMessage({
-	pin,
-	rect,
-}: Omit<SelectPinMessage, "type">): SelectPinMessage {
-	return { type: selectPinMessageType, pin, rect }
-}
-
-export function createDeselectPinMessage(pin: PinIdentity): DeselectPinMessage {
-	return { type: deselectPinMessageType, pin }
-}
-
-export function createReportSelectedPinPositionMessage({
-	pin,
-	rect,
-	visible,
-}: Omit<ReportSelectedPinPositionMessage, "type">): ReportSelectedPinPositionMessage {
-	return { type: reportSelectedPinPositionMessageType, pin, rect, visible }
-}
 
 export function isAckMessage(data: unknown): data is AckMessage {
 	return z.validate(ackMessageSchema, data)

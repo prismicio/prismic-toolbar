@@ -1,11 +1,13 @@
-import type { RefObject, TargetedMouseEvent } from "preact"
+import type {
+	RefObject,
+	TargetedEvent,
+	TargetedFocusEvent,
+	TargetedKeyboardEvent,
+	TargetedMouseEvent,
+} from "preact"
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import {
-	createDeselectPinMessage,
-	createPlaceCommentMessage,
-	createReportSelectedPinPositionMessage,
-	createSelectPinMessage,
 	draftPinIdentity,
 	isCommentOverlayMessage,
 	isScrollToPinMessage,
@@ -97,7 +99,7 @@ function PlacementLayer(props: PlacementLayerProps) {
 		event.stopPropagation()
 
 		if (draftPin) {
-			postMessage(createDeselectPinMessage(draftPinIdentity))
+			postMessage({ type: "prismic:embedded-preview:deselect-pin", pin: draftPinIdentity })
 			return
 		}
 
@@ -108,12 +110,11 @@ function PlacementLayer(props: PlacementLayerProps) {
 			xRatio: clamp(event.pageX / width),
 			yRatio: clamp(event.pageY / height),
 		}
-		postMessage(
-			createPlaceCommentMessage({
-				...position,
-				rect: getPinRectFromPosition(position, uiScale),
-			}),
-		)
+		postMessage({
+			type: "prismic:embedded-preview:place-comment",
+			...position,
+			rect: getPinRectFromPosition(position, uiScale),
+		})
 	}
 
 	function trackCursor(event: TargetedMouseEvent<HTMLButtonElement>) {
@@ -177,11 +178,34 @@ function ThreadPin(props: ThreadPinProps) {
 		event.stopPropagation()
 
 		if (selected) {
-			postMessage(createDeselectPinMessage(identity))
+			postMessage({ type: "prismic:embedded-preview:deselect-pin", pin: identity })
 			return
 		}
 
-		postMessage(createSelectPinMessage({ pin: identity, rect: getPinRect(event.currentTarget) }))
+		postMessage({
+			type: "prismic:embedded-preview:select-pin",
+			pin: identity,
+			rect: getPinRect(event.currentTarget),
+		})
+	}
+
+	function onEnter(event: TargetedEvent<HTMLButtonElement>) {
+		if (selected) return
+		postMessage({
+			type: "prismic:embedded-preview:show-pin-preview",
+			pin: identity,
+			rect: getPinRect(event.currentTarget),
+		})
+	}
+
+	function onLeave(event: TargetedEvent<HTMLButtonElement>) {
+		if (!event.currentTarget.matches(":hover, :focus"))
+			postMessage({ type: "prismic:embedded-preview:hide-pin-preview", pin: identity })
+	}
+
+	function onKeyDown(event: TargetedKeyboardEvent<HTMLButtonElement>) {
+		if (event.key === "Escape")
+			postMessage({ type: "prismic:embedded-preview:hide-pin-preview", pin: identity })
 	}
 
 	return (
@@ -197,6 +221,11 @@ function ThreadPin(props: ThreadPinProps) {
 				aria-label={`Open comment by ${pin.author.name || pin.author.id}`}
 				aria-pressed={selected}
 				onClick={handleClick}
+				onMouseEnter={onEnter}
+				onMouseLeave={onLeave}
+				onFocus={onEnter}
+				onBlur={onLeave}
+				onKeyDown={onKeyDown}
 			/>
 			{selected && (
 				<PinPositionReporter
@@ -257,6 +286,11 @@ interface PinProps {
 	dimmed?: boolean
 	disabled?: boolean
 	onClick?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	onMouseEnter?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	onMouseLeave?: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	onFocus?: (event: TargetedFocusEvent<HTMLButtonElement>) => void
+	onBlur?: (event: TargetedFocusEvent<HTMLButtonElement>) => void
+	onKeyDown?: (event: TargetedKeyboardEvent<HTMLButtonElement>) => void
 	"aria-label"?: string
 	"aria-pressed"?: boolean
 	"data-thread-id"?: string
@@ -317,7 +351,7 @@ function useDismissOnClick(pin: PinIdentity | undefined, postMessage: PostMessag
 	useLayoutEffect(() => {
 		if (!pin) return
 
-		const deselectPin = () => postMessage(createDeselectPinMessage(pin))
+		const deselectPin = () => postMessage({ type: "prismic:embedded-preview:deselect-pin", pin })
 		document.addEventListener("click", deselectPin)
 		return () => document.removeEventListener("click", deselectPin)
 	}, [pin, postMessage])
@@ -361,13 +395,12 @@ function PinPositionReporter(props: PinPositionReporterProps) {
 	const reportPosition = useCallback(() => {
 		if (!pinRef.current) return
 
-		postMessage(
-			createReportSelectedPinPositionMessage({
-				pin: identity,
-				rect: getPinRect(pinRef.current),
-				visible: isVisible(pinRef.current),
-			}),
-		)
+		postMessage({
+			type: "prismic:embedded-preview:report-selected-pin-position",
+			pin: identity,
+			rect: getPinRect(pinRef.current),
+			visible: isVisible(pinRef.current),
+		})
 	}, [identity, pinRef, postMessage])
 
 	useLayoutEffect(reportPosition, [

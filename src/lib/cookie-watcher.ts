@@ -1,4 +1,4 @@
-import Cookies from "js-cookie"
+import { getCookie } from "./cookie"
 
 /**
  * Calls `onChange` when a cookie's value changes, including changes from other tabs or the editor's
@@ -6,9 +6,9 @@ import Cookies from "js-cookie"
  * otherwise. Returns a function that stops watching.
  */
 export function watchCookie(name: string, onChange: () => void): () => void {
-	let lastValue = Cookies.get(name)
+	let lastValue = getCookie(name)
 	const check = () => {
-		const value = Cookies.get(name)
+		const value = getCookie(name)
 		if (value === lastValue) return
 		lastValue = value
 		onChange()

@@ -26,6 +26,7 @@
 	place-items: center;
 	overflow: hidden;
 	color: #666;
+	font-family: inherit;
 	background: white;
 	border: 0;
 	border-radius: 2px 50% 50%;
