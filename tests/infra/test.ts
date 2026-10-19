@@ -119,6 +119,8 @@ export class Website {
 	 * them, still reloading; or records and handles them, so the toolbar does not reload.
 	 */
 	events: "ignore" | "record" | "handle" = "ignore"
+	/** Query parameters of the toolbar script, as the website's SDK installs it. */
+	scriptQuery = "new=true&repo=toolbar-e2e"
 
 	constructor(
 		readonly page: Page,
@@ -175,7 +177,10 @@ export class Website {
 			this.repository.host,
 		)
 		this.loads.push(ref ?? null)
-		await route.fulfill({ contentType: "text/html", body: websiteHTML(ref, this.events) })
+		await route.fulfill({
+			contentType: "text/html",
+			body: websiteHTML(ref, this.events, this.scriptQuery),
+		})
 	}
 }
 
@@ -190,7 +195,7 @@ function readPreviewRef(cookie: string | undefined, repository: string): string 
 	return cookie
 }
 
-function websiteHTML(ref: string | undefined, events: Website["events"]) {
+function websiteHTML(ref: string | undefined, events: Website["events"], scriptQuery: string) {
 	const recorder = `<script>
 		window.previewEvents = []
 		for (const type of ["prismicPreviewStart", "prismicPreviewUpdate", "prismicPreviewEnd"]) {
@@ -228,7 +233,7 @@ function websiteHTML(ref: string | undefined, events: Website["events"]) {
 	addEventListener("message", (event) => receivedMessages.push(event.data?.type))
 </script>
 ${events === "ignore" ? "" : recorder}
-<script async defer src="https://static.cdn.prismic.io/prismic.js?new=true&repo=toolbar-e2e"></script>`
+<script async defer src="https://static.cdn.prismic.io/prismic.js?${scriptQuery}"></script>`
 }
 
 /** Comment threads, as the editor sends them. */

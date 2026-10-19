@@ -17,13 +17,25 @@ export function detectMode(win: Window = window): ToolbarMode | undefined {
  * runs: `document.currentScript` is only set then.
  */
 export function findRepositoryHost(doc: Document = document): string | undefined {
+	return parseRepositoryHost(findScriptParam("repo", doc))
+}
+
+/**
+ * Reads the toolbar version the website's SDK opts into from the toolbar script's `v` parameter,
+ * like `5`. Call it while that script first runs, like {@link findRepositoryHost}.
+ */
+export function findVersion(doc: Document = document): string | undefined {
+	return findScriptParam("v", doc)?.trim() || undefined
+}
+
+function findScriptParam(name: string, doc: Document): string | null {
 	const scripts = doc.querySelectorAll<HTMLScriptElement>(
 		'script[src*="prismic.js"], script[src*="prismic.min.js"]',
 	)
 	const script =
 		doc.currentScript instanceof HTMLScriptElement ? doc.currentScript : scripts[scripts.length - 1]
 
-	return script?.src ? parseRepositoryHost(new URL(script.src).searchParams.get("repo")) : undefined
+	return script?.src ? new URL(script.src).searchParams.get(name) : null
 }
 
 /**
