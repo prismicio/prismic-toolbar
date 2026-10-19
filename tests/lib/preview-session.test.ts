@@ -1,8 +1,8 @@
-import Cookies from "js-cookie"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { Bridge } from "../../src/lib/bridge"
 import type { BridgeState } from "../../src/lib/bridge-protocol"
+import { deleteCookie, getCookie, setCookie } from "../../src/lib/cookie"
 import { claimOwnership, readOwner } from "../../src/lib/owner-marker"
 import {
 	createPreviewSession,
@@ -76,12 +76,12 @@ const jsonCookie = (refs: Record<string, string>, tracker?: string) =>
 		...(tracker ? { _tracker: tracker } : {}),
 		...Object.fromEntries(Object.entries(refs).map(([host, preview]) => [host, { preview }])),
 	})
-const storedCookie = () => Cookies.get(previewCookieName)
+const storedCookie = () => getCookie(previewCookieName)
 const storedJSON = () => JSON.parse(storedCookie() ?? "null")
 
 describe("startup", () => {
 	it("clears a stale repository session but leaves the website's cookie when inactive", async () => {
-		Cookies.set(previewCookieName, "another-tab-ref")
+		setCookie(previewCookieName, "another-tab-ref")
 		const { session, bridge, reload } = setup({ isAuthenticated: false })
 
 		await session.start()
@@ -121,7 +121,7 @@ describe("startup", () => {
 
 	it("lets the website enter the preview itself and polls from there", async () => {
 		cancelEvents = true
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "stale-ref" }))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "stale-ref" }))
 		const { session, bridge, reload } = setup(active("ref-1"))
 
 		await session.start()
@@ -136,7 +136,7 @@ describe("startup", () => {
 	})
 
 	it("converts a raw cookie holding the session ref without notifying", async () => {
-		Cookies.set(previewCookieName, "ref-1")
+		setCookie(previewCookieName, "ref-1")
 		const { session, reload } = setup(active("ref-1", true))
 
 		await session.start()
@@ -152,7 +152,7 @@ describe("startup", () => {
 
 	it("does not rewrite a cookie that already holds the session ref", async () => {
 		const cookie = jsonCookie({ [repository]: "ref-1" }, "tracker1")
-		Cookies.set(previewCookieName, cookie)
+		setCookie(previewCookieName, cookie)
 		const { session } = setup(active("ref-1", true))
 
 		await session.start()
@@ -162,7 +162,7 @@ describe("startup", () => {
 	})
 
 	it("leaves an editor-owned ref alone", async () => {
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart - 1)
 		const { session, reload } = setup(active("session-ref"))
 
@@ -175,7 +175,7 @@ describe("startup", () => {
 	})
 
 	it("notifies once when the editor pushed after the page started loading", async () => {
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart + 1)
 		const { session, reload, bridge } = setup(active("session-ref"))
 
@@ -205,7 +205,7 @@ describe("startup", () => {
 		sessions.push(session)
 		const starting = session.start()
 
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		await vi.advanceTimersByTimeAsync(250)
 		connected(bridge)
 		await starting
@@ -223,7 +223,7 @@ describe("startup", () => {
 
 	it("lets a session replace an editor push older than ten minutes", async () => {
 		cancelEvents = true
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart - 10 * 60_000)
 		const { session } = setup(active("ref-1"))
 
@@ -235,7 +235,7 @@ describe("startup", () => {
 
 	it("follows the session in the editor's poll mode, whatever the editor pushed", async () => {
 		cancelEvents = true
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart - 1)
 		const { session, server } = setup(active("ref-1"), { watchCookie: false, codec: "plain" })
 
@@ -252,7 +252,7 @@ describe("startup", () => {
 	})
 
 	it("ignores a recent push from another repository's editor", async () => {
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(otherRepository, "editor-ref", navigationStart + 1)
 		const { session } = setup({ isAuthenticated: false })
 
@@ -299,7 +299,7 @@ describe("startup", () => {
 describe("polling", () => {
 	async function startPolling(ref = "ref-1", isAuthenticated = false) {
 		cancelEvents = true
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: ref }))
+		setCookie(previewCookieName, jsonCookie({ [repository]: ref }))
 		const context = setup(active(ref, isAuthenticated))
 		await context.session.start()
 		return context
@@ -318,7 +318,7 @@ describe("polling", () => {
 
 	it("does not overwrite a ref the editor pushed in the meantime", async () => {
 		const { bridge, server, session } = await startPolling()
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", Date.now())
 		events = []
 
@@ -377,7 +377,7 @@ describe("polling", () => {
 
 	it("stops quietly when the session ends while the editor owns the cookie", async () => {
 		const { server, session } = await startPolling()
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", Date.now())
 		await vi.advanceTimersByTimeAsync(250)
 		events = []
@@ -429,7 +429,7 @@ describe("polling", () => {
 		document.dispatchEvent(new Event("visibilitychange"))
 		await vi.advanceTimersByTimeAsync(0)
 		bridge.getState.mockResolvedValue(active("ref-2"))
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
 		await vi.advanceTimersByTimeAsync(250)
 		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-2" } })
 
@@ -464,16 +464,16 @@ describe("polling", () => {
 describe("cookie changes from other tabs and the editor", () => {
 	it("notifies once per new ref, ignores rewrites of the same ref, and ends on removal", async () => {
 		cancelEvents = true
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker1"))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker1"))
 		const { session } = setup({ isAuthenticated: false })
 		await session.start()
 
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker2"))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker2"))
 		await vi.advanceTimersByTimeAsync(250)
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		await vi.advanceTimersByTimeAsync(250)
 		await vi.advanceTimersByTimeAsync(250)
-		Cookies.remove(previewCookieName)
+		deleteCookie(previewCookieName)
 		await vi.advanceTimersByTimeAsync(250)
 
 		expect(events).toEqual([
@@ -486,7 +486,7 @@ describe("cookie changes from other tabs and the editor", () => {
 		const { session, reload } = setup({ isAuthenticated: false })
 		await session.start()
 
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		await vi.advanceTimersByTimeAsync(1000)
 
 		expect(reload).toHaveBeenCalledOnce()
@@ -500,7 +500,7 @@ describe("cookie changes from other tabs and the editor", () => {
 
 		state.preview = { ref: "ref-1", title: "Spring launch" }
 		server.ref = "ref-1"
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(3250)
 
 		expect(events).toEqual([["prismicPreviewStart", "ref-1"]])
@@ -516,7 +516,7 @@ describe("cookie changes from other tabs and the editor", () => {
 
 		const starting = session.start()
 		await vi.advanceTimersByTimeAsync(0)
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(250)
 		answer({ isAuthenticated: false })
 		await starting
@@ -531,7 +531,7 @@ describe("cookie changes from other tabs and the editor", () => {
 		const { session, bridge } = setup({ isAuthenticated: false })
 		await session.start()
 
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(250)
 
 		expect(bridge.getState).toHaveBeenCalledTimes(2)
@@ -542,7 +542,7 @@ describe("cookie changes from other tabs and the editor", () => {
 		const { session } = setup({ isAuthenticated: false }, { watchCookie: false, codec: "plain" })
 		await session.start()
 
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		await vi.advanceTimersByTimeAsync(1000)
 
 		expect(events).toEqual([])
@@ -552,10 +552,7 @@ describe("cookie changes from other tabs and the editor", () => {
 describe("exit", () => {
 	it("removes its own ref, keeps other repositories' refs, and closes the session", async () => {
 		cancelEvents = true
-		Cookies.set(
-			previewCookieName,
-			jsonCookie({ [otherRepository]: "other", [repository]: "ref-1" }),
-		)
+		setCookie(previewCookieName, jsonCookie({ [otherRepository]: "other", [repository]: "ref-1" }))
 		const { session, bridge, reload } = setup(active("ref-1"))
 		await session.start()
 
@@ -571,7 +568,7 @@ describe("exit", () => {
 	})
 
 	it("reloads when nothing handles the end", async () => {
-		Cookies.set(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		cancelEvents = true
 		const { session, reload } = setup(active("ref-1"))
 		await session.start()
@@ -583,7 +580,7 @@ describe("exit", () => {
 	})
 
 	it("clears an editor-owned ref of the same repository", async () => {
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart - 1)
 		cancelEvents = true
 		const { session } = setup(active("ref-1"))
@@ -596,7 +593,7 @@ describe("exit", () => {
 	})
 
 	it("leaves another repository's editor-owned ref", async () => {
-		Cookies.set(previewCookieName, "editor-ref")
+		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(otherRepository, "editor-ref", navigationStart - 1)
 		cancelEvents = true
 		const { session } = setup(active("ref-1"))

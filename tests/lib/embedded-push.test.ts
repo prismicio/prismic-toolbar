@@ -1,6 +1,6 @@
-import Cookies from "js-cookie"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
+import { getCookie, setCookie } from "../../src/lib/cookie"
 import { createEmbeddedPush } from "../../src/lib/embedded-push"
 import { claimOwnership, readOwner } from "../../src/lib/owner-marker"
 import { createSiteCookieStore, previewCookieName } from "../../src/lib/site-cookie"
@@ -32,12 +32,12 @@ function setup() {
 
 describe("refs sent with reload: false", () => {
 	it("store the ref, mark it as the editor's, and notify without reloading", async () => {
-		Cookies.set(previewCookieName, "bootstrap-token")
+		setCookie(previewCookieName, "bootstrap-token")
 		const { push, reload } = setup()
 
 		await push("live-1", false)
 
-		expect(Cookies.get(previewCookieName)).toBe("live-1")
+		expect(getCookie(previewCookieName)).toBe("live-1")
 		expect(readOwner()).toEqual({ version: 2, repository, ref: "live-1", at: 1234 })
 		expect(updates).toEqual(["live-1"])
 		expect(reload).not.toHaveBeenCalled()
@@ -49,15 +49,15 @@ describe("refs sent with reload: false", () => {
 		await push("live-1", false)
 		await push("live-1", false)
 		await push("live-2", false)
-		Cookies.set(previewCookieName, "share-link-ref")
+		setCookie(previewCookieName, "share-link-ref")
 		await push("live-2", false)
 
 		expect(updates).toEqual(["live-1", "live-2", "live-2"])
-		expect(Cookies.get(previewCookieName)).toBe("live-2")
+		expect(getCookie(previewCookieName)).toBe("live-2")
 	})
 
 	it("notify once for a first ref the cookie already holds", async () => {
-		Cookies.set(previewCookieName, "live-1")
+		setCookie(previewCookieName, "live-1")
 		const { push } = setup()
 
 		await push("live-1", false)
@@ -68,24 +68,24 @@ describe("refs sent with reload: false", () => {
 	})
 
 	it("rewrite a website's JSON cookie holding the ref so website tabs see it as the editor's", async () => {
-		Cookies.set(previewCookieName, JSON.stringify({ [repository]: { preview: "live-1" } }))
+		setCookie(previewCookieName, JSON.stringify({ [repository]: { preview: "live-1" } }))
 		const { push } = setup()
 
 		await push("live-1", false)
 
-		expect(Cookies.get(previewCookieName)).toBe("live-1")
+		expect(getCookie(previewCookieName)).toBe("live-1")
 	})
 })
 
 describe("refs sent without the flag", () => {
 	it("reload when nothing handles the update and release the editor's mark", async () => {
 		claimOwnership(repository, "live-1", 1)
-		Cookies.set(previewCookieName, "live-1")
+		setCookie(previewCookieName, "live-1")
 		const { push, reload } = setup()
 
 		await push("legacy-1")
 
-		expect(Cookies.get(previewCookieName)).toBe("legacy-1")
+		expect(getCookie(previewCookieName)).toBe("legacy-1")
 		expect(readOwner()).toBeUndefined()
 		expect(updates).toEqual(["legacy-1"])
 		expect(reload).toHaveBeenCalledOnce()
@@ -102,7 +102,7 @@ describe("refs sent without the flag", () => {
 	})
 
 	it("do nothing when the cookie already holds the ref", async () => {
-		Cookies.set(previewCookieName, "legacy-1")
+		setCookie(previewCookieName, "legacy-1")
 		const { push, reload } = setup()
 
 		await push("legacy-1")

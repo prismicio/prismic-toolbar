@@ -1,6 +1,6 @@
-import Cookies from "js-cookie"
 import { describe, expect, it } from "vitest"
 
+import { getCookie, setCookie } from "../../src/lib/cookie"
 import {
 	createSiteCookieStore,
 	parseSiteCookie,
@@ -11,7 +11,7 @@ import {
 const repository = "example.prismic.io"
 const otherRepository = "other.prismic.io"
 
-const storedJSON = () => JSON.parse(Cookies.get(previewCookieName) ?? "null")
+const storedJSON = () => JSON.parse(getCookie(previewCookieName) ?? "null")
 
 describe("parseSiteCookie", () => {
 	it("reads a missing cookie as none", () => {
@@ -62,13 +62,13 @@ describe("site cookie store", () => {
 
 	it("writes plain refs as they are", () => {
 		expect(store.writeRef("ref", { codec: "plain", authenticated: true })).toBe(true)
-		expect(Cookies.get(previewCookieName)).toBe("ref")
+		expect(getCookie(previewCookieName)).toBe("ref")
 	})
 
 	it("writes JSON with a new tracker for authenticated users only", () => {
 		store.writeRef("ref-1", { codec: "json", authenticated: true })
 		// Older SDKs find the repository with a regex that expects `_tracker` first.
-		expect(Cookies.get(previewCookieName)).toMatch(/^\{"_tracker":"[A-Za-z0-9]{8}",/)
+		expect(getCookie(previewCookieName)).toMatch(/^\{"_tracker":"[A-Za-z0-9]{8}",/)
 		const first = storedJSON()
 		expect(first).toEqual({
 			_tracker: expect.stringMatching(/^[A-Za-z0-9]{8}$/),
@@ -83,20 +83,20 @@ describe("site cookie store", () => {
 	})
 
 	it("keeps other repositories' refs and replaces a plain cookie", () => {
-		Cookies.set(previewCookieName, JSON.stringify({ [otherRepository]: { preview: "other" } }))
+		setCookie(previewCookieName, JSON.stringify({ [otherRepository]: { preview: "other" } }))
 		store.writeRef("mine", { codec: "json", authenticated: false })
 		expect(storedJSON()).toEqual({
 			[otherRepository]: { preview: "other" },
 			[repository]: { preview: "mine" },
 		})
 
-		Cookies.set(previewCookieName, "raw-ref")
+		setCookie(previewCookieName, "raw-ref")
 		store.writeRef("mine", { codec: "json", authenticated: false })
 		expect(storedJSON()).toEqual({ [repository]: { preview: "mine" } })
 	})
 
 	it("removes only its own ref", () => {
-		Cookies.set(
+		setCookie(
 			previewCookieName,
 			JSON.stringify({
 				_tracker: "abcd1234",
@@ -107,15 +107,12 @@ describe("site cookie store", () => {
 		store.removeOwn()
 		expect(storedJSON()).toEqual({ _tracker: "abcd1234", [otherRepository]: { preview: "other" } })
 
-		Cookies.set(
-			previewCookieName,
-			JSON.stringify({ _tracker: "x", [repository]: { preview: "a" } }),
-		)
+		setCookie(previewCookieName, JSON.stringify({ _tracker: "x", [repository]: { preview: "a" } }))
 		store.removeOwn()
-		expect(Cookies.get(previewCookieName)).toBeUndefined()
+		expect(getCookie(previewCookieName)).toBeUndefined()
 
-		Cookies.set(previewCookieName, "raw-ref")
+		setCookie(previewCookieName, "raw-ref")
 		store.removeOwn()
-		expect(Cookies.get(previewCookieName)).toBeUndefined()
+		expect(getCookie(previewCookieName)).toBeUndefined()
 	})
 })
