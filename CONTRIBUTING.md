@@ -28,7 +28,7 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 | `src/iframe.ts`           | Hidden, from the repository host, to read its cookies | `src/iframe`, inlined into `src/iframe.html`       |
 
 - Each file is a self-contained classic script. The CDN sends no CORS headers, so `prismic.js` loads the other bundles as classic scripts, and they register on `window.__prismicToolbar`.
-- `src/lib` holds the logic of `prismic.js` and code the bundles share. `src/prismic.ts` routes each page to a flow: the editor's preview iframe to `embedded-push.ts` or the preview session, and websites to `legacy.ts`, which syncs previews through the repository's iframe and loads the preview bar. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `embedded-push.ts` handles refs the editor pushes into its preview iframe.
+- `src/lib` holds the logic of `prismic.js` and code the bundles share. `src/prismic.ts` routes websites to `legacy.ts`, which syncs previews through the repository's iframe and loads the preview bar. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `embedded-push.ts` handles refs the editor pushes into its preview iframe.
 
 #### Development builds
 

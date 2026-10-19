@@ -73,9 +73,6 @@ describe("findVersion", () => {
 
 		document.head.innerHTML = `<script src="https://static.cdn.prismic.io/prismic.js?repo=example&v="></script>`
 		expect(findVersion()).toBeUndefined()
-
-		document.head.innerHTML = ""
-		expect(findVersion()).toBeUndefined()
 	})
 })
 

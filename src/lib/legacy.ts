@@ -2,16 +2,12 @@ import { loadChunk } from "./chunks"
 import { warn } from "./env"
 import { createPreviewSession, type PreviewSessionOptions } from "./preview-session"
 
-export interface LegacyOptions extends Pick<PreviewSessionOptions, "repositoryHost" | "connect"> {
-	/** URL of the folder serving the toolbar's bundles. */
-	assets: string
-}
-
-/**
- * Runs previews on a website through the repository's iframe: syncs the website's JSON preview
- * cookie with the repository's preview session and shows the preview bar while one is active.
- */
-export function startLegacy({ repositoryHost, assets, connect }: LegacyOptions): void {
+/** Runs website previews through the repository's iframe, with the JSON preview cookie. */
+export function startLegacy({
+	repositoryHost,
+	assets,
+	connect,
+}: Pick<PreviewSessionOptions, "repositoryHost" | "connect"> & { assets: string }): void {
 	const session = createPreviewSession({
 		repositoryHost,
 		codec: "json",

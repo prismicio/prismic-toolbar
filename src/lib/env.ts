@@ -25,7 +25,7 @@ export function findRepositoryHost(doc: Document = document): string | undefined
  * like `5`. Call it while that script first runs, like {@link findRepositoryHost}.
  */
 export function findVersion(doc: Document = document): string | undefined {
-	return findScriptParam("v", doc)?.trim() || undefined
+	return findScriptParam("v", doc) || undefined
 }
 
 function findScriptParam(name: string, doc: Document): string | null {
