@@ -1,3 +1,4 @@
+import { startLegacy } from "./legacy"
 import { connectBridge } from "./lib/bridge"
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
 import { createEmbeddedPush } from "./lib/embedded-push"
@@ -9,7 +10,6 @@ import {
 	warn,
 	type ToolbarMode,
 } from "./lib/env"
-import { startLegacy } from "./legacy"
 import { createPreviewSession } from "./lib/preview-session"
 
 // Replaced at build time, see `vite.config.ts`.
