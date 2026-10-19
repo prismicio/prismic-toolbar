@@ -5,8 +5,8 @@
 	width: 100%;
 	height: 100%;
 	overflow: hidden;
-	color: #666;
-	background: #eee;
+	color: rgb(111, 110, 119);
+	background: rgb(233, 232, 234);
 	border-radius: 50%;
 }
 
@@ -17,8 +17,8 @@
 }
 
 .avatar-fallback {
-	font-size: 8px;
-	font-weight: 500;
-	line-height: 1;
+	font-size: 10px;
+	font-weight: 600;
+	line-height: 16px;
 	white-space: nowrap;
 }
