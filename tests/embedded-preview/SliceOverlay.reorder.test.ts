@@ -131,6 +131,11 @@ it("updates boundaries without losing the selected controls and respects read-on
 	])
 	expect(button("Move slice up")!.disabled).toBe(true)
 	expect(button("Move slice down")!.disabled).toBe(true)
+	metadata([
+		{ sliceId: "first", label: "Hero", variation: "Default", canMoveUp: true, canMoveDown: false },
+	])
+	expect(button("Move slice up")!.disabled).toBe(false)
+	expect(button("Move slice down")!.disabled).toBe(true)
 	metadata([{ sliceId: "first", label: "Hero" }])
 	expect(button("Move slice up")!.disabled).toBe(true)
 	expect(button("Move slice down")!.disabled).toBe(true)
