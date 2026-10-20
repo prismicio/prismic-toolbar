@@ -12,7 +12,7 @@ import {
 	type ToolbarMode,
 } from "./lib/env"
 import { createPreviewSession } from "./lib/preview-session"
-import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
+import { sessionCookieName } from "./lib/site-cookie"
 
 // Replaced at build time, see `vite.config.ts`.
 /** Origin the toolbar's versioned assets are served from, such as `https://prismic.io`. */
@@ -58,18 +58,12 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 	}
 
 	if (requestedVersion === "5") {
-		const previewCookie = getCookie(previewCookieName)
-		if (previewCookie && getCookie(sessionCookieName)) {
+		if (getCookie(sessionCookieName)) {
 			loadChunk(`${assets}/modern.js`, "startModern")
 				.then((startModern) => startModern({ repositoryHost, assets }))
 				.catch(console.error)
-			return
 		}
-
-		// Legacy only runs for previews opened without a session, and for share links created before
-		// the SDK opted in, which redirect from the repository host.
-		const fromRepository = document.referrer.startsWith(`${repositoryOrigin(repositoryHost)}/`)
-		if (!previewCookie && !fromRepository) return
+		return
 	}
 
 	startLegacy({ repositoryHost, assets, connect })

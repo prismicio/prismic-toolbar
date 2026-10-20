@@ -151,9 +151,10 @@ export class Website {
 	}
 
 	/** Stores a preview like the preview route of an SDK that opts into `v=5`. */
-	async storePreview(ref: string, { session = true } = {}) {
+	async storePreview(ref: string, { preview = true, session = true } = {}) {
 		this.repository.ref = ref
-		const cookies: Record<string, string> = { [previewCookieName]: ref }
+		const cookies: Record<string, string> = {}
+		if (preview) cookies[previewCookieName] = ref
 		if (session) cookies[sessionCookieName] = this.repository.sessionID
 		await this.page.context().addCookies(
 			Object.entries(cookies).map(([name, value]) => ({

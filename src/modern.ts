@@ -21,8 +21,8 @@ registerChunk("startModern", startModern)
 
 function createModernSession(repositoryHost: string): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
-	// The ref this page renders. The router only starts modern with a preview cookie.
-	let ref = getCookie(previewCookieName)!
+	// The ref this page renders. Without one, the first ping gets the session's ref.
+	let ref = getCookie(previewCookieName) ?? ""
 	// Not authenticated: the bar hides Share, which modern does not support yet.
 	let snapshot: PreviewSnapshot = {
 		status: "polling",

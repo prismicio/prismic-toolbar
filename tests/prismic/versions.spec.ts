@@ -1,8 +1,7 @@
-import { expect, previewCookieName, test, type Website } from "../infra"
+import { expect, previewCookieName, test } from "../infra"
 
-// Websites whose SDK opts into `v=5` run the modern flow when it stored a session, and the legacy
-// flow for previews it could not store a session for.
-
+// Websites whose SDK opts into `v=5` run the modern flow when it stored a session, and nothing
+// otherwise.
 test.beforeEach(({ website }) => {
 	website.scriptQuery += "&v=5"
 })
@@ -10,44 +9,23 @@ test.beforeEach(({ website }) => {
 const loaded = (requests: string[], file: string) =>
 	requests.some((url) => new URL(url).pathname.endsWith(`/${file}`))
 
-async function expectLegacy(website: Website, requests: string[]) {
-	await expect(website.content).toHaveText("Draft content: ref-1")
-	await expect(website.previewBar).toBeVisible()
-	expect(loaded(requests, "iframe.html")).toBe(true)
-	expect(loaded(requests, "modern.js")).toBe(false)
-}
-
-test("starts modern with a session", async ({ website, requests }) => {
-	await website.storePreview("ref-1")
+test("starts modern with only a session", async ({ website, requests }) => {
+	await website.storePreview("ref-1", { preview: false })
 	await website.goto()
 
+	// The first ping gets the session's ref.
+	await expect(website.content).toHaveText("Draft content: ref-1")
 	await expect(website.previewBar).toBeVisible()
+	expect(website.loads).toEqual([null, "ref-1"])
 	expect(loaded(requests, "modern.js")).toBe(true)
 	expect(loaded(requests, "iframe.html")).toBe(false)
 })
 
-test("starts legacy with a preview but no session", async ({ repository, website, requests }) => {
+test("does nothing without a session", async ({ repository, website, requests }) => {
 	await website.storePreview("ref-1", { session: false })
-	await repository.startPreview("ref-1")
-	await website.goto()
-
-	await expectLegacy(website, requests)
-	expect(website.loads).toEqual(["ref-1"])
-})
-
-test("starts legacy when coming from the repository", async ({ repository, website, requests }) => {
-	await repository.startPreview("ref-1")
 	await website.page.goto(website.url, { referer: `${repository.url}/previews/s/share-id` })
 
-	await expectLegacy(website, requests)
-	expect(website.loads).toEqual([null, "ref-1"])
-})
-
-test("does nothing without a preview", async ({ repository, website, requests }) => {
-	await repository.startPreview("ref-1")
-	await website.goto()
-
-	await expect(website.content).toHaveText("Published content")
+	await expect(website.content).toHaveText("Draft content: ref-1")
 	await expect(website.previewBar).toHaveCount(0)
 	expect(requests).toEqual([
 		`${website.url}/`,

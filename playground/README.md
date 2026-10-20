@@ -17,7 +17,7 @@ To preview from Prismic, add the playground to the repository's previews, with `
 
 Each flow has its own preview and exit routes under its path. The header switches between them.
 
-In the modern flow, the preview route stores the URL's `session` parameter in the `io.prismic.previewSession` cookie, and the toolbar follows that session with Prismic's public ping. The Prismic editor does not add `session` to preview URLs yet, so editor previews fall back to the legacy flow. To try the modern flow, open a preview from the editor once, copy the `io.prismic.previewSession` cookie of `<repository>.prismic.io` from the browser's developer tools, and open the preview URL again with `&session=<that value>` added.
+In the modern flow, the editor adds `session` to preview URLs, the preview route stores it in the `io.prismic.previewSession` cookie, and the toolbar follows that session with Prismic's public ping.
 
 ## Toolbar
 
