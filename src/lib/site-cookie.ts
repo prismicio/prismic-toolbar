@@ -3,6 +3,9 @@ import { deleteCookie, getCookie, setCookie } from "./cookie"
 /** `@prismicio/client` sends this cookie's whole value as the Content API ref. */
 export const previewCookieName = "io.prismic.preview"
 
+/** The preview session ID, written by SDK preview routes for the modern flow. */
+export const sessionCookieName = "io.prismic.previewSession"
+
 /**
  * - `plain`: a raw ref, written by SDK preview routes and by the toolbar inside the editor.
  * - `json`: `{ "_tracker": "…", "<repository host>": { "preview": "<ref>" } }`, written by the

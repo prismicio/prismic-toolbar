@@ -22,6 +22,12 @@ Locally, the toolbar's hidden iframe still loads from the repository host, from 
 
 `<PrismicPreview>` from `@prismicio/next` always loads the released toolbar, so `src/app/Preview.tsx` mirrors it with a configurable script.
 
+### Modern flow (`v=5`)
+
+Set `TOOLBAR_V5=true` to load the toolbar with `&v=5`, locally (`TOOLBAR_V5=true npm run dev`) or in the Vercel project's environment variables. The preview route then acts like an SDK that opts into `v=5`: it stores the `session` query parameter in the `io.prismic.previewSession` cookie, and `/api/exit-preview` deletes it. The toolbar follows that session with Prismic's public ping, without its iframe.
+
+The Prismic editor does not add `session` to preview URLs yet. Until it does, previews from the editor use the legacy flow. To try the modern flow, open a preview from the editor once, copy the `io.prismic.previewSession` cookie of the repository host (`<repository>.prismic.io`) from the browser's developer tools, and open the preview URL again with `&session=<that value>` added.
+
 ## Vercel
 
 The `prismic-toolbar-playground` project on the Prismic team serves https://prismic-toolbar-playground.vercel.app. It deploys this repository's `playground` folder: `master` to production and every branch as a preview.

@@ -1,6 +1,7 @@
 import { startLegacy } from "./legacy"
 import { connectBridge } from "./lib/bridge"
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
+import { getCookie } from "./lib/cookie"
 import { createEmbeddedPush } from "./lib/embedded-push"
 import {
 	detectMode,
@@ -11,6 +12,7 @@ import {
 	type ToolbarMode,
 } from "./lib/env"
 import { createPreviewSession } from "./lib/preview-session"
+import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
 
 // Replaced at build time, see `vite.config.ts`.
 /** Origin the toolbar's versioned assets are served from, such as `https://prismic.io`. */
@@ -21,7 +23,7 @@ declare const __TOOLBAR_VERSION__: string
 // The script's parameters must be read now: `document.currentScript` is only set while it first runs.
 const mode = detectMode()
 const repositoryHost = findRepositoryHost()
-const _requestedVersion = findVersion()
+const requestedVersion = findVersion()
 
 if (mode) {
 	if (repositoryHost) start(mode, repositoryHost)
@@ -55,8 +57,18 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 		return
 	}
 
-	// Websites whose SDK opts into `v=5` (`_requestedVersion`) will start the modern flow here.
-	startLegacy({ repositoryHost, assets, connect })
+	if (requestedVersion !== "5") return startLegacy({ repositoryHost, assets, connect })
+
+	// SDKs that opt into `v=5` store the session ID next to the ref.
+	const previewing = getCookie(previewCookieName)
+	if (previewing && getCookie(sessionCookieName)) {
+		loadChunk(`${assets}/modern.js`, "startModern")
+			.then((startModern) => startModern({ repositoryHost, assets }))
+			.catch(console.error)
+	} else if (previewing || document.referrer.startsWith(`${repositoryOrigin(repositoryHost)}/`)) {
+		// Previews opened without a session ID, and share links created before the SDK opted in.
+		startLegacy({ repositoryHost, assets, connect })
+	}
 }
 
 async function setupEmbeddedPreview(assets: string, options?: EmbeddedPreviewOptions) {

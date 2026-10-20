@@ -2,7 +2,13 @@ import { redirectToPreviewURL } from "@prismicio/next"
 import { cookies } from "next/headers"
 import type { NextRequest } from "next/server"
 
-import { createClient, isRepository, linkResolver, repositoryCookie } from "@/lib/prismic"
+import {
+	createClient,
+	isRepository,
+	linkResolver,
+	repositoryCookie,
+	sessionCookie,
+} from "@/lib/prismic"
 
 export async function GET(request: NextRequest): Promise<never> {
 	// Previews started from Prismic carry the repository in their token. Remember it, so the editor
@@ -17,6 +23,11 @@ export async function GET(request: NextRequest): Promise<never> {
 			secure: true,
 		})
 	}
+
+	// Like an SDK that opts into the toolbar's `v=5`: the toolbar follows this session with Prismic's
+	// public ping, with the same attributes as the preview cookie.
+	const session = request.nextUrl.searchParams.get("session")
+	if (session) (await cookies()).set(sessionCookie, session, { sameSite: "none", secure: true })
 
 	return redirectToPreviewURL({ client: await createClient(repository), request, linkResolver })
 }

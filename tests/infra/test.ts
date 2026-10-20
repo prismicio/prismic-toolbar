@@ -91,8 +91,10 @@ export class Repository {
 			const ref = url.searchParams.get("ref") ?? ""
 			this.pings.push(ref)
 			return route.fulfill({
+				// Like Prismic: any origin, without credentials.
+				headers: { "access-control-allow-origin": "*" },
 				json: this.ref
-					? { ref: this.ref, reload: this.ref !== ref }
+					? { ref: this.ref, reload: this.ref !== ref, title: this.title }
 					: { reload: false, close: true },
 			})
 		}
@@ -146,6 +148,22 @@ export class Website {
 
 	receivedMessages(page: Page | Frame = this.page) {
 		return page.evaluate(() => window.receivedMessages)
+	}
+
+	/** Stores a preview like the preview route of an SDK that opts into `v=5`. */
+	async storePreview(ref: string, { session = true } = {}) {
+		this.repository.ref = ref
+		const cookies: Record<string, string> = { [previewCookieName]: ref }
+		if (session) cookies[sessionCookieName] = this.repository.sessionID
+		await this.page.context().addCookies(
+			Object.entries(cookies).map(([name, value]) => ({
+				name,
+				value,
+				url: this.url,
+				secure: true,
+				sameSite: "None" as const,
+			})),
+		)
 	}
 
 	/** Reads a cookie of the website, decoded. */
@@ -377,7 +395,13 @@ function editorHTML({ mode, website, comments, slices }: Required<Omit<EditorOpt
 </script>`
 }
 
-export const test = base.extend<{ repository: Repository; website: Website; editor: Editor }>({
+export const test = base.extend<{
+	repository: Repository
+	website: Website
+	editor: Editor
+	/** URLs the browser requested. */
+	requests: string[]
+}>({
 	// Serves the toolbar at its production URLs and fails on any other request.
 	context: async ({ context }, use) => {
 		const unexpected: string[] = []
@@ -406,6 +430,11 @@ export const test = base.extend<{ repository: Repository; website: Website; edit
 		await use(page)
 
 		expect(errors, "Uncaught errors").toEqual([])
+	},
+	requests: async ({ context }, use) => {
+		const requests: string[] = []
+		context.on("request", (request) => requests.push(request.url()))
+		await use(requests)
 	},
 	repository: async ({ context }, use) => {
 		const repository = new Repository(context)

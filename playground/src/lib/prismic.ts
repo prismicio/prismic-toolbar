@@ -5,6 +5,9 @@ import { cookies } from "next/headers"
 /** Remembers the repository picked in the playground. */
 export const repositoryCookie = "playground-repository"
 
+/** The preview session the toolbar follows with `v=5`, set by the preview route. */
+export const sessionCookie = "io.prismic.previewSession"
+
 const defaultRepository = process.env.NEXT_PUBLIC_DEFAULT_REPOSITORY || "prismic-main"
 
 /** A repository name (`example`) or, outside `prismic.io`, its host (`example.wroom.io`). */
@@ -35,7 +38,7 @@ function endpoint(repository: string) {
 
 /**
  * The toolbar to test: `TOOLBAR_SRC` when set, as `npm run dev` does, the pull request's build on
- * pull request deployments, or the released toolbar.
+ * pull request deployments, or the released toolbar. `TOOLBAR_V5=true` opts into the modern flow.
  */
 export function getToolbarSrc(repository: string): string {
 	const pullRequest = process.env.VERCEL_GIT_PULL_REQUEST_ID
@@ -45,7 +48,8 @@ export function getToolbarSrc(repository: string): string {
 			? `https://prismic.io/prismic-toolbar/pr-${pullRequest}/prismic.js`
 			: "https://static.cdn.prismic.io/prismic.js")
 
-	return `${src}?repo=${encodeURIComponent(repository)}`
+	const version = process.env.TOOLBAR_V5 === "true" ? "&v=5" : ""
+	return `${src}?repo=${encodeURIComponent(repository)}${version}`
 }
 
 export const linkResolver: prismic.LinkResolverFunction = (document) => `/documents/${document.id}`
