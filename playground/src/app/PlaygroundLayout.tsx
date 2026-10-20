@@ -35,7 +35,6 @@ export async function PlaygroundLayout({ flow, children }: { flow: Flow; childre
 				</header>
 				<main>{children}</main>
 				<Preview
-					flow={flow}
 					basePath={basePath[flow]}
 					repository={repository}
 					toolbarSrc={toolbarSrc}
