@@ -17,7 +17,7 @@ const setSlices = (
 test("deletes the hovered slice without selecting it and clears its controls when removed", async ({
 	editor,
 }) => {
-	await editor.send({ type: "prismic:embedded-preview:set-slice-overlay", canDelete: true })
+	await editor.send({ type: "prismic:embedded-preview:set-slice-overlay", readOnly: false })
 	await editor.preview.locator("#second-slice").hover({ position: { x: 500, y: 100 } })
 	const highlight = editor.overlay.locator('.slice-highlight[data-slice-id="second-slice"]')
 	const button = highlight.getByRole("button", { name: "Delete slice", exact: true })
@@ -45,7 +45,7 @@ test("delete controls follow editor permissions and remain keyboard accessible a
 	await editor.send({
 		type: "prismic:embedded-preview:set-slice-overlay",
 		selectedSliceId: "first-slice",
-		canDelete: true,
+		readOnly: false,
 	})
 	await expect(button).toBeVisible()
 	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
@@ -58,7 +58,7 @@ test("delete controls follow editor permissions and remain keyboard accessible a
 	await editor.send({
 		type: "prismic:embedded-preview:set-slice-overlay",
 		selectedSliceId: "first-slice",
-		canDelete: false,
+		readOnly: true,
 	})
 	await expect(button).toHaveCount(0)
 })
@@ -67,7 +67,7 @@ test("delete targets the active controls when another slice is selected", async 
 	await editor.send({
 		type: "prismic:embedded-preview:set-slice-overlay",
 		selectedSliceId: "first-slice",
-		canDelete: true,
+		readOnly: false,
 	})
 	await editor.preview.locator("#second-slice").hover({ position: { x: 500, y: 100 } })
 	await editor.overlay

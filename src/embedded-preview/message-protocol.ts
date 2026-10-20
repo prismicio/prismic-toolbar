@@ -88,7 +88,7 @@ const scrollToPinMessageSchema = z.object({
 const sliceOverlayMessageSchema = z.object({
 	type: z.literal(setSliceOverlayMessageType),
 	selectedSliceId: z.optional(nonemptyStringSchema),
-	canDelete: z.optional(z.boolean()),
+	readOnly: z.optional(z.boolean()),
 })
 
 const scrollToSliceMessageSchema = z.object({
