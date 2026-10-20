@@ -69,6 +69,6 @@
 }
 
 .slice-button-icon {
-	width: calc(20px * var(--prismic-overlay-ui-scale));
-	height: calc(20px * var(--prismic-overlay-ui-scale));
+	width: calc(16px * var(--prismic-overlay-ui-scale));
+	height: calc(16px * var(--prismic-overlay-ui-scale));
 }
