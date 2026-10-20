@@ -1,4 +1,5 @@
 import type { TargetedMouseEvent } from "preact"
+import type { SVGProps } from "preact/compat"
 import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { isScrollToSliceMessage, isSliceOverlayMessage } from "../message-protocol"
@@ -19,8 +20,9 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, subscribeToMessages, uiScale } = props
 
 	const { slices, layout } = useSlices(subscribeToMessages)
-	const { selectedSliceId, readOnly = true } = useSliceOverlayState(subscribeToMessages)
-	const selectedSlice = slices.find((slice) => slice.sliceId === selectedSliceId)
+	const { selectedSliceId, readOnly } = useSliceOverlayState(subscribeToMessages)
+
+	const selectedSlice = useSelectedSlice(slices, selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
 
 	useSliceSelection(slices, uiScale, postMessage)
@@ -48,6 +50,11 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	)
 }
 
+function useSelectedSlice(slices: Slice[], selectedSliceId?: string) {
+	if (!selectedSliceId) return undefined
+	return slices.find((slice) => slice.sliceId === selectedSliceId)
+}
+
 function useHoveredSlice(slices: Slice[]) {
 	const [target, setTarget] = useState<Element | null>(null)
 	const pointer = useRef<PointerEvent>()
@@ -57,9 +64,9 @@ function useHoveredSlice(slices: Slice[]) {
 	// `pointer-events: auto` and regular `onClick` handlers because they intentionally cover the page.
 	useLayoutEffect(() => {
 		function track(event: PointerEvent) {
-			const hoverTarget = event.composedPath()[0]
+			const hoverTarget = event.target instanceof Element ? event.target : null
 			pointer.current = event
-			setTarget(hoverTarget instanceof Element ? hoverTarget : null)
+			setTarget(hoverTarget)
 		}
 
 		function clear() {
@@ -88,12 +95,7 @@ function useHoveredSlice(slices: Slice[]) {
 		}
 	}, [slices, target])
 
-	const slice = useMemo(() => {
-		const highlight = target?.closest(".slice-highlight")
-		if (highlight)
-			return slices.find((slice) => slice.sliceId === highlight.getAttribute("data-slice-id"))
-		return findSliceAtElement(slices, target)
-	}, [slices, target])
+	const slice = useMemo(() => findSliceAtElement(slices, target), [slices, target])
 
 	return slice
 }
@@ -146,7 +148,7 @@ function useSliceOverlayState(subscribeToMessages: SubscribeToMessages) {
 		})
 	}, [subscribeToMessages])
 
-	return state
+	return { ...state, readOnly: state.readOnly ?? true }
 }
 
 function useScrollToSlice(
@@ -177,8 +179,6 @@ function SliceHighlight(props: SliceHighlightProps) {
 
 	if (!rect) return null
 
-	const title = variation ? `${label} • ${variation}` : label
-
 	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
 		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
@@ -189,31 +189,59 @@ function SliceHighlight(props: SliceHighlightProps) {
 			className="slice-highlight"
 			data-slice-id={sliceId}
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
+			onPointerOver={(event) => event.stopPropagation()}
+			onPointerMove={(event) => event.stopPropagation()}
 		>
-			<div className="slice-highlight-label">{title}</div>
+			<div className="slice-control-group slice-title-group">
+				<div className="slice-title">
+					<span className="slice-label">{label}</span>
+					{variation && (
+						<span className="slice-variation">
+							{" • "}
+							{variation}
+						</span>
+					)}
+				</div>
+			</div>
 			{!readOnly && (
-				<button
-					type="button"
-					className="slice-delete"
-					aria-label="Delete slice"
-					title="Delete slice"
-					onClick={handleDelete}
-				>
-					<svg
-						width="20"
-						height="20"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						aria-hidden="true"
+				<div className="slice-control-group">
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Delete slice"
+						title="Delete slice"
+						onClick={handleDelete}
 					>
-						<path d="M3 6h18M9 6V4h6v2M5 6l1 15h12l1-15M10 10v7M14 10v7" />
-					</svg>
-				</button>
+						<DeleteIcon className="slice-button-icon" />
+					</button>
+				</div>
 			)}
 		</div>
 	)
 }
+
+const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
+	<svg viewBox="0 0 16 16" fill="none" {...props}>
+		<path
+			d="M12.1757 6.88889L11.8667 12.7556C11.8169 13.7068 11.0364 14.4444 10.0916 14.4444H5.90937C4.9636 14.4444 4.18403 13.7067 4.13425 12.7556L3.8252 6.88889"
+			stroke="#908E96"
+			stroke-width="1.33333"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		/>
+		<path
+			d="M2.44434 4.22222H13.5554"
+			stroke="#908E96"
+			stroke-width="1.33333"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		/>
+		<path
+			d="M6 4.22222V2.44445C6 1.95556 6.39822 1.55556 6.88889 1.55556H9.11111C9.60178 1.55556 10 1.95556 10 2.44445V4.22222"
+			stroke="#908E96"
+			stroke-width="1.33333"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		/>
+	</svg>
+)
