@@ -2,7 +2,7 @@ import { measureSliceMarkerRange } from "./slice-overlay-geometry"
 import type { Slice, SliceRect } from "./slice-overlay-geometry"
 
 export function scrollToSlice(slice: Slice, uiScale: number) {
-	let sliceRect = slice.rect
+	let sliceRect = measureSliceMarkerRange(slice)
 	if (!sliceRect) return
 
 	const inset = 16 * uiScale

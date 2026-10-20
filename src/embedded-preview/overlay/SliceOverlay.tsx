@@ -1,22 +1,23 @@
-import { useLayoutEffect, useMemo, useState } from "preact/hooks"
+import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { isScrollToSliceMessage, isSliceOverlayMessage } from "../message-protocol"
 import type { MessageHandler, PostMessage, SubscribeToMessages } from "../message-protocol"
 import { scrollToSlice } from "./scroll-to-slice"
 import { findSliceAtElement } from "./slice-overlay-geometry"
 import type { Slice } from "./slice-overlay-geometry"
+import { useSliceRect, useSlices } from "./useSlices"
 import { useStableCallback } from "./useStableCallback"
 
 interface SliceOverlayProps {
 	postMessage: PostMessage
 	subscribeToMessages: SubscribeToMessages
 	uiScale: number
-	slices: Slice[]
 }
 
 export function SliceOverlay(props: SliceOverlayProps) {
-	const { postMessage, slices, subscribeToMessages, uiScale } = props
+	const { postMessage, subscribeToMessages, uiScale } = props
 
+	const { slices, layout } = useSlices(subscribeToMessages)
 	const selectedSlice = useSelectedSlice(slices, subscribeToMessages)
 	const hoveredSlice = useHoveredSlice(slices)
 
@@ -25,14 +26,17 @@ export function SliceOverlay(props: SliceOverlayProps) {
 
 	return (
 		<>
-			{selectedSlice && <SliceHighlight slice={selectedSlice} />}
-			{hoveredSlice && hoveredSlice !== selectedSlice && <SliceHighlight slice={hoveredSlice} />}
+			{selectedSlice && <SliceHighlight slice={selectedSlice} layout={layout} />}
+			{hoveredSlice && hoveredSlice !== selectedSlice && (
+				<SliceHighlight slice={hoveredSlice} layout={layout} />
+			)}
 		</>
 	)
 }
 
 function useHoveredSlice(slices: Slice[]) {
 	const [target, setTarget] = useState<Element | null>(null)
+	const pointer = useRef<PointerEvent>()
 
 	// Slice highlights remain pointer-transparent so they do not block the preview. Hover and slice
 	// selection therefore use document events. Interactive controls added to a highlight should use
@@ -40,6 +44,7 @@ function useHoveredSlice(slices: Slice[]) {
 	useLayoutEffect(() => {
 		function track(event: PointerEvent) {
 			const hoverTarget = event.target instanceof Element ? event.target : null
+			pointer.current = event
 			setTarget(hoverTarget)
 		}
 
@@ -59,6 +64,15 @@ function useHoveredSlice(slices: Slice[]) {
 			window.removeEventListener("blur", clear)
 		}
 	}, [])
+
+	// Browsers don't reliably send pointer events when the hovered element is replaced under a still
+	// pointer, like when the editor re-renders the hovered slice.
+	useLayoutEffect(() => {
+		const event = pointer.current
+		if (event && target?.isConnected === false) {
+			setTarget(document.elementFromPoint(event.clientX, event.clientY))
+		}
+	}, [slices, target])
 
 	const slice = useMemo(() => findSliceAtElement(slices, target), [slices, target])
 
@@ -132,11 +146,13 @@ function useScrollToSlice(
 
 interface SliceHighlightProps {
 	slice: Slice
+	layout: EventTarget
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice } = props
-	const { sliceId, rect, label, variation } = slice
+	const { slice, layout } = props
+	const { sliceId, label, variation } = slice
+	const rect = useSliceRect(slice, layout)
 
 	if (!rect) return null
 

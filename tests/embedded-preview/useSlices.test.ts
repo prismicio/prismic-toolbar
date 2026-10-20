@@ -4,11 +4,13 @@ import { act } from "preact/test-utils"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import type { MessageHandler, SliceMetadata } from "../../src/embedded-preview/message-protocol"
-import type { Slice } from "../../src/embedded-preview/overlay/slice-overlay-geometry"
-import { useSlices } from "../../src/embedded-preview/overlay/useSlices"
+import type { Slice, SliceRect } from "../../src/embedded-preview/overlay/slice-overlay-geometry"
+import { useSliceRect, useSlices } from "../../src/embedded-preview/overlay/useSlices"
 
 let slices: Slice[]
+let rect: SliceRect | undefined
 let publications = 0
+let rectPublications = 0
 let root: ShadowRoot
 let element: HTMLElement
 let resize: () => void
@@ -30,12 +32,23 @@ function sendSlices(metadata: SliceMetadata[]) {
 	)
 }
 
+// Measures the first slice, as a highlight would.
 function Harness() {
-	const currentSlices = useSlices(subscribeToMessages)
+	const { slices: currentSlices, layout } = useSlices(subscribeToMessages)
 	useLayoutEffect(() => {
 		slices = currentSlices
 		publications += 1
 	}, [currentSlices])
+	const slice = currentSlices[0]
+	return slice ? h(Rect, { slice, layout }) : null
+}
+
+function Rect(props: { slice: Slice; layout: EventTarget }) {
+	const currentRect = useSliceRect(props.slice, props.layout)
+	useLayoutEffect(() => {
+		rect = currentRect
+		rectPublications += 1
+	}, [currentRect])
 	return null
 }
 
@@ -67,6 +80,7 @@ beforeEach(() => {
 	act(() => render(h(Harness, {}), root))
 	act(() => sendSlices([{ sliceId: "slice", label: "Hero", variation: "Default" }]))
 	publications = 0
+	rectPublications = 0
 })
 
 afterEach(() => {
@@ -106,11 +120,17 @@ describe("shared slice model", () => {
 		expect(slices).toBe(previous)
 	})
 
-	it("does not publish unchanged slices", () => {
+	it("does not publish unchanged slices or bounds", async () => {
 		act(() => {
 			document.dispatchEvent(new Event("pointermove"))
+			window.dispatchEvent(new Event("scroll"))
 		})
+		await act(async () => {
+			document.body.append(document.createElement("div"))
+		})
+		expect(element.getBoundingClientRect).toHaveBeenCalled()
 		expect(publications).toBe(0)
+		expect(rectPublications).toBe(0)
 	})
 
 	it("refreshes bounds after unrelated DOM changes without restarting resize observation", async () => {
@@ -119,7 +139,8 @@ describe("shared slice model", () => {
 		await act(async () => {
 			document.body.prepend(document.createElement("div"))
 		})
-		expect(slices[0]?.rect?.top).toBe(50)
+		expect(rect?.top).toBe(50)
+		expect(publications).toBe(0)
 		expect(observe).not.toHaveBeenCalled()
 		expect(unobserve).not.toHaveBeenCalled()
 		expect(disconnect).not.toHaveBeenCalled()
@@ -134,7 +155,7 @@ describe("shared slice model", () => {
 		await act(async () => element.replaceWith(replacement))
 		expect(slices).not.toBe(previous)
 		expect(slices[0]?.elements[0]).toBe(replacement)
-		expect(slices[0]?.rect).toEqual(previous[0]?.rect)
+		expect(rect).toEqual({ top: 20, left: 10, width: 200, height: 100 })
 		expect(unobserve).toHaveBeenCalledWith(element)
 		expect(observe).toHaveBeenCalledWith(replacement, { box: "border-box" })
 	})
@@ -157,13 +178,14 @@ describe("shared slice model", () => {
 				label: "Hero",
 				variation: "Default",
 				elements: [replacement],
-				rect: { top: 40, left: 30, width: 250, height: 150 },
 			},
 		])
+		expect(rect).toEqual({ top: 40, left: 30, width: 250, height: 150 })
 		expect(unobserve).toHaveBeenCalledWith(element)
 		expect(observe).toHaveBeenCalledWith(replacement, { box: "border-box" })
 		await act(async () => replacement.remove())
-		expect(slices[0]?.rect).toBeUndefined()
+		expect(slices[0]?.elements).toEqual([])
+		expect(rect).toBeUndefined()
 		expect(unobserve).toHaveBeenCalledWith(replacement)
 	})
 
@@ -176,7 +198,7 @@ describe("shared slice model", () => {
 				else if (event === "pointermove") document.dispatchEvent(new Event(event))
 				else window.dispatchEvent(new Event(event))
 			})
-			expect(slices[0]?.rect).toEqual({ top: 5, left: 10, width: 200, height: 120 })
+			expect(rect).toEqual({ top: 5, left: 10, width: 200, height: 120 })
 		},
 	)
 
