@@ -14,6 +14,7 @@ const placeCommentMessageType = "prismic:embedded-preview:place-comment"
 const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
 const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
+const deleteSliceMessageType = "prismic:embedded-preview:delete-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
 const showPinPreviewMessageType = "prismic:embedded-preview:show-pin-preview"
@@ -87,6 +88,7 @@ const scrollToPinMessageSchema = z.object({
 const sliceOverlayMessageSchema = z.object({
 	type: z.literal(setSliceOverlayMessageType),
 	selectedSliceId: z.optional(nonemptyStringSchema),
+	canDelete: z.optional(z.boolean()),
 })
 
 const scrollToSliceMessageSchema = z.object({
@@ -124,6 +126,10 @@ type PlaceCommentMessage = {
 }
 type SelectSliceMessage = {
 	type: typeof selectSliceMessageType
+	sliceId: string
+}
+type DeleteSliceMessage = {
+	type: typeof deleteSliceMessageType
 	sliceId: string
 }
 type SelectPinMessage = {
@@ -164,6 +170,7 @@ export type Message =
 	| PlaceCommentMessage
 	| SelectPinMessage
 	| SelectSliceMessage
+	| DeleteSliceMessage
 	| DeselectPinMessage
 	| ShowPinPreviewMessage
 	| HidePinPreviewMessage

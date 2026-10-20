@@ -1,3 +1,4 @@
+import type { TargetedMouseEvent } from "preact"
 import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { isScrollToSliceMessage, isSliceOverlayMessage } from "../message-protocol"
@@ -18,7 +19,8 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, subscribeToMessages, uiScale } = props
 
 	const { slices, layout } = useSlices(subscribeToMessages)
-	const selectedSlice = useSelectedSlice(slices, subscribeToMessages)
+	const { selectedSliceId, canDelete } = useSliceOverlayState(subscribeToMessages)
+	const selectedSlice = slices.find((slice) => slice.sliceId === selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
 
 	useSliceSelection(slices, uiScale, postMessage)
@@ -26,9 +28,21 @@ export function SliceOverlay(props: SliceOverlayProps) {
 
 	return (
 		<>
-			{selectedSlice && <SliceHighlight slice={selectedSlice} layout={layout} />}
+			{selectedSlice && (
+				<SliceHighlight
+					slice={selectedSlice}
+					layout={layout}
+					canDelete={canDelete}
+					postMessage={postMessage}
+				/>
+			)}
 			{hoveredSlice && hoveredSlice !== selectedSlice && (
-				<SliceHighlight slice={hoveredSlice} layout={layout} />
+				<SliceHighlight
+					slice={hoveredSlice}
+					layout={layout}
+					canDelete={canDelete}
+					postMessage={postMessage}
+				/>
 			)}
 		</>
 	)
@@ -43,9 +57,9 @@ function useHoveredSlice(slices: Slice[]) {
 	// `pointer-events: auto` and regular `onClick` handlers because they intentionally cover the page.
 	useLayoutEffect(() => {
 		function track(event: PointerEvent) {
-			const hoverTarget = event.target instanceof Element ? event.target : null
+			const hoverTarget = event.composedPath()[0]
 			pointer.current = event
-			setTarget(hoverTarget)
+			setTarget(hoverTarget instanceof Element ? hoverTarget : null)
 		}
 
 		function clear() {
@@ -74,7 +88,12 @@ function useHoveredSlice(slices: Slice[]) {
 		}
 	}, [slices, target])
 
-	const slice = useMemo(() => findSliceAtElement(slices, target), [slices, target])
+	const slice = useMemo(() => {
+		const highlight = target?.closest(".slice-highlight")
+		if (highlight)
+			return slices.find((slice) => slice.sliceId === highlight.getAttribute("data-slice-id"))
+		return findSliceAtElement(slices, target)
+	}, [slices, target])
 
 	return slice
 }
@@ -118,16 +137,16 @@ function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMe
 	}, [selectSlice])
 }
 
-function useSelectedSlice(slices: Slice[], subscribeToMessages: SubscribeToMessages) {
-	const [selectedSliceId, setSelectedSliceId] = useState<string>()
+function useSliceOverlayState(subscribeToMessages: SubscribeToMessages) {
+	const [state, setState] = useState<{ selectedSliceId?: string; canDelete?: boolean }>({})
 
 	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
-			if (isSliceOverlayMessage(data)) setSelectedSliceId(data.selectedSliceId)
+			if (isSliceOverlayMessage(data)) setState(data)
 		})
 	}, [subscribeToMessages])
 
-	return slices.find((slice) => slice.sliceId === selectedSliceId)
+	return state
 }
 
 function useScrollToSlice(
@@ -147,16 +166,23 @@ function useScrollToSlice(
 interface SliceHighlightProps {
 	slice: Slice
 	layout: EventTarget
+	canDelete: boolean | undefined
+	postMessage: PostMessage
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout } = props
+	const { slice, layout, canDelete, postMessage } = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
 
 	if (!rect) return null
 
 	const title = variation ? `${label} • ${variation}` : label
+
+	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
+	}
 
 	return (
 		<div
@@ -165,6 +191,29 @@ function SliceHighlight(props: SliceHighlightProps) {
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
 		>
 			<div className="slice-highlight-label">{title}</div>
+			{canDelete && (
+				<button
+					type="button"
+					className="slice-delete"
+					aria-label="Delete slice"
+					title="Delete slice"
+					onClick={handleDelete}
+				>
+					<svg
+						width="20"
+						height="20"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M3 6h18M9 6V4h6v2M5 6l1 15h12l1-15M10 10v7M14 10v7" />
+					</svg>
+				</button>
+			)}
 		</div>
 	)
 }
