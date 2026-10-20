@@ -13,7 +13,10 @@ import { readyDOM } from "./dom"
 export const shellConnectType = "prismic:shell:connect"
 
 export interface ShellMethods {
-	/** Reads the repository's cookies, without any request. */
+	/**
+	 * Reads the repository's session cookie, and asks Prismic whether the user is signed in when one
+	 * exists.
+	 */
 	getSession(): Promise<{ session: string | null; authenticated: boolean }>
 	/** Deletes the repository's session cookie, so the session does not come back on the next page. */
 	closeSession(): Promise<void>

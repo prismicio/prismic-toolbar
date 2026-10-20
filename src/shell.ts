@@ -39,11 +39,8 @@ const shares = new Map<string, Promise<string>>()
 
 const methods: ShellMethods = {
 	async getSession() {
-		return {
-			session: getCookie(sessionCookieName) ?? null,
-			// Like the bridge, which only asks Prismic when one of these cookies exists.
-			authenticated: Boolean(getCookie("is-logged-in")),
-		}
+		const session = getCookie(sessionCookieName) ?? null
+		return { session, authenticated: Boolean(session) && (await isAuthenticated()) }
 	},
 
 	async closeSession() {
@@ -62,6 +59,16 @@ const methods: ShellMethods = {
 		}
 		return share
 	},
+}
+
+// Prismic's auth cookies are HttpOnly, so only Prismic knows.
+async function isAuthenticated(): Promise<boolean> {
+	try {
+		const response = await fetch("/toolbar/state")
+		return response.ok && Boolean((await response.json()).isAuthenticated)
+	} catch {
+		return false
+	}
 }
 
 async function createShareLink(

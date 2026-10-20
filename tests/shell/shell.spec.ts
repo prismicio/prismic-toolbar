@@ -51,6 +51,11 @@ test("reads, shares, and closes the repository's session", async ({
 			pageURL,
 		)
 
+	let stateRequests = 0
+	context.on("request", (request) => {
+		if (request.url() === `${repository.url}/toolbar/state`) stateRequests++
+	})
+
 	await page.goto(websiteURL)
 	await page.evaluate(async (url) => {
 		window.shell = await window.PrismicShell.connectShell(url)
@@ -62,15 +67,20 @@ test("reads, shares, and closes the repository's session", async ({
 		authenticated: false,
 	})
 	expect(await share()).toBe("No active preview session to share.")
+	expect(stateRequests).toBe(0)
 
+	// Prismic tells whether the user is signed in.
 	await repository.startPreview("ref-1")
-	await context.addCookies([
-		{ name: "is-logged-in", value: "true", url: repository.url, secure: true, sameSite: "None" },
-	])
 	expect(await page.evaluate(() => window.shell.getSession())).toEqual({
 		session: repository.sessionID,
 		authenticated: true,
 	})
+	repository.authenticated = false
+	expect(await page.evaluate(() => window.shell.getSession())).toEqual({
+		session: repository.sessionID,
+		authenticated: false,
+	})
+	expect(stateRequests).toBe(2)
 
 	// Shared once per session and page.
 	expect(await share()).toBe(`${repository.url}/previews/s/share-id`)
@@ -102,6 +112,7 @@ test("reads, shares, and closes the repository's session", async ({
 	expect(sessionCookies).toEqual([])
 	expect(await page.evaluate(() => window.shell.getSession())).toEqual({
 		session: null,
-		authenticated: true,
+		authenticated: false,
 	})
+	expect(stateRequests).toBe(2)
 })
