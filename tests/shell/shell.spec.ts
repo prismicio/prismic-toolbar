@@ -1,6 +1,6 @@
 import { build, type Rolldown } from "vite"
 
-import type * as client from "../../src/lib/shell"
+import type * as client from "../../src/lib/shell-client"
 import { version } from "../../vite.config"
 import { expect, sessionCookieName, test } from "../infra"
 
@@ -22,7 +22,7 @@ test.beforeAll(async () => {
 		logLevel: "warn",
 		build: {
 			write: false,
-			lib: { entry: "src/lib/shell.ts", formats: ["iife"], name: "PrismicShell" },
+			lib: { entry: "src/lib/shell-client.ts", formats: ["iife"], name: "PrismicShell" },
 		},
 	})) as Rolldown.RolldownOutput[]
 	clientScript = output[0]!.output[0].code

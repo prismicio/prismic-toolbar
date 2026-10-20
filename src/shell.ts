@@ -1,4 +1,4 @@
-import { shellPrefix, type ShellMethods, type ShellRequest } from "./lib/shell-protocol"
+import { shellPrefix, type ShellMethods, type ShellRequest } from "./lib/shell-client"
 
 // Runs on the repository host, where the repository's cookies are first-party. Kept apart from
 // `src/lib/cookie.ts`, which handles any website's cookies, so the page stays small.
