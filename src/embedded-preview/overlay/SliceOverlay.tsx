@@ -269,21 +269,21 @@ const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
 	<svg viewBox="0 0 16 16" fill="none" {...props}>
 		<path
 			d="M12.1757 6.88889L11.8667 12.7556C11.8169 13.7068 11.0364 14.4444 10.0916 14.4444H5.90937C4.9636 14.4444 4.18403 13.7067 4.13425 12.7556L3.8252 6.88889"
-			stroke="#908E96"
+			stroke="currentColor"
 			stroke-width="1.33333"
 			stroke-linecap="round"
 			stroke-linejoin="round"
 		/>
 		<path
 			d="M2.44434 4.22222H13.5554"
-			stroke="#908E96"
+			stroke="currentColor"
 			stroke-width="1.33333"
 			stroke-linecap="round"
 			stroke-linejoin="round"
 		/>
 		<path
 			d="M6 4.22222V2.44445C6 1.95556 6.39822 1.55556 6.88889 1.55556H9.11111C9.60178 1.55556 10 1.95556 10 2.44445V4.22222"
-			stroke="#908E96"
+			stroke="currentColor"
 			stroke-width="1.33333"
 			stroke-linecap="round"
 			stroke-linejoin="round"
