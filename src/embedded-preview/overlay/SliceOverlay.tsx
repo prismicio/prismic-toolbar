@@ -273,28 +273,16 @@ const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
 
 function ArrowUpIcon(props: SVGProps<SVGSVGElement>) {
 	return (
-		<svg viewBox="0 0 16 16" fill="none" {...props}>
-			<path
-				d="M8 13V3m-4 4 4-4 4 4"
-				stroke="currentColor"
-				stroke-width="1.33333"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M4 12L5.41 13.41L11 7.83V20H13V7.83L18.58 13.42L20 12L12 4L4 12Z" />
 		</svg>
 	)
 }
 
 function ArrowDownIcon(props: SVGProps<SVGSVGElement>) {
 	return (
-		<svg viewBox="0 0 16 16" fill="none" {...props}>
-			<path
-				d="M8 3v10m-4-4 4 4 4-4"
-				stroke="currentColor"
-				stroke-width="1.33333"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M20 12L18.59 10.59L13 16.17V4H11V16.17L5.42 10.58L4 12L12 20L20 12Z" />
 		</svg>
 	)
 }
