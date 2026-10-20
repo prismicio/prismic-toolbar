@@ -3,7 +3,6 @@
 	border: calc(2px * var(--prismic-overlay-ui-scale)) solid #6e56cf;
 	border-radius: calc(8px * var(--prismic-overlay-ui-scale));
 	display: flex;
-	justify-content: space-between;
 	gap: calc(8px * var(--prismic-overlay-ui-scale));
 	padding: calc(8px * var(--prismic-overlay-ui-scale));
 }
@@ -72,8 +71,8 @@
 	height: calc(16px * var(--prismic-overlay-ui-scale));
 }
 
-.slice-move-group {
-	margin-right: auto;
+.slice-control-group-right {
+	margin-left: auto;
 }
 
 .slice-button:disabled {

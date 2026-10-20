@@ -233,7 +233,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 				</div>
 			)}
 			{!readOnly && (
-				<div className="slice-control-group">
+				<div className="slice-control-group slice-control-group-right">
 					<button
 						type="button"
 						className="slice-button"
