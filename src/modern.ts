@@ -30,6 +30,8 @@ function createModernSession(repositoryHost: string): PreviewSession {
 		preview: { ref, title: "" },
 	}
 	let timer: ReturnType<typeof setInterval> | undefined
+	// The interval and `visibilitychange` must not start a ping while one is in flight.
+	let pinging = false
 
 	function setSnapshot(patch: Partial<PreviewSnapshot>) {
 		snapshot = { ...snapshot, ...patch }
@@ -50,12 +52,13 @@ function createModernSession(repositoryHost: string): PreviewSession {
 	}
 
 	async function tick() {
-		if (snapshot.status !== "polling" || document.visibilityState !== "visible") return
+		if (pinging || snapshot.status !== "polling" || document.visibilityState !== "visible") return
 		// Read on every tick: another tab may have exited or replaced the session.
 		const id = getCookie(sessionCookieName)
 		if (!id) return end()
 
 		let data: { ref?: string; title?: string; close?: boolean }
+		pinging = true
 		try {
 			const url = `${repositoryOrigin(repositoryHost)}/previews/${id}/ping?ref=${encodeURIComponent(ref)}`
 			const response = await fetch(url)
@@ -63,6 +66,8 @@ function createModernSession(repositoryHost: string): PreviewSession {
 			data = await response.json()
 		} catch {
 			return // Transient failure: try again on the next tick.
+		} finally {
+			pinging = false
 		}
 		// The page may have exited or reloaded, or another tab replaced the session, during the ping.
 		if (snapshot.status !== "polling" || getCookie(sessionCookieName) !== id) return

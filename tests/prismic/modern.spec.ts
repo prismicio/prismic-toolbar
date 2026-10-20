@@ -123,6 +123,29 @@ test("exits the preview", async ({ website }) => {
 	expect(website.loads).toEqual(["ref-1", null])
 })
 
+test("waits for a slow ping before the next", async ({ repository, website, context }) => {
+	let inFlight = 0
+	let maxInFlight = 0
+	// Slower than the 3s interval.
+	await context.route(
+		(url) => url.pathname.endsWith("/ping"),
+		async (route) => {
+			maxInFlight = Math.max(maxInFlight, ++inFlight)
+			await new Promise((resolve) => setTimeout(resolve, 3500))
+			inFlight--
+			await route.fallback()
+		},
+	)
+	await website.storePreview("ref-1")
+	await website.goto()
+	await expect.poll(() => inFlight).toBe(1)
+
+	await website.page.evaluate(() => document.dispatchEvent(new Event("visibilitychange")))
+
+	await expect.poll(() => repository.pings.length, { timeout: 10_000 }).toBe(1)
+	expect(maxInFlight).toBe(1)
+})
+
 test("retries after failed pings", async ({ repository, website, context }) => {
 	let failures = 0
 	// A network error, then a server error.
