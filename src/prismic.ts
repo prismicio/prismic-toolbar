@@ -61,7 +61,7 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 		if (getCookie(sessionCookieName)) {
 			loadChunk(`${assets}/modern.js`, "startModern")
 				.then((startModern) => startModern({ repositoryHost, assets }))
-				.catch(console.error)
+				.catch((error: unknown) => warn(`Could not load the preview.\n\n${String(error)}`))
 		}
 		return
 	}
