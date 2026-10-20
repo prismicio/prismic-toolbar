@@ -9,6 +9,7 @@
 
 .slice-control-group {
 	display: flex;
+	z-index: 1;
 	flex-shrink: 0;
 	align-items: center;
 	border: calc(1px * var(--prismic-overlay-ui-scale)) solid #dcdbdd;
@@ -67,8 +68,8 @@
 }
 
 .slice-button-icon {
-	width: calc(16px * var(--prismic-overlay-ui-scale));
-	height: calc(16px * var(--prismic-overlay-ui-scale));
+	width: calc(20px * var(--prismic-overlay-ui-scale));
+	height: calc(20px * var(--prismic-overlay-ui-scale));
 }
 
 .slice-control-group-right {
