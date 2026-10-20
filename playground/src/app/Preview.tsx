@@ -4,20 +4,30 @@ import { useRouter } from "next/navigation"
 import Script from "next/script"
 import { useEffect } from "react"
 
+import type { Flow } from "@/lib/prismic"
+
 /**
- * Mirrors `<PrismicPreview>` from `@prismicio/next`, which always loads the released toolbar, so
- * the playground can load the toolbar under test instead.
+ * Mirrors `<PrismicPreview>` from the flow's `@prismicio/next`, which always loads the released
+ * toolbar, so the playground can load the toolbar under test instead.
  */
-export function Preview(props: { repository: string; toolbarSrc: string; isDraftMode: boolean }) {
-	const { repository, toolbarSrc, isDraftMode } = props
+export function Preview(props: {
+	flow: Flow
+	/** Where the flow's routes live, like `/legacy`. */
+	basePath: string
+	repository: string
+	toolbarSrc: string
+	isDraftMode: boolean
+}) {
+	const { flow, basePath, repository, toolbarSrc, isDraftMode } = props
 	const { refresh } = useRouter()
+	const previewURL = `${basePath}/api/preview`
 
 	useEffect(() => {
 		const controller = new AbortController()
 		const { signal } = controller
 
 		async function start() {
-			const response = await fetch("/api/preview", { redirect: "manual", signal })
+			const response = await fetch(previewURL, { redirect: "manual", signal })
 			if (response.type !== "opaqueredirect") throw new Error("Failed to start the preview.")
 			// A soft refresh cannot leave Next.js's not-found boundary, which renders this tag.
 			if (document.querySelector('meta[name="robots"][content="noindex"]')) location.reload()
@@ -32,7 +42,7 @@ export function Preview(props: { repository: string; toolbarSrc: string; isDraft
 
 		function onEnd(event: Event) {
 			event.preventDefault()
-			fetch("/api/exit-preview", { signal })
+			fetch(`${basePath}/api/exit-preview`, { signal })
 				.then(() => refresh())
 				.catch(console.error)
 		}
@@ -54,7 +64,14 @@ export function Preview(props: { repository: string; toolbarSrc: string; isDraft
 		}
 
 		return () => controller.abort()
-	}, [repository, isDraftMode, refresh])
+	}, [basePath, previewURL, repository, isDraftMode, refresh])
 
-	return <Script src={toolbarSrc} strategy="lazyOnload" />
+	// The modern SDK gives the toolbar its preview route. `next/script` adds `lazyOnload` scripts in
+	// the browser, where the URL resolves against the page.
+	const dataPreviewURL =
+		flow === "modern" && typeof window !== "undefined"
+			? new URL(previewURL, document.baseURI).href
+			: undefined
+
+	return <Script src={toolbarSrc} data-preview-url={dataPreviewURL} strategy="lazyOnload" />
 }

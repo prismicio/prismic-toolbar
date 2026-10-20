@@ -1,9 +1,9 @@
 import type { PrismicDocument } from "@prismicio/client"
 import Link from "next/link"
 
-import { createClient, documentTitle, getRepository } from "@/lib/prismic"
+import { createClient, documentTitle, getRepository, documentURL, type Flow } from "@/lib/prismic"
 
-export default async function Home() {
+export async function Home({ flow }: { flow: Flow }) {
 	const repository = await getRepository()
 	const documents = await getRecentDocuments(repository).catch((error: unknown) => String(error))
 
@@ -18,7 +18,7 @@ export default async function Home() {
 					<ul className="documents">
 						{documents.map((document) => (
 							<li key={document.id}>
-								<Link href={`/documents/${document.id}`}>{documentTitle(document)}</Link>{" "}
+								<Link href={documentURL(flow, document.id)}>{documentTitle(document)}</Link>{" "}
 								<small>{document.type}</small>
 							</li>
 						))}

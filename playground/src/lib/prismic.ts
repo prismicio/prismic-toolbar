@@ -1,12 +1,18 @@
 import * as prismic from "@prismicio/client"
 import { enableAutoPreviews } from "@prismicio/next"
 import { cookies } from "next/headers"
+import type { NextRequest } from "next/server"
+
+/**
+ * Each toolbar flow runs with the `@prismicio/next` that supports it: modern (`v=5`) at `/`, and
+ * legacy at `/legacy`.
+ */
+export type Flow = "modern" | "legacy"
+
+export const basePath = { modern: "", legacy: "/legacy" } satisfies Record<Flow, string>
 
 /** Remembers the repository picked in the playground. */
 export const repositoryCookie = "playground-repository"
-
-/** The preview session the toolbar follows with `v=5`, set by the preview route. */
-export const sessionCookie = "io.prismic.previewSession"
 
 const defaultRepository = process.env.NEXT_PUBLIC_DEFAULT_REPOSITORY || "prismic-main"
 
@@ -38,9 +44,9 @@ function endpoint(repository: string) {
 
 /**
  * The toolbar to test: `TOOLBAR_SRC` when set, as `npm run dev` does, the pull request's build on
- * pull request deployments, or the released toolbar. `TOOLBAR_V5=true` opts into the modern flow.
+ * pull request deployments, or the released toolbar. The modern flow opts into `v=5`.
  */
-export function getToolbarSrc(repository: string): string {
+export function getToolbarSrc(repository: string, flow: Flow): string {
 	const pullRequest = process.env.VERCEL_GIT_PULL_REQUEST_ID
 	const src =
 		process.env.TOOLBAR_SRC ||
@@ -48,11 +54,39 @@ export function getToolbarSrc(repository: string): string {
 			? `https://prismic.io/prismic-toolbar/pr-${pullRequest}/prismic.js`
 			: "https://static.cdn.prismic.io/prismic.js")
 
-	const version = process.env.TOOLBAR_V5 === "true" ? "&v=5" : ""
-	return `${src}?repo=${encodeURIComponent(repository)}${version}`
+	return `${src}?repo=${encodeURIComponent(repository)}${flow === "modern" ? "&v=5" : ""}`
 }
 
-export const linkResolver: prismic.LinkResolverFunction = (document) => `/documents/${document.id}`
+export function documentURL(flow: Flow, id: string): string {
+	return `${basePath[flow]}/documents/${id}`
+}
+
+/**
+ * Previews started from Prismic carry the repository in their token. Remembers it, so the editor
+ * can preview any repository whose preview settings point here.
+ */
+export async function rememberRepository(request: NextRequest): Promise<string | undefined> {
+	const repository = repositoryFromToken(request.nextUrl.searchParams.get("token"))
+	if (repository) {
+		;(await cookies()).set(repositoryCookie, repository, {
+			path: "/",
+			maxAge: 60 * 60 * 24 * 365,
+			// The editor previews the playground in a cross-site iframe.
+			sameSite: "none",
+			secure: true,
+		})
+	}
+	return repository
+}
+
+// Tokens look like `https://example.prismic.io/previews/…` or `https://example.wroom.io/previews/…`.
+function repositoryFromToken(token: string | null): string | undefined {
+	if (!URL.canParse(token ?? "")) return undefined
+
+	const host = new URL(token as string).hostname.replace(".cdn.", ".")
+	const repository = host.endsWith(".prismic.io") ? host.split(".")[0] : host
+	return repository && isRepository(repository) ? repository : undefined
+}
 
 export function documentTitle(document: prismic.PrismicDocument): string {
 	const { title } = document.data

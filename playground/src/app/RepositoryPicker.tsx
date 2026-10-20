@@ -2,7 +2,7 @@
 
 import type { FormEvent } from "react"
 
-export function RepositoryPicker({ repository }: { repository: string }) {
+export function RepositoryPicker({ repository, home }: { repository: string; home: string }) {
 	function pick(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault()
 		const value = new FormData(event.currentTarget).get("repository")?.toString().trim()
@@ -11,7 +11,7 @@ export function RepositoryPicker({ repository }: { repository: string }) {
 		// `SameSite=None` lets the editor's cross-site preview iframe read it too.
 		document.cookie = `playground-repository=${encodeURIComponent(value)}; path=/; max-age=31536000; samesite=none; secure`
 		// The toolbar reads its repository once, when it loads.
-		location.assign("/")
+		location.assign(home)
 	}
 
 	return (

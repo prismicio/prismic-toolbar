@@ -6,7 +6,18 @@ A minimal Next.js website to try the toolbar with a real repository, locally and
 
 The playground shows `prismic-main` by default; set `NEXT_PUBLIC_DEFAULT_REPOSITORY` to change it. Pick another repository in the header: a name, like `prismic-main`, or a host outside `prismic.io`, like `example.wroom.io`. The choice is remembered in a cookie. Previews started from Prismic switch to their repository automatically.
 
-To preview from Prismic, add the playground to the repository's previews, with `/api/preview` as the preview route.
+To preview from Prismic, add the playground to the repository's previews, with `/api/preview` as the preview route. Add `/legacy/api/preview` as another preview to try the legacy flow.
+
+## Flows
+
+| Where     | Flow                                   | SDK                                                                                           |
+| --------- | -------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `/`       | Modern: the toolbar loads with `&v=5`  | `@prismicio/next` from [prismic-next#175](https://github.com/prismicio/prismic-next/pull/175) |
+| `/legacy` | Legacy: the toolbar follows its iframe | `@prismicio/next-legacy`, an alias of `@prismicio/next@2.3.3`                                 |
+
+Each flow has its own preview and exit routes under its path. The header switches between them.
+
+In the modern flow, the preview route stores the URL's `session` parameter in the `io.prismic.previewSession` cookie, and the toolbar follows that session with Prismic's public ping. The Prismic editor does not add `session` to preview URLs yet, so editor previews fall back to the legacy flow. To try the modern flow, open a preview from the editor once, copy the `io.prismic.previewSession` cookie of `<repository>.prismic.io` from the browser's developer tools, and open the preview URL again with `&session=<that value>` added.
 
 ## Toolbar
 
@@ -20,13 +31,7 @@ To preview from Prismic, add the playground to the repository's previews, with `
 
 Locally, the toolbar's hidden iframe still loads from the repository host, from the folder of the build. Local builds are never deployed, so `npm run dev` names its build after the last commit deployed from `origin/master` and reuses that iframe. Run `TOOLBAR_VERSION=pr-<number> npm run dev` to reuse a pull request's iframe instead, to test changes to it. The editor's live preview does not need the iframe and works with any local build.
 
-`<PrismicPreview>` from `@prismicio/next` always loads the released toolbar, so `src/app/Preview.tsx` mirrors it with a configurable script.
-
-### Modern flow (`v=5`)
-
-Set `TOOLBAR_V5=true` to load the toolbar with `&v=5`, locally (`TOOLBAR_V5=true npm run dev`) or in the Vercel project's environment variables. The preview route then acts like an SDK that opts into `v=5`: it stores the `session` query parameter in the `io.prismic.previewSession` cookie, and `/api/exit-preview` deletes it. The toolbar follows that session with Prismic's public ping, without its iframe.
-
-The Prismic editor does not add `session` to preview URLs yet. Until it does, previews from the editor use the legacy flow. To try the modern flow, open a preview from the editor once, copy the `io.prismic.previewSession` cookie of the repository host (`<repository>.prismic.io`) from the browser's developer tools, and open the preview URL again with `&session=<that value>` added.
+`<PrismicPreview>` always loads the released toolbar, so `src/app/Preview.tsx` mirrors it for each flow, with a configurable script.
 
 ## Vercel
 
