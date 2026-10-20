@@ -62,12 +62,25 @@
 	pointer-events: auto;
 }
 
-.slice-button:hover,
-.slice-button:focus-visible {
+.slice-button:enabled:hover,
+.slice-button:enabled:focus-visible {
 	background: #f4f2f4;
 }
 
 .slice-button-icon {
 	width: calc(16px * var(--prismic-overlay-ui-scale));
 	height: calc(16px * var(--prismic-overlay-ui-scale));
+}
+
+.slice-move-group {
+	margin-right: auto;
+}
+
+.slice-arrow-down {
+	transform: rotate(180deg);
+}
+
+.slice-button:disabled {
+	opacity: 0.5;
+	cursor: default;
 }

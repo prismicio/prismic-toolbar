@@ -50,7 +50,7 @@ test("delete controls follow editor permissions and remain keyboard accessible a
 	await expect(button).toBeVisible()
 	await expect(button).toHaveCSS("width", "28px")
 	await expect(button).toHaveCSS("height", "28px")
-	const actions = editor.overlay.locator(".slice-control-group:has(.slice-button)")
+	const actions = editor.overlay.locator('.slice-control-group:has([aria-label="Delete slice"])')
 	await expect(actions).toHaveCSS("height", "34px")
 	await button.focus()
 	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })

@@ -179,6 +179,11 @@ function SliceHighlight(props: SliceHighlightProps) {
 
 	if (!rect) return null
 
+	function handleMove(event: TargetedMouseEvent<HTMLButtonElement>, direction: "up" | "down") {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:move-slice", sliceId, direction })
+	}
+
 	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
 		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
@@ -203,6 +208,30 @@ function SliceHighlight(props: SliceHighlightProps) {
 					)}
 				</div>
 			</div>
+			{!readOnly && (
+				<div className="slice-control-group slice-move-group">
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Move slice up"
+						title="Move slice up"
+						disabled={!slice.canMoveUp}
+						onClick={(event) => handleMove(event, "up")}
+					>
+						<ArrowIcon className="slice-button-icon" />
+					</button>
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Move slice down"
+						title="Move slice down"
+						disabled={!slice.canMoveDown}
+						onClick={(event) => handleMove(event, "down")}
+					>
+						<ArrowIcon className="slice-button-icon slice-arrow-down" />
+					</button>
+				</div>
+			)}
 			{!readOnly && (
 				<div className="slice-control-group">
 					<button
@@ -245,3 +274,17 @@ const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
 		/>
 	</svg>
 )
+
+function ArrowIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 16 16" fill="none" {...props}>
+			<path
+				d="M8 13V3m-4 4 4-4 4 4"
+				stroke="currentColor"
+				stroke-width="1.33333"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		</svg>
+	)
+}
