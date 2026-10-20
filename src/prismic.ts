@@ -57,18 +57,21 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 		return
 	}
 
-	if (requestedVersion !== "5") return startLegacy({ repositoryHost, assets, connect })
-
-	// SDKs that opt into `v=5` store the session ID next to the ref.
-	const previewing = getCookie(previewCookieName)
-	if (previewing && getCookie(sessionCookieName)) {
+	const previewCookie = getCookie(previewCookieName)
+	const sessionCookie = getCookie(sessionCookieName)
+	if (requestedVersion === "5" && previewCookie && sessionCookie) {
 		loadChunk(`${assets}/modern.js`, "startModern")
 			.then((startModern) => startModern({ repositoryHost, assets }))
 			.catch(console.error)
-	} else if (previewing || document.referrer.startsWith(`${repositoryOrigin(repositoryHost)}/`)) {
-		// Previews opened without a session ID, and share links created before the SDK opted in.
-		startLegacy({ repositoryHost, assets, connect })
+		return
 	}
+
+	// With `v=5`, legacy only runs for previews opened without a session, and for share links
+	// created before the SDK opted in, which redirect from the repository host.
+	const fromRepository = document.referrer.startsWith(`${repositoryOrigin(repositoryHost)}/`)
+	if (requestedVersion === "5" && !previewCookie && !fromRepository) return
+
+	startLegacy({ repositoryHost, assets, connect })
 }
 
 async function setupEmbeddedPreview(assets: string, options?: EmbeddedPreviewOptions) {
