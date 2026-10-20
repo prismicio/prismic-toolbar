@@ -76,10 +76,6 @@
 	margin-right: auto;
 }
 
-.slice-arrow-down {
-	transform: rotate(180deg);
-}
-
 .slice-button:disabled {
 	opacity: 0.5;
 	cursor: default;

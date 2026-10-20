@@ -218,7 +218,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 						disabled={!slice.canMoveUp}
 						onClick={(event) => handleMove(event, "up")}
 					>
-						<ArrowIcon className="slice-button-icon" />
+						<ArrowUpIcon className="slice-button-icon" />
 					</button>
 					<button
 						type="button"
@@ -228,7 +228,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 						disabled={!slice.canMoveDown}
 						onClick={(event) => handleMove(event, "down")}
 					>
-						<ArrowIcon className="slice-button-icon slice-arrow-down" />
+						<ArrowDownIcon className="slice-button-icon" />
 					</button>
 				</div>
 			)}
@@ -275,11 +275,25 @@ const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
 	</svg>
 )
 
-function ArrowIcon(props: SVGProps<SVGSVGElement>) {
+function ArrowUpIcon(props: SVGProps<SVGSVGElement>) {
 	return (
 		<svg viewBox="0 0 16 16" fill="none" {...props}>
 			<path
 				d="M8 13V3m-4 4 4-4 4 4"
+				stroke="currentColor"
+				stroke-width="1.33333"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		</svg>
+	)
+}
+
+function ArrowDownIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 16 16" fill="none" {...props}>
+			<path
+				d="M8 3v10m-4-4 4 4 4-4"
 				stroke="currentColor"
 				stroke-width="1.33333"
 				stroke-linecap="round"
