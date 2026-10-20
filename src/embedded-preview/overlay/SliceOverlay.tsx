@@ -218,7 +218,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 							title="Change variation"
 							onClick={handleChangeVariation}
 						>
-							<BrushIcon className="slice-button-icon" />
+							<DescriptionIcon className="slice-button-icon" />
 						</button>
 					)}
 					<button
@@ -242,23 +242,10 @@ const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
 	</svg>
 )
 
-function BrushIcon(props: SVGProps<SVGSVGElement>) {
+function DescriptionIcon(props: SVGProps<SVGSVGElement>) {
 	return (
-		<svg viewBox="0 0 16 16" fill="none" {...props}>
-			<path
-				d="M6.18311 8.03911L12.0302 2.192C12.5822 1.64 13.4782 1.64 14.0302 2.192C14.5822 2.744 14.5822 3.64 14.0302 4.192L8.18311 10.0391"
-				stroke="currentColor"
-				stroke-width="1.33333"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
-			<path
-				d="M1.55554 13.072C3.95821 13.7938 5.90754 13.8542 7.50132 12.2231C8.46221 11.2587 8.46221 9.69422 7.50132 8.72889C6.54043 7.76355 4.98932 7.74933 4.02043 8.72889C2.44443 10.3218 3.82043 11.8347 1.55554 13.072Z"
-				stroke="currentColor"
-				stroke-width="1.33333"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M8 16H16V18H8V16ZM8 12H16V14H8V12ZM14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
 		</svg>
 	)
 }
