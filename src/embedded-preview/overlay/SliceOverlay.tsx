@@ -19,7 +19,7 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, subscribeToMessages, uiScale } = props
 
 	const { slices, layout } = useSlices(subscribeToMessages)
-	const { selectedSliceId, canDelete } = useSliceOverlayState(subscribeToMessages)
+	const { selectedSliceId, readOnly = true } = useSliceOverlayState(subscribeToMessages)
 	const selectedSlice = slices.find((slice) => slice.sliceId === selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
 
@@ -32,7 +32,7 @@ export function SliceOverlay(props: SliceOverlayProps) {
 				<SliceHighlight
 					slice={selectedSlice}
 					layout={layout}
-					canDelete={canDelete}
+					readOnly={readOnly}
 					postMessage={postMessage}
 				/>
 			)}
@@ -40,7 +40,7 @@ export function SliceOverlay(props: SliceOverlayProps) {
 				<SliceHighlight
 					slice={hoveredSlice}
 					layout={layout}
-					canDelete={canDelete}
+					readOnly={readOnly}
 					postMessage={postMessage}
 				/>
 			)}
@@ -138,7 +138,7 @@ function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMe
 }
 
 function useSliceOverlayState(subscribeToMessages: SubscribeToMessages) {
-	const [state, setState] = useState<{ selectedSliceId?: string; canDelete?: boolean }>({})
+	const [state, setState] = useState<{ selectedSliceId?: string; readOnly?: boolean }>({})
 
 	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
@@ -166,12 +166,12 @@ function useScrollToSlice(
 interface SliceHighlightProps {
 	slice: Slice
 	layout: EventTarget
-	canDelete: boolean | undefined
+	readOnly: boolean
 	postMessage: PostMessage
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout, canDelete, postMessage } = props
+	const { slice, layout, readOnly, postMessage } = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
 
@@ -191,7 +191,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
 		>
 			<div className="slice-highlight-label">{title}</div>
-			{canDelete && (
+			{!readOnly && (
 				<button
 					type="button"
 					className="slice-delete"
