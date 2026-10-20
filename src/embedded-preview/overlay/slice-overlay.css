@@ -1,7 +1,7 @@
 .slice-highlight {
 	position: absolute;
 	border: calc(2px * var(--prismic-overlay-ui-scale)) solid #6e56cf;
-	border-radius: calc(8px * var(--prismic-overlay-ui-scale));
+	border-radius: calc(12px * var(--prismic-overlay-ui-scale));
 	display: flex;
 	gap: calc(8px * var(--prismic-overlay-ui-scale));
 	padding: calc(8px * var(--prismic-overlay-ui-scale));
