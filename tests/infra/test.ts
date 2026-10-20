@@ -32,7 +32,7 @@ declare global {
 	}
 }
 
-/** A Prismic repository with a fake preview session, serving the toolbar's iframe. */
+/** A Prismic repository with a fake preview session, serving the toolbar's iframe and shell. */
 export class Repository {
 	readonly host = "toolbar-e2e.prismic.io"
 	readonly url = `https://${this.host}`
@@ -75,8 +75,10 @@ export class Repository {
 	private async handle(route: Route) {
 		const url = new URL(route.request().url())
 
-		if (url.pathname === `/prismic-toolbar/${version}/iframe.html`) {
-			return route.fulfill({ path: toolbarFile("iframe.html") })
+		for (const page of ["iframe.html", "shell.html"]) {
+			if (url.pathname === `/prismic-toolbar/${version}/${page}`) {
+				return route.fulfill({ path: toolbarFile(page) })
+			}
 		}
 		if (url.pathname === "/toolbar/state") {
 			return route.fulfill({
