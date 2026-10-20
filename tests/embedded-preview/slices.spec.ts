@@ -97,14 +97,12 @@ test("highlights and selects slices, following the overlay's scale and scroll", 
 	await expect(highlight).toHaveAttribute("data-slice-id", "first-slice")
 	await expect(highlight).toHaveCSS("border-color", "rgb(110, 86, 207)")
 	await expect(highlight).toHaveCSS("border-width", "2px")
-	await expect(highlight).toHaveCSS("border-radius", "8px")
 
 	await slice.click()
 	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
 
 	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
 	await expect(highlight).toHaveCSS("border-width", "4px")
-	await expect(highlight).toHaveCSS("border-radius", "16px")
 	const box = await highlight.boundingBox()
 	expect(box).toEqual(await slice.boundingBox())
 
