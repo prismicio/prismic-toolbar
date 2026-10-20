@@ -71,11 +71,11 @@ afterEach(() => {
 
 it("requests a variation change for the hovered instance while another is selected", () => {
 	overlay(false)
-	act(() =>
+	act(() => {
 		document
 			.querySelector("#second")!
-			.dispatchEvent(new MouseEvent("pointerover", { bubbles: true })),
-	)
+			.dispatchEvent(new MouseEvent("pointerover", { bubbles: true }))
+	})
 	const change = root.querySelector<HTMLButtonElement>(
 		'[data-slice-id="second"] [aria-label="Change variation"]',
 	)!
