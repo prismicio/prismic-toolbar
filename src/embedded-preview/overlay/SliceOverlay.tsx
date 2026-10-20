@@ -179,6 +179,11 @@ function SliceHighlight(props: SliceHighlightProps) {
 
 	if (!rect) return null
 
+	function handleChangeVariation(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:change-slice-variation", sliceId })
+	}
+
 	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
 		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
@@ -205,6 +210,17 @@ function SliceHighlight(props: SliceHighlightProps) {
 			</div>
 			{!readOnly && (
 				<div className="slice-control-group">
+					{variation !== undefined && (
+						<button
+							type="button"
+							className="slice-button"
+							aria-label="Change variation"
+							title="Change variation"
+							onClick={handleChangeVariation}
+						>
+							<BrushIcon className="slice-button-icon" />
+						</button>
+					)}
 					<button
 						type="button"
 						className="slice-button"
@@ -245,3 +261,17 @@ const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
 		/>
 	</svg>
 )
+
+function BrushIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 16 16" fill="none" {...props}>
+			<path
+				d="m6.5 8.5 6-6a1.414 1.414 0 0 1 2 2l-6 6M6.5 8.5l2 2M6.5 8.5c-2-1-3.5.5-3.5 2.5 0 1-1 2-2 2 2 1 5 1 6-1 .5-.5 1-1 1.5-1.5"
+				stroke="currentColor"
+				stroke-width="1.33333"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+		</svg>
+	)
+}
