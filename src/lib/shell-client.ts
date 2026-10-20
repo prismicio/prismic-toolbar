@@ -29,10 +29,10 @@ export interface Shell extends ShellMethods {
 }
 
 /**
- * Loads the repository's shell page and connects to it. Rejects when it does not answer in time,
- * and so does each call.
+ * Loads the repository's shell page and connects to it. Rejects when it does not answer within 15
+ * seconds, and so does each call.
  */
-export async function connectShell(url: string, timeout = 15_000): Promise<Shell> {
+export async function connectShell(url: string): Promise<Shell> {
 	await readyDOM()
 
 	const iframe = Object.assign(document.createElement("iframe"), {
@@ -70,7 +70,7 @@ export async function connectShell(url: string, timeout = 15_000): Promise<Shell
 	}
 
 	try {
-		await withTimeout(connected, timeout, "the repository shell did not answer in time")
+		await withTimeout(connected, "the repository shell did not answer in time")
 	} catch (error) {
 		dispose()
 		throw error
@@ -85,7 +85,7 @@ export async function connectShell(url: string, timeout = 15_000): Promise<Shell
 			})
 		})
 		port.postMessage({ id, method, params })
-		return withTimeout(response, timeout, `${method} timed out`).finally(() => pending.delete(id))
+		return withTimeout(response, `${method} timed out`).finally(() => pending.delete(id))
 	}
 
 	return {
@@ -96,10 +96,10 @@ export async function connectShell(url: string, timeout = 15_000): Promise<Shell
 	}
 }
 
-function withTimeout<T>(promise: Promise<T>, timeout: number, reason: string): Promise<T> {
+function withTimeout<T>(promise: Promise<T>, reason: string): Promise<T> {
 	let timer: ReturnType<typeof setTimeout> | undefined
 	const timedOut = new Promise<never>((_, reject) => {
-		timer = setTimeout(() => reject(new Error(`Prismic toolbar: ${reason}.`)), timeout)
+		timer = setTimeout(() => reject(new Error(`Prismic toolbar: ${reason}.`)), 15_000)
 	})
 	return Promise.race([promise, timedOut]).finally(() => clearTimeout(timer))
 }
