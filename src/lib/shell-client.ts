@@ -2,16 +2,15 @@ import { readyDOM } from "./dom"
 
 /**
  * Protocol between legacy websites and the shell page on the repository host, which reads the
- * repository's cookies for them. The shell will move to a stable path shared by every `prismic.js`
- * version, so this protocol is frozen: add new message types, never change existing ones. Both ends
- * ignore messages they do not know.
+ * repository's cookies for them. The shell deploys next to each `prismic.js`, so both change
+ * together.
  *
  * - The website posts `connect` to the shell's window with a `MessagePort`, which carries every later
- *   message. The shell answers `ready`.
- * - The website calls a method with `{ type: "<prefix><method>", id, params }`.
- * - The shell answers `{ type: "<prefix>response", id, result }`, or `error` instead of `result`.
+ *   message. The shell answers `"ready"`.
+ * - The website calls a method with `{ id, method, params }`.
+ * - The shell answers `{ id, result }`, or `{ id, error }`.
  */
-export const shellPrefix = "prismic:shell:"
+export const shellConnectType = "prismic:shell:connect"
 
 export interface ShellMethods {
 	/** Reads the repository's cookies, without any request. */
@@ -22,8 +21,8 @@ export interface ShellMethods {
 	share(pageURL: string, title: string): Promise<string>
 }
 
-export type ShellRequest = { type: string; id: number; params: unknown[] }
-export type ShellResponse = { type: string; id: number } & ({ result: unknown } | { error: string })
+export type ShellRequest = { id: number; method: keyof ShellMethods; params: unknown[] }
+export type ShellResponse = { id: number } & ({ result: unknown } | { error: string })
 
 export interface Shell extends ShellMethods {
 	dispose(): void
@@ -49,16 +48,16 @@ export async function connectShell(url: string, timeout = 15_000): Promise<Shell
 	let lastId = 0
 
 	const connected = new Promise<void>((resolve) => {
-		port.onmessage = ({ data }: MessageEvent<ShellResponse | null>) => {
-			if (data?.type === `${shellPrefix}ready`) resolve()
-			else if (data?.type === `${shellPrefix}response`) pending.get(data.id)?.(data)
+		port.onmessage = ({ data }: MessageEvent<ShellResponse | "ready">) => {
+			if (data === "ready") resolve()
+			else pending.get(data.id)?.(data)
 		}
 	})
 	// A port can only be transferred once, so a reloaded shell must not resend it.
 	iframe.addEventListener(
 		"load",
 		() => {
-			const message = { type: `${shellPrefix}connect` }
+			const message = { type: shellConnectType }
 			iframe.contentWindow?.postMessage(message, new URL(url).origin, [port2])
 		},
 		{ once: true },
@@ -85,7 +84,7 @@ export async function connectShell(url: string, timeout = 15_000): Promise<Shell
 				else resolve(data.result as T)
 			})
 		})
-		port.postMessage({ type: `${shellPrefix}${method}`, id, params })
+		port.postMessage({ id, method, params })
 		return withTimeout(response, timeout, `${method} timed out`).finally(() => pending.delete(id))
 	}
 

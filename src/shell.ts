@@ -1,4 +1,4 @@
-import { shellPrefix, type ShellMethods, type ShellRequest } from "./lib/shell-client"
+import { shellConnectType, type ShellMethods, type ShellRequest } from "./lib/shell-client"
 
 // Runs on the repository host, where the repository's cookies are first-party. Kept apart from
 // `src/lib/cookie.ts`, which handles any website's cookies, so the page stays small.
@@ -89,19 +89,15 @@ async function createShareLink(
 }
 
 addEventListener("message", ({ data, ports: [port] }) => {
-	if (data?.type !== `${shellPrefix}connect` || !port) return
+	if (data?.type !== shellConnectType || !port) return
 
-	port.onmessage = async ({ data }: MessageEvent<ShellRequest | null>) => {
-		const method = data?.type?.slice(shellPrefix.length) as keyof ShellMethods
-		if (!data?.type?.startsWith(shellPrefix) || !Object.hasOwn(methods, method)) return
-
-		const response = { type: `${shellPrefix}response`, id: data.id }
+	port.onmessage = async ({ data: { id, method, params } }: MessageEvent<ShellRequest>) => {
 		try {
 			const handler = methods[method] as (...params: unknown[]) => unknown
-			port.postMessage({ ...response, result: await handler(...data.params) })
+			port.postMessage({ id, result: await handler(...params) })
 		} catch (error) {
-			port.postMessage({ ...response, error: (error as Error).message })
+			port.postMessage({ id, error: (error as Error).message })
 		}
 	}
-	port.postMessage({ type: `${shellPrefix}ready` })
+	port.postMessage("ready")
 })
