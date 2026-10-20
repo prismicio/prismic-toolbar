@@ -20,12 +20,13 @@ The following setup is required to work on this project:
 
 Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<version>/`. A folder of the same name holds its code:
 
-| Entry                     | Loaded                                                | Code                                               |
-| ------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
-| `src/prismic.ts`          | On every page, by the install snippet                 | `src/lib`                                          |
-| `src/toolbar.ts`          | Only while a preview session is active                | `src/toolbar`: the preview bar                     |
-| `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe       | `src/embedded-preview`: comment and slice overlays |
-| `src/iframe.ts`           | Hidden, from the repository host, to read its cookies | `src/iframe`, inlined into `src/iframe.html`       |
+| Entry                     | Loaded                                                | Code                                                |
+| ------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
+| `src/prismic.ts`          | On every page, by the install snippet                 | `src/lib`                                           |
+| `src/legacy.ts`           | On websites, bundled into `prismic.js`                | `src/lib`: previews through the repository's iframe |
+| `src/toolbar.ts`          | Only while a preview session is active                | `src/toolbar`: the preview bar                      |
+| `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe       | `src/embedded-preview`: comment and slice overlays  |
+| `src/iframe.ts`           | Hidden, from the repository host, to read its cookies | `src/iframe`, inlined into `src/iframe.html`        |
 
 - Each file is a self-contained classic script. The CDN sends no CORS headers, so `prismic.js` loads the other bundles as classic scripts, and they register on `window.__prismicToolbar`.
 - `src/lib` holds the logic of `prismic.js` and code the bundles share. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `embedded-push.ts` handles refs the editor pushes into its preview iframe.

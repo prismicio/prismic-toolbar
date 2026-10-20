@@ -1,7 +1,15 @@
+import { startLegacy } from "./legacy"
 import { connectBridge } from "./lib/bridge"
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
 import { createEmbeddedPush } from "./lib/embedded-push"
-import { detectMode, findRepositoryHost, repositoryOrigin, warn, type ToolbarMode } from "./lib/env"
+import {
+	detectMode,
+	findRepositoryHost,
+	findVersion,
+	repositoryOrigin,
+	warn,
+	type ToolbarMode,
+} from "./lib/env"
 import { createPreviewSession } from "./lib/preview-session"
 
 // Replaced at build time, see `vite.config.ts`.
@@ -10,8 +18,10 @@ declare const CDN_HOST: string
 /** The asset folder, such as a commit's short SHA or `pr-<number>`. See `vite.config.ts`. */
 declare const __TOOLBAR_VERSION__: string
 
+// The script's parameters must be read now: `document.currentScript` is only set while it first runs.
 const mode = detectMode()
 const repositoryHost = findRepositoryHost()
+const _requestedVersion = findVersion()
 
 if (mode) {
 	if (repositoryHost) start(mode, repositoryHost)
@@ -28,6 +38,7 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 	const connect = () =>
 		connectBridge(`${repositoryOrigin(repositoryHost)}/prismic-toolbar/${version}/iframe.html`)
 
+	// The editor drives embedded modes, whatever the website's SDK opts into.
 	if (mode === "embedded-push") {
 		void setupEmbeddedPreview(assets, { onRef: createEmbeddedPush({ repositoryHost }) })
 		return
@@ -44,21 +55,8 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 		return
 	}
 
-	const session = createPreviewSession({
-		repositoryHost,
-		codec: "json",
-		watchCookie: true,
-		connect,
-	})
-	// The preview bar only loads once a preview session is active.
-	const unsubscribe = session.subscribe((snapshot) => {
-		if (snapshot.status !== "polling") return
-		unsubscribe()
-		loadChunk(`${assets}/toolbar.js`, "mountToolbar")
-			.then((mountToolbar) => mountToolbar({ session, repositoryHost }))
-			.catch((error: unknown) => warn(`Could not load the preview toolbar.\n\n${String(error)}`))
-	})
-	void session.start()
+	// Websites whose SDK opts into `v=5` (`_requestedVersion`) will start the modern flow here.
+	startLegacy({ repositoryHost, assets, connect })
 }
 
 async function setupEmbeddedPreview(assets: string, options?: EmbeddedPreviewOptions) {

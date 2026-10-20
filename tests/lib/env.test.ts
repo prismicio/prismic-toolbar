@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it, vi } from "vitest"
 
 import {
 	detectMode,
 	findRepositoryHost,
+	findVersion,
 	parseRepositoryHost,
 	repositoryOrigin,
 } from "../../src/lib/env"
@@ -55,6 +56,37 @@ describe("findRepositoryHost", () => {
 
 		document.head.innerHTML = `<script src="https://static.cdn.prismic.io/prismic.js"></script>`
 		expect(findRepositoryHost()).toBeUndefined()
+	})
+})
+
+describe("findVersion", () => {
+	it("reads the v parameter of the last toolbar script when currentScript is unavailable", () => {
+		document.head.innerHTML = `
+			<script src="https://static.cdn.prismic.io/prismic.js?repo=first&v=4"></script>
+			<script src="https://example.com/other.js?v=6"></script>
+			<script src="https://static.cdn.prismic.io/prismic.min.js?new=true&repo=second&v=5"></script>
+		`
+		expect(findVersion()).toBe("5")
+
+		document.head.innerHTML = `<script src="https://static.cdn.prismic.io/prismic.js?repo=example"></script>`
+		expect(findVersion()).toBeUndefined()
+
+		document.head.innerHTML = `<script src="https://static.cdn.prismic.io/prismic.js?repo=example&v="></script>`
+		expect(findVersion()).toBeUndefined()
+	})
+})
+
+describe("findRepositoryHost and findVersion", () => {
+	it("read the running script first", () => {
+		document.head.innerHTML = `
+			<script id="running" src="https://static.cdn.prismic.io/prismic.js?repo=running&v=5"></script>
+			<script src="https://static.cdn.prismic.io/prismic.js?repo=last"></script>
+		`
+		vi.spyOn(document, "currentScript", "get").mockReturnValue(
+			document.querySelector<HTMLScriptElement>("#running"),
+		)
+		expect(findRepositoryHost()).toBe("running.prismic.io")
+		expect(findVersion()).toBe("5")
 	})
 })
 
