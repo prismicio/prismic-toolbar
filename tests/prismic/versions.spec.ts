@@ -21,6 +21,17 @@ test("starts modern with only a session", async ({ website, requests }) => {
 	expect(loaded(requests, "iframe.html")).toBe(false)
 })
 
+test("starts the preview with the session's first ref", async ({ website }) => {
+	await website.storePreview("ref-1", { preview: false })
+	await website.goto({ events: "handle" })
+
+	await expect
+		.poll(() => website.recordedEvents(), { timeout: 10_000 })
+		.toEqual([["prismicPreviewStart", "ref-1"]])
+	expect((await website.cookie(previewCookieName))?.value).toBe("ref-1")
+	expect(website.loads).toEqual([null])
+})
+
 test("does nothing without a session", async ({ repository, website, requests }) => {
 	await website.storePreview("ref-1", { session: false })
 	await website.page.goto(website.url, { referer: `${repository.url}/previews/s/share-id` })

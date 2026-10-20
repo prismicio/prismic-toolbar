@@ -77,7 +77,8 @@ function createModernSession(repositoryHost: string): PreviewSession {
 		if (!setCookie(previewCookieName, ref)) {
 			return warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 		}
-		if (dispatchPreviewEvent("prismicPreviewUpdate", ref)) {
+		// Without a previous ref, the page does not show the session yet.
+		if (dispatchPreviewEvent(previous ? "prismicPreviewUpdate" : "prismicPreviewStart", ref)) {
 			stop()
 			setSnapshot({ status: "reloading" })
 			window.location.reload()
