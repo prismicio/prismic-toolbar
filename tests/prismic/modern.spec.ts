@@ -84,6 +84,34 @@ test("ends the preview when another tab exits it", async ({ website, context }) 
 	await expectNoPreview(website)
 })
 
+test("ignores pings of a session another tab replaced", async ({ website, context }) => {
+	await website.storePreview("ref-1")
+	await website.goto()
+	await expectPreview(website, "ref-1")
+	const cors = { "access-control-allow-origin": "*" }
+	await context.route(
+		(url) => url.pathname.endsWith("/ping"),
+		async (route) => {
+			if (route.request().url().includes("/new-session/")) {
+				return route.fulfill({ headers: cors, json: { ref: "ref-1", reload: false } })
+			}
+			// Another tab starts a session while this ping is in flight, which the old session closes.
+			await context.addCookies([
+				{ name: sessionCookieName, value: "new-session", url: website.url, secure: true },
+			])
+			await route.fulfill({ headers: cors, json: { reload: false, close: true } })
+		},
+	)
+	const newSession = context.waitForEvent("request", (request) =>
+		request.url().includes("/previews/new-session/ping"),
+	)
+
+	await newSession
+
+	await expectPreview(website, "ref-1")
+	expect((await website.cookie(sessionCookieName))?.value).toBe("new-session")
+})
+
 test("exits the preview", async ({ website }) => {
 	await website.storePreview("ref-1")
 	await website.goto()

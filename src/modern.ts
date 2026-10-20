@@ -64,8 +64,8 @@ function createModernSession(repositoryHost: string): PreviewSession {
 		} catch {
 			return // Transient failure: try again on the next tick.
 		}
-		// The page may have exited or reloaded during the ping.
-		if (snapshot.status !== "polling") return
+		// The page may have exited or reloaded, or another tab replaced the session, during the ping.
+		if (snapshot.status !== "polling" || getCookie(sessionCookieName) !== id) return
 		if (data.close) return end()
 
 		const previous = ref
@@ -73,8 +73,9 @@ function createModernSession(repositoryHost: string): PreviewSession {
 		setSnapshot({ preview: { ref, title: data.title || "" } })
 		if (ref === previous) return
 
+		// Reloading with the old cookie would find the new ref again, and loop.
 		if (!setCookie(previewCookieName, ref)) {
-			warn("The browser rejected the preview cookie. Check that cookies are allowed.")
+			return warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 		}
 		if (dispatchPreviewEvent("prismicPreviewUpdate", ref)) {
 			stop()
