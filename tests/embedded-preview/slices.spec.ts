@@ -48,8 +48,14 @@ test("delete controls follow editor permissions and remain keyboard accessible a
 		readOnly: false,
 	})
 	await expect(button).toBeVisible()
+	await expect(button).toHaveCSS("width", "28px")
+	await expect(button).toHaveCSS("height", "28px")
+	const actions = editor.overlay.locator(".slice-control-group:has(.slice-button)")
+	await expect(actions).toHaveCSS("height", "34px")
+	await button.focus()
 	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
-	await expect.poll(async () => (await button.boundingBox())?.width).toBe(72)
+	await expect.poll(async () => (await button.boundingBox())?.width).toBe(56)
+	await expect.poll(async () => (await actions.boundingBox())?.height).toBe(68)
 	await button.press("Enter")
 	await expect
 		.poll(() => editor.messages("delete-slice"))
@@ -545,7 +551,7 @@ test("labels the highlight with the slice's name and variation, inset and scaled
 	editor,
 }) => {
 	const highlight = editor.preview.locator(".slice-highlight")
-	const label = editor.preview.locator(".slice-highlight-label")
+	const label = editor.preview.locator(".slice-title")
 	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
 	await expect(label).toHaveText("Hero • Default")
 	await expect(label).toBeInViewport()
@@ -554,31 +560,75 @@ test("labels the highlight with the slice's name and variation, inset and scaled
 	await second.hover({ position: { x: 500, y: 100 } })
 	await expect(label).toHaveText("Call to action • Centered")
 	const box = (await highlight.boundingBox())!
+	const panel = editor.overlay.locator(".slice-control-group:has(.slice-title)")
+	const panelBox = (await panel.boundingBox())!
 	const labelBox = (await label.boundingBox())!
-	// Inside the 2px border, 4px from the highlight's corner.
-	expect(labelBox.x).toBe(box.x + 6)
-	expect(labelBox.y).toBe(box.y + 6)
-	expect(labelBox.height).toBe(24)
+	expect(panelBox.x).toBe(box.x + 10)
+	expect(panelBox.y).toBe(box.y + 10)
+	expect(panelBox.height).toBe(34)
 
 	await second.evaluate(() => window.scrollBy(0, 40))
 	await expect.poll(async () => (await label.boundingBox())?.y).toBe(labelBox.y - 40)
 
 	await editor.send({ type: "prismic:embedded-preview:set-overlay-scale", uiScale: 2 })
 	await second.hover({ position: { x: 500, y: 100 } })
-	await expect.poll(async () => (await label.boundingBox())?.height).toBe(labelBox.height * 2)
+	await expect.poll(async () => (await panel.boundingBox())?.height).toBe(panelBox.height * 2)
 })
 
 test("labels slices without a variation with their name only", async ({ editor }) => {
 	await setSlices(editor, [{ sliceId: "first-slice", label: "Hero" }])
 	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
-	await expect(editor.preview.locator(".slice-highlight-label")).toHaveText("Hero")
+	await expect(editor.preview.locator(".slice-title")).toHaveText("Hero")
+})
+
+test("long titles keep delete reachable in phone previews and readable on white-text websites", async ({
+	editor,
+	page,
+}) => {
+	await page.setViewportSize({ width: 375, height: 900 })
+	await editor.preview.locator("body").evaluate((body) => {
+		body.style.color = "white"
+	})
+	await setSlices(editor, [
+		{
+			sliceId: "first-slice",
+			label: "CustomerTestimonials".repeat(5),
+			variation: "Featured customer stories",
+		},
+	])
+	await editor.send({
+		type: "prismic:embedded-preview:set-slice-overlay",
+		selectedSliceId: "first-slice",
+		readOnly: false,
+	})
+	const title = editor.overlay.locator(".slice-title")
+	const button = editor.overlay.getByRole("button", { name: "Delete slice" })
+	await expect(title).toBeVisible()
+	await expect(editor.overlay.locator(".slice-label")).toHaveCSS("color", "rgb(26, 21, 35)")
+	await expect(button).toBeInViewport()
+	await expect
+		.poll(() => title.evaluate((element) => element.scrollWidth > element.clientWidth))
+		.toBe(true)
+	await button.click()
+	await expect
+		.poll(() => editor.messages("delete-slice"))
+		.toEqual([{ type: "prismic:embedded-preview:delete-slice", sliceId: "first-slice" }])
+})
+
+test("clicking the static title selects the underlying slice", async ({ editor }) => {
+	await editor.preview.locator("#first-slice").hover({ position: { x: 500, y: 200 } })
+	const title = editor.overlay.locator(".slice-title")
+	await expect(title).toBeVisible()
+	const box = (await title.boundingBox())!
+	await editor.page.mouse.click(box.x + box.width / 2, box.y + box.height / 2)
+	await expect.poll(() => sliceSelections(editor)).toEqual([selected("first-slice")])
 })
 
 test("follows the editor's slices, leaving other documents' slices alone", async ({ editor }) => {
 	const first = editor.preview.locator("#first-slice")
 	const second = editor.preview.locator("#second-slice")
 	const highlight = editor.preview.locator(".slice-highlight")
-	const label = editor.preview.locator(".slice-highlight-label")
+	const label = editor.preview.locator(".slice-title")
 	await first.hover({ position: { x: 500, y: 200 } })
 	await expect(label).toHaveText("Hero • Default")
 
@@ -620,7 +670,7 @@ test("highlights a newly rendered slice once the editor describes it", async ({ 
 	await expect(editor.preview.locator(".slice-highlight")).toHaveCount(0)
 
 	await setSlices(editor, [{ sliceId: "added", label: "New slice", variation: "Default" }])
-	await expect(editor.preview.locator(".slice-highlight-label")).toHaveText("New slice • Default")
+	await expect(editor.preview.locator(".slice-title")).toHaveText("New slice • Default")
 
 	await added.evaluate((element) => element.parentElement?.remove())
 	await expect(editor.preview.locator(".slice-highlight")).toHaveCount(0)
