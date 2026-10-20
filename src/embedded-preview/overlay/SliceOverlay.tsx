@@ -266,7 +266,14 @@ function BrushIcon(props: SVGProps<SVGSVGElement>) {
 	return (
 		<svg viewBox="0 0 16 16" fill="none" {...props}>
 			<path
-				d="m6.5 8.5 6-6a1.414 1.414 0 0 1 2 2l-6 6M6.5 8.5l2 2M6.5 8.5c-2-1-3.5.5-3.5 2.5 0 1-1 2-2 2 2 1 5 1 6-1 .5-.5 1-1 1.5-1.5"
+				d="M6.18311 8.03911L12.0302 2.192C12.5822 1.64 13.4782 1.64 14.0302 2.192C14.5822 2.744 14.5822 3.64 14.0302 4.192L8.18311 10.0391"
+				stroke="currentColor"
+				stroke-width="1.33333"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<path
+				d="M1.55554 13.072C3.95821 13.7938 5.90754 13.8542 7.50132 12.2231C8.46221 11.2587 8.46221 9.69422 7.50132 8.72889C6.54043 7.76355 4.98932 7.74933 4.02043 8.72889C2.44443 10.3218 3.82043 11.8347 1.55554 13.072Z"
 				stroke="currentColor"
 				stroke-width="1.33333"
 				stroke-linecap="round"
