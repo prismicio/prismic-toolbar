@@ -66,8 +66,17 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 		const sharedSession = readSharedSession()
 		if (sharedSession) {
 			setCookie(sessionCookieName, sharedSession)
-			// Without state, Next.js's router adopts the URL instead of restoring the hash on refresh.
-			history.replaceState(null, "", location.pathname + location.search)
+			// Next's App Router adopts the URL only from state it doesn't own. Other routers need their
+			// state, without the hash in the URLs they saved, like Vue Router's `current` and Next Pages
+			// Router's `as`.
+			const { hash } = location
+			const state = history.state && !history.state.__NA ? { ...history.state } : null
+			for (const key in state) {
+				if (typeof state[key] === "string" && state[key].endsWith(hash)) {
+					state[key] = state[key].slice(0, -hash.length)
+				}
+			}
+			history.replaceState(state, "", location.pathname + location.search)
 		}
 		if (getCookie(sessionCookieName)) {
 			loadChunk(`${assets}/v5.js`, "startV5")

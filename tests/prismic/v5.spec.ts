@@ -129,6 +129,10 @@ test("opens a share link, showing that the preview loads until the page reloads"
 		{ times: 1 },
 	)
 
+	// Next's App Router state, which it updates itself.
+	await website.page.addInitScript(() => {
+		if (location.hash) history.replaceState({ __NA: true }, "")
+	})
 	// From the same page, opening the link only changes the hash.
 	await website.goto({ path: "/page?q=1" })
 	await website.goto({
@@ -164,15 +168,23 @@ test("opens a share link, showing that the preview loads until the page reloads"
 	)
 	expect(website.page.url()).toBe(`${website.url}/page?q=1`)
 	expect(website.loads).toEqual([null, null, "ref-1"])
+	expect(await website.page.evaluate(() => history.state)).toBe(null)
 })
 
 test("ends the preview of an expired share link", async ({ repository, website }) => {
-	await website.goto({ path: `/#prismic-session=${encodeURIComponent(repository.sessionID)}` })
+	const path = `/#prismic-session=${encodeURIComponent(repository.sessionID)}`
+	// A router's state, like Vue Router's.
+	await website.page.addInitScript((current) => {
+		if (location.hash) history.replaceState({ current, other: 1 }, "")
+	}, path)
+
+	await website.goto({ path })
 
 	await expect.poll(() => website.loads, { timeout: 10_000 }).toEqual([null, null])
 	await expectNoPreview(website)
 	expect(website.page.url()).toBe(`${website.url}/`)
 	expect(repository.pings).toEqual([""])
+	expect(await website.page.evaluate(() => history.state)).toEqual({ current: "/", other: 1 })
 })
 
 test("copies a link to the current page with the session", async ({ repository, website }) => {
