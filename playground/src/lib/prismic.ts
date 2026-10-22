@@ -4,12 +4,12 @@ import { cookies } from "next/headers"
 import type { NextRequest } from "next/server"
 
 /**
- * Each toolbar flow runs with the `@prismicio/next` that supports it: modern (`v=5`) at `/`, and
- * legacy at `/legacy`.
+ * Each toolbar flow runs with the `@prismicio/next` that supports it: v5 (`v=5`) at `/`, and v4 at
+ * `/v4`.
  */
-export type Flow = "modern" | "legacy"
+export type Flow = "v5" | "v4"
 
-export const basePath = { modern: "", legacy: "/legacy" } satisfies Record<Flow, string>
+export const basePath = { v5: "", v4: "/v4" } satisfies Record<Flow, string>
 
 /** Remembers the repository picked in the playground. */
 export const repositoryCookie = "playground-repository"
@@ -44,7 +44,7 @@ function endpoint(repository: string) {
 
 /**
  * The toolbar to test: `TOOLBAR_SRC` when set, as `npm run dev` does, the pull request's build on
- * pull request deployments, or the released toolbar. The modern flow opts into `v=5`.
+ * pull request deployments, or the released toolbar. The v5 flow opts into `v=5`.
  */
 export function getToolbarSrc(repository: string, flow: Flow): string {
 	const pullRequest = process.env.VERCEL_GIT_PULL_REQUEST_ID
@@ -54,7 +54,7 @@ export function getToolbarSrc(repository: string, flow: Flow): string {
 			? `https://prismic.io/prismic-toolbar/pr-${pullRequest}/prismic.js`
 			: "https://static.cdn.prismic.io/prismic.js")
 
-	return `${src}?repo=${encodeURIComponent(repository)}${flow === "modern" ? "&v=5" : ""}`
+	return `${src}?repo=${encodeURIComponent(repository)}${flow === "v5" ? "&v=5" : ""}`
 }
 
 export function documentURL(flow: Flow, id: string): string {

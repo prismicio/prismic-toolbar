@@ -19,7 +19,7 @@ Add the script to every page of your website, including the 404 page. Replace `m
 <script
 	async
 	defer
-	src="https://static.cdn.prismic.io/prismic.js?new=true&repo=my-repository"
+	src="https://static.cdn.prismic.io/prismic.js?repo=my-repository"
 ></script>
 ```
 

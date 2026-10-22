@@ -1,29 +1,29 @@
-import { loadChunk, registerChunk, type StartModernOptions } from "./lib/chunks"
+import { registerChunk } from "./lib/chunks"
 import { deleteCookie, getCookie, setCookie } from "./lib/cookie"
 import { repositoryOrigin, warn } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
 import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
 import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
+import { mountToolbar } from "./toolbar"
 
 /**
  * Follows the preview session the website's SDK stored in a first-party cookie, with Prismic's
  * public `ping` endpoint. No iframe and no third-party cookies.
  */
-export function startModern({ repositoryHost, assets }: StartModernOptions): void {
-	const session = createModernSession(repositoryHost)
+export function startV5(repositoryHost: string): void {
+	const session = createSession(repositoryHost)
 	void session.start()
-	loadChunk(`${assets}/toolbar.js`, "mountToolbar")
-		.then((mountToolbar) => mountToolbar({ session, repositoryHost }))
-		.catch((error: unknown) => warn(`Could not load the preview toolbar.\n\n${String(error)}`))
+	// Bundled, so the bar needs no request after this chunk's.
+	mountToolbar({ session, repositoryHost })
 }
 
-registerChunk("startModern", startModern)
+registerChunk("startV5", startV5)
 
-function createModernSession(repositoryHost: string): PreviewSession {
+function createSession(repositoryHost: string): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	// The ref this page renders. Without one, the first ping gets the session's ref.
 	let ref = getCookie(previewCookieName) ?? ""
-	// Not authenticated: the bar hides Share, which modern does not support yet.
+	// Not authenticated: the bar hides Share, which v5 does not support yet.
 	let snapshot: PreviewSnapshot = {
 		status: "polling",
 		authenticated: false,

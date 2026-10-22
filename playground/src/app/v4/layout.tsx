@@ -5,5 +5,5 @@ import { PlaygroundLayout } from "../PlaygroundLayout"
 export { metadata } from "../PlaygroundLayout"
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-	return <PlaygroundLayout flow="legacy">{children}</PlaygroundLayout>
+	return <PlaygroundLayout flow="v4">{children}</PlaygroundLayout>
 }

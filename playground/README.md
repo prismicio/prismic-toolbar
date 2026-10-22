@@ -6,18 +6,18 @@ A minimal Next.js website to try the toolbar with a real repository, locally and
 
 The playground shows `prismic-main` by default; set `NEXT_PUBLIC_DEFAULT_REPOSITORY` to change it. Pick another repository in the header: a name, like `prismic-main`, or a host outside `prismic.io`, like `example.wroom.io`. The choice is remembered in a cookie. Previews started from Prismic switch to their repository automatically.
 
-To preview from Prismic, add the playground to the repository's previews, with `/api/preview` as the preview route. Add `/legacy/api/preview` as another preview to try the legacy flow.
+To preview from Prismic, add the playground to the repository's previews, with `/api/preview` as the preview route. Add `/v4/api/preview` as another preview to try the v4 flow.
 
 ## Flows
 
 | Where     | Flow                                   | SDK                                                                                           |
 | --------- | -------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `/`       | Modern: the toolbar loads with `&v=5`  | `@prismicio/next` from [prismic-next#175](https://github.com/prismicio/prismic-next/pull/175) |
-| `/legacy` | Legacy: the toolbar follows its iframe | `@prismicio/next-legacy`, an alias of `@prismicio/next@2.3.3`                                 |
+| `/`       | v5: the toolbar loads with `&v=5`      | `@prismicio/next` from [prismic-next#175](https://github.com/prismicio/prismic-next/pull/175) |
+| `/v4`     | v4: the toolbar follows its iframe     | `@prismicio/next-v4`, an alias of `@prismicio/next@2.3.3`                                     |
 
 Each flow has its own preview and exit routes under its path. The header switches between them.
 
-In the modern flow, the editor adds `session` to preview URLs, the preview route stores it in the `io.prismic.previewSession` cookie, and the toolbar follows that session with Prismic's public ping.
+In the v5 flow, the editor adds `session` to preview URLs, the preview route stores it in the `io.prismic.previewSession` cookie, and the toolbar follows that session with Prismic's public ping.
 
 ## Toolbar
 

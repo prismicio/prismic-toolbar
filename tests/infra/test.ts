@@ -122,7 +122,7 @@ export class Website {
 	 */
 	events: "ignore" | "record" | "handle" = "ignore"
 	/** Query parameters of the toolbar script, as the website's SDK installs it. */
-	scriptQuery = "new=true&repo=toolbar-e2e"
+	scriptQuery = "repo=toolbar-e2e"
 
 	constructor(
 		readonly page: Page,

@@ -11,8 +11,8 @@
 			"maxSize": "10KB"
 		},
 		{
-			"path": "./dist/prismic-toolbar/*/modern.js",
-			"maxSize": "4KB"
+			"path": "./dist/prismic-toolbar/*/v5.js",
+			"maxSize": "13KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/embedded-preview.js",

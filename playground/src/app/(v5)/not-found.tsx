@@ -1,5 +1,5 @@
 import { NotFound } from "../NotFound"
 
 export default function Page() {
-	return <NotFound flow="legacy" />
+	return <NotFound flow="v5" />
 }

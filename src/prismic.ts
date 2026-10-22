@@ -1,4 +1,4 @@
-import { startLegacy } from "./legacy"
+import { startV4 } from "./v4"
 import { connectBridge } from "./lib/bridge"
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
 import { getCookie } from "./lib/cookie"
@@ -30,7 +30,7 @@ if (mode) {
 	else {
 		warn(`Add your repository name to the toolbar script, for example:
 
-<script async defer src="https://static.cdn.prismic.io/prismic.js?new=true&repo=example-repository"></script>`)
+<script async defer src="https://static.cdn.prismic.io/prismic.js?repo=example-repository"></script>`)
 	}
 }
 
@@ -59,14 +59,14 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 
 	if (requestedVersion === "5") {
 		if (getCookie(sessionCookieName)) {
-			loadChunk(`${assets}/modern.js`, "startModern")
-				.then((startModern) => startModern({ repositoryHost, assets }))
+			loadChunk(`${assets}/v5.js`, "startV5")
+				.then((startV5) => startV5(repositoryHost))
 				.catch((error: unknown) => warn(`Could not load the preview.\n\n${String(error)}`))
 		}
 		return
 	}
 
-	startLegacy({ repositoryHost, assets, connect })
+	startV4({ repositoryHost, assets, connect })
 }
 
 async function setupEmbeddedPreview(assets: string, options?: EmbeddedPreviewOptions) {

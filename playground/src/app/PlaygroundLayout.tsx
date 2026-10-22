@@ -17,7 +17,7 @@ export async function PlaygroundLayout({ flow, children }: { flow: Flow; childre
 	const toolbarSrc = getToolbarSrc(repository, flow)
 	const { isEnabled: isDraftMode } = await draftMode()
 	const home = basePath[flow] || "/"
-	const otherFlow = flow === "modern" ? "legacy" : "modern"
+	const otherFlow = flow === "v5" ? "v4" : "v5"
 
 	return (
 		<html lang="en">

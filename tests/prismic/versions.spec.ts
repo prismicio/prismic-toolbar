@@ -1,6 +1,6 @@
 import { expect, previewCookieName, test } from "../infra"
 
-// Websites whose SDK opts into `v=5` run the modern flow when it stored a session, and nothing
+// Websites whose SDK opts into `v=5` run the v5 flow when it stored a session, and nothing
 // otherwise.
 test.beforeEach(({ website }) => {
 	website.scriptQuery += "&v=5"
@@ -9,7 +9,7 @@ test.beforeEach(({ website }) => {
 const loaded = (requests: string[], file: string) =>
 	requests.some((url) => new URL(url).pathname.endsWith(`/${file}`))
 
-test("starts modern with only a session", async ({ website, requests }) => {
+test("starts v5 with only a session", async ({ website, requests }) => {
 	await website.storePreview("ref-1", { preview: false })
 	await website.goto()
 
@@ -17,7 +17,8 @@ test("starts modern with only a session", async ({ website, requests }) => {
 	await expect(website.content).toHaveText("Draft content: ref-1")
 	await expect(website.previewBar).toBeVisible()
 	expect(website.loads).toEqual([null, "ref-1"])
-	expect(loaded(requests, "modern.js")).toBe(true)
+	expect(loaded(requests, "v5.js")).toBe(true)
+	expect(loaded(requests, "toolbar.js")).toBe(false)
 	expect(loaded(requests, "iframe.html")).toBe(false)
 })
 
@@ -38,17 +39,14 @@ test("does nothing without a session", async ({ repository, website, requests })
 
 	await expect(website.content).toHaveText("Draft content: ref-1")
 	await expect(website.previewBar).toHaveCount(0)
-	expect(requests).toEqual([
-		`${website.url}/`,
-		"https://static.cdn.prismic.io/prismic.js?new=true&repo=toolbar-e2e&v=5",
-	])
+	expect(requests.map((url) => new URL(url).pathname)).toEqual(["/", "/prismic.js"])
 })
 
 test("ignores v=5 in the editor's preview", async ({ editor, requests }) => {
 	await editor.goto()
 
 	await expect(editor.overlay).toBeAttached()
-	for (const file of ["toolbar.js", "iframe.html", "modern.js"]) {
+	for (const file of ["toolbar.js", "iframe.html", "v5.js"]) {
 		expect(loaded(requests, file)).toBe(false)
 	}
 })

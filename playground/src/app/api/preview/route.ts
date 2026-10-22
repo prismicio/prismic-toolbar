@@ -5,6 +5,6 @@ import { createClient, documentURL, rememberRepository } from "@/lib/prismic"
 
 export async function GET(request: NextRequest): Promise<never> {
 	const client = await createClient(await rememberRepository(request))
-	const linkResolver = (document: { id: string }) => documentURL("modern", document.id)
+	const linkResolver = (document: { id: string }) => documentURL("v5", document.id)
 	return redirectToPreviewURL({ client, request, linkResolver })
 }

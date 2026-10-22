@@ -9,7 +9,7 @@ import { useEffect } from "react"
  * toolbar, so the playground can load the toolbar under test instead.
  */
 export function Preview(props: {
-	/** Where the flow's routes live, like `/legacy`. */
+	/** Where the flow's routes live, like `/v4`. */
 	basePath: string
 	repository: string
 	toolbarSrc: string

@@ -6,11 +6,6 @@ export interface MountToolbarOptions {
 	repositoryHost: string
 }
 
-export interface StartModernOptions {
-	repositoryHost: string
-	assets: string
-}
-
 export interface EmbeddedPreviewOptions {
 	/** Receives refs the editor pushes, with `reload: false` when it expects an in-place update. */
 	onRef?: (ref: string, reload?: boolean) => Promise<void>
@@ -19,7 +14,7 @@ export interface EmbeddedPreviewOptions {
 /** Entry points of the lazily loaded bundles. */
 export interface ToolbarChunks {
 	mountToolbar: (options: MountToolbarOptions) => void
-	startModern: (options: StartModernOptions) => void
+	startV5: (repositoryHost: string) => void
 	setupEmbeddedPreview: (options?: EmbeddedPreviewOptions) => Promise<void>
 }
 

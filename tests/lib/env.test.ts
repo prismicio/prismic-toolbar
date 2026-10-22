@@ -50,7 +50,7 @@ describe("findRepositoryHost", () => {
 		document.head.innerHTML = `
 			<script src="https://static.cdn.prismic.io/prismic.js?repo=first"></script>
 			<script src="https://example.com/other.js"></script>
-			<script src="https://static.cdn.prismic.io/prismic.min.js?new=true&repo=second"></script>
+			<script src="https://static.cdn.prismic.io/prismic.min.js?repo=second"></script>
 		`
 		expect(findRepositoryHost()).toBe("second.prismic.io")
 
@@ -64,7 +64,7 @@ describe("findVersion", () => {
 		document.head.innerHTML = `
 			<script src="https://static.cdn.prismic.io/prismic.js?repo=first&v=4"></script>
 			<script src="https://example.com/other.js?v=6"></script>
-			<script src="https://static.cdn.prismic.io/prismic.min.js?new=true&repo=second&v=5"></script>
+			<script src="https://static.cdn.prismic.io/prismic.min.js?repo=second&v=5"></script>
 		`
 		expect(findVersion()).toBe("5")
 

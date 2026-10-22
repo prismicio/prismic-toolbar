@@ -3,7 +3,7 @@ import { warn } from "./lib/env"
 import { createPreviewSession, type PreviewSessionOptions } from "./lib/preview-session"
 
 /** Runs website previews through the repository's iframe, with the JSON preview cookie. */
-export function startLegacy({
+export function startV4({
 	repositoryHost,
 	assets,
 	connect,
