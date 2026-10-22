@@ -190,7 +190,7 @@ export function createPreviewSession({
 		if (serverRef !== undefined) return
 		try {
 			shell ??= await connect()
-			const { authenticated } = await shell.getSession()
+			const authenticated = await shell.isAuthenticated()
 			const { ref, title = "" } = await shell.ping(currentRef() ?? "")
 			// A cookie change meanwhile may already be reloading the page.
 			if (isReloading()) return

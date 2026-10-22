@@ -20,9 +20,15 @@ function deleteSessionCookie() {
 const shares = new Map<string, Promise<string>>()
 
 const methods: ShellMethods = {
-	async getSession() {
-		const session = getCookie(sessionCookieName) ?? null
-		return { session, authenticated: Boolean(session) && (await isAuthenticated()) }
+	// Prismic's auth cookies are HttpOnly, so only Prismic knows. A failed request counts as signed out.
+	async isAuthenticated() {
+		if (!getCookie(sessionCookieName)) return false
+		try {
+			const response = await fetch("/toolbar/state")
+			return response.ok && Boolean((await response.json()).isAuthenticated)
+		} catch {
+			return false
+		}
 	},
 
 	async ping(ref) {
@@ -60,16 +66,6 @@ const methods: ShellMethods = {
 		}
 		return share
 	},
-}
-
-// Prismic's auth cookies are HttpOnly, so only Prismic knows.
-async function isAuthenticated(): Promise<boolean> {
-	try {
-		const response = await fetch("/toolbar/state")
-		return response.ok && Boolean((await response.json()).isAuthenticated)
-	} catch {
-		return false
-	}
 }
 
 async function createShareLink(

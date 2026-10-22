@@ -38,7 +38,7 @@ afterEach(() => {
 	for (const type of eventTypes) window.removeEventListener(type, recordEvent)
 })
 
-/** The repository's session as the shell reads it: its ref, `null` without an active session. */
+/** The repository's session as the shell reports it, without `ref` when none is active. */
 interface State {
 	authenticated: boolean
 	ref?: string
@@ -47,10 +47,7 @@ interface State {
 function fakeShell(state: State) {
 	const server = { ref: state.ref ?? (null as string | null) }
 	const shell = {
-		getSession: vi.fn(async () => ({
-			session: server.ref && "session-1",
-			authenticated: state.authenticated,
-		})),
+		isAuthenticated: vi.fn(async () => state.authenticated),
 		ping: vi.fn(async (_ref: string): Promise<{ ref?: string; title?: string }> =>
 			server.ref ? { ref: server.ref, title: "Spring launch" } : {},
 		),
@@ -519,14 +516,14 @@ describe("cookie changes from other tabs and the editor", () => {
 	it("follows a session started while starting up", async () => {
 		cancelEvents = true
 		const { session, shell } = setup(active("ref-1"))
-		let answer = (_session: { session: null; authenticated: boolean }) => {}
-		shell.getSession.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		let answer = (_authenticated: boolean) => {}
+		shell.isAuthenticated.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 
 		const starting = session.start()
 		await vi.advanceTimersByTimeAsync(0)
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(250)
-		answer({ session: null, authenticated: false })
+		answer(false)
 		await starting
 		await vi.advanceTimersByTimeAsync(3000)
 
