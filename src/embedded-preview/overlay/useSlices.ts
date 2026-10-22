@@ -107,6 +107,7 @@ function isSameSlices(a: Slice[], b: Slice[]) {
 				slice.variation === other.variation &&
 				slice.canMoveUp === other.canMoveUp &&
 				slice.canMoveDown === other.canMoveDown &&
+				slice.previousSliceId === other.previousSliceId &&
 				slice.elements.length === other.elements.length &&
 				slice.elements.every((element, j) => element === other.elements[j])
 			)

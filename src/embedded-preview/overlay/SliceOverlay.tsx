@@ -44,6 +44,10 @@ export function SliceOverlay(props: SliceOverlayProps) {
 					layout={layout}
 					readOnly={readOnly}
 					postMessage={postMessage}
+					hideInsertBefore={
+						selectedSlice !== undefined && hoveredSlice.previousSliceId === selectedSlice.sliceId
+					}
+					hideInsertAfter={selectedSlice?.previousSliceId === hoveredSlice.sliceId}
 				/>
 			)}
 		</>
@@ -170,10 +174,12 @@ interface SliceHighlightProps {
 	layout: EventTarget
 	readOnly: boolean
 	postMessage: PostMessage
+	hideInsertBefore?: boolean
+	hideInsertAfter?: boolean
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout, readOnly, postMessage } = props
+	const { slice, layout, readOnly, postMessage, hideInsertBefore, hideInsertAfter } = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
 
@@ -202,6 +208,12 @@ function SliceHighlight(props: SliceHighlightProps) {
 			onPointerOver={(event) => event.stopPropagation()}
 			onPointerMove={(event) => event.stopPropagation()}
 		>
+			{!readOnly && !hideInsertBefore && (
+				<InsertSliceButton sliceId={sliceId} position="before" postMessage={postMessage} />
+			)}
+			{!readOnly && !hideInsertAfter && (
+				<InsertSliceButton sliceId={sliceId} position="after" postMessage={postMessage} />
+			)}
 			<div className="slice-control-group slice-title-group">
 				<div className="slice-title">
 					<span className="slice-label">{label}</span>
@@ -262,6 +274,43 @@ function SliceHighlight(props: SliceHighlightProps) {
 				</div>
 			)}
 		</div>
+	)
+}
+
+interface InsertSliceButtonProps {
+	sliceId: string
+	position: "before" | "after"
+	postMessage: PostMessage
+}
+
+function InsertSliceButton(props: InsertSliceButtonProps) {
+	const { sliceId, position, postMessage } = props
+	const label = `Add slice ${position}`
+
+	function handleClick(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:insert-slice", sliceId, position })
+	}
+
+	return (
+		<button
+			type="button"
+			className="slice-button slice-insert-button"
+			data-position={position}
+			aria-label={label}
+			title={label}
+			onClick={handleClick}
+		>
+			<AddIcon className="slice-button-icon" aria-hidden="true" />
+		</button>
+	)
+}
+
+function AddIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+		</svg>
 	)
 }
 
