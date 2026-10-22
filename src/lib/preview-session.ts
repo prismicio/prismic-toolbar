@@ -1,8 +1,9 @@
-import type { Bridge } from "./bridge"
 import { watchCookie } from "./cookie-watcher"
 import { warn } from "./env"
 import { dispatchPreviewEvent } from "./events"
 import { liveOwner, releaseOwnership } from "./owner-marker"
+import { ping, type PingResponse } from "./ping"
+import type { Shell } from "./shell-client"
 import {
 	createSiteCookieStore,
 	previewCookieName,
@@ -38,7 +39,7 @@ export interface PreviewSessionOptions {
 	 * the editor pushed alone. Off in the editor, where the preview session sets the ref.
 	 */
 	watchCookie: boolean
-	connect(): Promise<Bridge>
+	connect(): Promise<Shell>
 	reload?: () => void
 	/** When this page's navigation started, comparable with `Date.now()`. */
 	navigationStart?: number
@@ -46,10 +47,10 @@ export interface PreviewSessionOptions {
 }
 
 /**
- * Keeps the website's preview cookie in sync with the repository's preview session and tells the
- * website when the ref it renders is stale. Every notification goes through `reconcile`, which
- * compares the cookie with the ref this page renders, so polling, cookie changes and this page's
- * own writes notify at most once per ref.
+ * Keeps the website's preview cookie in sync with the repository's preview session, which the shell
+ * reads and Prismic's public `ping` follows, and tells the website when the ref it renders is
+ * stale. Every notification goes through `reconcile`, which compares the cookie with the ref this
+ * page renders, so polling, cookie changes and this page's own writes notify at most once per ref.
  */
 export function createPreviewSession({
 	repositoryHost,
@@ -62,7 +63,9 @@ export function createPreviewSession({
 }: PreviewSessionOptions): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	let snapshot: PreviewSnapshot = { status: "booting", authenticated: false }
-	let bridge: Bridge | undefined
+	let shell: Shell | undefined
+	/** The followed session, and its ref while following it. */
+	let session: string | undefined
 	let serverRef: string | undefined
 	let pollTimer: ReturnType<typeof setInterval> | undefined
 	let following = Promise.resolve()
@@ -75,8 +78,12 @@ export function createPreviewSession({
 	const unwatch = watch
 		? watchCookie(previewCookieName, () => {
 				reconcile()
-				// A tab that was not previewing follows a session another tab or a share link started.
-				if (currentRef() !== undefined) void follow(false)
+				// Another tab or a preview route started, replaced, or exited a session: read it again. The
+				// editor pushes refs on every edit, within the same session.
+				if (isReloading() || currentRef() === serverRef || editorOwner(store.read())) return
+				stopPolling()
+				serverRef = undefined
+				void follow()
 			})
 		: undefined
 
@@ -144,23 +151,29 @@ export function createPreviewSession({
 	}
 
 	async function tick() {
-		if (!bridge || serverRef === undefined || document.visibilityState !== "visible") return
+		if (!session || serverRef === undefined || document.visibilityState !== "visible") return
 
+		const pinged = session
 		const pingedRef = serverRef
-		let nextRef: string | null
+		let state: PingResponse
 		try {
-			nextRef = (await bridge.ping(pingedRef)).ref
+			state = await ping(repositoryHost, pinged, pingedRef)
 		} catch {
 			return // Transient failure: try again on the next tick.
 		}
 		// Polling may have stopped or followed another session during the ping, such as on exit,
 		// reload, or a session another tab started.
-		if (pollTimer === undefined || serverRef !== pingedRef || nextRef === serverRef) return
+		if (pollTimer === undefined || session !== pinged || serverRef !== pingedRef) return
+
+		const nextRef = state.ref
+		if (nextRef && snapshot.preview)
+			setSnapshot({ preview: { ref: nextRef, title: state.title || "" } })
+		if (nextRef === serverRef) return
 
 		const cookie = store.read()
 		const editorOwnsCookie = Boolean(editorOwner(cookie))
 
-		if (nextRef === null) {
+		if (!nextRef) {
 			// The session ended. Clear the cookie only when it still holds this session's ref.
 			const ownsCookie = !editorOwnsCookie && refFor(cookie, repositoryHost) === serverRef
 			stopPolling()
@@ -174,7 +187,6 @@ export function createPreviewSession({
 		}
 
 		serverRef = nextRef
-		if (snapshot.preview) setSnapshot({ preview: { ...snapshot.preview, ref: nextRef } })
 		// Never overwrite a ref the editor pushed. An unchanged ref above never writes either, which
 		// keeps this tab from fighting the editor over the cookie.
 		if (editorOwnsCookie) return
@@ -184,27 +196,29 @@ export function createPreviewSession({
 	}
 
 	/** Connects, then follows the repository's preview session if one is active. Runs one at a time. */
-	const follow = (startup: boolean) => (following = following.then(() => followOnce(startup)))
+	const follow = () => (following = following.then(followOnce))
 
-	async function followOnce(startup: boolean) {
+	async function followOnce() {
 		if (serverRef !== undefined) return
 		try {
-			bridge ??= await connect()
-			const state = await bridge.getState()
+			shell ??= await connect()
+			const { session: id, authenticated } = await shell.getSession()
+			const state = id ? await ping(repositoryHost, id, currentRef() ?? "") : undefined
 			// A cookie change meanwhile may already be reloading the page.
 			if (isReloading()) return
-			setSnapshot({ authenticated: state.isAuthenticated })
+			setSnapshot({ authenticated })
 
-			if (!state.preview) {
-				// On startup, clear a stale repository session, but leave the website's cookie: another
-				// tab or the editor may own it.
-				if (startup) void bridge.closeSession().catch(() => {})
-				setSnapshot({ status: "idle" })
+			if (!id || !state?.ref) {
+				// Clear an ended repository session, but leave the website's cookie: another tab or the
+				// editor may own it.
+				if (id) void shell.closeSession().catch(() => {})
+				setSnapshot({ status: "idle", preview: undefined })
 				reconcileEditorPush()
 				return
 			}
 
-			serverRef = state.preview.ref
+			session = id
+			serverRef = state.ref
 			const cookie = store.read()
 			if (editorOwner(cookie)) {
 				reconcileEditorPush()
@@ -218,7 +232,7 @@ export function createPreviewSession({
 				writeRef(serverRef)
 			}
 
-			setSnapshot({ status: "polling", preview: state.preview })
+			setSnapshot({ status: "polling", preview: { ref: serverRef, title: state.title || "" } })
 			startPolling()
 		} catch (error) {
 			warn(`Could not reach the preview session.\n\n${String(error)}`)
@@ -227,11 +241,11 @@ export function createPreviewSession({
 	}
 
 	return {
-		start: () => follow(true),
+		start: follow,
 
 		async exit() {
 			stopPolling()
-			await bridge?.closeSession().catch(() => {})
+			await shell?.closeSession().catch(() => {})
 			serverRef = undefined
 
 			const owner = editorOwner(store.read())
@@ -248,8 +262,8 @@ export function createPreviewSession({
 		},
 
 		async share(pageURL = window.location.href) {
-			if (!bridge) throw new Error("The preview session is not connected.")
-			return bridge.share(pageURL)
+			if (!shell) throw new Error("The preview session is not connected.")
+			return shell.share(pageURL, snapshot.preview?.title ?? "")
 		},
 
 		getSnapshot: () => snapshot,
@@ -262,7 +276,7 @@ export function createPreviewSession({
 		dispose() {
 			stopPolling()
 			unwatch?.()
-			bridge?.dispose()
+			shell?.dispose()
 			listeners.clear()
 		},
 	}

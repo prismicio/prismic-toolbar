@@ -1,3 +1,4 @@
+import { version } from "../../vite.config"
 import { expect, ownerCookieName, previewCookieName, test } from "../infra"
 
 test("starts a preview by reloading the page with the session's ref", async ({
@@ -43,7 +44,7 @@ test("ends the preview when the session ends", async ({ repository, website }) =
 	await expect(website.content).toHaveText("Published content", { timeout: 10_000 })
 	await expect(website.previewBar).toHaveCount(0)
 	expect(await website.cookie(previewCookieName)).toBeUndefined()
-	expect(await repository.hasSession()).toBe(false)
+	await expect.poll(() => repository.hasSession()).toBe(false)
 	expect(website.loads).toEqual([null, "ref-1", null])
 })
 
@@ -105,7 +106,18 @@ test("lets the website handle preview events without reloading", async ({
 	expect(website.loads).toEqual([null])
 })
 
-test("leaves the preview cookie alone without an active session", async ({
+test("does nothing without a session", async ({ repository, website, requests }) => {
+	await website.goto()
+
+	await expect(website.content).toHaveText("Published content")
+	await expect.poll(() => requests.some((url) => url.endsWith("/shell.html"))).toBe(true)
+	await website.page.waitForTimeout(500)
+	expect(requests.filter((url) => url.startsWith(repository.url))).toEqual([
+		`${repository.url}/prismic-toolbar/${version}/shell.html`,
+	])
+})
+
+test("leaves the preview cookie alone when the session ended", async ({
 	repository,
 	website,
 	context,
@@ -117,13 +129,57 @@ test("leaves the preview cookie alone without an active session", async ({
 
 	await website.goto()
 
-	// The stale session is closed.
+	// The ended session is closed.
 	await expect.poll(() => repository.hasSession()).toBe(false)
 	await expect(website.content).toHaveText("Draft content: another-ref")
 	await expect(website.previewBar).toHaveCount(0)
 	expect((await website.cookie(previewCookieName))?.value).toBe("another-ref")
 	expect(website.loads).toEqual(["another-ref"])
-	expect(repository.pings).toEqual([])
+	expect(repository.pings).toEqual(["another-ref"])
+})
+
+test("follows a preview route that stores the ref after the page loaded", async ({
+	repository,
+	website,
+}) => {
+	await website.goto()
+	await expect(website.content).toHaveText("Published content")
+
+	// Like old Nuxt `usePrismicPreview`: the session starts, then the page stores the raw ref.
+	await repository.startPreview("ref-1")
+	await website.page.evaluate(() => (document.cookie = "io.prismic.preview=ref-1; path=/"))
+
+	await expect(website.content).toHaveText("Draft content: ref-1")
+	await expect(website.previewBar).toBeVisible()
+	expect(website.loads).toEqual([null, "ref-1"])
+})
+
+test("follows a session another tab started and exited", async ({
+	repository,
+	website,
+	context,
+}) => {
+	await website.goto({ events: "handle" })
+	await expect(website.content).toHaveText("Published content")
+	const otherTab = await context.newPage()
+
+	await repository.startPreview("ref-1")
+	await otherTab.goto(website.url)
+	const otherBar = otherTab.getByRole("region", { name: "Prismic preview" })
+	await expect(otherBar).toBeVisible()
+
+	await expect.poll(() => website.recordedEvents()).toEqual([["prismicPreviewStart", "ref-1"]])
+	await expect(website.previewBar).toBeVisible()
+
+	await otherBar.getByRole("button", { name: "Exit preview" }).click()
+
+	await expect.poll(() => website.recordedEvents()).toContainEqual(["prismicPreviewEnd", null])
+	await expect(website.previewBar).toHaveCount(0)
+	// The session is still active on Prismic, but this tab must not bring it back.
+	const pings = repository.pings.length
+	await website.page.waitForTimeout(3500)
+	expect(repository.pings.length).toBe(pings)
+	expect(await website.previewRef()).toBeUndefined()
 })
 
 test("adopts the cookie of a preview route without reloading", async ({

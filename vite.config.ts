@@ -10,7 +10,7 @@ import packageJSON from "./package.json" with { type: "json" }
 export const version = process.env.TOOLBAR_VERSION || packageJSON.version
 
 /** Each entry builds `src/<entry>.ts` into `<entry>.js`, or into `<entry>.html` for pages. */
-export const entries = ["prismic", "v5", "embedded-preview", "toolbar", "iframe", "shell"] as const
+export const entries = ["prismic", "v5", "embedded-preview", "toolbar", "shell"] as const
 
 export type Entry = (typeof entries)[number]
 
@@ -31,7 +31,7 @@ function defines(development: boolean) {
 }
 
 /** Inlines an entry's script into `<entry>.html`, so the repository host serves a single file. */
-function inlineScript(entry: "iframe" | "shell"): Plugin {
+function inlineScript(entry: "shell"): Plugin {
 	return {
 		name: "inline-script",
 		generateBundle(_options, bundle) {
@@ -72,7 +72,7 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 			sourcemap: development ? "inline" : false,
 			watch: development ? {} : null,
 		},
-		plugins: entry === "iframe" || entry === "shell" ? [inlineScript(entry)] : [],
+		plugins: entry === "shell" ? [inlineScript(entry)] : [],
 	}
 }
 

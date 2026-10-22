@@ -65,8 +65,7 @@ test("copies a share link to the current page", async ({ repository, website }) 
 			sessionId: repository.sessionID,
 			pageURL: `${website.url}/`,
 			title: repository.title,
-			imageName: `${repository.sessionID}.jpg`,
-			_: "csrf-token",
+			imageName: "default-preview.png",
 		},
 	])
 })

@@ -10,10 +10,10 @@ To preview from Prismic, add the playground to the repository's previews, with `
 
 ## Flows
 
-| Where | Flow                               | SDK                                                                                           |
-| ----- | ---------------------------------- | --------------------------------------------------------------------------------------------- |
-| `/`   | v5: the toolbar loads with `&v=5`  | `@prismicio/next` from [prismic-next#175](https://github.com/prismicio/prismic-next/pull/175) |
-| `/v4` | v4: the toolbar follows its iframe | `@prismicio/next-v4`, an alias of `@prismicio/next@2.3.3`                                     |
+| Where | Flow                              | SDK                                                                                           |
+| ----- | --------------------------------- | --------------------------------------------------------------------------------------------- |
+| `/`   | v5: the toolbar loads with `&v=5` | `@prismicio/next` from [prismic-next#175](https://github.com/prismicio/prismic-next/pull/175) |
+| `/v4` | v4: the toolbar follows its shell | `@prismicio/next-v4`, an alias of `@prismicio/next@2.3.3`                                     |
 
 Each flow has its own preview and exit routes under its path. The header switches between them.
 
@@ -29,7 +29,7 @@ In the v5 flow, the editor adds `session` to preview URLs, the preview route sto
 
 `TOOLBAR_SRC` overrides it. The header shows the script in use.
 
-Locally, the toolbar's hidden iframe still loads from the repository host, from the folder of the build. Local builds are never deployed, so `npm run dev` names its build after the last commit deployed from `origin/master` and reuses that iframe. Run `TOOLBAR_VERSION=pr-<number> npm run dev` to reuse a pull request's iframe instead, to test changes to it. The editor's live preview does not need the iframe and works with any local build.
+Locally, the v4 flow still loads the toolbar's hidden shell from the repository host, from the folder of the build. Local builds are never deployed, so `npm run dev` names its build after the last commit deployed from `origin/master` and reuses that shell. Run `TOOLBAR_VERSION=pr-<number> npm run dev` to reuse a pull request's shell instead, to test changes to it. The v5 flow and the editor's live preview do not need the shell and work with any local build.
 
 `<PrismicPreview>` always loads the released toolbar, so `src/app/Preview.tsx` mirrors it for each flow, with a configurable script.
 

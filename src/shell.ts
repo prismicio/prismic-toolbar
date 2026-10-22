@@ -60,8 +60,8 @@ async function createShareLink(
 ): Promise<string> {
 	if (!session) throw new Error("No active preview session to share.")
 
-	// Screenshots are no longer uploaded, so Prismic shows its default image. Unlike the bridge, sends
-	// no CSRF token: Prismic no longer returns or checks one.
+	// Screenshots are no longer uploaded, so Prismic shows its default image. Sends no CSRF token:
+	// Prismic no longer returns or checks one.
 	const query = new URLSearchParams({
 		sessionId: session,
 		pageURL,

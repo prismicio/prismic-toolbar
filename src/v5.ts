@@ -1,7 +1,8 @@
 import { registerChunk } from "./lib/chunks"
 import { deleteCookie, getCookie, setCookie } from "./lib/cookie"
-import { repositoryOrigin, warn } from "./lib/env"
+import { warn } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
+import { ping, type PingResponse } from "./lib/ping"
 import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
 import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
 import { mountToolbar } from "./toolbar"
@@ -57,13 +58,10 @@ function createSession(repositoryHost: string): PreviewSession {
 		const id = getCookie(sessionCookieName)
 		if (!id) return end()
 
-		let data: { ref?: string; title?: string; close?: boolean }
+		let data: PingResponse
 		pinging = true
 		try {
-			const url = `${repositoryOrigin(repositoryHost)}/previews/${id}/ping?ref=${encodeURIComponent(ref)}`
-			const response = await fetch(url)
-			if (!response.ok) return
-			data = await response.json()
+			data = await ping(repositoryHost, id, ref)
 		} catch {
 			return // Transient failure: try again on the next tick.
 		} finally {
