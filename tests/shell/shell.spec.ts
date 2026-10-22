@@ -1,3 +1,5 @@
+// Covers the shell until legacy uses it. Legacy's e2e behavior tests replace this file then.
+
 import { build, type Rolldown } from "vite"
 
 import type * as client from "../../src/lib/shell-client"
@@ -90,23 +92,10 @@ test("reads, shares, and closes the repository's session", async ({
 			sessionId: repository.sessionID,
 			pageURL,
 			title: "Spring launch",
-			imageName: `blog/post#intro${repository.sessionID}.jpg`,
+			imageName: "default-preview.png",
 		},
 	])
 
-	// Prismic may write the session cookie on any parent domain or path.
-	await context.addCookies(
-		[
-			{ domain: ".prismic.io", path: "/" },
-			{ domain: repository.host, path: "/prismic-toolbar/" },
-		].map((variant) => ({
-			...variant,
-			name: sessionCookieName,
-			value: repository.sessionID,
-			secure: true,
-			sameSite: "None" as const,
-		})),
-	)
 	await page.evaluate(() => window.shell.closeSession())
 	const sessionCookies = (await context.cookies()).filter(({ name }) => name === sessionCookieName)
 	expect(sessionCookies).toEqual([])

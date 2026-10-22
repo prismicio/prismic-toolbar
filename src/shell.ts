@@ -12,27 +12,9 @@ const getCookie = (name: string) =>
 		.find((cookie) => cookie.startsWith(`${name}=`))
 		?.slice(name.length + 1)
 
-// Prismic writes the session cookie, so its exact domain and path are unknown: delete every variant.
+// Matches how wroom writes it: host-only on `/`.
 function deleteSessionCookie() {
-	const hosts = location.hostname.split(".")
-	const segments = location.pathname.split("/")
-	const domains = [""]
-	const paths = ["", "; path=/"]
-	// Skip the top-level domain: browsers reject cookies set on it, and Firefox logs each attempt.
-	for (let index = 0; index < hosts.length - 1; index++) {
-		const domain = hosts.slice(index).join(".")
-		domains.push(`; domain=${domain}`, `; domain=.${domain}`)
-	}
-	for (let index = 2; index <= segments.length; index++) {
-		const path = segments.slice(0, index).join("/")
-		paths.push(`; path=${path}`, `; path=${path}/`)
-	}
-
-	for (const domain of domains) {
-		for (const path of paths) {
-			document.cookie = `${sessionCookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=None; Secure${domain}${path}`
-		}
-	}
+	document.cookie = `${sessionCookieName}=; path=/; max-age=0; SameSite=None; Secure`
 }
 
 const shares = new Map<string, Promise<string>>()
@@ -78,14 +60,13 @@ async function createShareLink(
 ): Promise<string> {
 	if (!session) throw new Error("No active preview session to share.")
 
-	// Prismic requires an image name; screenshots are no longer uploaded. Unlike the bridge, sends no
-	// CSRF token: Prismic no longer returns or checks one.
-	const page = new URL(pageURL)
+	// Screenshots are no longer uploaded, so Prismic shows its default image. Unlike the bridge, sends
+	// no CSRF token: Prismic no longer returns or checks one.
 	const query = new URLSearchParams({
 		sessionId: session,
 		pageURL,
 		title,
-		imageName: `${page.pathname.slice(1)}${page.hash}${session}.jpg`,
+		imageName: "default-preview.png",
 	})
 	const response = await fetch(`/previews/s?${query}`, { method: "POST" })
 	if (!response.ok) throw new Error(`Prismic responded ${response.status} to the share request.`)

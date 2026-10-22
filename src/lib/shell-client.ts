@@ -47,13 +47,14 @@ export async function connectShell(url: string): Promise<Shell> {
 	iframe.style.cssText = "display:none!important"
 
 	const { port1: port, port2 } = new MessageChannel()
-	const pending = new Map<number, (response: ShellResponse) => void>()
+	const pending = new Map<number, { resolve(result: unknown): void; reject(error: Error): void }>()
 	let lastId = 0
 
 	const connected = new Promise<void>((resolve) => {
 		port.onmessage = ({ data }: MessageEvent<ShellResponse | "ready">) => {
 			if (data === "ready") resolve()
-			else pending.get(data.id)?.(data)
+			else if ("error" in data) pending.get(data.id)?.reject(new Error(data.error))
+			else pending.get(data.id)?.resolve(data.result)
 		}
 	})
 	// A port can only be transferred once, so a reloaded shell must not resend it.
@@ -68,6 +69,8 @@ export async function connectShell(url: string): Promise<Shell> {
 	document.body.appendChild(iframe)
 
 	function dispose() {
+		const disposed = new Error("Prismic toolbar: shell disposed.")
+		for (const { reject } of pending.values()) reject(disposed)
 		port.close()
 		iframe.remove()
 	}
@@ -81,12 +84,7 @@ export async function connectShell(url: string): Promise<Shell> {
 
 	function call<T>(method: keyof ShellMethods, ...params: unknown[]): Promise<T> {
 		const id = ++lastId
-		const response = new Promise<T>((resolve, reject) => {
-			pending.set(id, (data) => {
-				if ("error" in data) reject(new Error(data.error))
-				else resolve(data.result as T)
-			})
-		})
+		const response = new Promise<T>((resolve, reject) => pending.set(id, { resolve, reject }))
 		port.postMessage({ id, method, params })
 		return withTimeout(response, `${method} timed out`).finally(() => pending.delete(id))
 	}
