@@ -12,7 +12,7 @@ test("connects to the editor without loading the preview bar or the repository",
 	await expect(editor.overlay).toBeAttached()
 	expect(await editor.messages("ready")).toHaveLength(1)
 	expect(requests.filter((path) => path.endsWith("/embedded-preview.js"))).toHaveLength(1)
-	expect(requests.filter((path) => /\/(toolbar\.js|iframe\.html)$/.test(path))).toEqual([])
+	expect(requests.filter((path) => /\/(toolbar\.js|shell\.html)$/.test(path))).toEqual([])
 })
 
 test("is not loaded outside the editor", async ({ repository, website, context }) => {

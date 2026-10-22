@@ -1,7 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
-import type { Bridge } from "../../src/lib/bridge"
-import type { BridgeState } from "../../src/lib/bridge-protocol"
 import { deleteCookie, getCookie, setCookie } from "../../src/lib/cookie"
 import { claimOwnership, readOwner } from "../../src/lib/owner-marker"
 import {
@@ -9,6 +7,7 @@ import {
 	type PreviewSession,
 	type PreviewSessionOptions,
 } from "../../src/lib/preview-session"
+import type { Shell } from "../../src/lib/shell-client"
 import { createSiteCookieStore, previewCookieName } from "../../src/lib/site-cookie"
 
 const repository = "example.prismic.io"
@@ -39,38 +38,43 @@ afterEach(() => {
 	for (const type of eventTypes) window.removeEventListener(type, recordEvent)
 })
 
-function fakeBridge(state: BridgeState) {
-	const server = { ref: state.preview?.ref ?? (null as string | null) }
-	const bridge = {
-		getState: vi.fn(async () => state),
-		ping: vi.fn(async () => ({ ref: server.ref })),
+/** The repository's session as the shell reports it, without `ref` when none is active. */
+interface State {
+	authenticated: boolean
+	ref?: string
+}
+
+function fakeShell(state: State) {
+	const server = { ref: state.ref ?? (null as string | null) }
+	const shell = {
+		isAuthenticated: vi.fn(async () => state.authenticated),
+		ping: vi.fn(async (_ref: string): Promise<{ ref?: string; title?: string }> =>
+			server.ref ? { ref: server.ref, title: "Spring launch" } : {},
+		),
 		closeSession: vi.fn(async () => {}),
 		share: vi.fn(async (pageURL: string) => `https://example.prismic.io/previews/s/${pageURL}`),
 		dispose: vi.fn(),
-	} satisfies Bridge
-	return { bridge, server }
+	} satisfies Shell
+	return { shell, server }
 }
 
-function setup(state: BridgeState, options: Partial<PreviewSessionOptions> = {}) {
-	const { bridge, server } = fakeBridge(state)
+function setup(state: State, options: Partial<PreviewSessionOptions> = {}) {
+	const { shell, server } = fakeShell(state)
 	const reload = vi.fn()
 	const session = createPreviewSession({
 		repositoryHost: repository,
 		codec: "json",
 		watchCookie: true,
-		connect: async () => bridge,
+		connect: async () => shell,
 		reload,
 		navigationStart,
 		...options,
 	})
 	sessions.push(session)
-	return { session, bridge, server, reload }
+	return { session, shell, server, reload }
 }
 
-const active = (ref: string, isAuthenticated = false): BridgeState => ({
-	isAuthenticated,
-	preview: { ref, title: "Spring launch" },
-})
+const active = (ref: string, authenticated = false): State => ({ authenticated, ref })
 const jsonCookie = (refs: Record<string, string>, tracker?: string) =>
 	JSON.stringify({
 		...(tracker ? { _tracker: tracker } : {}),
@@ -80,13 +84,12 @@ const storedCookie = () => getCookie(previewCookieName)
 const storedJSON = () => JSON.parse(storedCookie() ?? "null")
 
 describe("startup", () => {
-	it("clears a stale repository session but leaves the website's cookie when inactive", async () => {
+	it("leaves the website's cookie without an active session", async () => {
 		setCookie(previewCookieName, "another-tab-ref")
-		const { session, bridge, reload } = setup({ isAuthenticated: false })
+		const { session, reload } = setup({ authenticated: false })
 
 		await session.start()
 
-		expect(bridge.closeSession).toHaveBeenCalledOnce()
 		expect(storedCookie()).toBe("another-tab-ref")
 		expect(session.getSnapshot()).toEqual({ status: "idle", authenticated: false })
 		expect(events).toEqual([])
@@ -122,7 +125,7 @@ describe("startup", () => {
 	it("lets the website enter the preview itself and polls from there", async () => {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [repository]: "stale-ref" }))
-		const { session, bridge, reload } = setup(active("ref-1"))
+		const { session, shell, reload } = setup(active("ref-1"))
 
 		await session.start()
 
@@ -132,7 +135,7 @@ describe("startup", () => {
 			preview: { ref: "ref-1", title: "Spring launch" },
 		})
 		await vi.advanceTimersByTimeAsync(3000)
-		expect(bridge.ping).toHaveBeenCalledWith("ref-1")
+		expect(shell.ping).toHaveBeenCalledWith("ref-1")
 	})
 
 	it("converts a raw cookie holding the session ref without notifying", async () => {
@@ -177,9 +180,10 @@ describe("startup", () => {
 	it("notifies once when the editor pushed after the page started loading", async () => {
 		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart + 1)
-		const { session, reload, bridge } = setup(active("session-ref"))
+		const { session, reload, shell } = setup(active("session-ref"))
 
 		await session.start()
+		shell.ping.mockClear()
 
 		expect(events).toEqual([["prismicPreviewUpdate", "editor-ref"]])
 		expect(reload).toHaveBeenCalledOnce()
@@ -187,18 +191,18 @@ describe("startup", () => {
 		// The page is unloading: it must not start polling.
 		expect(session.getSnapshot().status).toBe("reloading")
 		await vi.advanceTimersByTimeAsync(3000)
-		expect(bridge.ping).not.toHaveBeenCalled()
+		expect(shell.ping).not.toHaveBeenCalled()
 	})
 
 	it("stops starting up when a cookie change reloads the page meanwhile", async () => {
-		const { bridge } = fakeBridge(active("ref-1"))
-		let connected = (_bridge: Bridge) => {}
+		const { shell } = fakeShell(active("ref-1"))
+		let connected = (_shell: Shell) => {}
 		const reload = vi.fn()
 		const session = createPreviewSession({
 			repositoryHost: repository,
 			codec: "json",
 			watchCookie: true,
-			connect: () => new Promise<Bridge>((resolve) => (connected = resolve)),
+			connect: () => new Promise<Shell>((resolve) => (connected = resolve)),
 			reload,
 			navigationStart,
 		})
@@ -207,8 +211,10 @@ describe("startup", () => {
 
 		setCookie(previewCookieName, "editor-ref")
 		await vi.advanceTimersByTimeAsync(250)
-		connected(bridge)
+		connected(shell)
 		await starting
+		await vi.advanceTimersByTimeAsync(0)
+		shell.ping.mockClear()
 		await vi.advanceTimersByTimeAsync(3000)
 
 		expect(events).toEqual([
@@ -218,7 +224,7 @@ describe("startup", () => {
 		expect(reload).toHaveBeenCalledOnce()
 		expect(session.getSnapshot().status).toBe("reloading")
 		expect(storedCookie()).toBe("editor-ref")
-		expect(bridge.ping).not.toHaveBeenCalled()
+		expect(shell.ping).not.toHaveBeenCalled()
 	})
 
 	it("lets a session replace an editor push older than ten minutes", async () => {
@@ -254,7 +260,7 @@ describe("startup", () => {
 	it("ignores a recent push from another repository's editor", async () => {
 		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(otherRepository, "editor-ref", navigationStart + 1)
-		const { session } = setup({ isAuthenticated: false })
+		const { session } = setup({ authenticated: false })
 
 		await session.start()
 
@@ -277,7 +283,7 @@ describe("startup", () => {
 		)
 	})
 
-	it("stays idle when the repository iframe is unreachable", async () => {
+	it("stays idle when the repository shell is unreachable", async () => {
 		vi.spyOn(console, "warn").mockImplementation(() => {})
 		const session = createPreviewSession({
 			repositoryHost: repository,
@@ -302,22 +308,23 @@ describe("polling", () => {
 		setCookie(previewCookieName, jsonCookie({ [repository]: ref }))
 		const context = setup(active(ref, isAuthenticated))
 		await context.session.start()
+		context.shell.ping.mockClear()
 		return context
 	}
 
 	it("never writes while the ref stays the same", async () => {
-		const { bridge } = await startPolling()
+		const { shell } = await startPolling()
 		const cookie = storedCookie()
 
 		await vi.advanceTimersByTimeAsync(9000)
 
-		expect(bridge.ping).toHaveBeenCalledTimes(3)
+		expect(shell.ping).toHaveBeenCalledTimes(3)
 		expect(storedCookie()).toBe(cookie)
 		expect(events).toEqual([])
 	})
 
 	it("does not overwrite a ref the editor pushed in the meantime", async () => {
-		const { bridge, server, session } = await startPolling()
+		const { shell, server, session } = await startPolling()
 		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", Date.now())
 		events = []
@@ -326,7 +333,7 @@ describe("polling", () => {
 		server.ref = "ref-2"
 		await vi.advanceTimersByTimeAsync(3000)
 
-		expect(bridge.ping).toHaveBeenLastCalledWith("ref-1")
+		expect(shell.ping).toHaveBeenLastCalledWith("ref-1")
 		expect(storedCookie()).toBe("editor-ref")
 		// The cookie watcher reported the push itself; polling adds nothing.
 		expect(events).toEqual([["prismicPreviewUpdate", "editor-ref"]])
@@ -334,7 +341,7 @@ describe("polling", () => {
 	})
 
 	it("stores a new ref and notifies once, then keeps polling when the website handles it", async () => {
-		const { server, reload, bridge } = await startPolling("ref-1", true)
+		const { server, reload, shell } = await startPolling("ref-1", true)
 
 		server.ref = "ref-2"
 		await vi.advanceTimersByTimeAsync(3000)
@@ -347,11 +354,11 @@ describe("polling", () => {
 		})
 		expect(events).toEqual([["prismicPreviewUpdate", "ref-2"]])
 		expect(reload).not.toHaveBeenCalled()
-		expect(bridge.ping).toHaveBeenLastCalledWith("ref-2")
+		expect(shell.ping).toHaveBeenLastCalledWith("ref-2")
 	})
 
 	it("reloads on a new ref when nothing handles the update", async () => {
-		const { server, reload, bridge } = await startPolling()
+		const { server, reload, shell } = await startPolling()
 		cancelEvents = false
 
 		server.ref = "ref-2"
@@ -359,18 +366,18 @@ describe("polling", () => {
 		await vi.advanceTimersByTimeAsync(9000)
 
 		expect(reload).toHaveBeenCalledOnce()
-		expect(bridge.ping).toHaveBeenCalledTimes(1)
+		expect(shell.ping).toHaveBeenCalledTimes(1)
 	})
 
 	it("ends the preview when the session ends and the cookie still holds its ref", async () => {
-		const { server, bridge, session } = await startPolling()
+		const { server, shell, session } = await startPolling()
 
 		server.ref = null
 		await vi.advanceTimersByTimeAsync(3000)
 
 		expect(storedCookie()).toBeUndefined()
-		// The iframe closes the session itself when its ping finds it ended.
-		expect(bridge.closeSession).not.toHaveBeenCalled()
+		// The shell closes the session itself when its ping finds it ended.
+		expect(shell.closeSession).not.toHaveBeenCalled()
 		expect(events).toEqual([["prismicPreviewEnd", null]])
 		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
 	})
@@ -391,23 +398,23 @@ describe("polling", () => {
 	})
 
 	it("retries after a failed ping and skips pings while the page is hidden", async () => {
-		const { bridge, server } = await startPolling()
-		bridge.ping.mockRejectedValueOnce(new Error("offline"))
+		const { shell, server } = await startPolling()
+		shell.ping.mockRejectedValueOnce(new Error("offline"))
 
 		await vi.advanceTimersByTimeAsync(3000)
 		Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true })
 		await vi.advanceTimersByTimeAsync(9000)
-		expect(bridge.ping).toHaveBeenCalledTimes(1)
+		expect(shell.ping).toHaveBeenCalledTimes(1)
 
 		server.ref = "ref-2"
 		Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true })
 		await vi.advanceTimersByTimeAsync(3000)
-		expect(bridge.ping).toHaveBeenCalledTimes(2)
+		expect(shell.ping).toHaveBeenCalledTimes(2)
 		expect(events).toEqual([["prismicPreviewUpdate", "ref-2"]])
 	})
 
 	it("pings as soon as the page is visible again", async () => {
-		const { bridge } = await startPolling()
+		const { shell } = await startPolling()
 		Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true })
 		await vi.advanceTimersByTimeAsync(6000)
 
@@ -415,20 +422,20 @@ describe("polling", () => {
 		document.dispatchEvent(new Event("visibilitychange"))
 		await vi.advanceTimersByTimeAsync(0)
 
-		expect(bridge.ping).toHaveBeenCalledOnce()
+		expect(shell.ping).toHaveBeenCalledOnce()
 	})
 
 	it("ignores a ping that answers after following another session", async () => {
-		const { bridge, session } = await startPolling()
-		let answer = (_response: { ref: string | null }) => {}
-		bridge.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		const { shell, server, session } = await startPolling()
+		let answer = (_response: { ref?: string }) => {}
+		shell.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 		await vi.advanceTimersByTimeAsync(3000)
 
 		// Another tab exits, so the next ping finds the session ended, then a new session starts.
-		bridge.ping.mockResolvedValueOnce({ ref: null })
+		shell.ping.mockResolvedValueOnce({})
 		document.dispatchEvent(new Event("visibilitychange"))
 		await vi.advanceTimersByTimeAsync(0)
-		bridge.getState.mockResolvedValue(active("ref-2"))
+		server.ref = "ref-2"
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
 		await vi.advanceTimersByTimeAsync(250)
 		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-2" } })
@@ -441,11 +448,11 @@ describe("polling", () => {
 	})
 
 	it("ignores a ping that answers after exiting", async () => {
-		const { bridge, session } = await startPolling()
-		let answer = (_response: { ref: string | null }) => {}
+		const { shell, session } = await startPolling()
+		let answer = (_response: { ref?: string }) => {}
 		let closed = () => {}
-		bridge.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
-		bridge.closeSession.mockImplementationOnce(
+		shell.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		shell.closeSession.mockImplementationOnce(
 			() => new Promise<void>((resolve) => (closed = resolve)),
 		)
 		await vi.advanceTimersByTimeAsync(3000)
@@ -465,7 +472,7 @@ describe("cookie changes from other tabs and the editor", () => {
 	it("notifies once per new ref, ignores rewrites of the same ref, and ends on removal", async () => {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker1"))
-		const { session } = setup({ isAuthenticated: false })
+		const { session } = setup({ authenticated: false })
 		await session.start()
 
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker2"))
@@ -483,7 +490,7 @@ describe("cookie changes from other tabs and the editor", () => {
 	})
 
 	it("reloads when nothing handles a change", async () => {
-		const { session, reload } = setup({ isAuthenticated: false })
+		const { session, reload } = setup({ authenticated: false })
 		await session.start()
 
 		setCookie(previewCookieName, "editor-ref")
@@ -494,52 +501,38 @@ describe("cookie changes from other tabs and the editor", () => {
 
 	it("starts following a session another tab started", async () => {
 		cancelEvents = true
-		const state: BridgeState = { isAuthenticated: false }
-		const { session, bridge, server } = setup(state)
+		const { session, shell, server } = setup({ authenticated: false })
 		await session.start()
 
-		state.preview = { ref: "ref-1", title: "Spring launch" }
 		server.ref = "ref-1"
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(3250)
 
 		expect(events).toEqual([["prismicPreviewStart", "ref-1"]])
 		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-1" } })
-		expect(bridge.ping).toHaveBeenCalled()
+		expect(shell.ping).toHaveBeenCalled()
 	})
 
 	it("follows a session started while starting up", async () => {
 		cancelEvents = true
-		const { session, bridge } = setup(active("ref-1"))
-		let answer = (_state: BridgeState) => {}
-		bridge.getState.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		const { session, shell } = setup(active("ref-1"))
+		let answer = (_authenticated: boolean) => {}
+		shell.isAuthenticated.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 
 		const starting = session.start()
 		await vi.advanceTimersByTimeAsync(0)
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(250)
-		answer({ isAuthenticated: false })
+		answer(false)
 		await starting
 		await vi.advanceTimersByTimeAsync(3000)
 
 		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-1" } })
-		expect(bridge.ping).toHaveBeenCalled()
-	})
-
-	it("does not close the repository session when a cookie change finds none", async () => {
-		cancelEvents = true
-		const { session, bridge } = setup({ isAuthenticated: false })
-		await session.start()
-
-		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
-		await vi.advanceTimersByTimeAsync(250)
-
-		expect(bridge.getState).toHaveBeenCalledTimes(2)
-		expect(bridge.closeSession).toHaveBeenCalledOnce()
+		expect(shell.ping).toHaveBeenCalled()
 	})
 
 	it("does not watch inside the editor", async () => {
-		const { session } = setup({ isAuthenticated: false }, { watchCookie: false, codec: "plain" })
+		const { session } = setup({ authenticated: false }, { watchCookie: false, codec: "plain" })
 		await session.start()
 
 		setCookie(previewCookieName, "editor-ref")
@@ -553,18 +546,19 @@ describe("exit", () => {
 	it("removes its own ref, keeps other repositories' refs, and closes the session", async () => {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [otherRepository]: "other", [repository]: "ref-1" }))
-		const { session, bridge, reload } = setup(active("ref-1"))
+		const { session, shell, reload } = setup(active("ref-1"))
 		await session.start()
+		shell.ping.mockClear()
 
 		await session.exit()
 
-		expect(bridge.closeSession).toHaveBeenCalledOnce()
+		expect(shell.closeSession).toHaveBeenCalledOnce()
 		expect(storedJSON()).toEqual({ [otherRepository]: { preview: "other" } })
 		expect(events).toEqual([["prismicPreviewEnd", null]])
 		expect(reload).not.toHaveBeenCalled()
 		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
 		await vi.advanceTimersByTimeAsync(6000)
-		expect(bridge.ping).not.toHaveBeenCalled()
+		expect(shell.ping).not.toHaveBeenCalled()
 	})
 
 	it("reloads when nothing handles the end", async () => {

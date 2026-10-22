@@ -18,7 +18,7 @@ async function expectNoPreview(website: Website) {
 	expect(await website.cookie(sessionCookieName)).toBeUndefined()
 }
 
-test("follows the session with ping, without the iframe", async ({
+test("follows the session with ping, without the shell", async ({
 	repository,
 	website,
 	requests,
