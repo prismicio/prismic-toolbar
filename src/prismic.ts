@@ -1,4 +1,3 @@
-import { startV4 } from "./v4"
 import { connectBridge } from "./lib/bridge"
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
 import { getCookie } from "./lib/cookie"
@@ -11,8 +10,10 @@ import {
 	warn,
 	type ToolbarMode,
 } from "./lib/env"
+import { dispatchPreviewEvent } from "./lib/events"
 import { createPreviewSession } from "./lib/preview-session"
-import { sessionCookieName } from "./lib/site-cookie"
+import { createSiteCookieStore, refFor, sessionCookieName } from "./lib/site-cookie"
+import { startV4 } from "./v4"
 
 // Replaced at build time, see `vite.config.ts`.
 /** Origin the toolbar's versioned assets are served from, such as `https://prismic.io`. */
@@ -62,7 +63,16 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 			loadChunk(`${assets}/v5.js`, "startV5")
 				.then((startV5) => startV5(repositoryHost))
 				.catch((error: unknown) => warn(`Could not load the preview.\n\n${String(error)}`))
+			return
 		}
+		// A preview without a session, like a v4 one from before the website's SDK sent `v=5`, has no
+		// bar to exit it.
+		const store = createSiteCookieStore(repositoryHost)
+		if (!refFor(store.read(), repositoryHost)) return
+		store.removeOwn()
+		// Reloading with a cookie the toolbar cannot delete would loop.
+		const removed = !refFor(store.read(), repositoryHost)
+		if (dispatchPreviewEvent("prismicPreviewEnd") && removed) window.location.reload()
 		return
 	}
 

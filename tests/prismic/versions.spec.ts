@@ -1,7 +1,7 @@
 import { expect, previewCookieName, test } from "../infra"
 
-// Websites whose SDK opts into `v=5` run the v5 flow when it stored a session, and nothing
-// otherwise.
+// Websites whose SDK opts into `v=5` run the v5 flow when it stored a session, and end previews
+// without one.
 test.beforeEach(({ website }) => {
 	website.scriptQuery += "&v=5"
 })
@@ -18,7 +18,6 @@ test("starts v5 with only a session", async ({ website, requests }) => {
 	await expect(website.previewBar).toBeVisible()
 	expect(website.loads).toEqual([null, "ref-1"])
 	expect(loaded(requests, "v5.js")).toBe(true)
-	expect(loaded(requests, "toolbar.js")).toBe(false)
 	expect(loaded(requests, "iframe.html")).toBe(false)
 })
 
@@ -33,13 +32,21 @@ test("starts the preview with the session's first ref", async ({ website }) => {
 	expect(website.loads).toEqual([null])
 })
 
-test("does nothing without a session", async ({ repository, website, requests }) => {
-	await website.storePreview("ref-1", { session: false })
-	await website.page.goto(website.url, { referer: `${repository.url}/previews/s/share-id` })
+test("does nothing without a preview", async ({ website, requests }) => {
+	await website.goto()
 
-	await expect(website.content).toHaveText("Draft content: ref-1")
-	await expect(website.previewBar).toHaveCount(0)
+	await expect(website.content).toHaveText("Published content")
 	expect(requests.map((url) => new URL(url).pathname)).toEqual(["/", "/prismic.js"])
+})
+
+test("ends a preview without a session", async ({ website, requests }) => {
+	await website.storePreview("ref-1", { session: false })
+	await website.goto()
+
+	await expect(website.content).toHaveText("Published content")
+	expect(website.loads).toEqual(["ref-1", null])
+	expect(await website.cookie(previewCookieName)).toBeUndefined()
+	expect(loaded(requests, "v5.js")).toBe(false)
 })
 
 test("ignores v=5 in the editor's preview", async ({ editor, requests }) => {

@@ -10,10 +10,10 @@ To preview from Prismic, add the playground to the repository's previews, with `
 
 ## Flows
 
-| Where     | Flow                                   | SDK                                                                                           |
-| --------- | -------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `/`       | v5: the toolbar loads with `&v=5`      | `@prismicio/next` from [prismic-next#175](https://github.com/prismicio/prismic-next/pull/175) |
-| `/v4`     | v4: the toolbar follows its iframe     | `@prismicio/next-v4`, an alias of `@prismicio/next@2.3.3`                                     |
+| Where | Flow                               | SDK                                                                                           |
+| ----- | ---------------------------------- | --------------------------------------------------------------------------------------------- |
+| `/`   | v5: the toolbar loads with `&v=5`  | `@prismicio/next` from [prismic-next#175](https://github.com/prismicio/prismic-next/pull/175) |
+| `/v4` | v4: the toolbar follows its iframe | `@prismicio/next-v4`, an alias of `@prismicio/next@2.3.3`                                     |
 
 Each flow has its own preview and exit routes under its path. The header switches between them.
 
