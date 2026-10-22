@@ -2,7 +2,7 @@ import { watchCookie } from "./cookie-watcher"
 import { warn } from "./env"
 import { dispatchPreviewEvent } from "./events"
 import { liveOwner, releaseOwnership } from "./owner-marker"
-import { ping, type PingResponse } from "./ping"
+import { ping } from "./ping"
 import type { Shell } from "./shell-client"
 import {
 	createSiteCookieStore,
@@ -64,7 +64,7 @@ export function createPreviewSession({
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	let snapshot: PreviewSnapshot = { status: "booting", authenticated: false }
 	let shell: Shell | undefined
-	/** The followed session, and its ref while following it. */
+	/** The followed session, with `serverRef`. */
 	let session: string | undefined
 	let serverRef: string | undefined
 	let pollTimer: ReturnType<typeof setInterval> | undefined
@@ -155,19 +155,15 @@ export function createPreviewSession({
 
 		const pinged = session
 		const pingedRef = serverRef
-		let state: PingResponse
+		let nextRef: string | undefined
 		try {
-			state = await ping(repositoryHost, pinged, pingedRef)
+			nextRef = (await ping(repositoryHost, pinged, pingedRef)).ref
 		} catch {
 			return // Transient failure: try again on the next tick.
 		}
 		// Polling may have stopped or followed another session during the ping, such as on exit,
 		// reload, or a session another tab started.
 		if (pollTimer === undefined || session !== pinged || serverRef !== pingedRef) return
-
-		const nextRef = state.ref
-		if (nextRef && snapshot.preview)
-			setSnapshot({ preview: { ref: nextRef, title: state.title || "" } })
 		if (nextRef === serverRef) return
 
 		const cookie = store.read()
@@ -187,6 +183,7 @@ export function createPreviewSession({
 		}
 
 		serverRef = nextRef
+		if (snapshot.preview) setSnapshot({ preview: { ...snapshot.preview, ref: nextRef } })
 		// Never overwrite a ref the editor pushed. An unchanged ref above never writes either, which
 		// keeps this tab from fighting the editor over the cookie.
 		if (editorOwnsCookie) return

@@ -30,26 +30,24 @@ function defines(development: boolean) {
 	}
 }
 
-/** Inlines an entry's script into `<entry>.html`, so the repository host serves a single file. */
-function inlineScript(entry: "shell"): Plugin {
-	return {
-		name: "inline-script",
-		generateBundle(_options, bundle) {
-			const script = bundle[`${entry}.js`]
-			if (script?.type !== "chunk") throw new Error(`Missing ${entry} script`)
+/** Inlines the shell's script into `shell.html`, so the repository host serves a single file. */
+const inlineShell: Plugin = {
+	name: "inline-shell",
+	generateBundle(_options, bundle) {
+		const script = bundle["shell.js"]
+		if (script?.type !== "chunk") throw new Error("Missing shell script")
 
-			const template = readFileSync(`src/${entry}.html`, "utf8")
-			this.emitFile({
-				type: "asset",
-				fileName: `${entry}.html`,
-				source: template.replace(
-					`<script src="${entry}?_inline"></script>`,
-					() => `<script>${script.code.replace(/<\/script/gi, "<\\/script")}</script>`,
-				),
-			})
-			delete bundle[`${entry}.js`]
-		},
-	}
+		const template = readFileSync("src/shell.html", "utf8")
+		this.emitFile({
+			type: "asset",
+			fileName: "shell.html",
+			source: template.replace(
+				'<script src="shell?_inline"></script>',
+				() => `<script>${script.code.replace(/<\/script/gi, "<\\/script")}</script>`,
+			),
+		})
+		delete bundle["shell.js"]
+	},
 }
 
 /** Builds one entry as a self-contained classic script, used by `scripts/build.ts`. */
@@ -72,7 +70,7 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 			sourcemap: development ? "inline" : false,
 			watch: development ? {} : null,
 		},
-		plugins: entry === "shell" ? [inlineScript(entry)] : [],
+		plugins: entry === "shell" ? [inlineShell] : [],
 	}
 }
 
