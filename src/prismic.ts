@@ -60,7 +60,10 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 
 	if (requestedVersion === "5") {
 		// Share links carry the session in the hash, which never reaches servers.
-		const sharedSession = new URLSearchParams(location.hash.slice(1)).get(sessionHashKey)
+		const readSharedSession = () => new URLSearchParams(location.hash.slice(1)).get(sessionHashKey)
+		// A share link to the page already open only changes its hash: load it to read the session.
+		addEventListener("hashchange", () => readSharedSession() && location.reload())
+		const sharedSession = readSharedSession()
 		if (sharedSession) {
 			setCookie(sessionCookieName, sharedSession)
 			// Without state, Next.js's router adopts the URL instead of restoring the hash on refresh.

@@ -121,7 +121,9 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 
 	button.onclick = async () => {
 		const pageURL = window.location.href
-		const cached = links.get(pageURL)
+		// A session followed without reloading has another ref, and so another link.
+		const key = `${session.getSnapshot().preview?.ref} ${pageURL}`
+		const cached = links.get(key)
 		if (!cached) show("loading")
 		let url: string
 		try {
@@ -129,7 +131,7 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 		} catch {
 			return show("failed")
 		}
-		links.set(pageURL, url)
+		links.set(key, url)
 
 		try {
 			await navigator.clipboard.writeText(url)
