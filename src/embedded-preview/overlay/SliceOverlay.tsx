@@ -184,6 +184,11 @@ function SliceHighlight(props: SliceHighlightProps) {
 		postMessage({ type: "prismic:embedded-preview:move-slice", sliceId, direction })
 	}
 
+	function handleChangeVariation(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:change-slice-variation", sliceId })
+	}
+
 	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
 		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
@@ -234,6 +239,17 @@ function SliceHighlight(props: SliceHighlightProps) {
 			)}
 			{!readOnly && (
 				<div className="slice-control-group slice-control-group-right">
+					{variation !== undefined && (
+						<button
+							type="button"
+							className="slice-button"
+							aria-label="Change variation"
+							title="Change variation"
+							onClick={handleChangeVariation}
+						>
+							<DescriptionIcon className="slice-button-icon" />
+						</button>
+					)}
 					<button
 						type="button"
 						className="slice-button"
@@ -267,6 +283,14 @@ function ArrowDownIcon(props: SVGProps<SVGSVGElement>) {
 	return (
 		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
 			<path d="M20 12L18.59 10.59L13 16.17V4H11V16.17L5.42 10.58L4 12L12 20L20 12Z" />
+		</svg>
+	)
+}
+
+function DescriptionIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M8 16H16V18H8V16ZM8 12H16V14H8V12ZM14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
 		</svg>
 	)
 }

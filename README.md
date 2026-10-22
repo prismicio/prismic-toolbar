@@ -16,11 +16,7 @@ The official preview toolbar for [Prismic][prismic].
 Add the script to every page of your website, including the 404 page. Replace `my-repository` with your repository name.
 
 ```html
-<script
-	async
-	defer
-	src="https://static.cdn.prismic.io/prismic.js?new=true&repo=my-repository"
-></script>
+<script async defer src="https://static.cdn.prismic.io/prismic.js?repo=my-repository"></script>
 ```
 
 Prismic's framework integrations add it for you, and `getToolbarSrc()` from `@prismicio/client` returns its URL.
@@ -35,7 +31,7 @@ npx skills add --global --yes prismicio/skills
 
 For full documentation, visit the official Prismic documentation for your framework: [Next.js][prismic-docs-nextjs], [Nuxt][prismic-docs-nuxt], or [SvelteKit][prismic-docs-sveltekit].
 
-To integrate the toolbar with another framework, listen to its preview events. The toolbar dispatches them on `window` and reloads the page unless one is cancelled.
+To integrate the toolbar with another framework, listen to its preview events. The toolbar updates the `io.prismic.preview` cookie, dispatches the event on `window`, and reloads the page unless it is cancelled.
 
 | Event                  | `detail`  | When                                                                                                                                  |
 | ---------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |

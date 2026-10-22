@@ -15,6 +15,7 @@ const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
 const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const moveSliceMessageType = "prismic:embedded-preview:move-slice"
+const changeSliceVariationMessageType = "prismic:embedded-preview:change-slice-variation"
 const deleteSliceMessageType = "prismic:embedded-preview:delete-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
@@ -136,6 +137,10 @@ type MoveSliceMessage = {
 	sliceId: string
 	direction: "up" | "down"
 }
+type ChangeSliceVariationMessage = {
+	type: typeof changeSliceVariationMessageType
+	sliceId: string
+}
 type DeleteSliceMessage = {
 	type: typeof deleteSliceMessageType
 	sliceId: string
@@ -179,6 +184,7 @@ export type Message =
 	| SelectPinMessage
 	| SelectSliceMessage
 	| MoveSliceMessage
+	| ChangeSliceVariationMessage
 	| DeleteSliceMessage
 	| DeselectPinMessage
 	| ShowPinPreviewMessage

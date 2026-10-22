@@ -9,8 +9,8 @@ import packageJSON from "./package.json" with { type: "json" }
 // and the last SHA deployed from master locally (see `scripts/dev.ts`).
 export const version = process.env.TOOLBAR_VERSION || packageJSON.version
 
-/** Each entry builds `src/<entry>.ts` into `<entry>.js`. */
-export const entries = ["prismic", "embedded-preview", "toolbar", "iframe"] as const
+/** Each entry builds `src/<entry>.ts` into `<entry>.js`, or into `<entry>.html` for pages. */
+export const entries = ["prismic", "v5", "embedded-preview", "toolbar", "iframe", "shell"] as const
 
 export type Entry = (typeof entries)[number]
 
@@ -30,24 +30,26 @@ function defines(development: boolean) {
 	}
 }
 
-/** Inlines the iframe's script into `iframe.html`, so the repository host serves a single file. */
-const inlineIframeScript: Plugin = {
-	name: "inline-iframe-script",
-	generateBundle(_options, bundle) {
-		const script = bundle["iframe.js"]
-		if (script?.type !== "chunk") throw new Error("Missing iframe script")
+/** Inlines an entry's script into `<entry>.html`, so the repository host serves a single file. */
+function inlineScript(entry: "iframe" | "shell"): Plugin {
+	return {
+		name: "inline-script",
+		generateBundle(_options, bundle) {
+			const script = bundle[`${entry}.js`]
+			if (script?.type !== "chunk") throw new Error(`Missing ${entry} script`)
 
-		const template = readFileSync("src/iframe.html", "utf8")
-		this.emitFile({
-			type: "asset",
-			fileName: "iframe.html",
-			source: template.replace(
-				'<script src="iframe?_inline"></script>',
-				() => `<script>${script.code.replace(/<\/script/gi, "<\\/script")}</script>`,
-			),
-		})
-		delete bundle["iframe.js"]
-	},
+			const template = readFileSync(`src/${entry}.html`, "utf8")
+			this.emitFile({
+				type: "asset",
+				fileName: `${entry}.html`,
+				source: template.replace(
+					`<script src="${entry}?_inline"></script>`,
+					() => `<script>${script.code.replace(/<\/script/gi, "<\\/script")}</script>`,
+				),
+			})
+			delete bundle[`${entry}.js`]
+		},
+	}
 }
 
 /** Builds one entry as a self-contained classic script, used by `scripts/build.ts`. */
@@ -70,7 +72,7 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 			sourcemap: development ? "inline" : false,
 			watch: development ? {} : null,
 		},
-		plugins: entry === "iframe" ? [inlineIframeScript] : [],
+		plugins: entry === "iframe" || entry === "shell" ? [inlineScript(entry)] : [],
 	}
 }
 

@@ -4,9 +4,9 @@ import { notFound } from "next/navigation"
 
 import { createClient, documentTitle, findSlices } from "@/lib/prismic"
 
-import { Slice } from "../../Slice"
+import { Slice } from "./Slice"
 
-export default async function DocumentPage({ params }: { params: Promise<{ id: string }> }) {
+export async function DocumentPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params
 	const client = await createClient()
 	const document = await client.getByID(id).catch((error: unknown) => {
