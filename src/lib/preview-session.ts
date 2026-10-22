@@ -2,7 +2,6 @@ import { watchCookie } from "./cookie-watcher"
 import { warn } from "./env"
 import { dispatchPreviewEvent } from "./events"
 import { liveOwner, releaseOwnership } from "./owner-marker"
-import { ping } from "./ping"
 import type { Shell } from "./shell-client"
 import {
 	createSiteCookieStore,
@@ -47,10 +46,10 @@ export interface PreviewSessionOptions {
 }
 
 /**
- * Keeps the website's preview cookie in sync with the repository's preview session, which the shell
- * reads and Prismic's public `ping` follows, and tells the website when the ref it renders is
- * stale. Every notification goes through `reconcile`, which compares the cookie with the ref this
- * page renders, so polling, cookie changes and this page's own writes notify at most once per ref.
+ * Keeps the website's preview cookie in sync with the repository's preview session, which the
+ * repository's shell reads and pings, and tells the website when the ref it renders is stale. Every
+ * notification goes through `reconcile`, which compares the cookie with the ref this page renders,
+ * so polling, cookie changes and this page's own writes notify at most once per ref.
  */
 export function createPreviewSession({
 	repositoryHost,
@@ -64,8 +63,6 @@ export function createPreviewSession({
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	let snapshot: PreviewSnapshot = { status: "booting", authenticated: false }
 	let shell: Shell | undefined
-	/** The followed session, with `serverRef`. */
-	let session: string | undefined
 	let serverRef: string | undefined
 	let pollTimer: ReturnType<typeof setInterval> | undefined
 	let following = Promise.resolve()
@@ -78,12 +75,8 @@ export function createPreviewSession({
 	const unwatch = watch
 		? watchCookie(previewCookieName, () => {
 				reconcile()
-				// Another tab or a preview route started, replaced, or exited a session: read it again. The
-				// editor pushes refs on every edit, within the same session.
-				if (isReloading() || currentRef() === serverRef || editorOwner(store.read())) return
-				stopPolling()
-				serverRef = undefined
-				void follow()
+				// A tab that was not previewing follows a session another tab or a share link started.
+				if (currentRef() !== undefined) void follow()
 			})
 		: undefined
 
@@ -91,8 +84,6 @@ export function createPreviewSession({
 		snapshot = { ...snapshot, ...patch }
 		for (const listener of listeners) listener(snapshot)
 	}
-
-	const idle = () => setSnapshot({ status: "idle", preview: undefined })
 
 	/** Only pages that follow editor pushes leave the editor's ref alone. */
 	const editorOwner = (cookie: SiteCookie) => (watch ? liveOwner(cookie) : undefined)
@@ -153,26 +144,18 @@ export function createPreviewSession({
 	}
 
 	async function tick() {
-		if (!session || serverRef === undefined || document.visibilityState !== "visible") return
+		if (!shell || serverRef === undefined || document.visibilityState !== "visible") return
 
-		const pinged = session
 		const pingedRef = serverRef
 		let nextRef: string | undefined
 		try {
-			nextRef = (await ping(repositoryHost, pinged, pingedRef)).ref
+			nextRef = (await shell.ping(pingedRef)).ref
 		} catch {
 			return // Transient failure: try again on the next tick.
 		}
 		// Polling may have stopped or followed another session during the ping, such as on exit,
 		// reload, or a session another tab started.
-		if (
-			pollTimer === undefined ||
-			session !== pinged ||
-			serverRef !== pingedRef ||
-			nextRef === serverRef
-		) {
-			return
-		}
+		if (pollTimer === undefined || serverRef !== pingedRef || nextRef === serverRef) return
 
 		const cookie = store.read()
 		const editorOwnsCookie = Boolean(editorOwner(cookie))
@@ -182,7 +165,7 @@ export function createPreviewSession({
 			const ownsCookie = !editorOwnsCookie && refFor(cookie, repositoryHost) === serverRef
 			stopPolling()
 			serverRef = undefined
-			idle()
+			setSnapshot({ status: "idle", preview: undefined })
 			if (ownsCookie) {
 				store.removeOwn()
 				reconcile()
@@ -207,29 +190,26 @@ export function createPreviewSession({
 		if (serverRef !== undefined) return
 		try {
 			shell ??= await connect()
-			const { session: id, authenticated } = await shell.getSession()
-			const state = id ? await ping(repositoryHost, id, currentRef() ?? "") : undefined
+			const { authenticated } = await shell.getSession()
+			const { ref, title = "" } = await shell.ping(currentRef() ?? "")
 			// A cookie change meanwhile may already be reloading the page.
 			if (isReloading()) return
 			setSnapshot({ authenticated })
 
-			if (!id || !state?.ref) {
-				// Clear an ended repository session, but leave the website's cookie: another tab or the
-				// editor may own it.
-				if (id) void shell.closeSession(id).catch(() => {})
-				idle()
+			// Leave the website's cookie when the session ended: another tab or the editor may own it.
+			if (!ref) {
+				setSnapshot({ status: "idle" })
 				reconcileEditorPush()
 				return
 			}
 
-			session = id
-			serverRef = state.ref
+			serverRef = ref
 			const cookie = store.read()
 			if (editorOwner(cookie)) {
 				reconcileEditorPush()
 				if (isReloading()) return
 			} else if (refFor(cookie, repositoryHost) !== serverRef) {
-				if (!writeRef(serverRef)) return idle()
+				if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
 				renderedRef = serverRef
 				if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
 			} else if (cookie.kind === "plain" && codec === "json") {
@@ -237,37 +217,34 @@ export function createPreviewSession({
 				writeRef(serverRef)
 			}
 
-			setSnapshot({ status: "polling", preview: { ref: serverRef, title: state.title || "" } })
+			setSnapshot({ status: "polling", preview: { ref, title } })
 			startPolling()
 		} catch (error) {
 			warn(`Could not reach the preview session.\n\n${String(error)}`)
-			idle()
+			setSnapshot({ status: "idle" })
 		}
-	}
-
-	async function exitOnce() {
-		stopPolling()
-		await shell?.closeSession().catch(() => {})
-		serverRef = undefined
-
-		const owner = editorOwner(store.read())
-		if (!owner) {
-			store.removeOwn()
-		} else if (owner.repository === repositoryHost) {
-			releaseOwnership()
-			store.deleteAll()
-		} // Otherwise another repository's editor owns the cookie: leave it.
-
-		renderedRef = currentRef()
-		idle()
-		if (dispatchPreviewEvent("prismicPreviewEnd")) reloadPage()
 	}
 
 	return {
 		start: follow,
 
-		// After any follow in flight, which would otherwise follow the session again.
-		exit: () => (following = following.then(exitOnce)),
+		async exit() {
+			stopPolling()
+			await shell?.closeSession().catch(() => {})
+			serverRef = undefined
+
+			const owner = editorOwner(store.read())
+			if (!owner) {
+				store.removeOwn()
+			} else if (owner.repository === repositoryHost) {
+				releaseOwnership()
+				store.deleteAll()
+			} // Otherwise another repository's editor owns the cookie: leave it.
+
+			renderedRef = currentRef()
+			setSnapshot({ status: "idle", preview: undefined })
+			if (dispatchPreviewEvent("prismicPreviewEnd")) reloadPage()
+		},
 
 		async share(pageURL = window.location.href) {
 			if (!shell) throw new Error("The preview session is not connected.")

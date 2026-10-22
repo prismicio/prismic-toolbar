@@ -25,9 +25,27 @@ const methods: ShellMethods = {
 		return { session, authenticated: Boolean(session) && (await isAuthenticated()) }
 	},
 
-	async closeSession(session) {
-		// Checked and deleted in one step, so a session another tab started meanwhile survives.
-		if (!session || getCookie(sessionCookieName) === session) deleteSessionCookie()
+	async ping(ref) {
+		// Read on every ping: another tab or website may have replaced or closed the session.
+		const session = getCookie(sessionCookieName)
+		if (!session) return {}
+
+		const response = await fetch(`/previews/${session}/ping?ref=${encodeURIComponent(ref)}`)
+		if (!response.ok) throw new Error(`Prismic responded ${response.status} to ping.`)
+		// `{ ref, title }`, or `{ close: true }` once the session ended.
+		const { ref: next, title } = await response.json()
+
+		const current = getCookie(sessionCookieName)
+		// Another tab replaced the session meanwhile: report no change, so the next ping follows it.
+		if (current !== session) return current ? { ref } : {}
+		if (next) return { ref: next, title }
+		// Checked and deleted in one step, so a session started meanwhile survives.
+		deleteSessionCookie()
+		return {}
+	},
+
+	async closeSession() {
+		deleteSessionCookie()
 	},
 
 	share(pageURL, title) {

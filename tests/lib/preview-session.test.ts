@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest"
 
 import { deleteCookie, getCookie, setCookie } from "../../src/lib/cookie"
 import { claimOwnership, readOwner } from "../../src/lib/owner-marker"
-import type { PingResponse } from "../../src/lib/ping"
 import {
 	createPreviewSession,
 	type PreviewSession,
@@ -37,53 +36,33 @@ beforeEach(() => {
 afterEach(() => {
 	for (const session of sessions.splice(0)) session.dispose()
 	for (const type of eventTypes) window.removeEventListener(type, recordEvent)
-	vi.unstubAllGlobals()
 })
 
-/** The repository's session cookie, as the shell reads it, and the session's ref on Prismic. */
-interface Server {
-	session: string | null
-	ref: string | null
+/** The repository's session as the shell reads it: its ref, `null` without an active session. */
+interface State {
 	authenticated: boolean
+	ref?: string
 }
 
-const active = (ref: string, authenticated = false): Server => ({
-	session: "session-1",
-	ref,
-	authenticated,
-})
-const inactive = (): Server => ({ session: null, ref: null, authenticated: false })
-
-function fakeServer(server: Server) {
+function fakeShell(state: State) {
+	const server = { ref: state.ref ?? (null as string | null) }
 	const shell = {
 		getSession: vi.fn(async () => ({
-			session: server.session,
-			authenticated: Boolean(server.session) && server.authenticated,
+			session: server.ref && "session-1",
+			authenticated: state.authenticated,
 		})),
-		// Like the shell: with a session, only while the cookie still holds it.
-		closeSession: vi.fn(async (session?: string) => {
-			if (!session || server.session === session) server.session = null
-		}),
+		ping: vi.fn(async (_ref: string): Promise<{ ref?: string; title?: string }> =>
+			server.ref ? { ref: server.ref, title: "Spring launch" } : {},
+		),
+		closeSession: vi.fn(async () => {}),
 		share: vi.fn(async (pageURL: string) => `https://example.prismic.io/previews/s/${pageURL}`),
 		dispose: vi.fn(),
 	} satisfies Shell
-	// Called with the pinged ref and session.
-	const ping = vi.fn(async (_ref: string, _session: string): Promise<PingResponse> =>
-		server.ref ? { ref: server.ref, title: "Spring launch" } : { close: true },
-	)
-	vi.stubGlobal(
-		"fetch",
-		vi.fn(async (url: string) => {
-			const { pathname, searchParams } = new URL(url)
-			const body = await ping(searchParams.get("ref") ?? "", pathname.split("/")[2] ?? "")
-			return { ok: true, json: async () => body }
-		}),
-	)
-	return { shell, ping, server }
+	return { shell, server }
 }
 
-function setup(state: Server, options: Partial<PreviewSessionOptions> = {}) {
-	const { shell, ping, server } = fakeServer(state)
+function setup(state: State, options: Partial<PreviewSessionOptions> = {}) {
+	const { shell, server } = fakeShell(state)
 	const reload = vi.fn()
 	const session = createPreviewSession({
 		repositoryHost: repository,
@@ -95,9 +74,10 @@ function setup(state: Server, options: Partial<PreviewSessionOptions> = {}) {
 		...options,
 	})
 	sessions.push(session)
-	return { session, shell, ping, server, reload }
+	return { session, shell, server, reload }
 }
 
+const active = (ref: string, authenticated = false): State => ({ authenticated, ref })
 const jsonCookie = (refs: Record<string, string>, tracker?: string) =>
 	JSON.stringify({
 		...(tracker ? { _tracker: tracker } : {}),
@@ -107,23 +87,12 @@ const storedCookie = () => getCookie(previewCookieName)
 const storedJSON = () => JSON.parse(storedCookie() ?? "null")
 
 describe("startup", () => {
-	it("stays idle without pinging when there is no session", async () => {
-		const { session, shell, ping } = setup(inactive())
-
-		await session.start()
-
-		expect(ping).not.toHaveBeenCalled()
-		expect(shell.closeSession).not.toHaveBeenCalled()
-		expect(session.getSnapshot()).toEqual({ status: "idle", authenticated: false })
-	})
-
-	it("closes an ended repository session but leaves the website's cookie", async () => {
+	it("leaves the website's cookie without an active session", async () => {
 		setCookie(previewCookieName, "another-tab-ref")
-		const { session, shell, reload } = setup({ ...active("ref-1"), ref: null })
+		const { session, reload } = setup({ authenticated: false })
 
 		await session.start()
 
-		expect(shell.closeSession).toHaveBeenCalledExactlyOnceWith("session-1")
 		expect(storedCookie()).toBe("another-tab-ref")
 		expect(session.getSnapshot()).toEqual({ status: "idle", authenticated: false })
 		expect(events).toEqual([])
@@ -159,7 +128,7 @@ describe("startup", () => {
 	it("lets the website enter the preview itself and polls from there", async () => {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [repository]: "stale-ref" }))
-		const { session, ping, reload } = setup(active("ref-1"))
+		const { session, shell, reload } = setup(active("ref-1"))
 
 		await session.start()
 
@@ -169,7 +138,7 @@ describe("startup", () => {
 			preview: { ref: "ref-1", title: "Spring launch" },
 		})
 		await vi.advanceTimersByTimeAsync(3000)
-		expect(ping).toHaveBeenLastCalledWith("ref-1", "session-1")
+		expect(shell.ping).toHaveBeenCalledWith("ref-1")
 	})
 
 	it("converts a raw cookie holding the session ref without notifying", async () => {
@@ -214,10 +183,10 @@ describe("startup", () => {
 	it("notifies once when the editor pushed after the page started loading", async () => {
 		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", navigationStart + 1)
-		const { session, reload, ping } = setup(active("session-ref"))
+		const { session, reload, shell } = setup(active("session-ref"))
 
 		await session.start()
-		ping.mockClear()
+		shell.ping.mockClear()
 
 		expect(events).toEqual([["prismicPreviewUpdate", "editor-ref"]])
 		expect(reload).toHaveBeenCalledOnce()
@@ -225,11 +194,11 @@ describe("startup", () => {
 		// The page is unloading: it must not start polling.
 		expect(session.getSnapshot().status).toBe("reloading")
 		await vi.advanceTimersByTimeAsync(3000)
-		expect(ping).not.toHaveBeenCalled()
+		expect(shell.ping).not.toHaveBeenCalled()
 	})
 
 	it("stops starting up when a cookie change reloads the page meanwhile", async () => {
-		const { shell, ping } = fakeServer(active("ref-1"))
+		const { shell } = fakeShell(active("ref-1"))
 		let connected = (_shell: Shell) => {}
 		const reload = vi.fn()
 		const session = createPreviewSession({
@@ -247,7 +216,8 @@ describe("startup", () => {
 		await vi.advanceTimersByTimeAsync(250)
 		connected(shell)
 		await starting
-		ping.mockClear()
+		await vi.advanceTimersByTimeAsync(0)
+		shell.ping.mockClear()
 		await vi.advanceTimersByTimeAsync(3000)
 
 		expect(events).toEqual([
@@ -257,7 +227,7 @@ describe("startup", () => {
 		expect(reload).toHaveBeenCalledOnce()
 		expect(session.getSnapshot().status).toBe("reloading")
 		expect(storedCookie()).toBe("editor-ref")
-		expect(ping).not.toHaveBeenCalled()
+		expect(shell.ping).not.toHaveBeenCalled()
 	})
 
 	it("lets a session replace an editor push older than ten minutes", async () => {
@@ -293,7 +263,7 @@ describe("startup", () => {
 	it("ignores a recent push from another repository's editor", async () => {
 		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(otherRepository, "editor-ref", navigationStart + 1)
-		const { session } = setup(inactive())
+		const { session } = setup({ authenticated: false })
 
 		await session.start()
 
@@ -336,28 +306,28 @@ describe("startup", () => {
 })
 
 describe("polling", () => {
-	async function startPolling(ref = "ref-1", authenticated = false) {
+	async function startPolling(ref = "ref-1", isAuthenticated = false) {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [repository]: ref }))
-		const context = setup(active(ref, authenticated))
+		const context = setup(active(ref, isAuthenticated))
 		await context.session.start()
-		context.ping.mockClear()
+		context.shell.ping.mockClear()
 		return context
 	}
 
 	it("never writes while the ref stays the same", async () => {
-		const { ping } = await startPolling()
+		const { shell } = await startPolling()
 		const cookie = storedCookie()
 
 		await vi.advanceTimersByTimeAsync(9000)
 
-		expect(ping).toHaveBeenCalledTimes(3)
+		expect(shell.ping).toHaveBeenCalledTimes(3)
 		expect(storedCookie()).toBe(cookie)
 		expect(events).toEqual([])
 	})
 
 	it("does not overwrite a ref the editor pushed in the meantime", async () => {
-		const { ping, server, session } = await startPolling()
+		const { shell, server, session } = await startPolling()
 		setCookie(previewCookieName, "editor-ref")
 		claimOwnership(repository, "editor-ref", Date.now())
 		events = []
@@ -366,7 +336,7 @@ describe("polling", () => {
 		server.ref = "ref-2"
 		await vi.advanceTimersByTimeAsync(3000)
 
-		expect(ping).toHaveBeenLastCalledWith("ref-1", "session-1")
+		expect(shell.ping).toHaveBeenLastCalledWith("ref-1")
 		expect(storedCookie()).toBe("editor-ref")
 		// The cookie watcher reported the push itself; polling adds nothing.
 		expect(events).toEqual([["prismicPreviewUpdate", "editor-ref"]])
@@ -374,7 +344,7 @@ describe("polling", () => {
 	})
 
 	it("stores a new ref and notifies once, then keeps polling when the website handles it", async () => {
-		const { server, reload, ping } = await startPolling("ref-1", true)
+		const { server, reload, shell } = await startPolling("ref-1", true)
 
 		server.ref = "ref-2"
 		await vi.advanceTimersByTimeAsync(3000)
@@ -387,11 +357,11 @@ describe("polling", () => {
 		})
 		expect(events).toEqual([["prismicPreviewUpdate", "ref-2"]])
 		expect(reload).not.toHaveBeenCalled()
-		expect(ping).toHaveBeenLastCalledWith("ref-2", "session-1")
+		expect(shell.ping).toHaveBeenLastCalledWith("ref-2")
 	})
 
 	it("reloads on a new ref when nothing handles the update", async () => {
-		const { server, reload, ping } = await startPolling()
+		const { server, reload, shell } = await startPolling()
 		cancelEvents = false
 
 		server.ref = "ref-2"
@@ -399,16 +369,18 @@ describe("polling", () => {
 		await vi.advanceTimersByTimeAsync(9000)
 
 		expect(reload).toHaveBeenCalledOnce()
-		expect(ping).toHaveBeenCalledTimes(1)
+		expect(shell.ping).toHaveBeenCalledTimes(1)
 	})
 
 	it("ends the preview when the session ends and the cookie still holds its ref", async () => {
-		const { server, session } = await startPolling()
+		const { server, shell, session } = await startPolling()
 
 		server.ref = null
 		await vi.advanceTimersByTimeAsync(3000)
 
 		expect(storedCookie()).toBeUndefined()
+		// The shell closes the session itself when its ping finds it ended.
+		expect(shell.closeSession).not.toHaveBeenCalled()
 		expect(events).toEqual([["prismicPreviewEnd", null]])
 		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
 	})
@@ -429,23 +401,23 @@ describe("polling", () => {
 	})
 
 	it("retries after a failed ping and skips pings while the page is hidden", async () => {
-		const { ping, server } = await startPolling()
-		ping.mockRejectedValueOnce(new Error("offline"))
+		const { shell, server } = await startPolling()
+		shell.ping.mockRejectedValueOnce(new Error("offline"))
 
 		await vi.advanceTimersByTimeAsync(3000)
 		Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true })
 		await vi.advanceTimersByTimeAsync(9000)
-		expect(ping).toHaveBeenCalledTimes(1)
+		expect(shell.ping).toHaveBeenCalledTimes(1)
 
 		server.ref = "ref-2"
 		Object.defineProperty(document, "visibilityState", { value: "visible", configurable: true })
 		await vi.advanceTimersByTimeAsync(3000)
-		expect(ping).toHaveBeenCalledTimes(2)
+		expect(shell.ping).toHaveBeenCalledTimes(2)
 		expect(events).toEqual([["prismicPreviewUpdate", "ref-2"]])
 	})
 
 	it("pings as soon as the page is visible again", async () => {
-		const { ping } = await startPolling()
+		const { shell } = await startPolling()
 		Object.defineProperty(document, "visibilityState", { value: "hidden", configurable: true })
 		await vi.advanceTimersByTimeAsync(6000)
 
@@ -453,22 +425,25 @@ describe("polling", () => {
 		document.dispatchEvent(new Event("visibilitychange"))
 		await vi.advanceTimersByTimeAsync(0)
 
-		expect(ping).toHaveBeenCalledOnce()
+		expect(shell.ping).toHaveBeenCalledOnce()
 	})
 
 	it("ignores a ping that answers after following another session", async () => {
-		const { ping, server, session } = await startPolling()
-		let answer = (_response: PingResponse) => {}
-		ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		const { shell, server, session } = await startPolling()
+		let answer = (_response: { ref?: string }) => {}
+		shell.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 		await vi.advanceTimersByTimeAsync(3000)
 
-		// Another tab replaces the session.
-		Object.assign(server, { session: "session-2", ref: "ref-2" })
+		// Another tab exits, so the next ping finds the session ended, then a new session starts.
+		shell.ping.mockResolvedValueOnce({})
+		document.dispatchEvent(new Event("visibilitychange"))
+		await vi.advanceTimersByTimeAsync(0)
+		server.ref = "ref-2"
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
 		await vi.advanceTimersByTimeAsync(250)
 		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-2" } })
 
-		answer({ ref: "ref-3" })
+		answer({ ref: "ref-1" })
 		await vi.advanceTimersByTimeAsync(0)
 
 		expect(storedJSON()).toEqual({ [repository]: { preview: "ref-2" } })
@@ -476,10 +451,10 @@ describe("polling", () => {
 	})
 
 	it("ignores a ping that answers after exiting", async () => {
-		const { ping, shell, session } = await startPolling()
-		let answer = (_response: PingResponse) => {}
+		const { shell, session } = await startPolling()
+		let answer = (_response: { ref?: string }) => {}
 		let closed = () => {}
-		ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
+		shell.ping.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 		shell.closeSession.mockImplementationOnce(
 			() => new Promise<void>((resolve) => (closed = resolve)),
 		)
@@ -500,7 +475,7 @@ describe("cookie changes from other tabs and the editor", () => {
 	it("notifies once per new ref, ignores rewrites of the same ref, and ends on removal", async () => {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker1"))
-		const { session } = setup(inactive())
+		const { session } = setup({ authenticated: false })
 		await session.start()
 
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }, "tracker2"))
@@ -518,7 +493,7 @@ describe("cookie changes from other tabs and the editor", () => {
 	})
 
 	it("reloads when nothing handles a change", async () => {
-		const { session, reload } = setup(inactive())
+		const { session, reload } = setup({ authenticated: false })
 		await session.start()
 
 		setCookie(previewCookieName, "editor-ref")
@@ -529,74 +504,38 @@ describe("cookie changes from other tabs and the editor", () => {
 
 	it("starts following a session another tab started", async () => {
 		cancelEvents = true
-		const { session, ping, server } = setup(inactive())
+		const { session, shell, server } = setup({ authenticated: false })
 		await session.start()
 
-		Object.assign(server, active("ref-1"))
+		server.ref = "ref-1"
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(3250)
 
 		expect(events).toEqual([["prismicPreviewStart", "ref-1"]])
 		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-1" } })
-		expect(ping).toHaveBeenCalled()
+		expect(shell.ping).toHaveBeenCalled()
 	})
 
 	it("follows a session started while starting up", async () => {
 		cancelEvents = true
-		const { session, shell, ping, server } = setup(inactive())
-		let answer = () => {}
-		shell.getSession.mockImplementationOnce(
-			() => new Promise((resolve) => (answer = () => resolve(inactive()))),
-		)
+		const { session, shell } = setup(active("ref-1"))
+		let answer = (_session: { session: null; authenticated: boolean }) => {}
+		shell.getSession.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)))
 
 		const starting = session.start()
 		await vi.advanceTimersByTimeAsync(0)
-		Object.assign(server, active("ref-1"))
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
 		await vi.advanceTimersByTimeAsync(250)
-		answer()
+		answer({ session: null, authenticated: false })
 		await starting
 		await vi.advanceTimersByTimeAsync(3000)
 
 		expect(session.getSnapshot()).toMatchObject({ status: "polling", preview: { ref: "ref-1" } })
-		expect(ping).toHaveBeenCalled()
-	})
-
-	it("hides the bar when following a changed cookie fails", async () => {
-		cancelEvents = true
-		vi.spyOn(console, "warn").mockImplementation(() => {})
-		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
-		const { session, shell } = setup(active("ref-1"))
-		await session.start()
-		shell.getSession.mockRejectedValueOnce(new Error("timed out"))
-
-		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
-		await vi.advanceTimersByTimeAsync(250)
-
-		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
-	})
-
-	it("stops following a session another tab exited", async () => {
-		cancelEvents = true
-		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
-		const { session, ping, server } = setup(active("ref-1"))
-		await session.start()
-
-		// The session stays active on Prismic: only the cookies are gone.
-		server.session = null
-		deleteCookie(previewCookieName)
-		await vi.advanceTimersByTimeAsync(250)
-		ping.mockClear()
-		await vi.advanceTimersByTimeAsync(6000)
-
-		expect(events).toEqual([["prismicPreviewEnd", null]])
-		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
-		expect(ping).not.toHaveBeenCalled()
-		expect(storedCookie()).toBeUndefined()
+		expect(shell.ping).toHaveBeenCalled()
 	})
 
 	it("does not watch inside the editor", async () => {
-		const { session } = setup(inactive(), { watchCookie: false, codec: "plain" })
+		const { session } = setup({ authenticated: false }, { watchCookie: false, codec: "plain" })
 		await session.start()
 
 		setCookie(previewCookieName, "editor-ref")
@@ -610,9 +549,9 @@ describe("exit", () => {
 	it("removes its own ref, keeps other repositories' refs, and closes the session", async () => {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [otherRepository]: "other", [repository]: "ref-1" }))
-		const { session, shell, ping, reload } = setup(active("ref-1"))
+		const { session, shell, reload } = setup(active("ref-1"))
 		await session.start()
-		ping.mockClear()
+		shell.ping.mockClear()
 
 		await session.exit()
 
@@ -622,32 +561,7 @@ describe("exit", () => {
 		expect(reload).not.toHaveBeenCalled()
 		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
 		await vi.advanceTimersByTimeAsync(6000)
-		expect(ping).not.toHaveBeenCalled()
-	})
-
-	it("waits for a follow in flight, so it cannot follow the session again", async () => {
-		cancelEvents = true
-		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
-		const { session, shell, ping, server } = setup(active("ref-1"))
-		await session.start()
-		let answer = () => {}
-		shell.getSession.mockImplementationOnce(
-			() => new Promise((resolve) => (answer = () => resolve(active("ref-2")))),
-		)
-
-		// Another tab replaces the session, then the visitor exits while this tab reads it.
-		Object.assign(server, { session: "session-2", ref: "ref-2" })
-		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
-		await vi.advanceTimersByTimeAsync(250)
-		const exiting = session.exit()
-		answer()
-		await exiting
-		ping.mockClear()
-		await vi.advanceTimersByTimeAsync(6000)
-
-		expect(storedCookie()).toBeUndefined()
-		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
-		expect(ping).not.toHaveBeenCalled()
+		expect(shell.ping).not.toHaveBeenCalled()
 	})
 
 	it("reloads when nothing handles the end", async () => {

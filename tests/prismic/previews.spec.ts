@@ -182,6 +182,24 @@ test("follows a session another tab started and exited", async ({
 	expect(await website.previewRef()).toBeUndefined()
 })
 
+test("ends the preview when another website exits it", async ({ repository, website, context }) => {
+	await repository.startPreview("ref-1")
+	await website.goto({ events: "handle" })
+	await expect(website.previewBar).toBeVisible()
+
+	// Like a local development server previewing the same repository.
+	const localWebsite = await context.newPage()
+	await localWebsite.goto("http://localhost:3000")
+	const localBar = localWebsite.getByRole("region", { name: "Prismic preview" })
+	await localBar.getByRole("button", { name: "Exit preview" }).click()
+
+	await expect
+		.poll(() => website.recordedEvents(), { timeout: 10_000 })
+		.toContainEqual(["prismicPreviewEnd", null])
+	await expect(website.previewBar).toHaveCount(0)
+	expect(await website.previewRef()).toBeUndefined()
+})
+
 test("adopts the cookie of a preview route without reloading", async ({
 	repository,
 	website,
