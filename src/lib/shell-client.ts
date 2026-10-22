@@ -18,8 +18,11 @@ export interface ShellMethods {
 	 * exists.
 	 */
 	getSession(): Promise<{ session: string | null; authenticated: boolean }>
-	/** Deletes the repository's session cookie, so the session does not come back on the next page. */
-	closeSession(): Promise<void>
+	/**
+	 * Deletes the repository's session cookie, so the session does not come back on the next page.
+	 * With `session`, only while the cookie still holds it.
+	 */
+	closeSession(session?: string): Promise<void>
 	/** Returns a shareable link to the preview session on `pageURL`. */
 	share(pageURL: string, title: string): Promise<string>
 }
@@ -91,7 +94,7 @@ export async function connectShell(url: string): Promise<Shell> {
 
 	return {
 		getSession: () => call("getSession"),
-		closeSession: () => call("closeSession"),
+		closeSession: (session) => call("closeSession", session),
 		share: (pageURL, title) => call("share", pageURL, title),
 		dispose,
 	}

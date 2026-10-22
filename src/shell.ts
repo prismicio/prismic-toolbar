@@ -25,8 +25,9 @@ const methods: ShellMethods = {
 		return { session, authenticated: Boolean(session) && (await isAuthenticated()) }
 	},
 
-	async closeSession() {
-		deleteSessionCookie()
+	async closeSession(session) {
+		// Checked and deleted in one step, so a session another tab started meanwhile survives.
+		if (!session || getCookie(sessionCookieName) === session) deleteSessionCookie()
 	},
 
 	share(pageURL, title) {

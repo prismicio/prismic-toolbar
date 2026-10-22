@@ -60,8 +60,9 @@ function fakeServer(server: Server) {
 			session: server.session,
 			authenticated: Boolean(server.session) && server.authenticated,
 		})),
-		closeSession: vi.fn(async () => {
-			server.session = null
+		// Like the shell: with a session, only while the cookie still holds it.
+		closeSession: vi.fn(async (session?: string) => {
+			if (!session || server.session === session) server.session = null
 		}),
 		share: vi.fn(async (pageURL: string) => `https://example.prismic.io/previews/s/${pageURL}`),
 		dispose: vi.fn(),
@@ -122,7 +123,7 @@ describe("startup", () => {
 
 		await session.start()
 
-		expect(shell.closeSession).toHaveBeenCalledOnce()
+		expect(shell.closeSession).toHaveBeenCalledExactlyOnceWith("session-1")
 		expect(storedCookie()).toBe("another-tab-ref")
 		expect(session.getSnapshot()).toEqual({ status: "idle", authenticated: false })
 		expect(events).toEqual([])
@@ -561,6 +562,20 @@ describe("cookie changes from other tabs and the editor", () => {
 		expect(ping).toHaveBeenCalled()
 	})
 
+	it("hides the bar when following a changed cookie fails", async () => {
+		cancelEvents = true
+		vi.spyOn(console, "warn").mockImplementation(() => {})
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		const { session, shell } = setup(active("ref-1"))
+		await session.start()
+		shell.getSession.mockRejectedValueOnce(new Error("timed out"))
+
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
+		await vi.advanceTimersByTimeAsync(250)
+
+		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
+	})
+
 	it("stops following a session another tab exited", async () => {
 		cancelEvents = true
 		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
@@ -607,6 +622,31 @@ describe("exit", () => {
 		expect(reload).not.toHaveBeenCalled()
 		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
 		await vi.advanceTimersByTimeAsync(6000)
+		expect(ping).not.toHaveBeenCalled()
+	})
+
+	it("waits for a follow in flight, so it cannot follow the session again", async () => {
+		cancelEvents = true
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-1" }))
+		const { session, shell, ping, server } = setup(active("ref-1"))
+		await session.start()
+		let answer = () => {}
+		shell.getSession.mockImplementationOnce(
+			() => new Promise((resolve) => (answer = () => resolve(active("ref-2")))),
+		)
+
+		// Another tab replaces the session, then the visitor exits while this tab reads it.
+		Object.assign(server, { session: "session-2", ref: "ref-2" })
+		setCookie(previewCookieName, jsonCookie({ [repository]: "ref-2" }))
+		await vi.advanceTimersByTimeAsync(250)
+		const exiting = session.exit()
+		answer()
+		await exiting
+		ping.mockClear()
+		await vi.advanceTimersByTimeAsync(6000)
+
+		expect(storedCookie()).toBeUndefined()
+		expect(session.getSnapshot()).toMatchObject({ status: "idle", preview: undefined })
 		expect(ping).not.toHaveBeenCalled()
 	})
 
