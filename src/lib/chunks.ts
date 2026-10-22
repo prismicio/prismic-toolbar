@@ -4,6 +4,8 @@ import type { PreviewSession } from "./preview-session"
 export interface MountToolbarOptions {
 	session: PreviewSession
 	repositoryHost: string
+	/** Shows Share to every visitor, not only those logged into Prismic. */
+	alwaysShare?: boolean
 }
 
 export interface EmbeddedPreviewOptions {

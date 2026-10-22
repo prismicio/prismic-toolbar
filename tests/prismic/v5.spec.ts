@@ -29,7 +29,6 @@ test("follows the session with ping, without the shell", async ({
 	await expectPreview(website, "ref-1")
 	await expect(website.previewBar).toContainText(repository.title)
 	await expect(website.previewBar).toContainText("Live preview")
-	await expect(website.previewBar.getByRole("button", { name: "Share" })).toHaveCount(0)
 	expect(repository.pings).toContain("ref-1")
 	expect(website.loads).toEqual(["ref-1"])
 	const pings = new RegExp(`^${repository.url}/previews/${repository.sessionID}/ping\\?ref=`)
@@ -110,6 +109,89 @@ test("ignores pings of a session another tab replaced", async ({ website, contex
 
 	await expectPreview(website, "ref-1")
 	expect((await website.cookie(sessionCookieName))?.value).toBe("new-session")
+})
+
+test("opens a share link, showing that the preview loads until the page reloads", async ({
+	repository,
+	website,
+	context,
+}) => {
+	repository.ref = "ref-1"
+	// Holds the first ping, to see the bar before the page shows the preview.
+	let release = () => {}
+	const released = new Promise<void>((resolve) => (release = resolve))
+	await context.route(
+		(url) => url.pathname.endsWith("/ping"),
+		async (route) => {
+			await released
+			await route.fallback()
+		},
+		{ times: 1 },
+	)
+
+	await website.goto({
+		path: `/page?q=1#prismic-session=${encodeURIComponent(repository.sessionID)}`,
+	})
+
+	await expect(website.previewBar.locator(".details")).toHaveText("Loading preview…")
+	expect(website.page.url()).toBe(`${website.url}/page?q=1`)
+	expect((await website.cookie(sessionCookieName))?.value).toBe(repository.sessionID)
+	// Playwright waits for the reload to finish, so the page records what the bar shows until then.
+	await website.page.evaluate(() => {
+		const details = document
+			.querySelector("#prismic-toolbar")!
+			.shadowRoot!.querySelector(".details")!
+		const texts: (string | null)[] = []
+		const record = () => {
+			if (texts.at(-1) !== details.textContent) texts.push(details.textContent)
+			sessionStorage.setItem("details", JSON.stringify(texts))
+		}
+		record()
+		new MutationObserver(record).observe(details, {
+			subtree: true,
+			childList: true,
+			characterData: true,
+		})
+	})
+	release()
+
+	await expectPreview(website, "ref-1")
+	await expect(website.previewBar).toContainText(repository.title)
+	expect(await website.page.evaluate(() => sessionStorage.getItem("details"))).toBe(
+		JSON.stringify(["Loading preview…"]),
+	)
+	expect(website.page.url()).toBe(`${website.url}/page?q=1`)
+	expect(website.loads).toEqual([null, "ref-1"])
+})
+
+test("ends the preview of an expired share link", async ({ repository, website }) => {
+	await website.goto({ path: `/#prismic-session=${encodeURIComponent(repository.sessionID)}` })
+
+	await expect.poll(() => website.loads, { timeout: 10_000 }).toEqual([null, null])
+	await expectNoPreview(website)
+	expect(website.page.url()).toBe(`${website.url}/`)
+	expect(repository.pings).toEqual([""])
+})
+
+test("copies a link to the current page with the session", async ({ repository, website }) => {
+	// Copy without writing to the system clipboard.
+	await website.page.addInitScript(() => {
+		Object.defineProperty(navigator, "clipboard", {
+			value: { writeText: async (text: string) => sessionStorage.setItem("clipboard", text) },
+		})
+	})
+	await website.storePreview("ref-1")
+	// A page anchor is not a share link.
+	await website.goto({ path: "/page?q=1#section" })
+	await expectPreview(website, "ref-1")
+
+	await website.previewBar.getByRole("button", { name: "Share" }).click()
+
+	await expect(website.previewBar.getByRole("button", { name: "Copied" })).toBeVisible()
+	expect(await website.page.evaluate(() => sessionStorage.getItem("clipboard"))).toBe(
+		`${website.url}/page?q=1#prismic-session=${encodeURIComponent(repository.sessionID)}`,
+	)
+	expect(website.page.url()).toBe(`${website.url}/page?q=1#section`)
 })
 
 test("exits the preview", async ({ website }) => {

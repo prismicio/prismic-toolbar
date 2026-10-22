@@ -37,7 +37,8 @@ export class Repository {
 	readonly host = "toolbar-e2e.prismic.io"
 	readonly url = `https://${this.host}`
 	readonly title = "Spring launch"
-	readonly sessionID = "e2e-session"
+	/** Like Prismic's: `<session>~<website preview>`. */
+	readonly sessionID = "e2e-session~e2e-preview"
 	/** The preview session's ref, `null` once the session ended. */
 	ref: string | null = null
 	authenticated = true
@@ -131,9 +132,9 @@ export class Website {
 		return this.page.getByRole("region", { name: "Prismic preview" })
 	}
 
-	async goto({ events = this.events } = {}) {
+	async goto({ events = this.events, path = "/" } = {}) {
 		this.events = events
-		await this.page.goto(this.url)
+		await this.page.goto(this.url + path)
 	}
 
 	recordedEvents(page: Page | Frame = this.page) {

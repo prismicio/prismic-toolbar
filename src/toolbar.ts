@@ -6,7 +6,7 @@ import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
 import styles from "./toolbar.css?inline"
 
 /** Shows the preview bar while previewing, in a shadow root isolated from the website's styles. */
-export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): void {
+export function mountToolbar({ session, repositoryHost, alwaysShare }: MountToolbarOptions): void {
 	const root = shadow({
 		id: "prismic-toolbar",
 		style: { position: "fixed", zIndex: 2147483647, bottom: 0, left: 0 },
@@ -66,18 +66,25 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 					$el("p", { class: "status" }),
 				),
 				!authenticated && powered,
-				$el("div", { class: "actions" }, authenticated && $shareButton(session), exit),
+				$el(
+					"div",
+					{ class: "actions" },
+					(alwaysShare || authenticated) && $shareButton(session),
+					exit,
+				),
 			)
 			// Before the styles, where earlier versions rendered it.
 			root.prepend(bar)
 		}
 
 		// Only changed text is replaced, so updates keep the visitor's text selection.
+		// Without a ref, the page does not show the preview yet, such as one opened from a share link.
+		const loading = !snapshot.preview.ref
 		const title = bar.querySelector<HTMLElement>(".title")!
-		const text = snapshot.preview.title || "Preview"
+		const text = loading ? "Loading preview…" : snapshot.preview.title || "Preview"
 		if (title.textContent !== text) title.textContent = title.title = text
 		const status = bar.querySelector(".status")!
-		const label = snapshot.status === "reloading" ? "Updating…" : "Live preview"
+		const label = loading ? "" : snapshot.status === "reloading" ? "Updating…" : "Live preview"
 		if (status.textContent !== label) status.textContent = label
 	}
 
