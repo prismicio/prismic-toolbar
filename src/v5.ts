@@ -13,9 +13,8 @@ import { mountToolbar } from "./toolbar"
 export function startV5(repositoryHost: string): void {
 	const session = createSession(repositoryHost)
 	void session.start()
-	// Bundled, so the bar needs no request after this chunk's. v5 cannot tell whether the visitor
-	// is logged into Prismic, so everyone can share, like forwarding the link they opened.
-	mountToolbar({ session, repositoryHost, alwaysShare: true })
+	// Bundled, so the bar needs no request after this chunk's.
+	mountToolbar({ session, repositoryHost })
 }
 
 registerChunk("startV5", startV5)
@@ -27,7 +26,6 @@ function createSession(repositoryHost: string): PreviewSession {
 	// The snapshot's ref is the one this page renders: without one, the bar shows it is loading.
 	let snapshot: PreviewSnapshot = {
 		status: "polling",
-		authenticated: false,
 		preview: { ref, title: "" },
 	}
 	let timer: ReturnType<typeof setInterval> | undefined

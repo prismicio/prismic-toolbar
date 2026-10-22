@@ -184,6 +184,8 @@ test("copies a link to the current page with the session", async ({ repository, 
 	// A page anchor is not a share link.
 	await website.goto({ path: "/page?q=1#section" })
 	await expectPreview(website, "ref-1")
+	// v5 cannot tell whether the visitor is logged into Prismic.
+	await expect(website.previewBar.getByRole("link")).toHaveCount(0)
 
 	await website.previewBar.getByRole("button", { name: "Share" }).click()
 
