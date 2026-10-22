@@ -1,3 +1,5 @@
+import type { TargetedMouseEvent } from "preact"
+import type { SVGProps } from "preact/compat"
 import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { isScrollToSliceMessage, isSliceOverlayMessage } from "../message-protocol"
@@ -18,7 +20,9 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, subscribeToMessages, uiScale } = props
 
 	const { slices, layout } = useSlices(subscribeToMessages)
-	const selectedSlice = useSelectedSlice(slices, subscribeToMessages)
+	const { selectedSliceId, readOnly } = useSliceOverlayState(subscribeToMessages)
+
+	const selectedSlice = useSelectedSlice(slices, selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
 
 	useSliceSelection(slices, uiScale, postMessage)
@@ -26,12 +30,29 @@ export function SliceOverlay(props: SliceOverlayProps) {
 
 	return (
 		<>
-			{selectedSlice && <SliceHighlight slice={selectedSlice} layout={layout} />}
+			{selectedSlice && (
+				<SliceHighlight
+					slice={selectedSlice}
+					layout={layout}
+					readOnly={readOnly}
+					postMessage={postMessage}
+				/>
+			)}
 			{hoveredSlice && hoveredSlice !== selectedSlice && (
-				<SliceHighlight slice={hoveredSlice} layout={layout} />
+				<SliceHighlight
+					slice={hoveredSlice}
+					layout={layout}
+					readOnly={readOnly}
+					postMessage={postMessage}
+				/>
 			)}
 		</>
 	)
+}
+
+function useSelectedSlice(slices: Slice[], selectedSliceId?: string) {
+	if (!selectedSliceId) return undefined
+	return slices.find((slice) => slice.sliceId === selectedSliceId)
 }
 
 function useHoveredSlice(slices: Slice[]) {
@@ -118,16 +139,16 @@ function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMe
 	}, [selectSlice])
 }
 
-function useSelectedSlice(slices: Slice[], subscribeToMessages: SubscribeToMessages) {
-	const [selectedSliceId, setSelectedSliceId] = useState<string>()
+function useSliceOverlayState(subscribeToMessages: SubscribeToMessages) {
+	const [state, setState] = useState<{ selectedSliceId?: string; readOnly?: boolean }>({})
 
 	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
-			if (isSliceOverlayMessage(data)) setSelectedSliceId(data.selectedSliceId)
+			if (isSliceOverlayMessage(data)) setState(data)
 		})
 	}, [subscribeToMessages])
 
-	return slices.find((slice) => slice.sliceId === selectedSliceId)
+	return { ...state, readOnly: state.readOnly ?? true }
 }
 
 function useScrollToSlice(
@@ -147,24 +168,60 @@ function useScrollToSlice(
 interface SliceHighlightProps {
 	slice: Slice
 	layout: EventTarget
+	readOnly: boolean
+	postMessage: PostMessage
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout } = props
+	const { slice, layout, readOnly, postMessage } = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
 
 	if (!rect) return null
 
-	const title = variation ? `${label} • ${variation}` : label
+	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
+	}
 
 	return (
 		<div
 			className="slice-highlight"
 			data-slice-id={sliceId}
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
+			onPointerOver={(event) => event.stopPropagation()}
+			onPointerMove={(event) => event.stopPropagation()}
 		>
-			<div className="slice-highlight-label">{title}</div>
+			<div className="slice-control-group slice-title-group">
+				<div className="slice-title">
+					<span className="slice-label">{label}</span>
+					{variation && (
+						<span className="slice-variation">
+							{" • "}
+							{variation}
+						</span>
+					)}
+				</div>
+			</div>
+			{!readOnly && (
+				<div className="slice-control-group">
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Delete slice"
+						title="Delete slice"
+						onClick={handleDelete}
+					>
+						<DeleteIcon className="slice-button-icon" />
+					</button>
+				</div>
+			)}
 		</div>
 	)
 }
+
+const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
+	<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+		<path d="M16 9V19H8V9H16ZM14.5 3H9.5L8.5 4H5V6H19V4H15.5L14.5 3ZM18 7H6V19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7Z" />
+	</svg>
+)
