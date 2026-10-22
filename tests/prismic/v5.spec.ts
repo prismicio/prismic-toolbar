@@ -129,6 +129,8 @@ test("opens a share link, showing that the preview loads until the page reloads"
 		{ times: 1 },
 	)
 
+	// From the same page, opening the link only changes the hash.
+	await website.goto({ path: "/page?q=1" })
 	await website.goto({
 		path: `/page?q=1#prismic-session=${encodeURIComponent(repository.sessionID)}`,
 	})
@@ -161,7 +163,7 @@ test("opens a share link, showing that the preview loads until the page reloads"
 		JSON.stringify(["Loading preview…"]),
 	)
 	expect(website.page.url()).toBe(`${website.url}/page?q=1`)
-	expect(website.loads).toEqual([null, "ref-1"])
+	expect(website.loads).toEqual([null, null, "ref-1"])
 })
 
 test("ends the preview of an expired share link", async ({ repository, website }) => {
