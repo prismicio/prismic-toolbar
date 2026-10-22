@@ -23,11 +23,12 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 | Entry                     | Loaded                                                | Code                                                |
 | ------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
 | `src/prismic.ts`          | On every page, by the install snippet                 | `src/lib`                                           |
-| `src/legacy.ts`           | On websites, bundled into `prismic.js`                | `src/lib`: previews through the repository's iframe |
-| `src/toolbar.ts`          | Only while a preview session is active                | `src/toolbar`: the preview bar                      |
+| `src/v4.ts`               | On websites, bundled into `prismic.js`                | `src/lib`: previews through the repository's iframe |
+| `src/v5.ts`               | On websites opting into `v=5`, with a preview session | `src/lib`: previews through `ping`, with the bar    |
+| `src/toolbar.ts`          | Only while a v4 preview session is active             | `src/toolbar`: the preview bar                      |
 | `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe       | `src/embedded-preview`: comment and slice overlays  |
 | `src/iframe.ts`           | Hidden, from the repository host, to read its cookies | `src/iframe`, inlined into `src/iframe.html`        |
-| `src/shell.ts`            | Not yet; will replace `iframe.html` for legacy        | Inlined into `src/shell.html`                       |
+| `src/shell.ts`            | Not yet; will replace `iframe.html` for v4            | Inlined into `src/shell.html`                       |
 
 - Each file is a self-contained classic script. The CDN sends no CORS headers, so `prismic.js` loads the other bundles as classic scripts, and they register on `window.__prismicToolbar`.
 - `src/lib` holds the logic of `prismic.js` and code the bundles share. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `embedded-push.ts` handles refs the editor pushes into its preview iframe.

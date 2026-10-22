@@ -1,4 +1,4 @@
-// Covers the shell until legacy uses it. Legacy's e2e behavior tests replace this file then.
+// Covers the shell until v4 uses it. v4's e2e behavior tests replace this file then.
 
 import { build, type Rolldown } from "vite"
 

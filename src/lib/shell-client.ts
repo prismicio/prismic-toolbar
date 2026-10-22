@@ -1,7 +1,7 @@
 import { readyDOM } from "./dom"
 
 /**
- * Protocol between legacy websites and the shell page on the repository host, which reads the
+ * Protocol between v4 websites and the shell page on the repository host, which reads the
  * repository's cookies for them. The shell deploys next to each `prismic.js`, so both change
  * together.
  *

@@ -5,11 +5,17 @@ import Script from "next/script"
 import { useEffect } from "react"
 
 /**
- * Mirrors `<PrismicPreview>` from `@prismicio/next`, which always loads the released toolbar, so
- * the playground can load the toolbar under test instead.
+ * Mirrors `<PrismicPreview>` from the flow's `@prismicio/next`, which always loads the released
+ * toolbar, so the playground can load the toolbar under test instead.
  */
-export function Preview(props: { repository: string; toolbarSrc: string; isDraftMode: boolean }) {
-	const { repository, toolbarSrc, isDraftMode } = props
+export function Preview(props: {
+	/** Where the flow's routes live, like `/v4`. */
+	basePath: string
+	repository: string
+	toolbarSrc: string
+	isDraftMode: boolean
+}) {
+	const { basePath, repository, toolbarSrc, isDraftMode } = props
 	const { refresh } = useRouter()
 
 	useEffect(() => {
@@ -17,7 +23,7 @@ export function Preview(props: { repository: string; toolbarSrc: string; isDraft
 		const { signal } = controller
 
 		async function start() {
-			const response = await fetch("/api/preview", { redirect: "manual", signal })
+			const response = await fetch(`${basePath}/api/preview`, { redirect: "manual", signal })
 			if (response.type !== "opaqueredirect") throw new Error("Failed to start the preview.")
 			// A soft refresh cannot leave Next.js's not-found boundary, which renders this tag.
 			if (document.querySelector('meta[name="robots"][content="noindex"]')) location.reload()
@@ -32,7 +38,7 @@ export function Preview(props: { repository: string; toolbarSrc: string; isDraft
 
 		function onEnd(event: Event) {
 			event.preventDefault()
-			fetch("/api/exit-preview", { signal })
+			fetch(`${basePath}/api/exit-preview`, { signal })
 				.then(() => refresh())
 				.catch(console.error)
 		}
@@ -54,7 +60,7 @@ export function Preview(props: { repository: string; toolbarSrc: string; isDraft
 		}
 
 		return () => controller.abort()
-	}, [repository, isDraftMode, refresh])
+	}, [basePath, repository, isDraftMode, refresh])
 
 	return <Script src={toolbarSrc} strategy="lazyOnload" />
 }

@@ -14,6 +14,7 @@ export interface EmbeddedPreviewOptions {
 /** Entry points of the lazily loaded bundles. */
 export interface ToolbarChunks {
 	mountToolbar: (options: MountToolbarOptions) => void
+	startV5: (repositoryHost: string) => void
 	setupEmbeddedPreview: (options?: EmbeddedPreviewOptions) => Promise<void>
 }
 
