@@ -3,7 +3,7 @@ import { deleteCookie, getCookie, setCookie } from "./lib/cookie"
 import { repositoryOrigin, warn } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
 import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
-import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
+import { previewCookieName, sessionCookieName, sessionHashKey } from "./lib/site-cookie"
 import { mountToolbar } from "./toolbar"
 
 /**
@@ -21,12 +21,11 @@ registerChunk("startV5", startV5)
 
 function createSession(repositoryHost: string): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
-	// The ref this page renders. Without one, the first ping gets the session's ref.
+	// The ref of the cookie. Without one, the first ping gets the session's ref.
 	let ref = getCookie(previewCookieName) ?? ""
-	// Not authenticated: the bar hides Share, which v5 does not support yet.
+	// The snapshot's ref is the one this page renders: without one, the bar shows it is loading.
 	let snapshot: PreviewSnapshot = {
 		status: "polling",
-		authenticated: false,
 		preview: { ref, title: "" },
 	}
 	let timer: ReturnType<typeof setInterval> | undefined
@@ -75,19 +74,20 @@ function createSession(repositoryHost: string): PreviewSession {
 
 		const previous = ref
 		ref = data.ref || ref
-		setSnapshot({ preview: { ref, title: data.title || "" } })
-		if (ref === previous) return
+		const preview = { ref, title: data.title || "" }
+		if (ref === previous) return setSnapshot({ preview })
 
 		// Reloading with the old cookie would find the new ref again, and loop.
 		if (!setCookie(previewCookieName, ref)) {
 			return warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 		}
 		// Without a previous ref, the page does not show the session yet.
-		if (dispatchPreviewEvent(previous ? "prismicPreviewUpdate" : "prismicPreviewStart", ref)) {
-			stop()
-			setSnapshot({ status: "reloading" })
-			window.location.reload()
+		if (!dispatchPreviewEvent(previous ? "prismicPreviewUpdate" : "prismicPreviewStart", ref)) {
+			return setSnapshot({ preview })
 		}
+		stop()
+		setSnapshot({ status: "reloading" })
+		window.location.reload()
 	}
 
 	return {
@@ -100,7 +100,14 @@ function createSession(repositoryHost: string): PreviewSession {
 		async exit() {
 			end()
 		},
-		share: () => Promise.reject(new Error("Sharing is not available yet.")),
+		// The current page, with the session in a hash: unlike a query, it never reaches servers.
+		async share(pageURL = window.location.href) {
+			const id = getCookie(sessionCookieName)
+			if (!id) throw new Error("The preview session ended.")
+			const url = new URL(pageURL)
+			url.hash = `${sessionHashKey}=${encodeURIComponent(id)}`
+			return url.href
+		},
 		getSnapshot: () => snapshot,
 		subscribe(listener) {
 			listeners.add(listener)

@@ -14,7 +14,7 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 	appendCSS(root, styles)
 
 	let bar: HTMLElement | undefined
-	let authenticated = false
+	let authenticated: boolean | undefined
 
 	function update(snapshot: PreviewSnapshot) {
 		if (!snapshot.preview || snapshot.authenticated !== authenticated) {
@@ -25,6 +25,9 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 
 		if (!bar) {
 			authenticated = snapshot.authenticated
+			// Only visitors known to be logged out cannot share. Others share like forwarding the link
+			// they opened.
+			const canShare = authenticated !== false
 			const exit = $el(
 				"button",
 				{ class: "exit", type: "button", "aria-label": "Exit preview", title: "Exit preview" },
@@ -65,19 +68,21 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 					$el("p", { class: "title" }),
 					$el("p", { class: "status" }),
 				),
-				!authenticated && powered,
-				$el("div", { class: "actions" }, authenticated && $shareButton(session), exit),
+				!canShare && powered,
+				$el("div", { class: "actions" }, canShare && $shareButton(session), exit),
 			)
 			// Before the styles, where earlier versions rendered it.
 			root.prepend(bar)
 		}
 
 		// Only changed text is replaced, so updates keep the visitor's text selection.
+		// Without a ref, the page does not show the preview yet, such as one opened from a share link.
+		const loading = !snapshot.preview.ref
 		const title = bar.querySelector<HTMLElement>(".title")!
-		const text = snapshot.preview.title || "Preview"
+		const text = loading ? "Loading preview…" : snapshot.preview.title || "Preview"
 		if (title.textContent !== text) title.textContent = title.title = text
 		const status = bar.querySelector(".status")!
-		const label = snapshot.status === "reloading" ? "Updating…" : "Live preview"
+		const label = loading ? "" : snapshot.status === "reloading" ? "Updating…" : "Live preview"
 		if (status.textContent !== label) status.textContent = label
 	}
 
@@ -116,7 +121,9 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 
 	button.onclick = async () => {
 		const pageURL = window.location.href
-		const cached = links.get(pageURL)
+		// A session followed without reloading has another ref, and so another link.
+		const key = `${session.getSnapshot().preview?.ref} ${pageURL}`
+		const cached = links.get(key)
 		if (!cached) show("loading")
 		let url: string
 		try {
@@ -124,7 +131,7 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 		} catch {
 			return show("failed")
 		}
-		links.set(pageURL, url)
+		links.set(key, url)
 
 		try {
 			await navigator.clipboard.writeText(url)
