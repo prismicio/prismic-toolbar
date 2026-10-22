@@ -1,6 +1,6 @@
 import { connectBridge } from "./lib/bridge"
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
-import { getCookie } from "./lib/cookie"
+import { getCookie, setCookie } from "./lib/cookie"
 import { createEmbeddedPush } from "./lib/embedded-push"
 import {
 	detectMode,
@@ -12,7 +12,7 @@ import {
 } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
 import { createPreviewSession } from "./lib/preview-session"
-import { createSiteCookieStore, refFor, sessionCookieName } from "./lib/site-cookie"
+import { createSiteCookieStore, refFor, sessionCookieName, sessionHashKey } from "./lib/site-cookie"
 import { startV4 } from "./v4"
 
 // Replaced at build time, see `vite.config.ts`.
@@ -59,6 +59,13 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 	}
 
 	if (requestedVersion === "5") {
+		// Share links carry the session in the hash, which never reaches servers.
+		const sharedSession = new URLSearchParams(location.hash.slice(1)).get(sessionHashKey)
+		if (sharedSession) {
+			setCookie(sessionCookieName, sharedSession)
+			// Without state, Next.js's router adopts the URL instead of restoring the hash on refresh.
+			history.replaceState(null, "", location.pathname + location.search)
+		}
 		if (getCookie(sessionCookieName)) {
 			loadChunk(`${assets}/v5.js`, "startV5")
 				.then((startV5) => startV5(repositoryHost))
