@@ -6,7 +6,7 @@ import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
 import styles from "./toolbar.css?inline"
 
 /** Shows the preview bar while previewing, in a shadow root isolated from the website's styles. */
-export function mountToolbar({ session, repositoryHost, alwaysShare }: MountToolbarOptions): void {
+export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): void {
 	const root = shadow({
 		id: "prismic-toolbar",
 		style: { position: "fixed", zIndex: 2147483647, bottom: 0, left: 0 },
@@ -14,7 +14,7 @@ export function mountToolbar({ session, repositoryHost, alwaysShare }: MountTool
 	appendCSS(root, styles)
 
 	let bar: HTMLElement | undefined
-	let authenticated = false
+	let authenticated: boolean | undefined
 
 	function update(snapshot: PreviewSnapshot) {
 		if (!snapshot.preview || snapshot.authenticated !== authenticated) {
@@ -25,6 +25,9 @@ export function mountToolbar({ session, repositoryHost, alwaysShare }: MountTool
 
 		if (!bar) {
 			authenticated = snapshot.authenticated
+			// Only visitors known to be logged out cannot share. Others share like forwarding the link
+			// they opened.
+			const canShare = authenticated !== false
 			const exit = $el(
 				"button",
 				{ class: "exit", type: "button", "aria-label": "Exit preview", title: "Exit preview" },
@@ -65,13 +68,8 @@ export function mountToolbar({ session, repositoryHost, alwaysShare }: MountTool
 					$el("p", { class: "title" }),
 					$el("p", { class: "status" }),
 				),
-				!authenticated && powered,
-				$el(
-					"div",
-					{ class: "actions" },
-					(alwaysShare || authenticated) && $shareButton(session),
-					exit,
-				),
+				!canShare && powered,
+				$el("div", { class: "actions" }, canShare && $shareButton(session), exit),
 			)
 			// Before the styles, where earlier versions rendered it.
 			root.prepend(bar)
