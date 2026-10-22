@@ -16,7 +16,7 @@
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/embedded-preview.js",
-			"maxSize": "50KB"
+			"maxSize": "55KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/toolbar.js",

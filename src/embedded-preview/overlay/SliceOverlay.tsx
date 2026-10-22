@@ -179,6 +179,11 @@ function SliceHighlight(props: SliceHighlightProps) {
 
 	if (!rect) return null
 
+	function handleMove(event: TargetedMouseEvent<HTMLButtonElement>, direction: "up" | "down") {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:move-slice", sliceId, direction })
+	}
+
 	function handleChangeVariation(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
 		postMessage({ type: "prismic:embedded-preview:change-slice-variation", sliceId })
@@ -209,7 +214,31 @@ function SliceHighlight(props: SliceHighlightProps) {
 				</div>
 			</div>
 			{!readOnly && (
-				<div className="slice-control-group">
+				<div className="slice-control-group slice-move-group">
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Move slice up"
+						title="Move slice up"
+						disabled={!slice.canMoveUp}
+						onClick={(event) => handleMove(event, "up")}
+					>
+						<ArrowUpIcon className="slice-button-icon" />
+					</button>
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Move slice down"
+						title="Move slice down"
+						disabled={!slice.canMoveDown}
+						onClick={(event) => handleMove(event, "down")}
+					>
+						<ArrowDownIcon className="slice-button-icon" />
+					</button>
+				</div>
+			)}
+			{!readOnly && (
+				<div className="slice-control-group slice-control-group-right">
 					{variation !== undefined && (
 						<button
 							type="button"
@@ -241,6 +270,22 @@ const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
 		<path d="M16 9V19H8V9H16ZM14.5 3H9.5L8.5 4H5V6H19V4H15.5L14.5 3ZM18 7H6V19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7Z" />
 	</svg>
 )
+
+function ArrowUpIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M4 12L5.41 13.41L11 7.83V20H13V7.83L18.58 13.42L20 12L12 4L4 12Z" />
+		</svg>
+	)
+}
+
+function ArrowDownIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M20 12L18.59 10.59L13 16.17V4H11V16.17L5.42 10.58L4 12L12 20L20 12Z" />
+		</svg>
+	)
+}
 
 function DescriptionIcon(props: SVGProps<SVGSVGElement>) {
 	return (
