@@ -211,9 +211,6 @@ function SliceHighlight(props: SliceHighlightProps) {
 			{!readOnly && !hideInsertBefore && (
 				<InsertSliceButton sliceId={sliceId} position="before" postMessage={postMessage} />
 			)}
-			{!readOnly && !hideInsertAfter && (
-				<InsertSliceButton sliceId={sliceId} position="after" postMessage={postMessage} />
-			)}
 			<div className="slice-control-group slice-title-group">
 				<div className="slice-title">
 					<span className="slice-label">{label}</span>
@@ -272,6 +269,9 @@ function SliceHighlight(props: SliceHighlightProps) {
 						<DeleteIcon className="slice-button-icon" />
 					</button>
 				</div>
+			)}
+			{!readOnly && !hideInsertAfter && (
+				<InsertSliceButton sliceId={sliceId} position="after" postMessage={postMessage} />
 			)}
 		</div>
 	)
