@@ -58,11 +58,12 @@ const overlayScaleMessageSchema = z.object({
 
 const sliceMetadataSchema = z.object({
 	sliceId: nonemptyStringSchema,
+	zoneId: z.optional(nonemptyStringSchema),
+	index: z.optional(z.int().check(z.gte(0))),
 	label: z.string(),
 	variation: z.optional(z.string()),
 	canMoveUp: z.optional(z.boolean()),
 	canMoveDown: z.optional(z.boolean()),
-	previousSliceId: z.optional(nonemptyStringSchema),
 })
 export type SliceMetadata = z.infer<typeof sliceMetadataSchema>
 

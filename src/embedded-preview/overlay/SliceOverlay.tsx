@@ -24,6 +24,10 @@ export function SliceOverlay(props: SliceOverlayProps) {
 
 	const selectedSlice = useSelectedSlice(slices, selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
+	const hoveredSliceDistance = useDistanceBetweenSelectedAndHoveredSlice(
+		selectedSlice,
+		hoveredSlice,
+	)
 
 	useSliceSelection(slices, uiScale, postMessage)
 	useScrollToSlice(slices, uiScale, subscribeToMessages)
@@ -44,14 +48,19 @@ export function SliceOverlay(props: SliceOverlayProps) {
 					layout={layout}
 					readOnly={readOnly}
 					postMessage={postMessage}
-					hideInsertBefore={
-						selectedSlice !== undefined && hoveredSlice.previousSliceId === selectedSlice.sliceId
-					}
-					hideInsertAfter={selectedSlice?.previousSliceId === hoveredSlice.sliceId}
+					hideInsertBefore={hoveredSliceDistance === 1}
+					hideInsertAfter={hoveredSliceDistance === -1}
 				/>
 			)}
 		</>
 	)
+}
+
+function useDistanceBetweenSelectedAndHoveredSlice(selectedSlice?: Slice, hoveredSlice?: Slice) {
+	if (!selectedSlice || !hoveredSlice) return
+	if (selectedSlice.zoneId === undefined || selectedSlice.zoneId !== hoveredSlice.zoneId) return
+	if (selectedSlice.index === undefined || hoveredSlice.index === undefined) return
+	return hoveredSlice.index - selectedSlice.index
 }
 
 function useSelectedSlice(slices: Slice[], selectedSliceId?: string) {
