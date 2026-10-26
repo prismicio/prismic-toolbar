@@ -158,6 +158,27 @@ describe("comment message subscriptions", () => {
 })
 
 describe("comment placement", () => {
+	it("positions the cursor pin at the pointer", () => {
+		act(() =>
+			receive({
+				...commentState,
+				placementEnabled: true,
+				draftAuthor: commentState.pins[0].author,
+			}),
+		)
+		const placementLayer = container.querySelector<HTMLButtonElement>(
+			'[aria-label="Place a comment here"]',
+		)!
+		act(() => {
+			placementLayer.dispatchEvent(
+				new MouseEvent("mousemove", { bubbles: true, clientX: 600, clientY: 400 }),
+			)
+		})
+		const pin = container.querySelector<HTMLElement>(".cursor-pin")!
+		expect(pin.style.left).toBe("600px")
+		expect(pin.style.top).toBe("400px")
+	})
+
 	it("reports the clicked document position and viewport rectangle", () => {
 		act(() => receive({ ...commentState, placementEnabled: true }))
 		const placementLayer = container.querySelector<HTMLButtonElement>(

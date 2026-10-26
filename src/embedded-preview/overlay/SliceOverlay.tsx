@@ -57,7 +57,7 @@ function useSelectedSlice(slices: Slice[], selectedSliceId?: string) {
 
 function useHoveredSlice(slices: Slice[]) {
 	const [target, setTarget] = useState<Element | null>(null)
-	const pointer = useRef<PointerEvent>()
+	const pointer = useRef<PointerEvent | undefined>(undefined)
 
 	// Slice highlights remain pointer-transparent so they do not block the preview. Hover and slice
 	// selection therefore use document events. Interactive controls added to a highlight should use
@@ -198,7 +198,12 @@ function SliceHighlight(props: SliceHighlightProps) {
 		<div
 			className="slice-highlight"
 			data-slice-id={sliceId}
-			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
+			style={{
+				top: `${rect.top}px`,
+				left: `${rect.left}px`,
+				width: `${rect.width}px`,
+				height: `${rect.height}px`,
+			}}
 			onPointerOver={(event) => event.stopPropagation()}
 			onPointerMove={(event) => event.stopPropagation()}
 		>

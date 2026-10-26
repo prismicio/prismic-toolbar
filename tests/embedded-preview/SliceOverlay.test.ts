@@ -69,6 +69,15 @@ afterEach(() => {
 	vi.unstubAllGlobals()
 })
 
+it("positions and sizes the highlight to match the slice", () => {
+	overlay()
+	const highlight = root.querySelector<HTMLElement>('[data-slice-id="first"]')!
+	expect(highlight.style.top).toBe("20px")
+	expect(highlight.style.left).toBe("10px")
+	expect(highlight.style.width).toBe("200px")
+	expect(highlight.style.height).toBe("100px")
+})
+
 it("requests a variation change for the hovered instance while another is selected", () => {
 	overlay(false)
 	act(() => {
