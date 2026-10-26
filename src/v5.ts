@@ -97,7 +97,7 @@ function createSession(repositoryHost: string, previewURL?: string): PreviewSess
 		},
 		// Through the website's preview route, like previews opened from the editor.
 		share: previewURL
-			? async () => {
+			? () => {
 					const session = getCookie(sessionCookieName)
 					if (!session) throw new Error("The preview session ended.")
 					const { href, pathname, search, hash } = window.location

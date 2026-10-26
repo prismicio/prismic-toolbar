@@ -116,10 +116,12 @@ function $shareButton(share: NonNullable<PreviewSession["share"]>): HTMLButtonEl
 	}
 
 	button.onclick = async () => {
-		show("loading")
 		let url: string
 		try {
-			url = await share()
+			const link = share()
+			// Links built on the page need no spinner.
+			if (link instanceof Promise) show("loading")
+			url = await link
 		} catch {
 			return show("failed")
 		}
