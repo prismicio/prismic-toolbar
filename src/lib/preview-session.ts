@@ -24,7 +24,8 @@ export interface PreviewSession {
 	start(): Promise<void>
 	/** Ends the preview session for this browser. */
 	exit(): Promise<void>
-	share(pageURL?: string): Promise<string>
+	/** Missing when the website gives no way to share. */
+	share?(): Promise<string>
 	getSnapshot(): PreviewSnapshot
 	subscribe(listener: (snapshot: PreviewSnapshot) => void): () => void
 	dispose(): void

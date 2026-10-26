@@ -28,14 +28,27 @@ export function findVersion(doc: Document = document): string | undefined {
 	return findScriptParam("v", doc) || undefined
 }
 
+/**
+ * Reads the website's preview route, often relative, from the toolbar script's `data-preview-url`
+ * attribute, written by SDKs that opt into `v=5`. Call it while that script first runs, like
+ * {@link findRepositoryHost}.
+ */
+export function findPreviewURL(doc: Document = document): string | undefined {
+	return findScript(doc)?.dataset.previewUrl
+}
+
 function findScriptParam(name: string, doc: Document): string | null {
+	const src = findScript(doc)?.src
+	return src ? new URL(src).searchParams.get(name) : null
+}
+
+function findScript(doc: Document): HTMLScriptElement | undefined {
 	const scripts = doc.querySelectorAll<HTMLScriptElement>(
 		'script[src*="prismic.js"], script[src*="prismic.min.js"]',
 	)
-	const script =
-		doc.currentScript instanceof HTMLScriptElement ? doc.currentScript : scripts[scripts.length - 1]
-
-	return script?.src ? new URL(script.src).searchParams.get(name) : null
+	return doc.currentScript instanceof HTMLScriptElement
+		? doc.currentScript
+		: scripts[scripts.length - 1]
 }
 
 /**

@@ -1,8 +1,9 @@
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
-import { getCookie, setCookie } from "./lib/cookie"
+import { getCookie } from "./lib/cookie"
 import { createEmbeddedPush } from "./lib/embedded-push"
 import {
 	detectMode,
+	findPreviewURL,
 	findRepositoryHost,
 	findVersion,
 	repositoryOrigin,
@@ -12,7 +13,7 @@ import {
 import { dispatchPreviewEvent } from "./lib/events"
 import { createPreviewSession } from "./lib/preview-session"
 import { connectShell } from "./lib/shell-client"
-import { createSiteCookieStore, refFor, sessionCookieName, sessionHashKey } from "./lib/site-cookie"
+import { createSiteCookieStore, refFor, sessionCookieName } from "./lib/site-cookie"
 import { startV4 } from "./v4"
 
 // Replaced at build time, see `vite.config.ts`.
@@ -25,6 +26,7 @@ declare const __TOOLBAR_VERSION__: string
 const mode = detectMode()
 const repositoryHost = findRepositoryHost()
 const requestedVersion = findVersion()
+const previewURL = findPreviewURL()
 
 if (mode) {
 	if (repositoryHost) start(mode, repositoryHost)
@@ -59,28 +61,9 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 	}
 
 	if (requestedVersion === "5") {
-		// Share links carry the session in the hash, which never reaches servers.
-		const readSharedSession = () => new URLSearchParams(location.hash.slice(1)).get(sessionHashKey)
-		// A share link to the page already open only changes its hash: load it to read the session.
-		addEventListener("hashchange", () => readSharedSession() && location.reload())
-		const sharedSession = readSharedSession()
-		if (sharedSession) {
-			setCookie(sessionCookieName, sharedSession)
-			// Next's App Router adopts the URL only from state it doesn't own. Other routers need their
-			// state, without the hash in the URLs they saved, like Vue Router's `current` and Next Pages
-			// Router's `as`.
-			const { hash } = location
-			const state = history.state && !history.state.__NA ? { ...history.state } : null
-			for (const key in state) {
-				if (typeof state[key] === "string" && state[key].endsWith(hash)) {
-					state[key] = state[key].slice(0, -hash.length)
-				}
-			}
-			history.replaceState(state, "", location.pathname + location.search)
-		}
 		if (getCookie(sessionCookieName)) {
 			loadChunk(`${assets}/v5.js`, "startV5")
-				.then((startV5) => startV5(repositoryHost))
+				.then((startV5) => startV5(repositoryHost, previewURL))
 				.catch((error: unknown) => warn(`Could not load the preview.\n\n${String(error)}`))
 			return
 		}

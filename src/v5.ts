@@ -3,15 +3,15 @@ import { deleteCookie, getCookie, setCookie } from "./lib/cookie"
 import { repositoryOrigin, warn } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
 import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
-import { previewCookieName, sessionCookieName, sessionHashKey } from "./lib/site-cookie"
+import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
 import { mountToolbar } from "./toolbar"
 
 /**
  * Follows the preview session the website's SDK stored in a first-party cookie, with Prismic's
  * public `ping` endpoint. No iframe and no third-party cookies.
  */
-export function startV5(repositoryHost: string): void {
-	const session = createSession(repositoryHost)
+export function startV5(repositoryHost: string, previewURL?: string): void {
+	const session = createSession(repositoryHost, previewURL)
 	void session.start()
 	// Bundled, so the bar needs no request after this chunk's.
 	mountToolbar({ session, repositoryHost })
@@ -19,15 +19,11 @@ export function startV5(repositoryHost: string): void {
 
 registerChunk("startV5", startV5)
 
-function createSession(repositoryHost: string): PreviewSession {
+function createSession(repositoryHost: string, previewURL?: string): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
-	// The ref of the cookie. Without one, the first ping gets the session's ref.
+	// The ref this page renders. Without one, the first ping gets the session's ref.
 	let ref = getCookie(previewCookieName) ?? ""
-	// The snapshot's ref is the one this page renders: without one, the bar shows it is loading.
-	let snapshot: PreviewSnapshot = {
-		status: "polling",
-		preview: { ref, title: "" },
-	}
+	let snapshot: PreviewSnapshot = { status: "polling", preview: { ref, title: "" } }
 	let timer: ReturnType<typeof setInterval> | undefined
 	// The interval and `visibilitychange` must not start a ping while one is in flight.
 	let pinging = false
@@ -74,20 +70,19 @@ function createSession(repositoryHost: string): PreviewSession {
 
 		const previous = ref
 		ref = data.ref || ref
-		const preview = { ref, title: data.title || "" }
-		if (ref === previous) return setSnapshot({ preview })
+		setSnapshot({ preview: { ref, title: data.title || "" } })
+		if (ref === previous) return
 
 		// Reloading with the old cookie would find the new ref again, and loop.
 		if (!setCookie(previewCookieName, ref)) {
 			return warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 		}
 		// Without a previous ref, the page does not show the session yet.
-		if (!dispatchPreviewEvent(previous ? "prismicPreviewUpdate" : "prismicPreviewStart", ref)) {
-			return setSnapshot({ preview })
+		if (dispatchPreviewEvent(previous ? "prismicPreviewUpdate" : "prismicPreviewStart", ref)) {
+			stop()
+			setSnapshot({ status: "reloading" })
+			window.location.reload()
 		}
-		stop()
-		setSnapshot({ status: "reloading" })
-		window.location.reload()
 	}
 
 	return {
@@ -100,14 +95,19 @@ function createSession(repositoryHost: string): PreviewSession {
 		async exit() {
 			end()
 		},
-		// The current page, with the session in a hash: unlike a query, it never reaches servers.
-		async share(pageURL = window.location.href) {
-			const id = getCookie(sessionCookieName)
-			if (!id) throw new Error("The preview session ended.")
-			const url = new URL(pageURL)
-			url.hash = `${sessionHashKey}=${encodeURIComponent(id)}`
-			return url.href
-		},
+		// Through the website's preview route, like previews opened from the editor.
+		share: previewURL
+			? async () => {
+					const session = getCookie(sessionCookieName)
+					if (!session) throw new Error("The preview session ended.")
+					const { href, pathname, search, hash } = window.location
+					const url = new URL(previewURL, href)
+					url.searchParams.set("token", ref)
+					url.searchParams.set("session", session)
+					url.searchParams.set("path", pathname + search + hash)
+					return url.href
+				}
+			: undefined,
 		getSnapshot: () => snapshot,
 		subscribe(listener) {
 			listeners.add(listener)

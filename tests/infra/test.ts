@@ -118,6 +118,8 @@ export class Website {
 	events: "ignore" | "record" | "handle" = "ignore"
 	/** Query parameters of the toolbar script, as the website's SDK installs it. */
 	scriptQuery = "repo=toolbar-e2e"
+	/** The toolbar script's `data-preview-url`, which SDKs that opt into `v=5` write. */
+	previewURL?: string
 
 	constructor(
 		readonly page: Page,
@@ -193,7 +195,7 @@ export class Website {
 		this.loads.push(ref ?? null)
 		await route.fulfill({
 			contentType: "text/html",
-			body: websiteHTML(ref, this.events, this.scriptQuery),
+			body: websiteHTML(ref, this.events, this.scriptQuery, this.previewURL),
 		})
 	}
 }
@@ -209,7 +211,12 @@ function readPreviewRef(cookie: string | undefined, repository: string): string 
 	return cookie
 }
 
-function websiteHTML(ref: string | undefined, events: Website["events"], scriptQuery: string) {
+function websiteHTML(
+	ref: string | undefined,
+	events: Website["events"],
+	scriptQuery: string,
+	previewURL: string | undefined,
+) {
 	const recorder = `<script>
 		window.previewEvents = []
 		for (const type of ["prismicPreviewStart", "prismicPreviewUpdate", "prismicPreviewEnd"]) {
@@ -247,7 +254,7 @@ function websiteHTML(ref: string | undefined, events: Website["events"], scriptQ
 	addEventListener("message", (event) => receivedMessages.push(event.data?.type))
 </script>
 ${events === "ignore" ? "" : recorder}
-<script async defer src="https://static.cdn.prismic.io/prismic.js?${scriptQuery}"></script>`
+<script async defer src="https://static.cdn.prismic.io/prismic.js?${scriptQuery}"${previewURL ? ` data-preview-url="${previewURL}"` : ""}></script>`
 }
 
 /** Comment threads, as the editor sends them. */

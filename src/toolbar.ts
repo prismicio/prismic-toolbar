@@ -27,7 +27,7 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 			authenticated = snapshot.authenticated
 			// Only visitors known to be logged out cannot share. Others share like forwarding the link
 			// they opened.
-			const canShare = authenticated !== false
+			const share = authenticated === false ? undefined : session.share
 			const exit = $el(
 				"button",
 				{ class: "exit", type: "button", "aria-label": "Exit preview", title: "Exit preview" },
@@ -68,21 +68,19 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 					$el("p", { class: "title" }),
 					$el("p", { class: "status" }),
 				),
-				!canShare && powered,
-				$el("div", { class: "actions" }, canShare && $shareButton(session), exit),
+				!share && powered,
+				$el("div", { class: "actions" }, share && $shareButton(share), exit),
 			)
 			// Before the styles, where earlier versions rendered it.
 			root.prepend(bar)
 		}
 
 		// Only changed text is replaced, so updates keep the visitor's text selection.
-		// Without a ref, the page does not show the preview yet, such as one opened from a share link.
-		const loading = !snapshot.preview.ref
 		const title = bar.querySelector<HTMLElement>(".title")!
-		const text = loading ? "Loading preview…" : snapshot.preview.title || "Preview"
+		const text = snapshot.preview.title || "Preview"
 		if (title.textContent !== text) title.textContent = title.title = text
 		const status = bar.querySelector(".status")!
-		const label = loading ? "" : snapshot.status === "reloading" ? "Updating…" : "Live preview"
+		const label = snapshot.status === "reloading" ? "Updating…" : "Live preview"
 		if (status.textContent !== label) status.textContent = label
 	}
 
@@ -95,7 +93,7 @@ registerChunk("mountToolbar", mountToolbar)
 // Loading shows a spinner.
 const shareLabels = { idle: "Share", loading: "", copied: "Copied", failed: "Failed" }
 
-function $shareButton(session: PreviewSession): HTMLButtonElement {
+function $shareButton(share: NonNullable<PreviewSession["share"]>): HTMLButtonElement {
 	// Every label takes space, so the button keeps its width when its label changes.
 	const labels = Object.entries(shareLabels).map(([kind, label]) => {
 		const spinner = $el("span", { class: "spinner", role: "img", "aria-label": "Getting link…" })
@@ -106,8 +104,6 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 		{ class: "share", type: "button", "aria-live": "polite" },
 		...labels.map(([, span]) => span),
 	)
-	// Share links by page, so copying a link again needs no spinner.
-	const links = new Map<string, string>()
 	let timer: ReturnType<typeof setTimeout> | undefined
 
 	function show(state: keyof typeof shareLabels) {
@@ -120,18 +116,13 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 	}
 
 	button.onclick = async () => {
-		const pageURL = window.location.href
-		// A session followed without reloading has another ref, and so another link.
-		const key = `${session.getSnapshot().preview?.ref} ${pageURL}`
-		const cached = links.get(key)
-		if (!cached) show("loading")
+		show("loading")
 		let url: string
 		try {
-			url = cached ?? (await session.share(pageURL))
+			url = await share()
 		} catch {
 			return show("failed")
 		}
-		links.set(key, url)
 
 		try {
 			await navigator.clipboard.writeText(url)
@@ -158,7 +149,7 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 function $el<Tag extends keyof HTMLElementTagNameMap>(
 	tag: Tag,
 	attributes: Record<string, string>,
-	...children: (Node | string | false)[]
+	...children: (Node | string | false | undefined)[]
 ): HTMLElementTagNameMap[Tag] {
 	const element = document.createElement(tag)
 	for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value)

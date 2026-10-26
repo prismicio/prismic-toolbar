@@ -6,9 +6,6 @@ export const previewCookieName = "io.prismic.preview"
 /** The preview session ID, written by SDK preview routes for the v5 flow. */
 export const sessionCookieName = "io.prismic.previewSession"
 
-/** Share links carry the preview session ID in the URL hash: `#prismic-session=<id>`. */
-export const sessionHashKey = "prismic-session"
-
 /**
  * - `plain`: a raw ref, written by SDK preview routes and by the toolbar inside the editor.
  * - `json`: `{ "_tracker": "…", "<repository host>": { "preview": "<ref>" } }`, written by the

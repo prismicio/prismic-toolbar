@@ -1,4 +1,4 @@
-import { expect, previewCookieName, sessionCookieName, test } from "../infra"
+import { expect, previewCookieName, test } from "../infra"
 
 // Websites whose SDK opts into `v=5` run the v5 flow when it stored a session, and end previews
 // without one.
@@ -66,15 +66,4 @@ test("ignores v=5 in the editor's poll preview", async ({ repository, website, e
 	await expect.poll(() => repository.pings, { timeout: 10_000 }).toContain("poll-ref")
 	expect(website.loads).toEqual([null, "poll-ref"])
 	expect((await website.cookie(previewCookieName))?.value).toBe("poll-ref")
-})
-
-test("ignores share links without v=5", async ({ repository, website, requests }) => {
-	website.scriptQuery = "repo=toolbar-e2e"
-	const path = `/#prismic-session=${encodeURIComponent(repository.sessionID)}`
-
-	await website.goto({ path })
-
-	await expect.poll(() => loaded(requests, "iframe.html")).toBe(true)
-	expect(website.page.url()).toBe(website.url + path)
-	expect(await website.cookie(sessionCookieName)).toBeUndefined()
 })
