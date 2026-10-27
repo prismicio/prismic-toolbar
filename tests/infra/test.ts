@@ -6,12 +6,13 @@ import {
 	type APIRequestContext,
 	type Browser,
 	type BrowserContext,
+	type Frame,
 	type Page,
 } from "@playwright/test"
 
 import { STORAGE_STATE } from "../../playwright.config"
 import { version } from "../../vite.config"
-import { Prismic, type Document, type Repository } from "./client"
+import { Prismic, type Document, type Repository, type Slice } from "./client"
 
 export { expect }
 
@@ -76,6 +77,7 @@ type Fixtures = {
 		doc?: Document
 		repository?: Repository
 	}) => Promise<Document>
+	pageBuilder: PageBuilder
 	/** URLs the browser requested during the test. */
 	requests: string[]
 	/** Opens a fresh browser, signed out of Prismic, like someone a link was shared with. */
@@ -88,6 +90,11 @@ export const test = base.extend<Fixtures, { prismic: Prismic }>({
 	context: async ({ context }, use) => {
 		await serveToolbar(context)
 		await use(context)
+	},
+	pageBuilder: async ({ page, repository, baseURL }, use) => {
+		await use(new PageBuilder(page, repository, baseURL!))
+		// The editor may still be loading flags.
+		await page.unrouteAll({ behavior: "ignoreErrors" })
 	},
 	requests: async ({ context }, use) => {
 		const requests: string[] = []
@@ -178,20 +185,22 @@ export class Website {
 
 	/** Makes pages update in place on preview events, like frameworks, instead of reloading. */
 	async handleEvents() {
-		await this.page.context().addCookies([{ name: "events", value: "handle", url: this.url }])
+		// Readable in the editor's cross-site iframe too.
+		const cookie = { name: "events", value: "handle", domain: "localhost", path: "/" }
+		await this.page.context().addCookies([{ ...cookie, sameSite: "None", secure: true }])
 	}
 
 	/** Preview events this page load received. */
-	events(page = this.page) {
+	events(page: Page | Frame = this.page) {
 		return page.evaluate(() => window.previewEvents)
 	}
 
 	/** Marks this page load. A reload loses the mark. */
-	async mark(page = this.page) {
+	async mark(page: Page | Frame = this.page) {
 		await page.evaluate(() => (document.documentElement.dataset.marker = ""))
 	}
 
-	async expectSameLoad(page = this.page) {
+	async expectSameLoad(page: Page | Frame = this.page) {
 		await expect(page.locator("html")).toHaveAttribute("data-marker", "")
 	}
 
@@ -246,5 +255,83 @@ export class Editor {
 			id: session_id,
 			ref: new URL(preview_url).searchParams.get("token")!,
 		}
+	}
+}
+
+/** The Prismic Page Builder, editing a page with the website as its live preview. */
+export class PageBuilder {
+	constructor(
+		readonly page: Page,
+		readonly repository: Repository,
+		readonly website: string,
+	) {}
+
+	/** The website, in the editor's preview iframe. */
+	get preview() {
+		return this.page.frameLocator('iframe[name^="prismic:embedded-preview"]')
+	}
+
+	get frame(): Frame {
+		const frame = this.page.frames().find((frame) => frame.name().startsWith("prismic:embedded"))
+		if (!frame) throw new Error("The Page Builder shows no preview.")
+		return frame
+	}
+
+	/** The toolbar's highlight of a slice, with its controls. */
+	slice(slice: Slice) {
+		return this.preview.locator(`.slice-highlight[data-slice-id="text_block$${slice.id}"]`)
+	}
+
+	/** Selects the slice showing `text` in the preview, and appends `suffix` to it in the editor. */
+	async edit(text: string, suffix: string) {
+		await this.preview.getByText(text).click()
+		const field = this.page.locator('[contenteditable="true"][aria-label="Text"]')
+		await expect(field).toHaveText(text)
+		await field.click()
+		await this.page.keyboard.press("End")
+		await this.page.keyboard.type(suffix)
+		await expect(field).toHaveText(text + suffix)
+	}
+
+	/**
+	 * Opens `doc`. Live editing and how it updates the preview are behind feature flags, the only
+	 * part of Prismic's responses this changes: `push` sends refs to the website, `poll` lets the
+	 * toolbar follow the preview session. `inPlace` adds `reload: false` to the refs the editor
+	 * pushes, which only editors with Content API previews send, not yet available to test accounts.
+	 */
+	async open(
+		doc: Document,
+		{ mode, inPlace = false }: { mode: "push" | "poll"; inPlace?: boolean },
+	) {
+		const context = this.page.context()
+		// The editor is public, the website on the loopback.
+		await context.grantPermissions(["local-network-access"], { origin: this.repository.url })
+		await this.page.route("https://amplitude.prismic.io/api/sdk/v2/vardata*", async (route) => {
+			const response = await route.fetch()
+			const flags = await response.json()
+			const flag = (value: string) => ({ key: value, value })
+			flags["pb-ai-live-editing"] = flag("on")
+			flags["pb-embedded-preview-push-updates"] = flag(mode === "push" ? "on" : "off")
+			await route.fulfill({ response, json: flags })
+		})
+		if (inPlace) {
+			// Runs before the toolbar's listener, in the website's frame.
+			await context.addInitScript(() => {
+				if (window.name !== "prismic:embedded-preview") return
+				const type = "prismic:embedded-preview:set-ref"
+				const listener = (event: MessageEvent) => {
+					if (event.data?.type === type) event.data.reload = false
+				}
+				addEventListener("message", listener, { capture: true })
+			})
+		}
+		await this.page.goto(`${this.repository.url}/builder/pages/${doc.id}`)
+		// Live editing asks for a setup the website does not need.
+		const dialog = this.page.getByRole("dialog", { name: /missing the configuration/ })
+		await dialog.getByRole("button", { name: "Close" }).click()
+		// Each website is one of the repository's previews.
+		await this.page.getByRole("combobox").filter({ hasText: "Select a preview" }).click()
+		await this.page.getByRole("option", { name: this.website }).click()
+		await expect(this.preview.getByTestId("payload")).toBeVisible()
 	}
 }

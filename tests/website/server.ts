@@ -33,7 +33,8 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 	body { margin: 0; font: 16px sans-serif; }
 	/* The toolbar must not inherit website styles. */
 	.title { color: rgb(255, 0, 0); }
-	section { padding: 24px; min-height: 200px; }
+	/* Tall enough for the second slice to start below the fold. */
+	section { padding: 24px; min-height: 900px; }
 	.highlighted { background: #fde68a; }
 </style>
 ${sections.join("\n")}
@@ -41,16 +42,18 @@ ${sections.join("\n")}
 	// Pages record preview events. With the \`events=handle\` cookie, they update in place like
 	// frameworks do, instead of letting the toolbar reload them.
 	window.previewEvents = []
+	async function update() {
+		const res = await fetch(location.href)
+		const next = new DOMParser().parseFromString(await res.text(), "text/html")
+		for (const main of document.querySelectorAll("main")) main.replaceWith(next.getElementById(main.id))
+	}
 	const handle = document.cookie.split("; ").includes("events=handle")
 	for (const type of ["prismicPreviewStart", "prismicPreviewUpdate", "prismicPreviewEnd"]) {
 		addEventListener(type, (event) => {
 			previewEvents.push([type, event.detail?.ref ?? null])
 			if (!handle) return
 			event.preventDefault()
-			fetch(location.href).then((res) => res.text()).then((html) => {
-				const next = new DOMParser().parseFromString(html, "text/html")
-				for (const main of document.querySelectorAll("main")) main.replaceWith(next.getElementById(main.id))
-			})
+			update()
 		})
 	}
 </script>
@@ -74,7 +77,8 @@ async function render(page: string, req: IncomingMessage, scoped: boolean) {
 	} else {
 		client.enableAutoPreviewsFromReq(req)
 	}
-	const document = await client.getByUID("page", uid)
+	// A ref the editor just created can take a moment to reach the Content API.
+	const document = await retry(() => client.getByUID("page", uid))
 	const slices = document.data.slices.map((slice: prismic.SharedSlice) => {
 		const content = `<section class="${slice.variation}"><h2>${slice.primary.text}</h2></section>`
 		return `<!--prismic-slice-start:${slice.id}-->${content}<!--prismic-slice-end:${slice.id}-->`
@@ -85,6 +89,16 @@ async function render(page: string, req: IncomingMessage, scoped: boolean) {
 	<p data-testid="payload">${document.data.payload}</p>
 	${slices.join("\n\t")}
 </main>`
+}
+
+async function retry<T>(task: () => Promise<T>, attempts = 10): Promise<T> {
+	try {
+		return await task()
+	} catch (error) {
+		if (attempts <= 1) throw error
+		await new Promise((resolve) => setTimeout(resolve, 1000))
+		return retry(task, attempts - 1)
+	}
 }
 
 function repositoryRef(cookies = "", host: string): string | undefined {
