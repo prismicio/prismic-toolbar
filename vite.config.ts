@@ -83,8 +83,8 @@ export default defineConfig({
 	define: { ...defines(false), __TOOLBAR_LOCAL_EDITOR__: "true" },
 	test: {
 		environment: "jsdom",
-		include: ["tests/**/*.test.ts"],
-		setupFiles: ["tests/setup.ts"],
+		include: ["tests-old/**/*.test.ts"],
+		setupFiles: ["tests-old/setup.ts"],
 		coverage: {
 			provider: "v8",
 			reporter: ["lcovonly", "text"],
