@@ -14,7 +14,7 @@ import {
 
 export interface PreviewSnapshot {
 	status: "booting" | "idle" | "polling" | "reloading"
-	/** Whether Prismic logged the visitor in. Unknown in v5, which cannot ask Prismic. */
+	/** Unset when unknown, as in v5. */
 	authenticated?: boolean
 	/** Set while this page follows an active preview session. */
 	preview?: { ref: string; title: string }

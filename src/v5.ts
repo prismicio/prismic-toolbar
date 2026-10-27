@@ -95,14 +95,12 @@ function createSession(repositoryHost: string): PreviewSession {
 		async exit() {
 			end()
 		},
-		// Without a ref, which the next edit expires: Prismic's share page sends visitors through the
-		// website's preview route with the session's latest ref.
 		share() {
 			const session = getCookie(sessionCookieName)
 			if (!session) throw new Error("The preview session ended.")
 			const { pathname, search, hash } = window.location
 			const path = encodeURIComponent(pathname + search + hash)
-			return `${repositoryOrigin(repositoryHost)}/builder/share/${encodeURIComponent(session)}?path=${path}`
+			return `${repositoryOrigin(repositoryHost)}/previews/share/${encodeURIComponent(session)}?path=${path}`
 		},
 		getSnapshot: () => snapshot,
 		subscribe(listener) {

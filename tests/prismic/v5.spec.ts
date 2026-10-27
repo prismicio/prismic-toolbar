@@ -111,12 +111,7 @@ test("ignores pings of a session another tab replaced", async ({ website, contex
 	expect((await website.cookie(sessionCookieName))?.value).toBe("new-session")
 })
 
-test("copies a link to the current page through Prismic's share page", async ({
-	repository,
-	website,
-	context,
-}) => {
-	// Copy without writing to the system clipboard.
+test("copies a share link to the current page", async ({ repository, website, context }) => {
 	await website.page.addInitScript(() => {
 		Object.defineProperty(navigator, "clipboard", {
 			value: { writeText: async (text: string) => sessionStorage.setItem("clipboard", text) },
@@ -131,9 +126,9 @@ test("copies a link to the current page through Prismic's share page", async ({
 
 	await expect(website.previewBar.getByRole("button", { name: "Copied" })).toBeVisible()
 	const path = "path=%2Fpage%3Fq%3D1%23section"
-	expect(await clipboard()).toBe(`${repository.url}/builder/share/e2e-session?${path}`)
+	expect(await clipboard()).toBe(`${repository.url}/previews/share/e2e-session?${path}`)
 
-	// Another tab starts a session with the same ref.
+	// Another tab replaces the session.
 	await context.route(
 		(url) => url.pathname === "/previews/new-session/ping",
 		(route) =>
@@ -147,7 +142,7 @@ test("copies a link to the current page through Prismic's share page", async ({
 	])
 	await website.previewBar.getByRole("button", { name: "Copied" }).click()
 
-	await expect.poll(clipboard).toBe(`${repository.url}/builder/share/new-session?${path}`)
+	await expect.poll(clipboard).toBe(`${repository.url}/previews/share/new-session?${path}`)
 })
 
 test("exits the preview", async ({ website }) => {

@@ -25,8 +25,6 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 
 		if (!bar) {
 			authenticated = snapshot.authenticated
-			// Only visitors known to be logged out cannot share. Others share like forwarding the link
-			// they opened.
 			const canShare = authenticated !== false
 			const exit = $el(
 				"button",
@@ -119,7 +117,6 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 		let url: string
 		try {
 			const link = session.share()
-			// Links built on the page need no spinner.
 			if (link instanceof Promise) show("loading")
 			url = await link
 		} catch {
