@@ -13,11 +13,13 @@ import { readyDOM } from "./dom"
 export const shellConnectType = "prismic:shell:connect"
 
 export interface ShellMethods {
+	/** Asks Prismic whether the user is signed in, when a preview session exists. */
+	isAuthenticated(): Promise<boolean>
 	/**
-	 * Reads the repository's session cookie, and asks Prismic whether the user is signed in when one
-	 * exists.
+	 * Asks Prismic for the session's ref and title, reading the session cookie each time. Without a
+	 * ref, the session ended, and its cookie is deleted.
 	 */
-	getSession(): Promise<{ session: string | null; authenticated: boolean }>
+	ping(ref: string): Promise<{ ref?: string; title?: string }>
 	/** Deletes the repository's session cookie, so the session does not come back on the next page. */
 	closeSession(): Promise<void>
 	/** Returns a shareable link to the preview session on `pageURL`. */
@@ -90,7 +92,8 @@ export async function connectShell(url: string): Promise<Shell> {
 	}
 
 	return {
-		getSession: () => call("getSession"),
+		isAuthenticated: () => call("isAuthenticated"),
+		ping: (ref) => call("ping", ref),
 		closeSession: () => call("closeSession"),
 		share: (pageURL, title) => call("share", pageURL, title),
 		dispose,

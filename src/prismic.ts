@@ -1,4 +1,3 @@
-import { connectBridge } from "./lib/bridge"
 import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
 import { getCookie } from "./lib/cookie"
 import { createEmbeddedPush } from "./lib/embedded-push"
@@ -12,6 +11,7 @@ import {
 } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
 import { createPreviewSession } from "./lib/preview-session"
+import { connectShell } from "./lib/shell-client"
 import { createSiteCookieStore, refFor, sessionCookieName } from "./lib/site-cookie"
 import { startV4 } from "./v4"
 
@@ -39,7 +39,7 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 	const version = __TOOLBAR_VERSION__
 	const assets = `${CDN_HOST}/prismic-toolbar/${version}`
 	const connect = () =>
-		connectBridge(`${repositoryOrigin(repositoryHost)}/prismic-toolbar/${version}/iframe.html`)
+		connectShell(`${repositoryOrigin(repositoryHost)}/prismic-toolbar/${version}/shell.html`)
 
 	// The editor drives embedded modes, whatever the website's SDK opts into.
 	if (mode === "embedded-push") {

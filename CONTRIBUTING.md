@@ -20,15 +20,14 @@ The following setup is required to work on this project:
 
 Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<version>/`. A folder of the same name holds its code:
 
-| Entry                     | Loaded                                                | Code                                                |
-| ------------------------- | ----------------------------------------------------- | --------------------------------------------------- |
-| `src/prismic.ts`          | On every page, by the install snippet                 | `src/lib`                                           |
-| `src/v4.ts`               | On websites, bundled into `prismic.js`                | `src/lib`: previews through the repository's iframe |
-| `src/v5.ts`               | On websites opting into `v=5`, with a preview session | `src/lib`: previews through `ping`, with the bar    |
-| `src/toolbar.ts`          | Only while a v4 preview session is active             | `src/toolbar`: the preview bar                      |
-| `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe       | `src/embedded-preview`: comment and slice overlays  |
-| `src/iframe.ts`           | Hidden, from the repository host, to read its cookies | `src/iframe`, inlined into `src/iframe.html`        |
-| `src/shell.ts`            | Not yet; will replace `iframe.html` for v4            | Inlined into `src/shell.html`                       |
+| Entry                     | Loaded                                                | Code                                               |
+| ------------------------- | ----------------------------------------------------- | -------------------------------------------------- |
+| `src/prismic.ts`          | On every page, by the install snippet                 | `src/lib`                                          |
+| `src/v4.ts`               | On websites, bundled into `prismic.js`                | `src/lib`: previews through the repository's shell |
+| `src/v5.ts`               | On websites opting into `v=5`, with a preview session | `src/lib`: previews through `ping`, with the bar   |
+| `src/toolbar.ts`          | Only while a v4 preview session is active             | `src/toolbar`: the preview bar                     |
+| `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe       | `src/embedded-preview`: comment and slice overlays |
+| `src/shell.ts`            | Hidden, from the repository host, to read its cookies | Inlined into `src/shell.html`                      |
 
 - Each file is a self-contained classic script. The CDN sends no CORS headers, so `prismic.js` loads the other bundles as classic scripts, and they register on `window.__prismicToolbar`.
 - `src/lib` holds the logic of `prismic.js` and code the bundles share. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `embedded-push.ts` handles refs the editor pushes into its preview iframe.
@@ -37,7 +36,7 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 
 - `node --run dev` builds the toolbar on change, serves it at `http://localhost:8081/prismic-toolbar/<version>/`, and runs the [playground](./playground/README.md) with it at `http://localhost:3000`.
 - Development builds also accept an editor on `localhost` in the embedded preview. Set `TOOLBAR_LOCAL_EDITOR=true` to allow it in a production build.
-- Websites load `iframe.html` from the repository host, from the same folder as `prismic.js`. Local builds are never deployed, so `node --run dev` names its build after the last commit deployed from `origin/master` to reuse that iframe. To test changes to `src/iframe`, set `TOOLBAR_VERSION` to your pull request preview, like `pr-149`.
+- v4 websites load `shell.html` from the repository host, from the same folder as `prismic.js`. Local builds are never deployed, so `node --run dev` names its build after the last commit deployed from `origin/master` to reuse that shell. To test changes to `src/shell.ts`, set `TOOLBAR_VERSION` to your pull request preview, like `pr-149`.
 - With a local Prismic behind a proxy, set `CDN_HOST` so bundles load through it, and qualify the repository with the proxy domain:
 
   ```sh

@@ -4,7 +4,7 @@ import { existsSync } from "node:fs"
 
 import { version as packageVersion } from "../vite.config"
 
-// Local builds have no iframe on the repository host: reuse the last one deployed from master.
+// Local builds have no shell on the repository host: reuse the last one deployed from master.
 const version = process.env.TOOLBAR_VERSION || lastDeployedVersion() || packageVersion
 
 const run = (command: string, env?: Record<string, string>) =>

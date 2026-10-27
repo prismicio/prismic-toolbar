@@ -1,14 +1,6 @@
 // Reads and writes cookies like js-cookie 3: SDKs and servers parse these cookies, some with regular
 // expressions, so their format must not change.
 
-export type CookieAttributes = {
-	/** `undefined` writes no `path`, so the browser uses the current one. */
-	path: string | undefined
-	domain?: string
-	sameSite: "lax" | "none"
-	secure?: true
-}
-
 /** Returns the first cookie whose decoded name matches, skipping those that fail to decode. */
 export function getCookie(name: string): string | undefined {
 	for (const cookie of document.cookie.split("; ")) {
@@ -27,37 +19,28 @@ export function getCookie(name: string): string | undefined {
  * silently.
  */
 export function setCookie(name: string, value: string): boolean {
-	writeCookie(name, value, { path: "/", ...sameSiteAttributes() })
+	writeCookie(name, value)
 	return getCookie(name) === value
 }
 
-export function deleteCookie(
-	name: string,
-	attributes: CookieAttributes = { path: "/", ...sameSiteAttributes() },
-): void {
-	writeCookie(name, "", attributes, "Thu, 01 Jan 1970 00:00:00 GMT")
+export function deleteCookie(name: string): void {
+	writeCookie(name, "", "Thu, 01 Jan 1970 00:00:00 GMT")
 }
 
 // Names are constants that need no encoding. Values keep the characters cookies allow unescaped.
-function writeCookie(
-	name: string,
-	value: string,
-	{ path, domain, sameSite, secure }: CookieAttributes,
-	expires?: string,
-) {
+function writeCookie(name: string, value: string, expires?: string) {
 	const encoded = encodeURIComponent(value)
 	let cookie = `${name}=${encoded.replace(/%(2[346BF]|3[AC-F]|40|5[BDE]|60|7[BCD])/g, decodeURIComponent)}`
-	for (const [key, attribute] of Object.entries({ path, domain, sameSite, secure, expires })) {
+	for (const [key, attribute] of Object.entries({ path: "/", ...sameSiteAttributes(), expires })) {
 		if (attribute === true) cookie += `; ${key}`
-		// A `;` would start another attribute.
-		else if (attribute) cookie += `; ${key}=${attribute.split(";")[0]}`
+		else if (attribute) cookie += `; ${key}=${attribute}`
 	}
 	document.cookie = cookie
 }
 
 // Cookies written from a cross-site iframe need `SameSite=None; Secure`. Loopback hosts are secure
 // contexts, so `Secure` also holds for a local dev server previewed from the hosted editor.
-function sameSiteAttributes(): Pick<CookieAttributes, "sameSite" | "secure"> {
+function sameSiteAttributes(): { sameSite: "lax" | "none"; secure?: true } {
 	const { protocol, hostname } = window.location
 	const trustworthy =
 		protocol === "https:" ||

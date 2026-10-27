@@ -103,6 +103,8 @@ function isSameSlices(a: Slice[], b: Slice[]) {
 			const other = b[i]!
 			return (
 				slice.sliceId === other.sliceId &&
+				slice.zoneId === other.zoneId &&
+				slice.index === other.index &&
 				slice.label === other.label &&
 				slice.variation === other.variation &&
 				slice.canMoveUp === other.canMoveUp &&
