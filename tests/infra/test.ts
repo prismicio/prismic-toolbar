@@ -4,7 +4,6 @@ import {
 	test as base,
 	expect,
 	type APIRequestContext,
-	type Browser,
 	type BrowserContext,
 	type Frame,
 	type Page,
@@ -51,7 +50,7 @@ export async function saveState(request: APIRequestContext, repositories: Reposi
  * Serves this branch's build where Prismic serves the toolbar. The shell is served at its URL on
  * the repository host, so it runs there with the repository's real cookies.
  */
-export async function serveToolbar(context: BrowserContext) {
+async function serveToolbar(context: BrowserContext) {
 	const dist = `dist/prismic-toolbar/${version}`
 	await context.route("https://static.cdn.prismic.io/prismic.js?*", (route) =>
 		route.fulfill({ path: `${dist}/prismic.js` }),
@@ -70,13 +69,8 @@ type Fixtures = {
 	doc: Document
 	website: Website
 	editor: Editor
-	/** Saves a draft of `doc` and previews it from Prismic, in `page` unless another tab is given. */
-	startPreview: (options?: {
-		payload?: string
-		tab?: Page
-		doc?: Document
-		repository?: Repository
-	}) => Promise<Document>
+	/** Saves a draft of `doc` with "Draft 1", and previews it from Prismic in `tab`. */
+	startPreview: (tab?: Page) => Promise<Document>
 	pageBuilder: PageBuilder
 	/** URLs the browser requested during the test. */
 	requests: string[]
@@ -110,32 +104,25 @@ export const test = base.extend<Fixtures, { prismic: Prismic }>({
 		use(new Website(page, baseURL!, repository)),
 	editor: async ({ baseURL }, use) => use(new Editor(baseURL!)),
 	startPreview: async ({ page, repository, doc, editor }, use) => {
-		await use(async (options = {}) => {
-			const { payload = "Draft 1", tab = page } = options
-			const repo = options.repository ?? repository
-			const draft = await repo.updateDraft(options.doc ?? doc, { payload })
-			await editor.preview(tab, repo, draft)
-			await expect(tab.getByTestId("payload").first()).toHaveText(payload)
+		await use(async (tab = page) => {
+			const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
+			await editor.preview(tab, repository, draft)
+			await expect(tab.getByTestId("payload").first()).toHaveText("Draft 1")
 			return draft
 		})
 	},
 	visitor: async ({ browser }, use) => {
 		const contexts: BrowserContext[] = []
 		await use(async () => {
-			const context = await newContext(browser)
+			// Contexts inherit the project's storage state, which holds the Prismic login.
+			const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
 			contexts.push(context)
+			await serveToolbar(context)
 			return context.newPage()
 		})
 		for (const context of contexts) await context.close()
 	},
 })
-
-async function newContext(browser: Browser) {
-	// Contexts inherit the project's storage state, which holds the Prismic login.
-	const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
-	await serveToolbar(context)
-	return context
-}
 
 declare global {
 	interface Window {
@@ -209,14 +196,15 @@ export class Website {
 	}
 
 	/** Reads one of the website's cookies, decoded. */
-	async cookie(name: string, context = this.page.context()) {
-		const cookie = (await context.cookies(this.url)).find((cookie) => cookie.name === name)
+	async cookie(name: string) {
+		const cookies = await this.page.context().cookies(this.url)
+		const cookie = cookies.find((cookie) => cookie.name === name)
 		return cookie && { ...cookie, value: decodeURIComponent(cookie.value) }
 	}
 
 	/** The repository's ref in the preview cookie, read like the Content API does. */
-	async previewRef(repository = this.repository, context = this.page.context()) {
-		const value = (await this.cookie(previewCookieName, context))?.value
+	async previewRef(repository = this.repository) {
+		const value = (await this.cookie(previewCookieName))?.value
 		if (!value) return undefined
 		try {
 			return JSON.parse(value)[repository.host]?.preview as string | undefined
@@ -235,9 +223,7 @@ export class Editor {
 	 * cookie, then opens the website's preview route in `page`, with `session` like the editor.
 	 */
 	async preview(page: Page, repository: Repository, doc: Document) {
-		const session = await this.startSession(page.context(), repository, doc)
-		await page.goto(session.url)
-		return session
+		await page.goto((await this.startSession(page.context(), repository, doc)).url)
 	}
 
 	/** Starts the session without opening the website. */
@@ -252,7 +238,6 @@ export class Editor {
 			await res.json()
 		return {
 			url: `${preview_url}&session=${encodeURIComponent(session_id)}`,
-			id: session_id,
 			ref: new URL(preview_url).searchParams.get("token")!,
 		}
 	}

@@ -1,14 +1,14 @@
 import assert from "node:assert"
 import { randomUUID } from "node:crypto"
 
-import { request, type APIRequestContext } from "@playwright/test"
+import { expect, request, type APIRequestContext } from "@playwright/test"
 
 /** Prefix of the repositories tests create, followed by their creation time. */
 const prefix = "prismic-toolbar-e2e"
 
 type Auth = { email: string; password: string }
 
-export function readAuth(): Auth {
+function readAuth(): Auth {
 	const { E2E_PRISMIC_EMAIL: email, E2E_PRISMIC_PASSWORD: password } = process.env
 	assert(email && password, "Set E2E_PRISMIC_EMAIL and E2E_PRISMIC_PASSWORD, see CONTRIBUTING.md.")
 	return { email, password }
@@ -63,8 +63,8 @@ export class Prismic {
 		if (!(await remove()).ok()) assert.equal((await remove()).status(), 404)
 	}
 
-	/** Deletes repositories that runs older than `maxAge` left behind. */
-	async deleteStaleRepositories(maxAge = 60 * 60 * 1000): Promise<void> {
+	/** Deletes repositories that runs started over an hour ago left behind. */
+	async deleteStaleRepositories(): Promise<void> {
 		const res = await this.#request.get("https://api.internal.prismic.io/user/repositories", {
 			headers: { authorization: `Bearer ${this.#token}` },
 		})
@@ -72,7 +72,7 @@ export class Prismic {
 		const { repositories }: { repositories: { domain: string }[] } = await res.json()
 		for (const { domain } of repositories) {
 			const createdAt = parseInt(domain.match(new RegExp(`^${prefix}-(\\w+)-`))?.[1] ?? "", 36)
-			if (Date.now() - createdAt > maxAge) await this.deleteRepository(domain)
+			if (Date.now() - createdAt > 60 * 60 * 1000) await this.deleteRepository(domain)
 		}
 	}
 }
@@ -227,7 +227,7 @@ export class Repository {
 
 	async #waitForContentAPI(doc: Document) {
 		const api = `https://${this.domain}.cdn.prismic.io/api/v2`
-		await poll(async () => {
+		const served = async () => {
 			const { refs }: { refs: { ref: string; isMasterRef: boolean }[] } = await (
 				await this.#request.get(api)
 			).json()
@@ -237,20 +237,11 @@ export class Repository {
 			})
 			const res = await this.#request.get(`${api}/documents/search?${query}`)
 			return res.ok() && (await res.json()).results.length > 0
-		}, `The Content API did not serve ${doc.uid} in time.`)
+		}
+		const message = `The Content API did not serve ${doc.uid} in time.`
+		await expect.poll(served, { message, timeout: 30_000 }).toBe(true)
 	}
 }
-
-/** Retries `attempt` every second, for 30 seconds, until it succeeds. */
-async function poll(attempt: () => Promise<boolean>, message: string) {
-	for (let i = 0; i < 30; i++) {
-		if (await attempt()) return
-		await sleep(1000)
-	}
-	assert.fail(message)
-}
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /** The Core API's document format, with a type hint next to each field. */
 function toLegacy(uid: string, { payload, slices }: Content) {

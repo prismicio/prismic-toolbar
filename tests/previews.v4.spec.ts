@@ -47,7 +47,7 @@ test("follows a preview another tab started, then exited", async ({
 	await expect(website.payload).toHaveText("Published")
 	const otherTab = await context.newPage()
 
-	await startPreview({ tab: otherTab })
+	await startPreview(otherTab)
 
 	await expect(website.payload).toHaveText("Draft 1")
 	await expect(website.bar).toBeVisible()
