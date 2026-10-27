@@ -14,6 +14,10 @@ const placeCommentMessageType = "prismic:embedded-preview:place-comment"
 const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
 const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
+const moveSliceMessageType = "prismic:embedded-preview:move-slice"
+const insertSliceMessageType = "prismic:embedded-preview:insert-slice"
+const changeSliceVariationMessageType = "prismic:embedded-preview:change-slice-variation"
+const deleteSliceMessageType = "prismic:embedded-preview:delete-slice"
 const selectPinMessageType = "prismic:embedded-preview:select-pin"
 const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
 const showPinPreviewMessageType = "prismic:embedded-preview:show-pin-preview"
@@ -54,8 +58,12 @@ const overlayScaleMessageSchema = z.object({
 
 const sliceMetadataSchema = z.object({
 	sliceId: nonemptyStringSchema,
+	zoneId: z.optional(nonemptyStringSchema),
+	index: z.optional(z.int().check(z.gte(0))),
 	label: z.string(),
 	variation: z.optional(z.string()),
+	canMoveUp: z.optional(z.boolean()),
+	canMoveDown: z.optional(z.boolean()),
 })
 export type SliceMetadata = z.infer<typeof sliceMetadataSchema>
 
@@ -87,6 +95,7 @@ const scrollToPinMessageSchema = z.object({
 const sliceOverlayMessageSchema = z.object({
 	type: z.literal(setSliceOverlayMessageType),
 	selectedSliceId: z.optional(nonemptyStringSchema),
+	readOnly: z.optional(z.boolean()),
 })
 
 const scrollToSliceMessageSchema = z.object({
@@ -124,6 +133,24 @@ type PlaceCommentMessage = {
 }
 type SelectSliceMessage = {
 	type: typeof selectSliceMessageType
+	sliceId: string
+}
+type MoveSliceMessage = {
+	type: typeof moveSliceMessageType
+	sliceId: string
+	direction: "up" | "down"
+}
+type InsertSliceMessage = {
+	type: typeof insertSliceMessageType
+	sliceId: string
+	position: "before" | "after"
+}
+type ChangeSliceVariationMessage = {
+	type: typeof changeSliceVariationMessageType
+	sliceId: string
+}
+type DeleteSliceMessage = {
+	type: typeof deleteSliceMessageType
 	sliceId: string
 }
 type SelectPinMessage = {
@@ -164,6 +191,10 @@ export type Message =
 	| PlaceCommentMessage
 	| SelectPinMessage
 	| SelectSliceMessage
+	| MoveSliceMessage
+	| InsertSliceMessage
+	| ChangeSliceVariationMessage
+	| DeleteSliceMessage
 	| DeselectPinMessage
 	| ShowPinPreviewMessage
 	| HidePinPreviewMessage

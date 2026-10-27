@@ -1,3 +1,5 @@
+import type { TargetedMouseEvent } from "preact"
+import type { SVGProps } from "preact/compat"
 import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
 import { isScrollToSliceMessage, isSliceOverlayMessage } from "../message-protocol"
@@ -18,20 +20,52 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, subscribeToMessages, uiScale } = props
 
 	const { slices, layout } = useSlices(subscribeToMessages)
-	const selectedSlice = useSelectedSlice(slices, subscribeToMessages)
+	const { selectedSliceId, readOnly } = useSliceOverlayState(subscribeToMessages)
+
+	const selectedSlice = useSelectedSlice(slices, selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
+	const hoveredSliceDistance = useDistanceBetweenSelectedAndHoveredSlice(
+		selectedSlice,
+		hoveredSlice,
+	)
 
 	useSliceSelection(slices, uiScale, postMessage)
 	useScrollToSlice(slices, uiScale, subscribeToMessages)
 
 	return (
 		<>
-			{selectedSlice && <SliceHighlight slice={selectedSlice} layout={layout} />}
+			{selectedSlice && (
+				<SliceHighlight
+					slice={selectedSlice}
+					layout={layout}
+					readOnly={readOnly}
+					postMessage={postMessage}
+				/>
+			)}
 			{hoveredSlice && hoveredSlice !== selectedSlice && (
-				<SliceHighlight slice={hoveredSlice} layout={layout} />
+				<SliceHighlight
+					slice={hoveredSlice}
+					layout={layout}
+					readOnly={readOnly}
+					postMessage={postMessage}
+					hideInsertBefore={hoveredSliceDistance === 1}
+					hideInsertAfter={hoveredSliceDistance === -1}
+				/>
 			)}
 		</>
 	)
+}
+
+function useDistanceBetweenSelectedAndHoveredSlice(selectedSlice?: Slice, hoveredSlice?: Slice) {
+	if (!selectedSlice || !hoveredSlice) return
+	if (selectedSlice.zoneId === undefined || selectedSlice.zoneId !== hoveredSlice.zoneId) return
+	if (selectedSlice.index === undefined || hoveredSlice.index === undefined) return
+	return hoveredSlice.index - selectedSlice.index
+}
+
+function useSelectedSlice(slices: Slice[], selectedSliceId?: string) {
+	if (!selectedSliceId) return undefined
+	return slices.find((slice) => slice.sliceId === selectedSliceId)
 }
 
 function useHoveredSlice(slices: Slice[]) {
@@ -118,16 +152,16 @@ function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMe
 	}, [selectSlice])
 }
 
-function useSelectedSlice(slices: Slice[], subscribeToMessages: SubscribeToMessages) {
-	const [selectedSliceId, setSelectedSliceId] = useState<string>()
+function useSliceOverlayState(subscribeToMessages: SubscribeToMessages) {
+	const [state, setState] = useState<{ selectedSliceId?: string; readOnly?: boolean }>({})
 
 	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
-			if (isSliceOverlayMessage(data)) setSelectedSliceId(data.selectedSliceId)
+			if (isSliceOverlayMessage(data)) setState(data)
 		})
 	}, [subscribeToMessages])
 
-	return slices.find((slice) => slice.sliceId === selectedSliceId)
+	return { ...state, readOnly: state.readOnly ?? true }
 }
 
 function useScrollToSlice(
@@ -147,24 +181,174 @@ function useScrollToSlice(
 interface SliceHighlightProps {
 	slice: Slice
 	layout: EventTarget
+	readOnly: boolean
+	postMessage: PostMessage
+	hideInsertBefore?: boolean
+	hideInsertAfter?: boolean
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout } = props
+	const { slice, layout, readOnly, postMessage, hideInsertBefore, hideInsertAfter } = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
 
 	if (!rect) return null
 
-	const title = variation ? `${label} • ${variation}` : label
+	function handleMove(event: TargetedMouseEvent<HTMLButtonElement>, direction: "up" | "down") {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:move-slice", sliceId, direction })
+	}
+
+	function handleChangeVariation(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:change-slice-variation", sliceId })
+	}
+
+	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
+	}
 
 	return (
 		<div
 			className="slice-highlight"
 			data-slice-id={sliceId}
 			style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
+			onPointerOver={(event) => event.stopPropagation()}
+			onPointerMove={(event) => event.stopPropagation()}
 		>
-			<div className="slice-highlight-label">{title}</div>
+			{!readOnly && !hideInsertBefore && (
+				<InsertSliceButton sliceId={sliceId} position="before" postMessage={postMessage} />
+			)}
+			<div className="slice-control-group slice-title-group">
+				<div className="slice-title">
+					<span className="slice-label">{label}</span>
+					{variation && (
+						<span className="slice-variation">
+							{" • "}
+							{variation}
+						</span>
+					)}
+				</div>
+			</div>
+			{!readOnly && (
+				<div className="slice-control-group slice-move-group">
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Move slice up"
+						title="Move slice up"
+						disabled={!slice.canMoveUp}
+						onClick={(event) => handleMove(event, "up")}
+					>
+						<ArrowUpIcon className="slice-button-icon" />
+					</button>
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Move slice down"
+						title="Move slice down"
+						disabled={!slice.canMoveDown}
+						onClick={(event) => handleMove(event, "down")}
+					>
+						<ArrowDownIcon className="slice-button-icon" />
+					</button>
+				</div>
+			)}
+			{!readOnly && (
+				<div className="slice-control-group slice-control-group-right">
+					{variation !== undefined && (
+						<button
+							type="button"
+							className="slice-button"
+							aria-label="Change variation"
+							title="Change variation"
+							onClick={handleChangeVariation}
+						>
+							<DescriptionIcon className="slice-button-icon" />
+						</button>
+					)}
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Delete slice"
+						title="Delete slice"
+						onClick={handleDelete}
+					>
+						<DeleteIcon className="slice-button-icon" />
+					</button>
+				</div>
+			)}
+			{!readOnly && !hideInsertAfter && (
+				<InsertSliceButton sliceId={sliceId} position="after" postMessage={postMessage} />
+			)}
 		</div>
+	)
+}
+
+interface InsertSliceButtonProps {
+	sliceId: string
+	position: "before" | "after"
+	postMessage: PostMessage
+}
+
+function InsertSliceButton(props: InsertSliceButtonProps) {
+	const { sliceId, position, postMessage } = props
+	const label = `Add slice ${position}`
+
+	function handleClick(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:insert-slice", sliceId, position })
+	}
+
+	return (
+		<button
+			type="button"
+			className="slice-button slice-insert-button"
+			data-position={position}
+			aria-label={label}
+			title={label}
+			onClick={handleClick}
+		>
+			<AddIcon className="slice-button-icon" aria-hidden="true" />
+		</button>
+	)
+}
+
+function AddIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+		</svg>
+	)
+}
+
+const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
+	<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+		<path d="M16 9V19H8V9H16ZM14.5 3H9.5L8.5 4H5V6H19V4H15.5L14.5 3ZM18 7H6V19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7Z" />
+	</svg>
+)
+
+function ArrowUpIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M4 12L5.41 13.41L11 7.83V20H13V7.83L18.58 13.42L20 12L12 4L4 12Z" />
+		</svg>
+	)
+}
+
+function ArrowDownIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M20 12L18.59 10.59L13 16.17V4H11V16.17L5.42 10.58L4 12L12 20L20 12Z" />
+		</svg>
+	)
+}
+
+function DescriptionIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+			<path d="M8 16H16V18H8V16ZM8 12H16V14H8V12ZM14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+		</svg>
 	)
 }
