@@ -172,3 +172,22 @@ test("follows a session another tab started during a ping", async ({
 	await expect(website.bar).toBeVisible()
 	expect(await website.cookie(previewCookieName)).toBeDefined()
 })
+
+// v5 keeps one preview session for the whole website, which every repository's toolbar follows. Each
+// repository answers with its own ref, so the toolbars take turns rewriting the cookie and reloading.
+test.fixme("previews several repositories on one website", async ({
+	otherRepository,
+	doc,
+	website,
+	startPreview,
+}) => {
+	await startPreview()
+	const otherDoc = await otherRepository.createDocument({ title: "Autumn sale" })
+	const ref = await website.previewRef()
+
+	await website.page.goto(`${website.pageURL(doc)}?with=${otherRepository.domain}/${otherDoc.uid}`)
+	await website.page.waitForTimeout(8000)
+
+	expect(website.loads).toHaveLength(2)
+	expect(await website.previewRef()).toBe(ref)
+})
