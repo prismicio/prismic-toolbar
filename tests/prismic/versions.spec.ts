@@ -18,7 +18,7 @@ test("starts v5 with only a session", async ({ website, requests }) => {
 	await expect(website.previewBar).toBeVisible()
 	expect(website.loads).toEqual([null, "ref-1"])
 	expect(loaded(requests, "v5.js")).toBe(true)
-	expect(loaded(requests, "iframe.html")).toBe(false)
+	expect(loaded(requests, "shell.html")).toBe(false)
 })
 
 test("starts the preview with the session's first ref", async ({ website }) => {
@@ -53,7 +53,7 @@ test("ignores v=5 in the editor's preview", async ({ editor, requests }) => {
 	await editor.goto()
 
 	await expect(editor.overlay).toBeAttached()
-	for (const file of ["toolbar.js", "iframe.html", "v5.js"]) {
+	for (const file of ["toolbar.js", "shell.html", "v5.js"]) {
 		expect(loaded(requests, file)).toBe(false)
 	}
 })

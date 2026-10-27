@@ -2,7 +2,7 @@ import { loadChunk } from "./lib/chunks"
 import { warn } from "./lib/env"
 import { createPreviewSession, type PreviewSessionOptions } from "./lib/preview-session"
 
-/** Runs website previews through the repository's iframe, with the JSON preview cookie. */
+/** Runs website previews through the repository's shell and `ping`, with the JSON preview cookie. */
 export function startV4({
 	repositoryHost,
 	assets,

@@ -20,9 +20,34 @@ function deleteSessionCookie() {
 const shares = new Map<string, Promise<string>>()
 
 const methods: ShellMethods = {
-	async getSession() {
-		const session = getCookie(sessionCookieName) ?? null
-		return { session, authenticated: Boolean(session) && (await isAuthenticated()) }
+	// Prismic's auth cookies are HttpOnly, so only Prismic knows. A failed request counts as signed out.
+	async isAuthenticated() {
+		if (!getCookie(sessionCookieName)) return false
+		try {
+			const response = await fetch("/toolbar/state")
+			return response.ok && Boolean((await response.json()).isAuthenticated)
+		} catch {
+			return false
+		}
+	},
+
+	async ping(ref) {
+		// Read on every ping: another tab or website may have replaced or closed the session.
+		const session = getCookie(sessionCookieName)
+		if (!session) return {}
+
+		const response = await fetch(`/previews/${session}/ping?ref=${encodeURIComponent(ref)}`)
+		if (!response.ok) throw new Error(`Prismic responded ${response.status} to ping.`)
+		// `{ ref, title }`, or `{ close: true }` once the session ended.
+		const { ref: next, title } = await response.json()
+
+		const current = getCookie(sessionCookieName)
+		// Another tab replaced the session meanwhile: report no change, so the next ping follows it.
+		if (current !== session) return current ? { ref } : {}
+		if (next) return { ref: next, title }
+		// Checked and deleted in one step, so a session started meanwhile survives.
+		deleteSessionCookie()
+		return {}
 	},
 
 	async closeSession() {
@@ -43,16 +68,6 @@ const methods: ShellMethods = {
 	},
 }
 
-// Prismic's auth cookies are HttpOnly, so only Prismic knows.
-async function isAuthenticated(): Promise<boolean> {
-	try {
-		const response = await fetch("/toolbar/state")
-		return response.ok && Boolean((await response.json()).isAuthenticated)
-	} catch {
-		return false
-	}
-}
-
 async function createShareLink(
 	session: string | undefined,
 	pageURL: string,
@@ -60,8 +75,8 @@ async function createShareLink(
 ): Promise<string> {
 	if (!session) throw new Error("No active preview session to share.")
 
-	// Screenshots are no longer uploaded, so Prismic shows its default image. Unlike the bridge, sends
-	// no CSRF token: Prismic no longer returns or checks one.
+	// Screenshots are no longer uploaded, so Prismic shows its default image. Sends no CSRF token:
+	// Prismic no longer returns or checks one.
 	const query = new URLSearchParams({
 		sessionId: session,
 		pageURL,
