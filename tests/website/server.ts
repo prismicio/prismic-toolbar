@@ -17,13 +17,13 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 	const url = new URL(req.url ?? "/", `http://localhost:${port}`)
 	if (url.pathname === "/api/preview") return preview(url, res)
 
-	const page = url.pathname.slice(1)
+	// Pages live at `/<repository>/<uid>`.
+	if (url.pathname.split("/").length !== 3) return res.writeHead(404).end()
 	// `?with=<repository>/<uid>` shows a page of a second repository, with its own toolbar.
-	const other = url.searchParams.get("with")
-	// Pages are written into the HTML, so only names are accepted.
-	const name = /^[\w-]+\/[\w-]+$/
-	if (!name.test(page) || (other !== null && !name.test(other))) return res.writeHead(404).end()
-	const pages = other === null ? [page] : [page, other]
+	const pages = [url.pathname.slice(1), url.searchParams.get("with")]
+		.filter((page) => page !== null)
+		// Written into the HTML.
+		.map(escapeHTML)
 	const sections = await Promise.all(pages.map((page) => render(page, req, pages.length > 1)))
 
 	res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store" })
@@ -90,6 +90,15 @@ async function render(page: string, req: IncomingMessage, scoped: boolean) {
 	<p data-testid="payload">${document.data.payload}</p>
 	${slices.join("\n\t")}
 </main>`
+}
+
+function escapeHTML(value: string) {
+	return value
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;")
 }
 
 async function retry<T>(task: () => Promise<T>, attempts = 10): Promise<T> {
