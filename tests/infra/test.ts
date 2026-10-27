@@ -37,8 +37,7 @@ export class Repository {
 	readonly host = "toolbar-e2e.prismic.io"
 	readonly url = `https://${this.host}`
 	readonly title = "Spring launch"
-	/** Like Prismic's: `<session>~<website preview>`. */
-	readonly sessionID = "e2e-session~e2e-preview"
+	readonly sessionID = "e2e-session"
 	/** The preview session's ref, `null` once the session ended. */
 	ref: string | null = null
 	authenticated = true
@@ -118,8 +117,6 @@ export class Website {
 	events: "ignore" | "record" | "handle" = "ignore"
 	/** Query parameters of the toolbar script, as the website's SDK installs it. */
 	scriptQuery = "repo=toolbar-e2e"
-	/** The toolbar script's `data-preview-url`, which SDKs that opt into `v=5` write. */
-	previewURL?: string
 
 	constructor(
 		readonly page: Page,
@@ -195,7 +192,7 @@ export class Website {
 		this.loads.push(ref ?? null)
 		await route.fulfill({
 			contentType: "text/html",
-			body: websiteHTML(ref, this.events, this.scriptQuery, this.previewURL),
+			body: websiteHTML(ref, this.events, this.scriptQuery),
 		})
 	}
 }
@@ -211,12 +208,7 @@ function readPreviewRef(cookie: string | undefined, repository: string): string 
 	return cookie
 }
 
-function websiteHTML(
-	ref: string | undefined,
-	events: Website["events"],
-	scriptQuery: string,
-	previewURL: string | undefined,
-) {
+function websiteHTML(ref: string | undefined, events: Website["events"], scriptQuery: string) {
 	const recorder = `<script>
 		window.previewEvents = []
 		for (const type of ["prismicPreviewStart", "prismicPreviewUpdate", "prismicPreviewEnd"]) {
@@ -254,7 +246,7 @@ function websiteHTML(
 	addEventListener("message", (event) => receivedMessages.push(event.data?.type))
 </script>
 ${events === "ignore" ? "" : recorder}
-<script async defer src="https://static.cdn.prismic.io/prismic.js?${scriptQuery}"${previewURL ? ` data-preview-url="${previewURL}"` : ""}></script>`
+<script async defer src="https://static.cdn.prismic.io/prismic.js?${scriptQuery}"></script>`
 }
 
 /** Comment threads, as the editor sends them. */

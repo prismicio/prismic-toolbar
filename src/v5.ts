@@ -10,8 +10,8 @@ import { mountToolbar } from "./toolbar"
  * Follows the preview session the website's SDK stored in a first-party cookie, with Prismic's
  * public `ping` endpoint. No iframe and no third-party cookies.
  */
-export function startV5(repositoryHost: string, previewURL?: string): void {
-	const session = createSession(repositoryHost, previewURL)
+export function startV5(repositoryHost: string): void {
+	const session = createSession(repositoryHost)
 	void session.start()
 	// Bundled, so the bar needs no request after this chunk's.
 	mountToolbar({ session, repositoryHost })
@@ -19,7 +19,7 @@ export function startV5(repositoryHost: string, previewURL?: string): void {
 
 registerChunk("startV5", startV5)
 
-function createSession(repositoryHost: string, previewURL?: string): PreviewSession {
+function createSession(repositoryHost: string): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	// The ref this page renders. Without one, the first ping gets the session's ref.
 	let ref = getCookie(previewCookieName) ?? ""
@@ -95,19 +95,15 @@ function createSession(repositoryHost: string, previewURL?: string): PreviewSess
 		async exit() {
 			end()
 		},
-		// Through the website's preview route, like previews opened from the editor.
-		share: previewURL
-			? () => {
-					const session = getCookie(sessionCookieName)
-					if (!session) throw new Error("The preview session ended.")
-					const { href, pathname, search, hash } = window.location
-					const url = new URL(previewURL, href)
-					url.searchParams.set("token", ref)
-					url.searchParams.set("session", session)
-					url.searchParams.set("path", pathname + search + hash)
-					return url.href
-				}
-			: undefined,
+		// Without a ref, which the next edit expires: Prismic's share page sends visitors through the
+		// website's preview route with the session's latest ref.
+		share() {
+			const session = getCookie(sessionCookieName)
+			if (!session) throw new Error("The preview session ended.")
+			const { pathname, search, hash } = window.location
+			const path = encodeURIComponent(pathname + search + hash)
+			return `${repositoryOrigin(repositoryHost)}/builder/share/${encodeURIComponent(session)}?path=${path}`
+		},
 		getSnapshot: () => snapshot,
 		subscribe(listener) {
 			listeners.add(listener)

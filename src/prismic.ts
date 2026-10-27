@@ -3,7 +3,6 @@ import { getCookie } from "./lib/cookie"
 import { createEmbeddedPush } from "./lib/embedded-push"
 import {
 	detectMode,
-	findPreviewURL,
 	findRepositoryHost,
 	findVersion,
 	repositoryOrigin,
@@ -26,7 +25,6 @@ declare const __TOOLBAR_VERSION__: string
 const mode = detectMode()
 const repositoryHost = findRepositoryHost()
 const requestedVersion = findVersion()
-const previewURL = findPreviewURL()
 
 if (mode) {
 	if (repositoryHost) start(mode, repositoryHost)
@@ -63,7 +61,7 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 	if (requestedVersion === "5") {
 		if (getCookie(sessionCookieName)) {
 			loadChunk(`${assets}/v5.js`, "startV5")
-				.then((startV5) => startV5(repositoryHost, previewURL))
+				.then((startV5) => startV5(repositoryHost))
 				.catch((error: unknown) => warn(`Could not load the preview.\n\n${String(error)}`))
 			return
 		}

@@ -29,8 +29,6 @@ test("follows the session with ping, without the shell", async ({
 	await expectPreview(website, "ref-1")
 	await expect(website.previewBar).toContainText(repository.title)
 	await expect(website.previewBar).toContainText("Live preview")
-	// Without the website's preview route.
-	await expect(website.previewBar.getByRole("button", { name: "Share" })).toHaveCount(0)
 	expect(repository.pings).toContain("ref-1")
 	expect(website.loads).toEqual(["ref-1"])
 	const pings = new RegExp(`^${repository.url}/previews/${repository.sessionID}/ping\\?ref=`)
@@ -113,7 +111,7 @@ test("ignores pings of a session another tab replaced", async ({ website, contex
 	expect((await website.cookie(sessionCookieName))?.value).toBe("new-session")
 })
 
-test("copies a link to the current page through the preview route", async ({
+test("copies a link to the current page through Prismic's share page", async ({
 	repository,
 	website,
 	context,
@@ -125,7 +123,6 @@ test("copies a link to the current page through the preview route", async ({
 		})
 	})
 	const clipboard = () => website.page.evaluate(() => sessionStorage.getItem("clipboard"))
-	website.previewURL = "/api/preview?lang=fr"
 	await website.storePreview("ref-1")
 	await website.goto({ path: "/page?q=1#section" })
 	await expectPreview(website, "ref-1")
@@ -134,9 +131,7 @@ test("copies a link to the current page through the preview route", async ({
 
 	await expect(website.previewBar.getByRole("button", { name: "Copied" })).toBeVisible()
 	const path = "path=%2Fpage%3Fq%3D1%23section"
-	expect(await clipboard()).toBe(
-		`${website.url}/api/preview?lang=fr&token=ref-1&session=e2e-session%7Ee2e-preview&${path}`,
-	)
+	expect(await clipboard()).toBe(`${repository.url}/builder/share/e2e-session?${path}`)
 
 	// Another tab starts a session with the same ref.
 	await context.route(
@@ -152,9 +147,7 @@ test("copies a link to the current page through the preview route", async ({
 	])
 	await website.previewBar.getByRole("button", { name: "Copied" }).click()
 
-	await expect
-		.poll(clipboard)
-		.toBe(`${website.url}/api/preview?lang=fr&token=ref-1&session=new-session&${path}`)
+	await expect.poll(clipboard).toBe(`${repository.url}/builder/share/new-session?${path}`)
 })
 
 test("exits the preview", async ({ website }) => {

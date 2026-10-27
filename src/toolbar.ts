@@ -27,7 +27,7 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 			authenticated = snapshot.authenticated
 			// Only visitors known to be logged out cannot share. Others share like forwarding the link
 			// they opened.
-			const share = authenticated === false ? undefined : session.share
+			const canShare = authenticated !== false
 			const exit = $el(
 				"button",
 				{ class: "exit", type: "button", "aria-label": "Exit preview", title: "Exit preview" },
@@ -68,8 +68,8 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 					$el("p", { class: "title" }),
 					$el("p", { class: "status" }),
 				),
-				!share && powered,
-				$el("div", { class: "actions" }, share && $shareButton(share), exit),
+				!canShare && powered,
+				$el("div", { class: "actions" }, canShare && $shareButton(session), exit),
 			)
 			// Before the styles, where earlier versions rendered it.
 			root.prepend(bar)
@@ -93,7 +93,7 @@ registerChunk("mountToolbar", mountToolbar)
 // Loading shows a spinner.
 const shareLabels = { idle: "Share", loading: "", copied: "Copied", failed: "Failed" }
 
-function $shareButton(share: NonNullable<PreviewSession["share"]>): HTMLButtonElement {
+function $shareButton(session: PreviewSession): HTMLButtonElement {
 	// Every label takes space, so the button keeps its width when its label changes.
 	const labels = Object.entries(shareLabels).map(([kind, label]) => {
 		const spinner = $el("span", { class: "spinner", role: "img", "aria-label": "Getting link…" })
@@ -118,7 +118,7 @@ function $shareButton(share: NonNullable<PreviewSession["share"]>): HTMLButtonEl
 	button.onclick = async () => {
 		let url: string
 		try {
-			const link = share()
+			const link = session.share()
 			// Links built on the page need no spinner.
 			if (link instanceof Promise) show("loading")
 			url = await link
@@ -151,7 +151,7 @@ function $shareButton(share: NonNullable<PreviewSession["share"]>): HTMLButtonEl
 function $el<Tag extends keyof HTMLElementTagNameMap>(
 	tag: Tag,
 	attributes: Record<string, string>,
-	...children: (Node | string | false | undefined)[]
+	...children: (Node | string | false)[]
 ): HTMLElementTagNameMap[Tag] {
 	const element = document.createElement(tag)
 	for (const [name, value] of Object.entries(attributes)) element.setAttribute(name, value)
