@@ -103,6 +103,25 @@ test("follows the session when other content is published", async ({
 	await expect(website.payload).toHaveText("Draft 1")
 })
 
+test("updates a page rendering an earlier ref of the session", async ({
+	context,
+	repository,
+	doc,
+	website,
+	editor,
+}) => {
+	await website.handleEvents()
+	const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
+	const { url } = await editor.startSession(context, repository, draft)
+	// Publishing other content changes the session's ref before the page opens.
+	await repository.createDocument()
+
+	await website.page.goto(url)
+
+	await expect(website.bar).toBeVisible()
+	expect(await website.events()).toEqual([["prismicPreviewUpdate", await website.previewRef()]])
+})
+
 test("previews several repositories on one website", async ({
 	repository,
 	otherRepository,

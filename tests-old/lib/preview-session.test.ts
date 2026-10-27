@@ -236,7 +236,7 @@ describe("startup", () => {
 		await session.start()
 
 		expect(storedJSON()).toEqual({ [repository]: { preview: "ref-1" } })
-		expect(events).toEqual([["prismicPreviewStart", "ref-1"]])
+		expect(events).toEqual([["prismicPreviewUpdate", "ref-1"]])
 	})
 
 	it("follows the session in the editor's poll mode, whatever the editor pushed", async () => {
@@ -252,7 +252,7 @@ describe("startup", () => {
 		await vi.advanceTimersByTimeAsync(3000)
 		expect(storedCookie()).toBe("ref-2")
 		expect(events).toEqual([
-			["prismicPreviewStart", "ref-1"],
+			["prismicPreviewUpdate", "ref-1"],
 			["prismicPreviewUpdate", "ref-2"],
 		])
 	})
