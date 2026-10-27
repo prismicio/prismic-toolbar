@@ -76,15 +76,23 @@ type Fixtures = {
 		doc?: Document
 		repository?: Repository
 	}) => Promise<Document>
+	/** URLs the browser requested during the test. */
+	requests: string[]
 	/** Opens a fresh browser, signed out of Prismic, like someone a link was shared with. */
 	visitor: () => Promise<Page>
 }
 
 export const test = base.extend<Fixtures, { prismic: Prismic }>({
+	// oxlint-disable-next-line no-empty-pattern
 	prismic: [async ({}, use) => use(await Prismic.signIn()), { scope: "worker" }],
 	context: async ({ context }, use) => {
 		await serveToolbar(context)
 		await use(context)
+	},
+	requests: async ({ context }, use) => {
+		const requests: string[] = []
+		context.on("request", (request) => requests.push(request.url()))
+		await use(requests)
 	},
 	repository: async ({ prismic }, use, { parallelIndex }) =>
 		use(prismic.repository(readRepositories()[parallelIndex * 2]!)),
@@ -116,7 +124,8 @@ export const test = base.extend<Fixtures, { prismic: Prismic }>({
 })
 
 async function newContext(browser: Browser) {
-	const context = await browser.newContext({ viewport: { width: 1280, height: 900 } })
+	// Contexts inherit the project's storage state, which holds the Prismic login.
+	const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
 	await serveToolbar(context)
 	return context
 }
@@ -146,8 +155,17 @@ export class Website {
 		return this.page.getByTestId("payload").first()
 	}
 
+	/** The payload of the repository's page, when a page shows several repositories. */
+	payloadOf(repository: Repository) {
+		return this.page.locator(`[id="${repository.domain}"]`).getByTestId("payload")
+	}
+
 	get bar() {
-		return this.page.getByRole("region", { name: "Prismic preview" })
+		return this.barOf(this.page)
+	}
+
+	barOf(page: Page) {
+		return page.getByRole("region", { name: "Prismic preview" })
 	}
 
 	pageURL(doc: Document, repository = this.repository) {
@@ -177,11 +195,8 @@ export class Website {
 		await expect(page.locator("html")).toHaveAttribute("data-marker", "")
 	}
 
-	async exit(page = this.page) {
-		await page
-			.getByRole("region", { name: "Prismic preview" })
-			.getByRole("button", { name: "Exit preview" })
-			.click()
+	async exit(bar = this.bar) {
+		await bar.getByRole("button", { name: "Exit preview" }).click()
 	}
 
 	/** Reads one of the website's cookies, decoded. */

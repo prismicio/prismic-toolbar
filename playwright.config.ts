@@ -40,10 +40,10 @@ export default defineConfig({
 		{ name: "teardown", testMatch: "infra/teardown.ts" },
 		...Object.entries(websites).map(([name, port]) => ({
 			name,
-			// Specs named after a flow only run on its website.
+			// `*.<flow>.spec.ts` files only run on that flow's website.
 			testIgnore: Object.keys(websites)
 				.filter((other) => other !== name)
-				.map((other) => `**/${other}.spec.ts`),
+				.map((other) => `**/*.${other}.spec.ts`),
 			dependencies: ["setup"],
 			use: { baseURL: `http://localhost:${port}` },
 		})),

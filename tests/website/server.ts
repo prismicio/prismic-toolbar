@@ -23,7 +23,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 	const pages = [`${repository}/${uid}`, url.searchParams.get("with")].filter(
 		(page) => page !== null,
 	)
-	const sections = await Promise.all(pages.map((page) => render(page, req)))
+	const sections = await Promise.all(pages.map((page) => render(page, req, pages.length > 1)))
 
 	res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store" })
 	res.end(`<!doctype html>
@@ -63,10 +63,17 @@ ${pages
 }
 
 /** Renders a page with the ref of the preview cookie, like SDKs do. */
-async function render(page: string, req: IncomingMessage) {
+async function render(page: string, req: IncomingMessage, scoped: boolean) {
 	const [repository = "", uid = ""] = page.split("/")
 	const client = prismic.createClient(repository)
-	client.enableAutoPreviewsFromReq(req)
+	// `@prismicio/client` sends the whole cookie, which the Content API reads as a single repository's.
+	// Pages showing several repositories read their own entry of the toolbar's cookie instead.
+	if (scoped) {
+		const ref = repositoryRef(req.headers.cookie, `${repository}.prismic.io`)
+		if (ref) client.queryContentFromRef(ref)
+	} else {
+		client.enableAutoPreviewsFromReq(req)
+	}
 	const document = await client.getByUID("page", uid)
 	const slices = document.data.slices.map((slice: prismic.SharedSlice) => {
 		const content = `<section class="${slice.variation}"><h2>${slice.primary.text}</h2></section>`
@@ -78,6 +85,14 @@ async function render(page: string, req: IncomingMessage) {
 	<p data-testid="payload">${document.data.payload}</p>
 	${slices.join("\n\t")}
 </main>`
+}
+
+function repositoryRef(cookies = "", host: string): string | undefined {
+	const name = `${prismic.cookie.preview}=`
+	const cookie = cookies.split("; ").find((cookie) => cookie.startsWith(name))
+	try {
+		return JSON.parse(decodeURIComponent(cookie?.slice(name.length) ?? ""))[host]?.preview
+	} catch {}
 }
 
 /** The preview route of SDKs: stores the session's ref, and the session itself with `v=5`. */

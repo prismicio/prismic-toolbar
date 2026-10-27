@@ -86,9 +86,9 @@ test("ends the preview when another tab exits it", async ({ context, website, st
 	await expect(website.bar).toBeVisible()
 	const otherTab = await context.newPage()
 	await otherTab.goto(website.page.url())
-	await expect(otherTab.getByRole("region", { name: "Prismic preview" })).toBeVisible()
+	await expect(website.barOf(otherTab)).toBeVisible()
 
-	await website.exit(otherTab)
+	await website.exit(website.barOf(otherTab))
 
 	await expect(website.payload).toHaveText("Published")
 	await expect(website.bar).toHaveCount(0)
