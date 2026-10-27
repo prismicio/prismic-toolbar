@@ -203,9 +203,7 @@ test.describe("push in place", () => {
 		website,
 		baseURL,
 		startPreview,
-	}, { project }) => {
-		// v5 follows the session and ignores the editor's marker, so it replaces the editor's ref.
-		test.skip(project.name === "v5", "v5 website tabs ignore the editor's marker")
+	}) => {
 		await website.handleEvents()
 		await startPreview()
 		await expect(website.bar).toBeVisible()
@@ -233,9 +231,7 @@ test.describe("push in place", () => {
 		doc,
 		website,
 		pageBuilder,
-	}, { project }) => {
-		// v5 follows the session and ignores the editor's marker, so it replaces the editor's ref.
-		test.skip(project.name === "v5", "v5 website tabs ignore the editor's marker")
+	}) => {
 		await website.handleEvents()
 		await pageBuilder.open(doc, { mode: "push", inPlace: true })
 		await pageBuilder.edit("First slice", " edited")
