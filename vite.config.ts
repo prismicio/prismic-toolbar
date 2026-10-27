@@ -10,7 +10,15 @@ import packageJSON from "./package.json" with { type: "json" }
 export const version = process.env.TOOLBAR_VERSION || packageJSON.version
 
 /** Each entry builds `src/<entry>.ts` into `<entry>.js`, or into `<entry>.html` for pages. */
-export const entries = ["prismic", "v5", "embedded-preview", "toolbar", "iframe", "shell"] as const
+export const entries = [
+	"prismic",
+	"v5",
+	"embedded-preview",
+	"session-replay",
+	"toolbar",
+	"iframe",
+	"shell",
+] as const
 
 export type Entry = (typeof entries)[number]
 

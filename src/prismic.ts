@@ -82,7 +82,7 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 async function setupEmbeddedPreview(assets: string, options?: EmbeddedPreviewOptions) {
 	try {
 		const setup = await loadChunk(`${assets}/embedded-preview.js`, "setupEmbeddedPreview")
-		await setup(options)
+		await setup({ ...options, assets })
 	} catch (error) {
 		console.error("Failed to load embedded preview.", error)
 	}

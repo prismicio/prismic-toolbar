@@ -172,3 +172,35 @@ describe("embedded preview connection", () => {
 		})
 	})
 })
+
+it("loads replay only for valid configuration from the trusted parent", async () => {
+	const setReplay = vi.fn().mockResolvedValue(undefined)
+	window.__prismicToolbar!.setSessionReplay = setReplay
+	const append = vi.spyOn(document.head, "appendChild").mockImplementation((node) => {
+		queueMicrotask(() => node.dispatchEvent(new Event("load")))
+		return node
+	})
+	await setupEmbeddedPreview({ assets: "https://prismic.io/prismic-toolbar/test" })
+	const message = {
+		type: "prismic:embedded-preview:session-replay",
+		config: {
+			apiKey: "test-key",
+			deviceId: "test-device",
+			sessionId: 123,
+			sampleRate: 0.01,
+			serverZone: "EU" as const,
+			privacyConfig: { defaultMaskLevel: "medium" as const, unmaskSelector: [".visible"] },
+		},
+	}
+	receive({ ...message, config: undefined })
+	receive(message, "https://attacker.example")
+	receive(message, "http://localhost:5173", null)
+	receive({ ...message, config: { ...message.config, apiKey: "" } })
+	expect(append).not.toHaveBeenCalled()
+	expect(setReplay).not.toHaveBeenCalled()
+	receive(message)
+	await vi.waitFor(() => expect(setReplay).toHaveBeenCalledWith(message.config))
+	expect(append).toHaveBeenCalledOnce()
+	receive({ ...message, config: undefined })
+	await vi.waitFor(() => expect(setReplay).toHaveBeenLastCalledWith(undefined))
+})
