@@ -52,7 +52,7 @@
 			}
 		},
 		{
-			"files": ["tests/infra/**"],
+			"files": ["tests-old/infra/**"],
 			"rules": {
 				"react/rules-of-hooks": "off"
 			}
