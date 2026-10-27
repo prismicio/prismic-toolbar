@@ -62,8 +62,5 @@ export function Preview(props: {
 		return () => controller.abort()
 	}, [basePath, repository, isDraftMode, refresh])
 
-	// The v4 toolbar ignores `data-preview-url`.
-	return (
-		<Script src={toolbarSrc} strategy="lazyOnload" data-preview-url={`${basePath}/api/preview`} />
-	)
+	return <Script src={toolbarSrc} strategy="lazyOnload" />
 }
