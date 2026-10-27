@@ -17,12 +17,12 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 	const url = new URL(req.url ?? "/", `http://localhost:${port}`)
 	if (url.pathname === "/api/preview") return preview(url, res)
 
-	const [, repository, uid] = url.pathname.split("/")
-	if (!repository || !uid) return res.writeHead(404).end()
 	// `?with=<repository>/<uid>` shows a page of a second repository, with its own toolbar.
-	const pages = [`${repository}/${uid}`, url.searchParams.get("with")].filter(
+	const pages = [url.pathname.slice(1), url.searchParams.get("with")].filter(
 		(page) => page !== null,
 	)
+	// Pages are written into the HTML, so only names are accepted.
+	if (!pages.every((page) => /^[\w-]+\/[\w-]+$/.test(page))) return res.writeHead(404).end()
 	const sections = await Promise.all(pages.map((page) => render(page, req, pages.length > 1)))
 
 	res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store" })
