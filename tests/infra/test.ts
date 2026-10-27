@@ -317,6 +317,7 @@ export class PageBuilder {
 		// Each website is one of the repository's previews.
 		await this.page.getByRole("combobox").filter({ hasText: "Select a preview" }).click()
 		await this.page.getByRole("option", { name: this.website }).click()
-		await expect(this.preview.getByTestId("payload")).toBeVisible()
+		// The editor's first ref reloads the website: wait for it before using the overlay.
+		await expect(this.preview.locator("main[data-preview]")).toBeVisible()
 	}
 }

@@ -85,7 +85,11 @@ async function render(page: string, req: IncomingMessage, scoped: boolean) {
 		return `<!--prismic-slice-start:${slice.id}-->${content}<!--prismic-slice-end:${slice.id}-->`
 	})
 
-	return `<main id="${repository}">
+	// Tells tests the page renders a preview, rather than the published content before a reload.
+	const previewing = req.headers.cookie?.includes(`${prismic.cookie.preview}=`)
+		? " data-preview"
+		: ""
+	return `<main id="${repository}"${previewing}>
 	<h1 class="title">${document.uid}</h1>
 	<p data-testid="payload">${document.data.payload}</p>
 	${slices.join("\n\t")}
