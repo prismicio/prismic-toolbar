@@ -14,6 +14,8 @@ jobs:
     concurrency:
       group: ci-check-${{ github.ref }}
       cancel-in-progress: true
+    env:
+      HAS_E2E_CREDENTIALS: ${{ secrets.E2E_PRISMIC_EMAIL != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -31,12 +33,20 @@ jobs:
           BUNDLEWATCH_GITHUB_TOKEN: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
           CI_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
       - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:old
+      # Creates real repositories with a Prismic test account, whose credentials forks don't get.
       - run: npm run e2e
+        if: env.HAS_E2E_CREDENTIALS == 'true'
+        env:
+          E2E_PRISMIC_EMAIL: ${{ secrets.E2E_PRISMIC_EMAIL }}
+          E2E_PRISMIC_PASSWORD: ${{ secrets.E2E_PRISMIC_PASSWORD }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: browser-test-results
-          path: test-results/
+          path: |
+            test-results/
+            playwright-report/
 
   changes:
     if: github.event_name == 'push'
