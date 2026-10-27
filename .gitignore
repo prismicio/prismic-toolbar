@@ -25,3 +25,6 @@ npm-debug.log*
 # Editors
 .idea/
 *.iml
+
+# Local test credentials
+.env.test.local
