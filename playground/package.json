@@ -7,8 +7,8 @@
 		"start": "next start"
 	},
 	"dependencies": {
-		"@prismicio/client": "7.22.3-pr.477.5e5ad22",
-		"@prismicio/next": "2.3.4-pr.175.88bf097",
+		"@prismicio/client": "7.23.0",
+		"@prismicio/next": "2.3.4-pr.175.20dc589",
 		"@prismicio/next-v4": "npm:@prismicio/next@2.3.3",
 		"@prismicio/react": "3.5.1",
 		"next": "16.3.8",
@@ -20,8 +20,5 @@
 		"@types/react": "19.3.0",
 		"@types/react-dom": "19.3.0",
 		"typescript": "7.0.2"
-	},
-	"overrides": {
-		"@prismicio/client": "$@prismicio/client"
 	}
 }
