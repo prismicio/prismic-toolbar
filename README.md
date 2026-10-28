@@ -31,7 +31,11 @@ npx skills add --global --yes prismicio/skills
 
 For full documentation, visit the official Prismic documentation for your framework: [Next.js][prismic-docs-nextjs], [Nuxt][prismic-docs-nuxt], or [SvelteKit][prismic-docs-sveltekit].
 
-To integrate the toolbar with another framework, listen to its preview events. The toolbar updates the `io.prismic.preview` cookie, dispatches the event on `window`, and reloads the page unless it is cancelled.
+To integrate the toolbar with another framework, listen to its preview events on `window`:
+
+- When `prismicPreviewStart` or `prismicPreviewUpdate` fires, the `io.prismic.preview` cookie already holds `detail.ref`.
+- When `prismicPreviewEnd` fires, the toolbar has already deleted the preview cookies.
+- Cancel the event to update the page yourself. Otherwise, the toolbar reloads the page.
 
 | Event                  | `detail`  | When                                                                                                                                  |
 | ---------------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------- |

@@ -1,6 +1,10 @@
 /**
- * Cancelable window events. Frameworks cancel them to update the page themselves; otherwise the
- * toolbar reloads the page.
+ * Cancelable window events, the toolbar's contract with websites:
+ *
+ * - `prismicPreviewStart` and `prismicPreviewUpdate`: the preview cookie already holds `detail.ref`.
+ * - `prismicPreviewEnd`: the toolbar already deleted the preview cookies.
+ *
+ * Cancelling an event means the website updates the page itself. Otherwise, the toolbar reloads it.
  */
 export type PreviewEvent = "prismicPreviewStart" | "prismicPreviewUpdate" | "prismicPreviewEnd"
 
