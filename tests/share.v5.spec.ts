@@ -2,9 +2,6 @@
 // the website's preview route with the session's latest ref.
 import { expect, test, type Website } from "./infra"
 
-// Production still answers `/previews/share/<session>` with its generic 404 page.
-test.skip(true, "Needs prismicio/wroom#3292 deployed: it is merged, not live yet.")
-
 async function copyShareLink(website: Website) {
 	await website.page.context().grantPermissions(["clipboard-read", "clipboard-write"])
 	await website.bar.getByRole("button", { name: "Share" }).click()
