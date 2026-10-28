@@ -123,6 +123,42 @@ test("starts the preview over an earlier ref of the session", async ({
 	expect(await website.events()).toEqual([["prismicPreviewStart", await website.previewRef()]])
 })
 
+test("follows a session another tab started during the first ping", async ({
+	context,
+	repository,
+	doc,
+	website,
+	editor,
+}) => {
+	const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
+	await editor.startSession(context, repository, draft)
+	let release!: () => void
+	const released = new Promise<void>((resolve) => (release = resolve))
+	const held = new Promise<void>((resolve) => {
+		void context.route(
+			(url) => url.pathname.endsWith("/ping"),
+			async (route) => {
+				resolve()
+				await released
+				await route.continue()
+			},
+			{ times: 1 },
+		)
+	})
+	await website.goto(doc)
+	await held
+
+	// Another tab previews another page, which replaces the session.
+	const other = await repository.updateDraft(await repository.createDocument(), {
+		payload: "Other",
+	})
+	await editor.startSession(context, repository, other)
+	release()
+
+	await expect(website.bar).toBeVisible()
+	expect(await website.previewRef()).toBeDefined()
+})
+
 test("leaves the website's cookie alone when another session ended", async ({
 	context,
 	repository,

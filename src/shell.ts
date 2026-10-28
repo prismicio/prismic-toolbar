@@ -42,8 +42,8 @@ const methods: ShellMethods = {
 		const { ref: next, title } = await response.json()
 
 		const current = getCookie(sessionCookieName)
-		// Another tab replaced the session meanwhile: report no change, so the next ping follows it.
-		if (current !== session) return current ? { ref } : {}
+		// Another tab or a share link replaced the session meanwhile: ping the new one.
+		if (current !== session) return current ? methods.ping(ref) : {}
 		if (next) return { ref: next, title }
 		// Checked and deleted in one step, so a session started meanwhile survives.
 		deleteSessionCookie()
