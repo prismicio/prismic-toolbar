@@ -7,8 +7,10 @@ export const previewCookieName = "io.prismic.preview"
 export const sessionCookieName = "io.prismic.previewSession"
 
 /**
- * - `plain`: a raw ref, written by SDK preview routes and by the toolbar inside the editor.
- * - `json`: `{ "<repository host>": { "preview": "<ref>" } }`, written by the toolbar on websites.
+ * - `plain`: a raw ref, written by SDK preview routes and by the toolbar inside the editor. The
+ *   toolbar keeps it raw on websites too.
+ * - `json`: `{ "<repository host>": { "preview": "<ref>" } }`, written by the toolbar on websites
+ *   when the cookie is empty.
  */
 export type SiteCookie =
 	| { kind: "none" }
@@ -44,17 +46,23 @@ export function refFor(cookie: SiteCookie, repositoryHost: string): string | und
 
 export interface SiteCookieStore {
 	read(): SiteCookie
-	/** Stores this repository's ref, alone in the cookie, and reports whether the browser kept it. */
+	/**
+	 * Stores this repository's ref, alone in the cookie, and reports whether the browser kept it.
+	 * Keeps a raw ref raw: `json` only applies to an empty or JSON cookie.
+	 */
 	writeRef(ref: string, codec: SiteCookieCodec): boolean
 	delete(): void
 }
 
 export function createSiteCookieStore(repositoryHost: string): SiteCookieStore {
+	const read = () => parseSiteCookie(getCookie(previewCookieName))
+
 	return {
-		read: () => parseSiteCookie(getCookie(previewCookieName)),
+		read,
 
 		writeRef(ref, codec) {
-			const value = codec === "plain" ? ref : JSON.stringify({ [repositoryHost]: { preview: ref } })
+			const plain = codec === "plain" || read().kind === "plain"
+			const value = plain ? ref : JSON.stringify({ [repositoryHost]: { preview: ref } })
 			return setCookie(previewCookieName, value)
 		},
 

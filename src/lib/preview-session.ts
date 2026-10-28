@@ -172,14 +172,10 @@ export function createPreviewSession({
 			if (!ref) return setSnapshot({ status: "idle" })
 
 			serverRef = ref
-			const cookie = store.read()
-			if (refFor(cookie, repositoryHost) !== serverRef) {
+			if (currentRef() !== serverRef) {
 				if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
 				renderedRef = serverRef
 				if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
-			} else if (cookie.kind === "plain" && codec === "json") {
-				// SDK preview routes store the raw ref, which already renders the session.
-				writeRef(serverRef)
 			}
 
 			setSnapshot({ status: "polling", preview: { ref, title } })

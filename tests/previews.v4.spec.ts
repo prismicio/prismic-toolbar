@@ -2,20 +2,37 @@
 // preview session through the shell, a page on the repository host that reads its cookies.
 import { expect, previewCookieName, test } from "./infra/test"
 
-test("stores the ref in the cookie format older SDKs read", async ({
-	repository,
-	website,
-	startPreview,
-}) => {
-	await startPreview()
+test("keeps the raw ref of the preview route", async ({ repository, website, startPreview }) => {
+	const draft = await startPreview()
 	await expect(website.bar).toBeVisible()
-
-	await expect
-		.poll(async () => (await website.cookie(previewCookieName))?.value)
-		.toMatch(new RegExp(`^\\{"${repository.host}":\\{"preview":"[^"]+"\\}\\}$`))
-	expect((await website.cookie(previewCookieName))?.sameSite).toBe("Lax")
+	const ref = (await website.cookie(previewCookieName))?.value
+	expect(ref).toMatch(/^https:\/\//)
 	// The preview route already rendered the session: no reload.
 	expect(website.loads).toHaveLength(1)
+
+	await repository.updateDraft(draft, { payload: "Draft 2" })
+
+	await expect(website.payload).toHaveText("Draft 2")
+	expect((await website.cookie(previewCookieName))?.value).toMatch(/^https:\/\//)
+	expect((await website.cookie(previewCookieName))?.value).not.toBe(ref)
+})
+
+test("stores the ref as JSON when the website has none", async ({
+	context,
+	repository,
+	doc,
+	website,
+	editor,
+}) => {
+	const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
+	await editor.startSession(context, repository, draft)
+
+	await website.goto(doc)
+
+	await expect(website.payload).toHaveText("Draft 1")
+	const cookie = await website.cookie(previewCookieName)
+	expect(cookie?.value).toMatch(new RegExp(`^\\{"${repository.host}":\\{"preview":"[^"]+"\\}\\}$`))
+	expect(cookie?.sameSite).toBe("Lax")
 })
 
 test("follows a preview another tab started, then exited", async ({
