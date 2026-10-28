@@ -211,10 +211,8 @@ export function createPreviewSession({
 				if (isReloading()) return
 			} else if (refFor(cookie, repositoryHost) !== serverRef) {
 				if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
-				// A page rendering an earlier ref, like one from before a publish, updates.
-				const event = renderedRef === undefined ? "prismicPreviewStart" : "prismicPreviewUpdate"
 				renderedRef = serverRef
-				if (dispatchPreviewEvent(event, serverRef)) return reloadPage()
+				if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
 			} else if (cookie.kind === "plain" && codec === "json") {
 				// SDK preview routes store the raw ref, which already renders the session.
 				writeRef(serverRef)

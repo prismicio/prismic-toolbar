@@ -103,7 +103,9 @@ test("follows the session when other content is published", async ({
 	await expect(website.payload).toHaveText("Draft 1")
 })
 
-test("updates a page rendering an earlier ref of the session", async ({
+// The toolbar cannot tell whether the website renders the cookie's ref, like Next.js outside draft
+// mode, so it starts the preview when it bootstraps.
+test("starts the preview over an earlier ref of the session", async ({
 	context,
 	repository,
 	doc,
@@ -119,7 +121,7 @@ test("updates a page rendering an earlier ref of the session", async ({
 	await website.page.goto(url)
 
 	await expect(website.bar).toBeVisible()
-	expect(await website.events()).toEqual([["prismicPreviewUpdate", await website.previewRef()]])
+	expect(await website.events()).toEqual([["prismicPreviewStart", await website.previewRef()]])
 })
 
 test("previews several repositories on one website", async ({
