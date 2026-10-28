@@ -10,10 +10,9 @@ test("stores the ref in the cookie format older SDKs read", async ({
 	await startPreview()
 	await expect(website.bar).toBeVisible()
 
-	// The tracker comes first: older SDKs read the cookie with a regular expression.
 	await expect
 		.poll(async () => (await website.cookie(previewCookieName))?.value)
-		.toMatch(new RegExp(`^\\{"_tracker":"\\w+","${repository.host}":\\{"preview":"[^"]+"\\}\\}$`))
+		.toMatch(new RegExp(`^\\{"${repository.host}":\\{"preview":"[^"]+"\\}\\}$`))
 	expect((await website.cookie(previewCookieName))?.sameSite).toBe("Lax")
 	// The preview route already rendered the session: no reload.
 	expect(website.loads).toHaveLength(1)

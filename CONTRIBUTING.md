@@ -50,7 +50,7 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 #### Cookies
 
 - The toolbar stores the preview ref in the `io.prismic.preview` cookie, which `@prismicio/client` sends to the Content API.
-- On a website, the cookie holds JSON: `{ "_tracker": "…", "<repository host>": { "preview": "<ref>" } }`. The tracker comes first: older SDKs read the cookie with a regular expression. Inside the editor, it holds the raw ref.
+- On a website, the cookie holds JSON: `{ "<repository host>": { "preview": "<ref>" } }`. Inside the editor, it holds the raw ref.
 - The `io.prismic.preview.updated` cookie marks refs the editor pushed, so website tabs leave them alone.
 
 #### Tests

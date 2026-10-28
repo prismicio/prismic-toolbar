@@ -53,7 +53,7 @@ export function createEmbeddedPush({
 }
 
 function writeRef(store: SiteCookieStore, ref: string) {
-	const written = store.writeRef(ref, { codec: "plain", authenticated: false })
+	const written = store.writeRef(ref, "plain")
 	// Reloading would not help: the next load would find the same stale cookie.
 	if (!written) warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 	return written

@@ -139,7 +139,7 @@ export function createPreviewSession({
 	}
 
 	function writeRef(ref: string) {
-		const written = store.writeRef(ref, { codec, authenticated: Boolean(snapshot.authenticated) })
+		const written = store.writeRef(ref, codec)
 		if (!written) warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 		return written
 	}
