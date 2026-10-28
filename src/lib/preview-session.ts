@@ -3,11 +3,11 @@ import { warn } from "./env"
 import { dispatchPreviewEvent } from "./events"
 import type { Shell } from "./shell-client"
 import {
-	createSiteCookieStore,
+	deletePreviewCookie,
 	previewCookieName,
-	refFor,
+	readPreviewRef,
+	writePreviewRef,
 	type SiteCookieCodec,
-	type SiteCookieStore,
 } from "./site-cookie"
 
 export interface PreviewSnapshot {
@@ -38,8 +38,6 @@ export interface PreviewSessionOptions {
 	 */
 	watchCookie: boolean
 	connect(): Promise<Shell>
-	reload?: () => void
-	store?: SiteCookieStore
 }
 
 /**
@@ -53,8 +51,6 @@ export function createPreviewSession({
 	codec,
 	watchCookie: watch,
 	connect,
-	reload = () => window.location.reload(),
-	store = createSiteCookieStore(repositoryHost),
 }: PreviewSessionOptions): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	let snapshot: PreviewSnapshot = { status: "booting", authenticated: false }
@@ -63,7 +59,7 @@ export function createPreviewSession({
 	let pollTimer: ReturnType<typeof setInterval> | undefined
 	let following = Promise.resolve()
 
-	const currentRef = () => refFor(store.read(), repositoryHost)
+	const currentRef = () => readPreviewRef(repositoryHost)
 	// Read before anything can change the cookie: the closest guess of what the server rendered.
 	let renderedRef = currentRef()
 	// Watch before connecting so a change during startup is not mistaken for the rendered ref.
@@ -80,12 +76,6 @@ export function createPreviewSession({
 		for (const listener of listeners) listener(snapshot)
 	}
 
-	function startPolling() {
-		pollTimer = setInterval(tick, 3000)
-		// A tab coming back into view catches up right away.
-		document.addEventListener("visibilitychange", tick)
-	}
-
 	function stopPolling() {
 		clearInterval(pollTimer)
 		pollTimer = undefined
@@ -98,7 +88,7 @@ export function createPreviewSession({
 		stopPolling()
 		unwatch?.()
 		setSnapshot({ status: "reloading" })
-		reload()
+		window.location.reload()
 	}
 
 	/** Notifies the website when the cookie's ref differs from the one it renders. */
@@ -116,11 +106,7 @@ export function createPreviewSession({
 		if (dispatchPreviewEvent(event, ref)) reloadPage()
 	}
 
-	function writeRef(ref: string) {
-		const written = store.writeRef(ref, codec)
-		if (!written) warn("The browser rejected the preview cookie. Check that cookies are allowed.")
-		return written
-	}
+	const writeRef = (ref: string) => writePreviewRef(repositoryHost, ref, codec)
 
 	async function tick() {
 		if (!shell || serverRef === undefined || document.visibilityState !== "visible") return
@@ -143,7 +129,7 @@ export function createPreviewSession({
 			serverRef = undefined
 			setSnapshot({ status: "idle", preview: undefined })
 			if (ownsCookie) {
-				store.delete()
+				deletePreviewCookie()
 				reconcile()
 			}
 			return
@@ -179,7 +165,9 @@ export function createPreviewSession({
 			}
 
 			setSnapshot({ status: "polling", preview: { ref, title } })
-			startPolling()
+			pollTimer = setInterval(tick, 3000)
+			// A tab coming back into view catches up right away.
+			document.addEventListener("visibilitychange", tick)
 		} catch (error) {
 			warn(`Could not reach the preview session.\n\n${String(error)}`)
 			setSnapshot({ status: "idle" })
@@ -193,9 +181,7 @@ export function createPreviewSession({
 			stopPolling()
 			await shell?.closeSession().catch(() => {})
 			serverRef = undefined
-
-			store.delete()
-
+			deletePreviewCookie()
 			renderedRef = currentRef()
 			setSnapshot({ status: "idle", preview: undefined })
 			if (dispatchPreviewEvent("prismicPreviewEnd")) reloadPage()

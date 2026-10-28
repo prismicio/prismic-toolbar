@@ -1,71 +1,51 @@
 import { deleteCookie, getCookie, setCookie } from "./cookie"
+import { warn } from "./env"
 
-/** `@prismicio/client` sends this cookie's whole value as the Content API ref. */
+/**
+ * `@prismicio/client` sends this cookie's whole value as the Content API ref. It holds either:
+ *
+ * - A raw ref, written by SDK preview routes and by the toolbar inside the editor. The toolbar keeps
+ *   it raw on websites too.
+ * - `{ "<repository host>": { "preview": "<ref>" } }`, written by the toolbar on websites when the
+ *   cookie is empty.
+ */
 export const previewCookieName = "io.prismic.preview"
 
 /** The preview session ID, written by SDK preview routes for the v5 flow. */
 export const sessionCookieName = "io.prismic.previewSession"
 
-/**
- * - `plain`: a raw ref, written by SDK preview routes and by the toolbar inside the editor. The
- *   toolbar keeps it raw on websites too.
- * - `json`: `{ "<repository host>": { "preview": "<ref>" } }`, written by the toolbar on websites
- *   when the cookie is empty.
- */
-export type SiteCookie =
-	| { kind: "none" }
-	| { kind: "plain"; raw: string }
-	| { kind: "json"; raw: string; refs: Record<string, string> }
-
 export type SiteCookieCodec = "json" | "plain"
 
-export function parseSiteCookie(raw: string | undefined): SiteCookie {
-	if (!raw) return { kind: "none" }
+type Entries = Record<string, { preview?: unknown } | null>
 
-	let value: unknown
+/** The cookie's JSON entries, or `undefined` when it holds a raw ref. */
+function parseEntries(raw: string): Entries | undefined {
 	try {
-		value = JSON.parse(raw)
-	} catch {
-		return { kind: "plain", raw }
-	}
-	if (!value || typeof value !== "object" || Array.isArray(value)) return { kind: "plain", raw }
-
-	const refs: Record<string, string> = {}
-	for (const [repositoryHost, entry] of Object.entries(value)) {
-		const preview = (entry as { preview?: unknown } | null)?.preview
-		if (typeof preview === "string") refs[repositoryHost] = preview
-	}
-
-	return { kind: "json", raw, refs }
+		const value: unknown = JSON.parse(raw)
+		if (value && typeof value === "object" && !Array.isArray(value)) return value as Entries
+	} catch {}
 }
 
-export function refFor(cookie: SiteCookie, repositoryHost: string): string | undefined {
-	if (cookie.kind === "plain") return cookie.raw
-	if (cookie.kind === "json") return cookie.refs[repositoryHost]
+export function readPreviewRef(repositoryHost: string): string | undefined {
+	const raw = getCookie(previewCookieName)
+	if (!raw) return undefined
+	const entries = parseEntries(raw)
+	if (!entries) return raw
+	const preview = entries[repositoryHost]?.preview
+	return typeof preview === "string" ? preview : undefined
 }
 
-export interface SiteCookieStore {
-	read(): SiteCookie
-	/**
-	 * Stores this repository's ref, alone in the cookie, and reports whether the browser kept it.
-	 * Keeps a raw ref raw: `json` only applies to an empty or JSON cookie.
-	 */
-	writeRef(ref: string, codec: SiteCookieCodec): boolean
-	delete(): void
+/**
+ * Stores this repository's ref, alone in the cookie, and reports whether the browser kept it. Keeps
+ * a raw ref raw: `json` only applies to an empty or JSON cookie.
+ */
+export function writePreviewRef(repositoryHost: string, ref: string, codec: SiteCookieCodec) {
+	const raw = getCookie(previewCookieName)
+	const plain = codec === "plain" || Boolean(raw && !parseEntries(raw))
+	const value = plain ? ref : JSON.stringify({ [repositoryHost]: { preview: ref } })
+	const written = setCookie(previewCookieName, value)
+	if (!written) warn("The browser rejected the preview cookie. Check that cookies are allowed.")
+	return written
 }
 
-export function createSiteCookieStore(repositoryHost: string): SiteCookieStore {
-	const read = () => parseSiteCookie(getCookie(previewCookieName))
-
-	return {
-		read,
-
-		writeRef(ref, codec) {
-			const plain = codec === "plain" || read().kind === "plain"
-			const value = plain ? ref : JSON.stringify({ [repositoryHost]: { preview: ref } })
-			return setCookie(previewCookieName, value)
-		},
-
-		delete: () => deleteCookie(previewCookieName),
-	}
-}
+export const deletePreviewCookie = () => deleteCookie(previewCookieName)
