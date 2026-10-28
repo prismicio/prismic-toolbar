@@ -23,12 +23,7 @@ function createSession(repositoryHost: string): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	// The ref this page renders. Without one, the first ping gets the session's ref.
 	let ref = getCookie(previewCookieName) ?? ""
-	// Not authenticated: the bar hides Share, which v5 does not support yet.
-	let snapshot: PreviewSnapshot = {
-		status: "polling",
-		authenticated: false,
-		preview: { ref, title: "" },
-	}
+	let snapshot: PreviewSnapshot = { status: "polling", preview: { ref, title: "" } }
 	let timer: ReturnType<typeof setInterval> | undefined
 	// The interval and `visibilitychange` must not start a ping while one is in flight.
 	let pinging = false
@@ -100,7 +95,13 @@ function createSession(repositoryHost: string): PreviewSession {
 		async exit() {
 			end()
 		},
-		share: () => Promise.reject(new Error("Sharing is not available yet.")),
+		share() {
+			const session = getCookie(sessionCookieName)
+			if (!session) throw new Error("The preview session ended.")
+			const { pathname, search, hash } = window.location
+			const path = encodeURIComponent(pathname + search + hash)
+			return `${repositoryOrigin(repositoryHost)}/previews/share/${encodeURIComponent(session)}?path=${path}`
+		},
 		getSnapshot: () => snapshot,
 		subscribe(listener) {
 			listeners.add(listener)

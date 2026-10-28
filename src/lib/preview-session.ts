@@ -14,7 +14,8 @@ import {
 
 export interface PreviewSnapshot {
 	status: "booting" | "idle" | "polling" | "reloading"
-	authenticated: boolean
+	/** Unset when unknown, as in v5. */
+	authenticated?: boolean
 	/** Set while this page follows an active preview session. */
 	preview?: { ref: string; title: string }
 }
@@ -23,7 +24,7 @@ export interface PreviewSession {
 	start(): Promise<void>
 	/** Ends the preview session for this browser. */
 	exit(): Promise<void>
-	share(pageURL?: string): Promise<string>
+	share(): string | Promise<string>
 	getSnapshot(): PreviewSnapshot
 	subscribe(listener: (snapshot: PreviewSnapshot) => void): () => void
 	dispose(): void
@@ -138,7 +139,7 @@ export function createPreviewSession({
 	}
 
 	function writeRef(ref: string) {
-		const written = store.writeRef(ref, { codec, authenticated: snapshot.authenticated })
+		const written = store.writeRef(ref, { codec, authenticated: Boolean(snapshot.authenticated) })
 		if (!written) warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 		return written
 	}
