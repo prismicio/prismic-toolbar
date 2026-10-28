@@ -17,14 +17,10 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 	const url = new URL(req.url ?? "/", `http://localhost:${port}`)
 	if (url.pathname === "/api/preview") return preview(url, res)
 
-	// Pages live at `/<repository>/<uid>`.
-	if (url.pathname.split("/").length !== 3) return res.writeHead(404).end()
-	// `?with=<repository>/<uid>` shows a page of a second repository, with its own toolbar.
-	const pages = [url.pathname.slice(1), url.searchParams.get("with")]
-		.filter((page) => page !== null)
-		// Written into the HTML.
-		.map(escapeHTML)
-	const sections = await Promise.all(pages.map((page) => render(page, req, pages.length > 1)))
+	// Pages live at `/<repository>/<uid>`. Written into the HTML.
+	const page = escapeHTML(url.pathname.slice(1))
+	if (page.split("/").length !== 2) return res.writeHead(404).end()
+	const main = await render(page, req)
 
 	res.writeHead(200, { "content-type": "text/html", "cache-control": "no-store" })
 	res.end(`<!doctype html>
@@ -38,7 +34,7 @@ async function handle(req: IncomingMessage, res: ServerResponse) {
 	section { padding: 24px; min-height: 900px; }
 	.highlighted { background: #fde68a; }
 </style>
-${sections.join("\n")}
+${main}
 <script>
 	// Pages record preview events. With the \`events=handle\` cookie, they update in place like
 	// frameworks do, instead of letting the toolbar reload them.
@@ -58,26 +54,14 @@ ${sections.join("\n")}
 		})
 	}
 </script>
-${pages
-	.map((page) => {
-		const src = `https://static.cdn.prismic.io/prismic.js?repo=${page.split("/")[0]}${v5 ? "&v=5" : ""}`
-		return `<script async defer src="${src}"></script>`
-	})
-	.join("\n")}`)
+<script async defer src="https://static.cdn.prismic.io/prismic.js?repo=${page.split("/")[0]}${v5 ? "&v=5" : ""}"></script>`)
 }
 
 /** Renders a page with the ref of the preview cookie, like SDKs do. */
-async function render(page: string, req: IncomingMessage, scoped: boolean) {
+async function render(page: string, req: IncomingMessage) {
 	const [repository = "", uid = ""] = page.split("/")
 	const client = prismic.createClient(repository)
-	// `@prismicio/client` sends the whole cookie, which the Content API reads as a single repository's.
-	// Pages showing several repositories read their own entry of the toolbar's cookie instead.
-	if (scoped) {
-		const ref = repositoryRef(req.headers.cookie, `${repository}.prismic.io`)
-		if (ref) client.queryContentFromRef(ref)
-	} else {
-		client.enableAutoPreviewsFromReq(req)
-	}
+	client.enableAutoPreviewsFromReq(req)
 	// A ref the editor just created can take a moment to reach the Content API.
 	const document = await retry(() => client.getByUID("page", uid))
 	const slices = document.data.slices.map((slice: prismic.SharedSlice) => {
@@ -113,14 +97,6 @@ async function retry<T>(task: () => Promise<T>, attempts = 10): Promise<T> {
 		await new Promise((resolve) => setTimeout(resolve, 1000))
 		return retry(task, attempts - 1)
 	}
-}
-
-function repositoryRef(cookies = "", host: string): string | undefined {
-	const name = `${prismic.cookie.preview}=`
-	const cookie = cookies.split("; ").find((cookie) => cookie.startsWith(name))
-	try {
-		return JSON.parse(decodeURIComponent(cookie?.slice(name.length) ?? ""))[host]?.preview
-	} catch {}
 }
 
 /** The preview route of SDKs: stores the session's ref, and the session itself with `v=5`. */

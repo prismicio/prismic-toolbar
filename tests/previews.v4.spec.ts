@@ -106,48 +106,6 @@ test("starts the preview over an earlier ref of the session", async ({
 	expect(await website.events()).toEqual([["prismicPreviewStart", await website.previewRef()]])
 })
 
-test("previews several repositories on one website", async ({
-	repository,
-	otherRepository,
-	doc,
-	website,
-	editor,
-	context,
-}) => {
-	const otherDoc = await otherRepository.createDocument({ title: "Autumn sale" })
-	const page = `${website.pageURL(doc)}?with=${otherRepository.domain}/${otherDoc.uid}`
-	const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
-	await editor.preview(website.page, repository, draft)
-	// The preview route's raw ref would reach the other repository's API too: wait for the toolbar's
-	// cookie, which keeps refs by repository.
-	await expect
-		.poll(() => website.cookie(previewCookieName))
-		.toMatchObject({
-			value: expect.stringContaining(repository.host),
-		})
-	await website.page.goto(page)
-	await expect(website.payloadOf(repository)).toHaveText("Draft 1")
-
-	const otherDraft = await otherRepository.updateDraft(otherDoc, { payload: "Draft 2" })
-	await editor.preview(await context.newPage(), otherRepository, otherDraft)
-
-	// Each repository's toolbar follows its own session, in the same cookie.
-	await expect(website.payloadOf(otherRepository)).toHaveText("Draft 2")
-	await expect(website.payloadOf(repository)).toHaveText("Draft 1")
-	await expect(website.bar).toHaveCount(2)
-	expect(await website.previewRef(repository)).toBeDefined()
-	expect(await website.previewRef(otherRepository)).toBeDefined()
-
-	// Both bars sit in the same corner, so the other one covers this one: use the keyboard.
-	const otherBar = website.bar.filter({ hasText: "Autumn sale" })
-	await otherBar.getByRole("button", { name: "Exit preview" }).press("Enter")
-
-	await expect(website.payloadOf(otherRepository)).toHaveText("Published")
-	await expect(website.payloadOf(repository)).toHaveText("Draft 1")
-	expect(await website.previewRef(otherRepository)).toBeUndefined()
-	expect(await website.previewRef(repository)).toBeDefined()
-})
-
 test("leaves the website's cookie alone when another session ended", async ({
 	context,
 	repository,

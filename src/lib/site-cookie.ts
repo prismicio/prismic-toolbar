@@ -44,48 +44,20 @@ export function refFor(cookie: SiteCookie, repositoryHost: string): string | und
 
 export interface SiteCookieStore {
 	read(): SiteCookie
-	/**
-	 * Stores this repository's ref and reports whether the browser kept it. `json` writes keep other
-	 * repositories' refs.
-	 */
+	/** Stores this repository's ref, alone in the cookie, and reports whether the browser kept it. */
 	writeRef(ref: string, codec: SiteCookieCodec): boolean
-	/** Removes this repository's ref, deleting the cookie when no other ref remains. */
-	removeOwn(): void
-	deleteAll(): void
+	delete(): void
 }
 
 export function createSiteCookieStore(repositoryHost: string): SiteCookieStore {
-	const read = () => parseSiteCookie(getCookie(previewCookieName))
-
-	function writeJSON(refs: Record<string, string>) {
-		const entries = Object.entries(refs).map(([host, preview]) => [host, { preview }])
-		if (!entries.length) {
-			deleteCookie(previewCookieName)
-			return true
-		}
-		return setCookie(previewCookieName, JSON.stringify(Object.fromEntries(entries)))
-	}
-
 	return {
-		read,
+		read: () => parseSiteCookie(getCookie(previewCookieName)),
 
 		writeRef(ref, codec) {
-			if (codec === "plain") return setCookie(previewCookieName, ref)
-
-			const current = read()
-			return writeJSON({ ...(current.kind === "json" ? current.refs : {}), [repositoryHost]: ref })
+			const value = codec === "plain" ? ref : JSON.stringify({ [repositoryHost]: { preview: ref } })
+			return setCookie(previewCookieName, value)
 		},
 
-		removeOwn() {
-			const current = read()
-			if (current.kind !== "json") return deleteCookie(previewCookieName)
-
-			const { [repositoryHost]: _removed, ...refs } = current.refs
-			writeJSON(refs)
-		},
-
-		deleteAll() {
-			deleteCookie(previewCookieName)
-		},
+		delete: () => deleteCookie(previewCookieName),
 	}
 }

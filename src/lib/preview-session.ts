@@ -168,7 +168,7 @@ export function createPreviewSession({
 			serverRef = undefined
 			setSnapshot({ status: "idle", preview: undefined })
 			if (ownsCookie) {
-				store.removeOwn()
+				store.delete()
 				reconcile()
 			}
 			return
@@ -234,13 +234,8 @@ export function createPreviewSession({
 			await shell?.closeSession().catch(() => {})
 			serverRef = undefined
 
-			const owner = editorOwner(store.read())
-			if (!owner) {
-				store.removeOwn()
-			} else if (owner.repository === repositoryHost) {
-				releaseOwnership()
-				store.deleteAll()
-			} // Otherwise another repository's editor owns the cookie: leave it.
+			if (editorOwner(store.read())) releaseOwnership()
+			store.delete()
 
 			renderedRef = currentRef()
 			setSnapshot({ status: "idle", preview: undefined })

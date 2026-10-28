@@ -15,10 +15,9 @@ setup("create repositories", async ({ request }, testInfo) => {
 	const prismic = await Prismic.signIn()
 	await prismic.deleteStaleRepositories()
 
-	// Publishing changes the ref of every preview in a repository, so each worker gets its own, and a
-	// second one to preview on the same website.
+	// Publishing changes the ref of every preview in a repository, so each worker gets its own.
 	const repositories = await Promise.all(
-		Array.from({ length: testInfo.config.workers * 2 }, () => prismic.createRepository()),
+		Array.from({ length: testInfo.config.workers }, () => prismic.createRepository()),
 	)
 	// Saved before anything else can fail, so teardown deletes them.
 	await saveState(request, repositories)

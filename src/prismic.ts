@@ -69,7 +69,7 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 		// bar to exit it.
 		const store = createSiteCookieStore(repositoryHost)
 		if (!refFor(store.read(), repositoryHost)) return
-		store.removeOwn()
+		store.delete()
 		// Reloading with a cookie the toolbar cannot delete would loop.
 		const removed = !refFor(store.read(), repositoryHost)
 		if (dispatchPreviewEvent("prismicPreviewEnd") && removed) window.location.reload()
