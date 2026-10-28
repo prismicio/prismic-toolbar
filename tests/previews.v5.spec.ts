@@ -21,9 +21,9 @@ test("follows the session with ping, without the shell", async ({
 	for (const url of prismic) expect(url).toMatch(/\/previews\/[^/]+\/ping\?ref=/)
 	expect(loaded(requests, "v5.js")).toBe(true)
 	expect(loaded(requests, "shell.html")).toBe(false)
-	// Signed in or not, v5 does not know: it offers no Share.
-	await expect(website.bar.getByRole("button", { name: "Share" })).toHaveCount(0)
-	await expect(website.bar.getByRole("link", { name: "Powered by Prismic" })).toBeVisible()
+	// v5 does not know whether the visitor is signed in: everyone can share.
+	await expect(website.bar.getByRole("button", { name: "Share" })).toBeVisible()
+	await expect(website.bar.getByRole("link", { name: "Powered by Prismic" })).toHaveCount(0)
 })
 
 test("does nothing without a preview", async ({ doc, website, requests }) => {

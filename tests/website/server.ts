@@ -128,12 +128,17 @@ async function preview(url: URL, res: ServerResponse) {
 	const token = url.searchParams.get("token") ?? ""
 	const repository = new URL(token).hostname.split(".")[0] ?? ""
 	const client = prismic.createClient(repository)
-	const location = await client.resolvePreviewURL({
-		documentID: url.searchParams.get("documentId") ?? undefined,
-		previewToken: token,
-		defaultURL: "/",
-		linkResolver: (document) => `/${repository}/${document.uid}`,
-	})
+	// v5 share links return to the page they were copied from.
+	const path = url.searchParams.get("path")
+	const location =
+		v5 && path?.startsWith("/") && !path.startsWith("//")
+			? path
+			: await client.resolvePreviewURL({
+					documentID: url.searchParams.get("documentId") ?? undefined,
+					previewToken: token,
+					defaultURL: "/",
+					linkResolver: (document) => `/${repository}/${document.uid}`,
+				})
 
 	const attributes = v5 ? "; SameSite=None; Secure" : ""
 	const cookies = [`${prismic.cookie.preview}=${encodeURIComponent(token)}; Path=/${attributes}`]
