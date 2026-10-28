@@ -1,4 +1,4 @@
-import { expect, test } from "./infra"
+import { expect, test } from "./infra/test"
 
 test("shows the preview's title and status, isolated from the website's styles", async ({
 	repository,

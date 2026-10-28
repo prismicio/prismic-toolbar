@@ -1,6 +1,13 @@
 // The Page Builder previews the website in an iframe, where the toolbar draws its slice and comment
 // overlays. With `v=5` too: the editor drives the preview, whatever the website's SDK opts into.
-import { expect, ownerCookieName, PageBuilder, previewCookieName, test, Website } from "./infra"
+import {
+	expect,
+	ownerCookieName,
+	PageBuilder,
+	previewCookieName,
+	test,
+	Website,
+} from "./infra/test"
 
 test.use({ viewport: { width: 1920, height: 1080 } })
 

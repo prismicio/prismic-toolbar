@@ -1,5 +1,5 @@
 // What every website sees, whichever toolbar flow its SDK opts into.
-import { expect, test } from "./infra"
+import { expect, test } from "./infra/test"
 
 test("renders the draft of a preview started from Prismic", async ({ website, startPreview }) => {
 	await startPreview()

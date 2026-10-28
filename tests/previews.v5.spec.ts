@@ -1,6 +1,6 @@
 // Websites whose SDK opts into `v=5`. Their preview route stores the session in a first-party
 // cookie, which the toolbar follows with Prismic's public `ping`, without the shell.
-import { expect, previewCookieName, sessionCookieName, test } from "./infra"
+import { expect, previewCookieName, sessionCookieName, test } from "./infra/test"
 
 const loaded = (requests: string[], file: string) =>
 	requests.some((url) => new URL(url).pathname.endsWith(`/${file}`))

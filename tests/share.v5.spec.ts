@@ -1,6 +1,6 @@
 // v5 Share links point to Prismic, `<repository>/previews/share/<session>?path=`, which redirects to
 // the website's preview route with the session's latest ref.
-import { expect, test, type Website } from "./infra"
+import { expect, test, type Website } from "./infra/test"
 
 async function copyShareLink(website: Website) {
 	await website.page.context().grantPermissions(["clipboard-read", "clipboard-write"])

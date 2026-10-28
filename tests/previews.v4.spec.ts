@@ -1,6 +1,6 @@
 // Websites without `v=5`: every production website today. The toolbar follows the repository's
 // preview session through the shell, a page on the repository host that reads its cookies.
-import { expect, previewCookieName, sessionCookieName, test } from "./infra"
+import { expect, previewCookieName, sessionCookieName, test } from "./infra/test"
 
 test("adopts the ref the preview route stored, in the toolbar's cookie format", async ({
 	repository,

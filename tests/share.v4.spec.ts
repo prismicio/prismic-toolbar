@@ -1,4 +1,4 @@
-import { expect, test } from "./infra"
+import { expect, test } from "./infra/test"
 
 test("shares the preview with signed-out visitors", async ({
 	context,
