@@ -14,8 +14,6 @@ jobs:
     concurrency:
       group: ci-check-${{ github.ref }}
       cancel-in-progress: true
-    env:
-      HAS_E2E_CREDENTIALS: ${{ secrets.E2E_PRISMIC_EMAIL != '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -35,8 +33,9 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e:old
       # Creates real repositories with a Prismic test account, whose credentials forks don't get.
-      - run: npm run e2e
-        if: env.HAS_E2E_CREDENTIALS == 'true'
+      - run: |
+          if [ -z "$E2E_PRISMIC_EMAIL" ]; then echo "No Prismic credentials: skipping E2E tests."; exit 0; fi
+          npm run e2e
         env:
           E2E_PRISMIC_EMAIL: ${{ secrets.E2E_PRISMIC_EMAIL }}
           E2E_PRISMIC_PASSWORD: ${{ secrets.E2E_PRISMIC_PASSWORD }}

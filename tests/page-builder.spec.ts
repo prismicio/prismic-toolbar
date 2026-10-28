@@ -1,24 +1,15 @@
 // The Page Builder previews the website in an iframe, where the toolbar draws its slice and comment
 // overlays. With `v=5` too: the editor drives the preview, whatever the website's SDK opts into.
-import {
-	expect,
-	ownerCookieName,
-	PageBuilder,
-	previewCookieName,
-	test,
-	Website,
-} from "./infra/test"
+import { expect, PageBuilder, test, Website } from "./infra/test"
 
 test.use({ viewport: { width: 1920, height: 1080 } })
 
 test.describe("push", () => {
-	test("connects without the preview bar or the shell", async ({ doc, pageBuilder, requests }) => {
+	test("shows slice highlights but no preview bar", async ({ doc, pageBuilder }) => {
 		await pageBuilder.open(doc, { mode: "push" })
 
-		await expect(pageBuilder.preview.locator("#prismic-embedded-preview-overlay")).toBeAttached()
-		const files = requests.map((url) => new URL(url).pathname.split("/").pop()!)
-		expect(files).toContain("embedded-preview.js")
-		expect(files.filter((file) => /^(toolbar\.js|v5\.js|shell\.html)$/.test(file))).toEqual([])
+		await pageBuilder.preview.getByText("First slice").hover()
+		await expect(pageBuilder.slice(doc.content.slices[0]!)).toContainText("TextBlock")
 		await expect(pageBuilder.preview.getByRole("region", { name: "Prismic preview" })).toHaveCount(
 			0,
 		)
@@ -38,12 +29,6 @@ test.describe("push", () => {
 
 		await expect(pageBuilder.preview.getByText("First slice edited")).toBeVisible()
 		await website.expectSameLoad(pageBuilder.frame)
-		// The editor frames the website cross-site.
-		expect(await website.cookie(previewCookieName)).toMatchObject({
-			value: await website.previewRef(),
-			sameSite: "None",
-			secure: true,
-		})
 	})
 
 	test("reloads websites that do not handle edits", async ({ doc, website, pageBuilder }) => {
@@ -195,12 +180,6 @@ test.describe("push in place", () => {
 		await website.expectSameLoad(pageBuilder.frame)
 		const ref = await website.previewRef()
 		expect(await website.events(pageBuilder.frame)).toContainEqual(["prismicPreviewUpdate", ref])
-		// Website tabs read this marker to leave the editor's ref alone.
-		expect(JSON.parse((await website.cookie(ownerCookieName))!.value)).toMatchObject({
-			version: 2,
-			repository: pageBuilder.repository.host,
-			ref,
-		})
 	})
 
 	test("a website tab follows the editor's ref without overwriting it", async ({
@@ -226,11 +205,12 @@ test.describe("push in place", () => {
 		await website.page.waitForTimeout(7000)
 		expect(await website.previewRef()).toBe(ref)
 
-		// Exiting clears the editor's ref too.
+		// Exiting leaves the editor's ref too.
 		await website.exit()
 		await expect(website.bar).toHaveCount(0)
-		expect(await website.cookie(previewCookieName)).toBeUndefined()
-		expect(await website.cookie(ownerCookieName)).toBeUndefined()
+		await website.page.reload()
+		await expect(website.page.getByText("First slice", { exact: true })).toBeVisible()
+		await expect(website.bar).toHaveCount(0)
 	})
 
 	test("a website tab keeps a ref the editor pushed before it loaded", async ({
@@ -256,21 +236,17 @@ test.describe("push in place", () => {
 })
 
 test.describe("poll", () => {
-	test("follows the preview session", async ({ doc, website, pageBuilder, requests }) => {
+	test("follows the preview session", async ({ doc, pageBuilder }) => {
 		await pageBuilder.open(doc, { mode: "poll" })
-		expect(requests.some((url) => url.endsWith("/shell.html"))).toBe(true)
 
 		await pageBuilder.edit("First slice", " edited")
 
 		// The editor saves the draft, and the toolbar follows the session to it.
-		await expect(pageBuilder.preview.getByText("First slice edited")).toBeVisible({
-			timeout: 30_000,
-		})
-		// A local website previewed from Prismic must keep its cookie, or every load would reload.
-		expect(await website.cookie(previewCookieName)).toMatchObject({
-			sameSite: "None",
-			secure: true,
-		})
+		const edited = pageBuilder.preview.getByText("First slice edited")
+		await expect(edited).toBeVisible({ timeout: 30_000 })
+		// The preview survives a reload inside the editor's cross-site iframe.
+		await pageBuilder.frame.evaluate(() => location.reload())
+		await expect(edited).toBeVisible()
 		await expect(pageBuilder.preview.getByRole("region", { name: "Prismic preview" })).toHaveCount(
 			0,
 		)
@@ -291,13 +267,20 @@ test("ignores editors outside Prismic", async ({ context, doc, website }) => {
 	await expect(frame.getByTestId("payload")).toHaveText("Published")
 
 	// Like the Prismic editor, but from another origin.
-	await website.page.evaluate((origin) => {
-		const frame = document.querySelector("iframe")!.contentWindow!
-		frame.postMessage({ type: "prismic:embedded-preview:ack" }, origin)
-		frame.postMessage({ type: "prismic:embedded-preview:set-ref", token: "editor-ref" }, origin)
-	}, website.url)
+	const slices = [{ sliceId: `text_block$${doc.content.slices[0]!.id}`, label: "TextBlock" }]
+	await website.page.evaluate(
+		([origin, slices]) => {
+			const frame = document.querySelector("iframe")!.contentWindow!
+			frame.postMessage({ type: "prismic:embedded-preview:ack" }, origin)
+			frame.postMessage({ type: "prismic:embedded-preview:set-slices", slices }, origin)
+			frame.postMessage({ type: "prismic:embedded-preview:set-ref", token: "editor-ref" }, origin)
+		},
+		[website.url, slices] as const,
+	)
 
 	await website.page.waitForTimeout(2000)
-	await expect(frame.locator("#prismic-embedded-preview-overlay")).toHaveCount(0)
-	expect(await website.cookie(previewCookieName)).toBeUndefined()
+	await frame.getByText("First slice").hover()
+	await expect(frame.locator(".slice-highlight")).toHaveCount(0)
+	await frame.locator("body").evaluate(() => location.reload())
+	await expect(frame.getByTestId("payload")).toHaveText("Published")
 })

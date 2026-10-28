@@ -8,6 +8,15 @@ test("renders the draft of a preview started from Prismic", async ({ website, st
 	await expect(website.bar).toContainText("Live preview")
 })
 
+test("loads no preview code without a preview", async ({ doc, website, requests }) => {
+	await website.goto(doc)
+
+	await expect(website.payload).toHaveText("Published")
+	await website.page.waitForTimeout(2000)
+	await expect(website.bar).toHaveCount(0)
+	expect(requests.filter((url) => /\/(toolbar|v5|embedded-preview)\.js$/.test(url))).toEqual([])
+})
+
 test("reloads the page when the draft changes", async ({ repository, website, startPreview }) => {
 	const draft = await startPreview()
 	await expect(website.bar).toBeVisible()

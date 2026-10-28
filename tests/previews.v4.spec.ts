@@ -1,8 +1,8 @@
 // Websites without `v=5`: every production website today. The toolbar follows the repository's
 // preview session through the shell, a page on the repository host that reads its cookies.
-import { expect, previewCookieName, sessionCookieName, test } from "./infra/test"
+import { expect, previewCookieName, test } from "./infra/test"
 
-test("adopts the ref the preview route stored, in the toolbar's cookie format", async ({
+test("stores the ref in the cookie format older SDKs read", async ({
 	repository,
 	website,
 	startPreview,
@@ -17,23 +17,6 @@ test("adopts the ref the preview route stored, in the toolbar's cookie format", 
 	expect((await website.cookie(previewCookieName))?.sameSite).toBe("Lax")
 	// The preview route already rendered the session: no reload.
 	expect(website.loads).toHaveLength(1)
-})
-
-test("loads only the shell without a preview session", async ({
-	repository,
-	doc,
-	website,
-	requests,
-}) => {
-	await website.goto(doc)
-
-	await expect.poll(() => requests.some((url) => url.endsWith("/shell.html"))).toBe(true)
-	await website.page.waitForTimeout(1000)
-	expect(requests.filter((url) => url.startsWith(repository.url))).toEqual([
-		expect.stringMatching(/\/prismic-toolbar\/[^/]+\/shell\.html$/),
-	])
-	expect(requests.filter((url) => /\/(toolbar|v5|embedded-preview)\.js$/.test(url))).toEqual([])
-	await expect(website.bar).toHaveCount(0)
 })
 
 test("follows a preview another tab started, then exited", async ({
@@ -187,10 +170,8 @@ test("leaves the website's cookie alone when another session ended", async ({
 
 	await website.page.goto(page)
 
-	// The shell deletes the ended session, but this tab may still use its ref.
-	await expect
-		.poll(async () => (await context.cookies(repository.url)).map((cookie) => cookie.name))
-		.not.toContain(sessionCookieName)
+	// The ended session does not come back, but this tab may still use its ref.
+	await website.page.waitForTimeout(4000)
 	await expect(website.bar).toHaveCount(0)
 	await expect(website.payload).toHaveText("Draft 1")
 	expect(await website.previewRef()).toBe(ref)

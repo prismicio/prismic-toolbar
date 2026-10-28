@@ -33,7 +33,8 @@ export default defineConfig({
 		...devices["Desktop Chrome"],
 		viewport: { width: 1280, height: 900 },
 		storageState: STORAGE_STATE,
-		trace: "retain-on-failure",
+		// Traces hold the Prismic login and session cookies, and CI publishes its artifacts.
+		trace: process.env.CI ? "off" : "retain-on-failure",
 	},
 	projects: [
 		{ name: "setup", testMatch: "infra/setup.ts", teardown: "teardown" },

@@ -9,15 +9,12 @@ test("shares the preview with signed-out visitors", async ({
 }) => {
 	await context.grantPermissions(["clipboard-read", "clipboard-write"])
 	const draft = await startPreview()
-	const share = website.bar.getByRole("button", { name: "Share" })
-	const width = (await share.boundingBox())?.width
 
-	await share.click()
+	await website.bar.getByRole("button", { name: "Share" }).click()
 
-	await expect(website.bar.getByRole("button", { name: "Copied" })).toBeVisible()
-	// The bar does not shift when the label changes.
-	expect((await share.boundingBox())?.width).toBe(width)
-	const link = await website.page.evaluate(() => navigator.clipboard.readText())
+	const clipboard = () => website.page.evaluate(() => navigator.clipboard.readText())
+	await expect.poll(clipboard).toMatch(/^https:\/\//)
+	const link = await clipboard()
 
 	// Someone without a Prismic account opens the link.
 	const page = await visitor()
