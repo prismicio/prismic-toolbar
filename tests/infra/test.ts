@@ -17,7 +17,6 @@ export { expect }
 
 export const previewCookieName = "io.prismic.preview"
 export const sessionCookieName = "io.prismic.previewSession"
-export const ownerCookieName = "io.prismic.preview.updated"
 
 /** Where the setup project saves the repositories it created, next to the Prismic login. */
 const repositoriesCookieName = "e2e-repositories"

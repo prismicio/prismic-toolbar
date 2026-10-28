@@ -166,8 +166,8 @@ test.describe("push", () => {
 	})
 })
 
-// Editors with Content API previews push refs with `reload: false`: the website updates in place,
-// and website tabs leave the editor's ref alone.
+// Editors with Content API previews push refs with `reload: false`: the website updates in place.
+// Website tabs follow the preview session, whose ref can replace the editor's.
 test.describe("push in place", () => {
 	test("never reloads the website", async ({ doc, website, pageBuilder }) => {
 		await website.handleEvents()
@@ -183,7 +183,7 @@ test.describe("push in place", () => {
 		expect(await website.events(pageBuilder.frame)).toContainEqual(["prismicPreviewUpdate", ref])
 	})
 
-	test("a website tab follows the editor's ref without overwriting it", async ({
+	test("a website tab follows the editor's edits", async ({
 		context,
 		repository,
 		doc,
@@ -202,11 +202,9 @@ test.describe("push in place", () => {
 		await expect(website.page.getByText("First slice edited")).toBeVisible()
 		const ref = await website.previewRef()
 		expect(await website.events()).toContainEqual(["prismicPreviewUpdate", ref])
-		// The tab keeps following the session, but leaves the editor's ref alone.
-		await website.page.waitForTimeout(7000)
-		expect(await website.previewRef()).toBe(ref)
 
-		// Exiting leaves the editor's ref too.
+		// Exiting deletes the editor's ref too.
+		await editor.page.close()
 		await website.exit()
 		await expect(website.bar).toHaveCount(0)
 		await website.page.reload()
@@ -214,7 +212,7 @@ test.describe("push in place", () => {
 		await expect(website.bar).toHaveCount(0)
 	})
 
-	test("a website tab keeps a ref the editor pushed before it loaded", async ({
+	test("a website tab opened after an edit shows it", async ({
 		context,
 		doc,
 		website,
@@ -228,11 +226,10 @@ test.describe("push in place", () => {
 
 		await tab.goto(doc)
 
-		// The page already renders the editor's ref: no event, no reload.
 		await expect(tab.page.getByText("First slice edited")).toBeVisible()
+		// Following the session keeps the edit.
 		await tab.page.waitForTimeout(4000)
-		expect(await tab.events()).toEqual([])
-		expect(tab.loads).toHaveLength(1)
+		await expect(tab.page.getByText("First slice edited")).toBeVisible()
 	})
 })
 

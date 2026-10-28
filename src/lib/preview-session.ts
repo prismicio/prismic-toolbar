@@ -1,13 +1,11 @@
 import { watchCookie } from "./cookie-watcher"
 import { warn } from "./env"
 import { dispatchPreviewEvent } from "./events"
-import { liveOwner, releaseOwnership } from "./owner-marker"
 import type { Shell } from "./shell-client"
 import {
 	createSiteCookieStore,
 	previewCookieName,
 	refFor,
-	type SiteCookie,
 	type SiteCookieCodec,
 	type SiteCookieStore,
 } from "./site-cookie"
@@ -35,14 +33,12 @@ export interface PreviewSessionOptions {
 	/** `json` on websites, `plain` inside the editor. */
 	codec: SiteCookieCodec
 	/**
-	 * Follows preview cookie changes made outside this page, such as editor pushes, and leaves refs
-	 * the editor pushed alone. Off in the editor, where the preview session sets the ref.
+	 * Follows preview cookie changes made outside this page, such as editor pushes. Off in the
+	 * editor, where the preview session sets the ref.
 	 */
 	watchCookie: boolean
 	connect(): Promise<Shell>
 	reload?: () => void
-	/** When this page's navigation started, comparable with `Date.now()`. */
-	navigationStart?: number
 	store?: SiteCookieStore
 }
 
@@ -58,7 +54,6 @@ export function createPreviewSession({
 	watchCookie: watch,
 	connect,
 	reload = () => window.location.reload(),
-	navigationStart = performance.timeOrigin,
 	store = createSiteCookieStore(repositoryHost),
 }: PreviewSessionOptions): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
@@ -70,8 +65,7 @@ export function createPreviewSession({
 
 	const currentRef = () => refFor(store.read(), repositoryHost)
 	// Read before anything can change the cookie: the closest guess of what the server rendered.
-	const initialRef = currentRef()
-	let renderedRef = initialRef
+	let renderedRef = currentRef()
 	// Watch before connecting so a change during startup is not mistaken for the rendered ref.
 	const unwatch = watch
 		? watchCookie(previewCookieName, () => {
@@ -85,9 +79,6 @@ export function createPreviewSession({
 		snapshot = { ...snapshot, ...patch }
 		for (const listener of listeners) listener(snapshot)
 	}
-
-	/** Only pages that follow editor pushes leave the editor's ref alone. */
-	const editorOwner = (cookie: SiteCookie) => (watch ? liveOwner(cookie) : undefined)
 
 	function startPolling() {
 		pollTimer = setInterval(tick, 3000)
@@ -125,19 +116,6 @@ export function createPreviewSession({
 		if (dispatchPreviewEvent(event, ref)) reloadPage()
 	}
 
-	/**
-	 * An editor push that landed after this page started loading cannot be in its server-rendered
-	 * HTML. Pushes that landed before are, so this cannot loop on reload.
-	 */
-	function reconcileEditorPush() {
-		const owner = editorOwner(store.read())
-		if (!watch || renderedRef !== initialRef) return
-		if (owner?.repository !== repositoryHost || owner.at <= navigationStart) return
-
-		renderedRef = currentRef()
-		if (dispatchPreviewEvent("prismicPreviewUpdate", renderedRef)) reloadPage()
-	}
-
 	function writeRef(ref: string) {
 		const written = store.writeRef(ref, codec)
 		if (!written) warn("The browser rejected the preview cookie. Check that cookies are allowed.")
@@ -158,12 +136,9 @@ export function createPreviewSession({
 		// reload, or a session another tab started.
 		if (pollTimer === undefined || serverRef !== pingedRef || nextRef === serverRef) return
 
-		const cookie = store.read()
-		const editorOwnsCookie = Boolean(editorOwner(cookie))
-
 		if (!nextRef) {
 			// The session ended. Clear the cookie only when it still holds this session's ref.
-			const ownsCookie = !editorOwnsCookie && refFor(cookie, repositoryHost) === serverRef
+			const ownsCookie = currentRef() === serverRef
 			stopPolling()
 			serverRef = undefined
 			setSnapshot({ status: "idle", preview: undefined })
@@ -176,11 +151,7 @@ export function createPreviewSession({
 
 		serverRef = nextRef
 		if (snapshot.preview) setSnapshot({ preview: { ...snapshot.preview, ref: nextRef } })
-		// Never overwrite a ref the editor pushed. An unchanged ref above never writes either, which
-		// keeps this tab from fighting the editor over the cookie.
-		if (editorOwnsCookie) return
-
-		if (refFor(cookie, repositoryHost) !== nextRef && !writeRef(nextRef)) return
+		if (currentRef() !== nextRef && !writeRef(nextRef)) return
 		reconcile()
 	}
 
@@ -198,18 +169,11 @@ export function createPreviewSession({
 			setSnapshot({ authenticated })
 
 			// Leave the website's cookie when the session ended: another tab or the editor may own it.
-			if (!ref) {
-				setSnapshot({ status: "idle" })
-				reconcileEditorPush()
-				return
-			}
+			if (!ref) return setSnapshot({ status: "idle" })
 
 			serverRef = ref
 			const cookie = store.read()
-			if (editorOwner(cookie)) {
-				reconcileEditorPush()
-				if (isReloading()) return
-			} else if (refFor(cookie, repositoryHost) !== serverRef) {
+			if (refFor(cookie, repositoryHost) !== serverRef) {
 				if (!writeRef(serverRef)) return setSnapshot({ status: "idle" })
 				renderedRef = serverRef
 				if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
@@ -234,7 +198,6 @@ export function createPreviewSession({
 			await shell?.closeSession().catch(() => {})
 			serverRef = undefined
 
-			if (editorOwner(store.read())) releaseOwnership()
 			store.delete()
 
 			renderedRef = currentRef()
