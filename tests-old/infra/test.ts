@@ -131,9 +131,9 @@ export class Website {
 		return this.page.getByRole("region", { name: "Prismic preview" })
 	}
 
-	async goto({ events = this.events } = {}) {
+	async goto({ events = this.events, path = "/" } = {}) {
 		this.events = events
-		await this.page.goto(this.url)
+		await this.page.goto(this.url + path)
 	}
 
 	recordedEvents(page: Page | Frame = this.page) {
