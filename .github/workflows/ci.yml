@@ -91,9 +91,9 @@ jobs:
           aws-region: us-east-1
 
       - name: Upload the commit's build artifacts
-        # Change immutable assets to max-age=31536000 (1 year) after testing.
+        # A commit's folder never changes, so browsers and CloudFront keep its files for a year.
         run: |
-          aws s3 sync "dist/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION"             --exclude "prismic.js"             --acl public-read             --cache-control "public, max-age=86400, immutable"
+          aws s3 sync "dist/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION"             --exclude "prismic.js"             --acl public-read             --cache-control "public, max-age=31536000, immutable"
 
           aws s3 cp "dist/prismic-toolbar/$TOOLBAR_VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION/prismic.js"             --acl public-read             --cache-control "public, max-age=0, s-maxage=86400"
 
