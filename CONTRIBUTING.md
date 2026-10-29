@@ -59,7 +59,6 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 - Each test previews its own page from Prismic, like the editor, on the websites in `tests/website`: one without `v=5` on port 4421, one with it on port 4422. Specs named `*.v4.spec.ts` or `*.v5.spec.ts` run on one website, other specs on both.
 - The websites load the toolbar from its production URLs, and the tests serve this branch's build there, including the shell on the repository host.
 - Specs are named after the feature they test, like `tests/previews.spec.ts`. Prefer a real scenario to a unit test.
-- `tests-old` holds the previous suite, which fakes Prismic, with the unit tests. Run it with `node --run e2e:old` and `node --run unit`.
 
 ## :construction_worker: Develop
 
@@ -103,9 +102,6 @@ cp .env.test.example .env.test.local
 # Test your changes before requesting a review.
 # All changes should be tested. No failing tests are allowed.
 node --run test
-# Run only unit tests (optionally in watch mode):
-node --run unit
-node --run unit:watch
 # Run only E2E tests (optionally in UI mode):
 node --run e2e
 node --run e2e:ui
