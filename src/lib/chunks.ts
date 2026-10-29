@@ -1,3 +1,4 @@
+import type { SessionReplayMessage } from "../embedded-preview/message-protocol"
 import { loadScript } from "./dom"
 import type { PreviewSession } from "./preview-session"
 
@@ -7,12 +8,14 @@ export interface MountToolbarOptions {
 }
 
 export interface EmbeddedPreviewOptions {
+	assets?: string
 	/** Receives refs the editor pushes, with `reload: false` when it expects an in-place update. */
 	onRef?: (ref: string, reload?: boolean) => Promise<void>
 }
 
 /** Entry points of the lazily loaded bundles. */
 export interface ToolbarChunks {
+	setSessionReplay: (config: SessionReplayMessage["config"]) => Promise<void>
 	mountToolbar: (options: MountToolbarOptions) => void
 	startV5: (repositoryHost: string) => void
 	setupEmbeddedPreview: (options?: EmbeddedPreviewOptions) => Promise<void>

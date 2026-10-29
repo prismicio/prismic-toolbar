@@ -20,6 +20,7 @@
 		"test": "npm run lint && npm run types && npm run build && npm run e2e"
 	},
 	"dependencies": {
+		"@amplitude/session-replay-browser": "1.51.5",
 		"preact": "10.29.8",
 		"zod": "4.6.5"
 	},
