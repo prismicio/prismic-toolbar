@@ -14,7 +14,7 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 	appendCSS(root, styles)
 
 	let bar: HTMLElement | undefined
-	let authenticated = false
+	let authenticated: boolean | undefined
 
 	function update(snapshot: PreviewSnapshot) {
 		if (!snapshot.preview || snapshot.authenticated !== authenticated) {
@@ -25,6 +25,7 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 
 		if (!bar) {
 			authenticated = snapshot.authenticated
+			const canShare = authenticated !== false
 			const exit = $el(
 				"button",
 				{ class: "exit", type: "button", "aria-label": "Exit preview", title: "Exit preview" },
@@ -65,8 +66,8 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 					$el("p", { class: "title" }),
 					$el("p", { class: "status" }),
 				),
-				!authenticated && powered,
-				$el("div", { class: "actions" }, authenticated && $shareButton(session), exit),
+				!canShare && powered,
+				$el("div", { class: "actions" }, canShare && $shareButton(session), exit),
 			)
 			// Before the styles, where earlier versions rendered it.
 			root.prepend(bar)
@@ -101,8 +102,6 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 		{ class: "share", type: "button", "aria-live": "polite" },
 		...labels.map(([, span]) => span),
 	)
-	// Share links by page, so copying a link again needs no spinner.
-	const links = new Map<string, string>()
 	let timer: ReturnType<typeof setTimeout> | undefined
 
 	function show(state: keyof typeof shareLabels) {
@@ -115,16 +114,14 @@ function $shareButton(session: PreviewSession): HTMLButtonElement {
 	}
 
 	button.onclick = async () => {
-		const pageURL = window.location.href
-		const cached = links.get(pageURL)
-		if (!cached) show("loading")
 		let url: string
 		try {
-			url = cached ?? (await session.share(pageURL))
+			const link = session.share()
+			if (link instanceof Promise) show("loading")
+			url = await link
 		} catch {
 			return show("failed")
 		}
-		links.set(pageURL, url)
 
 		try {
 			await navigator.clipboard.writeText(url)

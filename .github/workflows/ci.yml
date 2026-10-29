@@ -24,19 +24,24 @@ jobs:
       - run: npm run types
       - run: npm run lint
       - run: npm run format -- --check
-      - run: npm run unit
       - run: npm run build
       - run: npm run bundlewatch
         env:
           BUNDLEWATCH_GITHUB_TOKEN: ${{ secrets.BUNDLEWATCH_GITHUB_TOKEN }}
           CI_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
       - run: npx playwright install --with-deps chromium
+      # Creates real repositories with a Prismic test account.
       - run: npm run e2e
+        env:
+          E2E_PRISMIC_EMAIL: ${{ secrets.E2E_PRISMIC_EMAIL }}
+          E2E_PRISMIC_PASSWORD: ${{ secrets.E2E_PRISMIC_PASSWORD }}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
           name: browser-test-results
-          path: test-results/
+          path: |
+            test-results/
+            playwright-report/
 
   changes:
     if: github.event_name == 'push'
@@ -91,9 +96,9 @@ jobs:
           aws-region: us-east-1
 
       - name: Upload the commit's build artifacts
-        # Change immutable assets to max-age=31536000 (1 year) after testing.
+        # A commit's folder never changes, so browsers and CloudFront keep its files for a year.
         run: |
-          aws s3 sync "dist/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION"             --exclude "prismic.js"             --acl public-read             --cache-control "public, max-age=86400, immutable"
+          aws s3 sync "dist/prismic-toolbar/$TOOLBAR_VERSION" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION"             --exclude "prismic.js"             --acl public-read             --cache-control "public, max-age=31536000, immutable"
 
           aws s3 cp "dist/prismic-toolbar/$TOOLBAR_VERSION/prismic.js" "s3://${{ secrets.BUCKET_PATH }}/$TOOLBAR_VERSION/prismic.js"             --acl public-read             --cache-control "public, max-age=0, s-maxage=86400"
 

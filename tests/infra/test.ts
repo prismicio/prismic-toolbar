@@ -1,451 +1,313 @@
+import { readFileSync, writeFileSync } from "node:fs"
+
 import {
 	test as base,
 	expect,
+	type APIRequestContext,
 	type BrowserContext,
 	type Frame,
 	type Page,
-	type Route,
 } from "@playwright/test"
 
+import { STORAGE_STATE } from "../../playwright.config"
 import { version } from "../../vite.config"
+import { Prismic, type Document, type Repository, type Slice } from "./client"
+
+export { expect }
 
 export const previewCookieName = "io.prismic.preview"
-export const ownerCookieName = "io.prismic.preview.updated"
 export const sessionCookieName = "io.prismic.previewSession"
 
-const toolbarFile = (name: string) => `dist/prismic-toolbar/${version}/${name}`
+/** Where the setup project saves the repositories it created, next to the Prismic login. */
+const repositoriesCookieName = "e2e-repositories"
 
-type PreviewEvent = [type: string, ref: string | null]
-
-declare global {
-	interface Window {
-		/** Preview events a website received, when it records them. */
-		previewEvents: PreviewEvent[]
-		/** Types of the messages a website received, to know when the toolbar handled one. */
-		receivedMessages: unknown[]
-		/** The fake Prismic editor's state. */
-		editor: {
-			messages: { type: string; [key: string]: unknown }[]
-			send(message: unknown): void
-			updateComments(patch: Record<string, unknown>): void
-		}
-	}
+export function readRepositories(): string[] {
+	const state: { cookies?: { name: string; value: string }[] } = JSON.parse(
+		readFileSync(STORAGE_STATE, "utf8"),
+	)
+	const cookie = state.cookies?.find((cookie) => cookie.name === repositoriesCookieName)
+	return cookie?.value ? cookie.value.split(",") : []
 }
 
-/** A Prismic repository with a fake preview session, serving the toolbar's shell. */
-export class Repository {
-	readonly host = "toolbar-e2e.prismic.io"
-	readonly url = `https://${this.host}`
-	readonly title = "Spring launch"
-	readonly sessionID = "e2e-session"
-	/** The preview session's ref, `null` once the session ended. */
-	ref: string | null = null
-	authenticated = true
-	/** Refs the toolbar pinged the session with. */
-	readonly pings: string[] = []
-	/** Query parameters of share link requests. */
-	readonly shares: Record<string, string>[] = []
-
-	constructor(private readonly context: BrowserContext) {}
-
-	/** Starts a preview session, like opening a preview from the Prismic editor. */
-	async startPreview(ref: string, { authenticated = true } = {}) {
-		this.ref = ref
-		this.authenticated = authenticated
-		await this.context.addCookies([
-			{
-				name: sessionCookieName,
-				value: this.sessionID,
-				url: this.url,
-				secure: true,
-				sameSite: "None",
-			},
-		])
-	}
-
-	async hasSession() {
-		const cookies = await this.context.cookies(this.url)
-		return cookies.some((cookie) => cookie.name === sessionCookieName)
-	}
-
-	async route() {
-		await this.context.route(`${this.url}/**`, (route) => this.handle(route))
-	}
-
-	private async handle(route: Route) {
-		const url = new URL(route.request().url())
-
-		if (url.pathname === `/prismic-toolbar/${version}/shell.html`) {
-			return route.fulfill({ path: toolbarFile("shell.html") })
-		}
-		if (url.pathname === "/toolbar/state") {
-			return route.fulfill({ json: { isAuthenticated: this.authenticated } })
-		}
-		if (url.pathname === `/previews/${this.sessionID}/ping`) {
-			const ref = url.searchParams.get("ref") ?? ""
-			this.pings.push(ref)
-			return route.fulfill({
-				// Like Prismic: any origin, without credentials.
-				headers: { "access-control-allow-origin": "*" },
-				json: this.ref
-					? { ref: this.ref, reload: this.ref !== ref, title: this.title }
-					: { reload: false, close: true },
-			})
-		}
-		if (url.pathname === "/previews/s" && route.request().method() === "POST") {
-			this.shares.push(Object.fromEntries(url.searchParams))
-			return route.fulfill({
-				json: { url: `${this.url}/previews/s/share-id`, hasPreviewImage: false },
-			})
-		}
-		return route.fallback()
-	}
+export async function saveState(request: APIRequestContext, repositories: Repository[]) {
+	const state = await request.storageState()
+	state.cookies = state.cookies.filter((cookie) => cookie.name !== repositoriesCookieName)
+	state.cookies.push({
+		name: repositoriesCookieName,
+		value: repositories.map((repository) => repository.domain).join(","),
+		domain: "localhost",
+		path: "/",
+		expires: -1,
+		httpOnly: false,
+		secure: false,
+		sameSite: "Lax",
+	})
+	writeFileSync(STORAGE_STATE, JSON.stringify(state))
 }
 
 /**
- * A website with the toolbar installed. It renders the ref of the preview cookie, like a website
- * using a Prismic SDK. It is served on `https://website.test` and `http://localhost:3000`.
+ * Serves this branch's build where Prismic serves the toolbar. The shell is served at its URL on
+ * the repository host, so it runs there with the repository's real cookies.
  */
-export class Website {
-	readonly url = "https://website.test"
-	/** The ref each page load rendered, `null` for published content. */
-	readonly loads: (string | null)[] = []
-	/**
-	 * How the website handles preview events: ignores them, so the toolbar reloads the page; records
-	 * them, still reloading; or records and handles them, so the toolbar does not reload.
-	 */
-	events: "ignore" | "record" | "handle" = "ignore"
-	/** Query parameters of the toolbar script, as the website's SDK installs it. */
-	scriptQuery = "repo=toolbar-e2e"
-
-	constructor(
-		readonly page: Page,
-		private readonly repository: Repository,
-	) {}
-
-	get content() {
-		return this.page.locator("#content")
-	}
-
-	get previewBar() {
-		return this.page.getByRole("region", { name: "Prismic preview" })
-	}
-
-	async goto({ events = this.events } = {}) {
-		this.events = events
-		await this.page.goto(this.url)
-	}
-
-	recordedEvents(page: Page | Frame = this.page) {
-		return page.evaluate(() => window.previewEvents)
-	}
-
-	receivedMessages(page: Page | Frame = this.page) {
-		return page.evaluate(() => window.receivedMessages)
-	}
-
-	/** Stores a preview like the preview route of an SDK that opts into `v=5`. */
-	async storePreview(ref: string, { preview = true, session = true } = {}) {
-		this.repository.ref = ref
-		const cookies: Record<string, string> = {}
-		if (preview) cookies[previewCookieName] = ref
-		if (session) cookies[sessionCookieName] = this.repository.sessionID
-		await this.page.context().addCookies(
-			Object.entries(cookies).map(([name, value]) => ({
-				name,
-				value,
-				url: this.url,
-				secure: true,
-				sameSite: "None" as const,
-			})),
-		)
-	}
-
-	/** Reads a cookie of the website, decoded. */
-	async cookie(name: string, url = this.url) {
-		const cookie = (await this.page.context().cookies(url)).find((cookie) => cookie.name === name)
-		return cookie && { ...cookie, value: decodeURIComponent(cookie.value) }
-	}
-
-	/** Reads the repository's ref from the preview cookie, like a Prismic SDK. */
-	async previewRef(url = this.url) {
-		return readPreviewRef((await this.cookie(previewCookieName, url))?.value, this.repository.host)
-	}
-
-	async route() {
-		const origins = [this.url, "http://localhost:3000"]
-		await this.page.context().route(
-			(url) => origins.includes(url.origin),
-			(route) => this.handle(route),
-		)
-	}
-
-	private async handle(route: Route) {
-		if (route.request().resourceType() !== "document") return route.fulfill({ status: 404 })
-
-		const cookies = (await route.request().allHeaders()).cookie?.split("; ") ?? []
-		const cookie = cookies.find((cookie) => cookie.startsWith(`${previewCookieName}=`))
-		const ref = readPreviewRef(
-			cookie && decodeURIComponent(cookie.slice(previewCookieName.length + 1)),
-			this.repository.host,
-		)
-		this.loads.push(ref ?? null)
-		await route.fulfill({
-			contentType: "text/html",
-			body: websiteHTML(ref, this.events, this.scriptQuery),
-		})
-	}
+async function serveToolbar(context: BrowserContext) {
+	const dist = `dist/prismic-toolbar/${version}`
+	await context.route("https://static.cdn.prismic.io/prismic.js?*", (route) =>
+		route.fulfill({ path: `${dist}/prismic.js` }),
+	)
+	const assets = new RegExp(`^https://([\\w-]+\\.)?prismic\\.io/prismic-toolbar/${version}/`)
+	await context.route(assets, (route) =>
+		route.fulfill({ path: `${dist}/${new URL(route.request().url()).pathname.split("/").pop()}` }),
+	)
 }
 
-function readPreviewRef(cookie: string | undefined, repository: string): string | undefined {
-	if (!cookie) return undefined
-	try {
-		const value: unknown = JSON.parse(cookie)
-		if (typeof value === "object" && value) {
-			return (value as Record<string, { preview?: string } | undefined>)[repository]?.preview
-		}
-	} catch {}
-	return cookie
-}
-
-function websiteHTML(ref: string | undefined, events: Website["events"], scriptQuery: string) {
-	const recorder = `<script>
-		window.previewEvents = []
-		for (const type of ["prismicPreviewStart", "prismicPreviewUpdate", "prismicPreviewEnd"]) {
-			addEventListener(type, (event) => {
-				previewEvents.push([type, event.detail?.ref ?? null])
-				${events === "handle" ? "event.preventDefault()" : ""}
-			})
-		}
-	</script>`
-
-	return `<!doctype html>
-<meta charset="utf-8" />
-<title>Website</title>
-<style>
-	body { margin: 0; height: 2400px; font: 16px sans-serif; }
-	/* The toolbar must not inherit website styles. */
-	.title { color: rgb(255, 0, 0); }
-	#first-slice { height: 400px; padding: 24px; }
-	#outside-slices { height: 100px; }
-	#second-slice { height: 300px; padding: 24px; }
-</style>
-<body>
-<!--prismic-slice-start:first-slice-->
-<section id="first-slice">
-	<h1 class="title">Customer content</h1>
-	<p id="content">${ref ? `Draft content: ${ref}` : "Published content"}</p>
-</section>
-<!--prismic-slice-end:first-slice-->
-<div id="outside-slices">Outside slices</div>
-<!--prismic-slice-start:second-slice-->
-<section id="second-slice">Second slice</section>
-<!--prismic-slice-end:second-slice-->
-<script>
-	window.receivedMessages = []
-	addEventListener("message", (event) => receivedMessages.push(event.data?.type))
-</script>
-${events === "ignore" ? "" : recorder}
-<script async defer src="https://static.cdn.prismic.io/prismic.js?${scriptQuery}"></script>`
-}
-
-/** Comment threads, as the editor sends them. */
-const author = { id: "author", name: "Test Author", avatarUrl: "/missing-avatar" }
-export const comments = {
-	pins: [
-		{ threadId: "first", xRatio: 0.1, yRatio: 0.1, author, resolved: false },
-		{ threadId: "last", xRatio: 0.8, yRatio: 0.9, author, resolved: true },
-	],
-	draftAuthor: author,
-}
-
-/** The edited document's slices, as the editor describes them. */
-export const slices = [
-	{ sliceId: "first-slice", label: "Hero", variation: "Default" },
-	{ sliceId: "second-slice", label: "Call to action", variation: "Centered" },
-]
-
-interface EditorOptions {
-	/** `poll` previews a website without live editing. */
-	mode?: "push" | "poll"
-	/** The editor's origin. Only Prismic origins can drive the preview. */
-	origin?: string
-	website?: string
-	/** The comment overlay's initial state. */
-	comments?: Record<string, unknown>
-	/** The edited document's slices. Others are neither highlighted nor selectable. */
-	slices?: { sliceId: string; label: string; variation?: string }[]
-	page?: Page
-}
-
-/** The Prismic editor's live preview, framing the website. */
-export class Editor {
-	private options: Required<Omit<EditorOptions, "page">>
-
-	constructor(
-		public page: Page,
-		private readonly website: Website,
-		private readonly repository: Repository,
-	) {
-		this.options = {
-			mode: "push",
-			origin: repository.url,
-			website: website.url,
-			comments: {},
-			slices,
-		}
-	}
-
-	/** The previewed website. */
-	get preview() {
-		return this.page.frameLocator("iframe")
-	}
-
-	get previewFrame() {
-		const frame = this.page.mainFrame().childFrames()[0]
-		if (!frame) throw new Error("The editor has no preview.")
-		return frame
-	}
-
-	get overlay() {
-		return this.preview.locator("#prismic-embedded-preview-overlay")
-	}
-
-	async goto({ page = this.page, ...options }: EditorOptions = {}) {
-		this.page = page
-		this.options = { ...this.options, website: this.website.url, ...options }
-		await page.goto(`${this.options.origin}/builder`)
-	}
-
-	send(message: { type: string; [key: string]: unknown }) {
-		return this.page.evaluate((message) => window.editor.send(message), message)
-	}
-
-	updateComments(patch: Record<string, unknown>) {
-		return this.page.evaluate((patch) => window.editor.updateComments(patch), patch)
-	}
-
-	messages(type: string) {
-		return this.page.evaluate(
-			(type) =>
-				window.editor.messages.filter(
-					(message) => message.type === `prismic:embedded-preview:${type}`,
-				),
-			type,
-		)
-	}
-
-	async route() {
-		const origins = [this.repository.url, "https://editor.test"]
-		await this.page.context().route(
-			(url) => origins.includes(url.origin) && url.pathname === "/builder",
-			(route) => route.fulfill({ contentType: "text/html", body: editorHTML(this.options) }),
-		)
-	}
-}
-
-function editorHTML({ mode, website, comments, slices }: Required<Omit<EditorOptions, "page">>) {
-	const name = mode === "poll" ? "prismic:embedded-preview:poll" : "prismic:embedded-preview"
-
-	return `<!doctype html>
-<meta charset="utf-8" />
-<title>Prismic editor</title>
-<style>
-	body { margin: 0; }
-	iframe { width: 100%; height: 700px; border: 0; }
-</style>
-<iframe name="${name}" src="${website}"></iframe>
-<script>
-	const frame = document.querySelector("iframe")
-	const origin = new URL(frame.src).origin
-	const editor = (window.editor = {
-		messages: [],
-		comments: {
-			type: "prismic:embedded-preview:set-comment-overlay",
-			placementEnabled: false,
-			pins: [],
-			...${JSON.stringify(comments)},
-		},
-		send: (message) => frame.contentWindow.postMessage(message, origin),
-		updateComments(patch) {
-			Object.assign(editor.comments, patch)
-			for (const key in patch) if (patch[key] === undefined) delete editor.comments[key]
-			editor.send(editor.comments)
-		},
-	})
-	// Like the Prismic editor: it acknowledges the preview and controls pin selection.
-	addEventListener("message", ({ source, data }) => {
-		if (source !== frame.contentWindow) return
-		editor.messages.push(data)
-		if (data.type === "prismic:embedded-preview:ready") {
-			editor.send({ type: "prismic:embedded-preview:ack" })
-			editor.send({ type: "prismic:embedded-preview:set-slices", slices: ${JSON.stringify(slices)} })
-			editor.send(editor.comments)
-		} else if (data.type === "prismic:embedded-preview:select-pin") {
-			editor.updateComments({ selectedThreadId: data.pin.threadId })
-		} else if (data.type === "prismic:embedded-preview:deselect-pin") {
-			editor.updateComments({ selectedThreadId: undefined, draftPin: undefined })
-		}
-	})
-</script>`
-}
-
-export const test = base.extend<{
+type Fixtures = {
 	repository: Repository
+	/** A published page with its own UID, so tests never share content. */
+	doc: Document
 	website: Website
 	editor: Editor
-	/** URLs the browser requested. */
+	/** Saves a draft of `doc` with "Draft 1", and previews it from Prismic in `tab`. */
+	startPreview: (tab?: Page) => Promise<Document>
+	pageBuilder: PageBuilder
+	/** URLs the browser requested during the test. */
 	requests: string[]
-}>({
-	// Serves the toolbar at its production URLs and fails on any other request.
+	/** Opens a fresh browser, signed out of Prismic, like someone a link was shared with. */
+	visitor: () => Promise<Page>
+}
+
+export const test = base.extend<Fixtures, { prismic: Prismic }>({
+	// oxlint-disable-next-line no-empty-pattern
+	prismic: [async ({}, use) => use(await Prismic.signIn()), { scope: "worker" }],
 	context: async ({ context }, use) => {
-		const unexpected: string[] = []
-		await context.route("**/*", (route) => {
-			unexpected.push(route.request().url())
-			return route.abort()
-		})
-		await context.route(
-			(url) => url.href.startsWith("https://static.cdn.prismic.io/prismic.js?"),
-			(route) => route.fulfill({ path: toolbarFile("prismic.js") }),
-		)
-		await context.route(`https://prismic.io/prismic-toolbar/${version}/*.js`, (route) =>
-			route.fulfill({
-				path: toolbarFile(new URL(route.request().url()).pathname.split("/").at(-1)!),
-			}),
-		)
-
+		await serveToolbar(context)
 		await use(context)
-
-		expect(unexpected, "Unexpected requests").toEqual([])
 	},
-	page: async ({ page }, use) => {
-		const errors: string[] = []
-		page.on("pageerror", (error) => errors.push(error.message))
-
-		await use(page)
-
-		expect(errors, "Uncaught errors").toEqual([])
+	pageBuilder: async ({ page, repository, baseURL }, use) => {
+		await use(new PageBuilder(page, repository, baseURL!))
+		// The editor may still be loading flags.
+		await page.unrouteAll({ behavior: "ignoreErrors" })
 	},
 	requests: async ({ context }, use) => {
 		const requests: string[] = []
 		context.on("request", (request) => requests.push(request.url()))
 		await use(requests)
 	},
-	repository: async ({ context }, use) => {
-		const repository = new Repository(context)
-		await repository.route()
-		await use(repository)
+	repository: async ({ prismic }, use, { parallelIndex }) =>
+		use(prismic.repository(readRepositories()[parallelIndex]!)),
+	doc: async ({ repository }, use) => use(await repository.createDocument()),
+	website: async ({ page, baseURL, repository }, use) =>
+		use(new Website(page, baseURL!, repository)),
+	editor: async ({ baseURL }, use) => use(new Editor(baseURL!)),
+	startPreview: async ({ page, repository, doc, editor }, use) => {
+		await use(async (tab = page) => {
+			const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
+			await editor.preview(tab, repository, draft)
+			await expect(tab.getByTestId("payload").first()).toHaveText("Draft 1")
+			return draft
+		})
 	},
-	website: async ({ page, repository }, use) => {
-		const website = new Website(page, repository)
-		await website.route()
-		await use(website)
-	},
-	editor: async ({ page, website, repository }, use) => {
-		const editor = new Editor(page, website, repository)
-		await editor.route()
-		await use(editor)
+	visitor: async ({ browser }, use) => {
+		const contexts: BrowserContext[] = []
+		await use(async () => {
+			// Contexts inherit the project's storage state, which holds the Prismic login.
+			const context = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+			contexts.push(context)
+			await serveToolbar(context)
+			return context.newPage()
+		})
+		for (const context of contexts) await context.close()
 	},
 })
 
-export { expect }
+declare global {
+	interface Window {
+		previewEvents: [type: string, ref: string | null][]
+	}
+}
+
+/** The website under test, `tests/website/server.ts`. */
+export class Website {
+	/** URLs this tab loaded, to tell whether the toolbar reloaded it. */
+	readonly loads: string[] = []
+
+	constructor(
+		readonly page: Page,
+		readonly url: string,
+		readonly repository: Repository,
+	) {
+		page.on("framenavigated", (frame) => {
+			if (frame === page.mainFrame()) this.loads.push(frame.url())
+		})
+	}
+
+	get payload() {
+		return this.page.getByTestId("payload").first()
+	}
+
+	get bar() {
+		return this.barOf(this.page)
+	}
+
+	barOf(page: Page) {
+		return page.getByRole("region", { name: "Prismic preview" })
+	}
+
+	pageURL(doc: Document) {
+		return `${this.url}/${this.repository.domain}/${doc.uid}`
+	}
+
+	async goto(doc: Document) {
+		await this.page.goto(this.pageURL(doc))
+	}
+
+	/** Makes pages update in place on preview events, like frameworks, instead of reloading. */
+	async handleEvents() {
+		// Readable in the editor's cross-site iframe too.
+		const cookie = { name: "events", value: "handle", domain: "localhost", path: "/" }
+		await this.page.context().addCookies([{ ...cookie, sameSite: "None", secure: true }])
+	}
+
+	/** Preview events this page load received. */
+	events(page: Page | Frame = this.page) {
+		return page.evaluate(() => window.previewEvents)
+	}
+
+	/** Marks this page load. A reload loses the mark. */
+	async mark(page: Page | Frame = this.page) {
+		await page.evaluate(() => (document.documentElement.dataset.marker = ""))
+	}
+
+	async expectSameLoad(page: Page | Frame = this.page) {
+		await expect(page.locator("html")).toHaveAttribute("data-marker", "")
+	}
+
+	async exit(bar = this.bar) {
+		await bar.getByRole("button", { name: "Exit preview" }).click()
+	}
+
+	/** Reads one of the website's cookies, decoded. */
+	async cookie(name: string) {
+		const cookies = await this.page.context().cookies(this.url)
+		const cookie = cookies.find((cookie) => cookie.name === name)
+		return cookie && { ...cookie, value: decodeURIComponent(cookie.value) }
+	}
+
+	/** The repository's ref in the preview cookie, read like the Content API does. */
+	async previewRef() {
+		const value = (await this.cookie(previewCookieName))?.value
+		if (!value) return undefined
+		try {
+			return JSON.parse(value)[this.repository.host]?.preview as string | undefined
+		} catch {
+			return value
+		}
+	}
+}
+
+/** Starts previews like the Prismic editor's Preview button. */
+export class Editor {
+	constructor(readonly website: string) {}
+
+	/**
+	 * Asks Prismic for a preview session of the document's draft, which sets the repository's session
+	 * cookie, then opens the website's preview route in `page`, with `session` like the editor.
+	 */
+	async preview(page: Page, repository: Repository, doc: Document) {
+		await page.goto((await this.startSession(page.context(), repository, doc)).url)
+	}
+
+	/** Starts the session without opening the website. */
+	async startSession(context: BrowserContext, repository: Repository, doc: Document) {
+		const query = new URLSearchParams({
+			previewId: await repository.previewID(this.website),
+			documentId: doc.id,
+		})
+		const res = await context.request.get(`${repository.url}/core/previews/session/draft?${query}`)
+		expect(res.ok(), "Could not start a preview session.").toBe(true)
+		const { preview_url, session_id }: { preview_url: string; session_id: string } =
+			await res.json()
+		return {
+			url: `${preview_url}&session=${encodeURIComponent(session_id)}`,
+			ref: new URL(preview_url).searchParams.get("token")!,
+		}
+	}
+}
+
+/** The Prismic Page Builder, editing a page with the website as its live preview. */
+export class PageBuilder {
+	constructor(
+		readonly page: Page,
+		readonly repository: Repository,
+		readonly website: string,
+	) {}
+
+	/** The website, in the editor's preview iframe. */
+	get preview() {
+		return this.page.frameLocator('iframe[name^="prismic:embedded-preview"]')
+	}
+
+	get frame(): Frame {
+		const frame = this.page.frames().find((frame) => frame.name().startsWith("prismic:embedded"))
+		if (!frame) throw new Error("The Page Builder shows no preview.")
+		return frame
+	}
+
+	/** The toolbar's highlight of a slice, with its controls. */
+	slice(slice: Slice) {
+		return this.preview.locator(`.slice-highlight[data-slice-id="text_block$${slice.id}"]`)
+	}
+
+	/** Selects the slice showing `text` in the preview, and appends `suffix` to it in the editor. */
+	async edit(text: string, suffix: string) {
+		await this.preview.getByText(text).click()
+		const field = this.page.locator('[contenteditable="true"][aria-label="Text"]')
+		await expect(field).toHaveText(text)
+		await field.click()
+		await this.page.keyboard.press("End")
+		await this.page.keyboard.type(suffix)
+		await expect(field).toHaveText(text + suffix)
+	}
+
+	/**
+	 * Opens `doc`. Live editing and how it updates the preview are behind feature flags, the only
+	 * part of Prismic's responses this changes: `push` sends refs to the website, `poll` lets the
+	 * toolbar follow the preview session. `inPlace` adds `reload: false` to the refs the editor
+	 * pushes, which only editors with Content API previews send, not yet available to test accounts.
+	 */
+	async open(
+		doc: Document,
+		{ mode, inPlace = false }: { mode: "push" | "poll"; inPlace?: boolean },
+	) {
+		const context = this.page.context()
+		// The editor is public, the website on the loopback.
+		await context.grantPermissions(["local-network-access"], { origin: this.repository.url })
+		await this.page.route("https://amplitude.prismic.io/api/sdk/v2/vardata*", async (route) => {
+			const response = await route.fetch()
+			const flags = await response.json()
+			const flag = (value: string) => ({ key: value, value })
+			flags["pb-ai-live-editing"] = flag("on")
+			flags["pb-embedded-preview-push-updates"] = flag(mode === "push" ? "on" : "off")
+			await route.fulfill({ response, json: flags })
+		})
+		if (inPlace) {
+			// Runs before the toolbar's listener, in the website's frame.
+			await context.addInitScript(() => {
+				if (window.name !== "prismic:embedded-preview") return
+				const type = "prismic:embedded-preview:set-ref"
+				const listener = (event: MessageEvent) => {
+					if (event.data?.type === type) event.data.reload = false
+				}
+				addEventListener("message", listener, { capture: true })
+			})
+		}
+		await this.page.goto(`${this.repository.url}/builder/pages/${doc.id}`)
+		// Live editing asks for a setup the website does not need.
+		const dialog = this.page.getByRole("dialog", { name: /missing the configuration/ })
+		await dialog.getByRole("button", { name: "Close" }).click()
+		// Each website is one of the repository's previews.
+		await this.page.getByRole("combobox").filter({ hasText: "Select a preview" }).click()
+		await this.page.getByRole("option", { name: this.website }).click()
+		// The editor's first ref reloads the website: wait for it before using the overlay.
+		await expect(this.preview.locator("main[data-preview]")).toBeVisible()
+	}
+}

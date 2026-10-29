@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs"
 
 import type { InlineConfig, Plugin } from "vite"
-import { defineConfig } from "vitest/config"
 
 import packageJSON from "./package.json" with { type: "json" }
 
@@ -83,19 +82,3 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 		plugins: entry === "shell" ? [inlineShell] : [],
 	}
 }
-
-// Unit tests.
-export default defineConfig({
-	oxc,
-	define: { ...defines(false), __TOOLBAR_LOCAL_EDITOR__: "true" },
-	test: {
-		environment: "jsdom",
-		include: ["tests/**/*.test.ts"],
-		setupFiles: ["tests/setup.ts"],
-		coverage: {
-			provider: "v8",
-			reporter: ["lcovonly", "text"],
-			include: ["src/**/*.{ts,tsx}"],
-		},
-	},
-})

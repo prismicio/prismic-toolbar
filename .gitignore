@@ -12,7 +12,6 @@ next-env.d.ts
 test-results/
 playwright-report/
 blob-report/
-coverage/
 
 # Local / generated
 s3.sh
@@ -25,3 +24,9 @@ npm-debug.log*
 # Editors
 .idea/
 *.iml
+
+# Local test credentials
+.env.test.local
+
+# E2E state: the Prismic login and test repositories
+tests/infra/.storage-state.json
