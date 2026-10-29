@@ -120,7 +120,8 @@ test.describe("push", () => {
 		await page.getByRole("textbox", { name: "Composer editor" }).fill("Looks good")
 		await page.getByRole("button", { name: "Send" }).click()
 
-		const pin = pageBuilder.preview.getByRole("button", { name: "Open comment by Jane Smith" })
+		// Pins are named after the test account's user.
+		const pin = pageBuilder.preview.getByRole("button", { name: /^Open comment by / })
 		await expect(pin).toBeVisible()
 		await expect(pageBuilder.preview.getByRole("button", { name: "New comment" })).toHaveCount(0)
 		await expect(page.getByText("Looks good").first()).toBeVisible()
