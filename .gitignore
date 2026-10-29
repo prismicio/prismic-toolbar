@@ -25,3 +25,9 @@ npm-debug.log*
 # Editors
 .idea/
 *.iml
+
+# Local test credentials
+.env.test.local
+
+# E2E state: the Prismic login and test repositories
+tests/infra/.storage-state.json
