@@ -27,7 +27,7 @@
 		"@playwright/test": "1.63.0",
 		"@prismicio/client": "7.22.1",
 		"@types/node": "26.6.4",
-		"bundlewatch": "0.4.2",
+		"bundlewatch": "1.1.0",
 		"http-server": "14.1.1",
 		"oxfmt": "0.68.0",
 		"oxlint": "1.83.0",
