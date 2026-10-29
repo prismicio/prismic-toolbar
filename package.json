@@ -21,7 +21,7 @@
 	},
 	"dependencies": {
 		"preact": "10.29.8",
-		"zod": "4.6.5"
+		"zod": "4.6.6"
 	},
 	"devDependencies": {
 		"@playwright/test": "1.63.0",
