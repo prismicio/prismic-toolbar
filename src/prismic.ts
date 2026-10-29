@@ -12,7 +12,7 @@ import {
 import { dispatchPreviewEvent } from "./lib/events"
 import { createPreviewSession } from "./lib/preview-session"
 import { connectShell } from "./lib/shell-client"
-import { createSiteCookieStore, refFor, sessionCookieName } from "./lib/site-cookie"
+import { deletePreviewCookie, readPreviewRef, sessionCookieName } from "./lib/site-cookie"
 import { startV4 } from "./v4"
 
 // Replaced at build time, see `vite.config.ts`.
@@ -43,7 +43,7 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 
 	// The editor drives embedded modes, whatever the website's SDK opts into.
 	if (mode === "embedded-push") {
-		void setupEmbeddedPreview(assets, { onRef: createEmbeddedPush({ repositoryHost }) })
+		void setupEmbeddedPreview(assets, { onRef: createEmbeddedPush(repositoryHost) })
 		return
 	}
 
@@ -67,11 +67,10 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 		}
 		// A preview without a session, like a v4 one from before the website's SDK sent `v=5`, has no
 		// bar to exit it.
-		const store = createSiteCookieStore(repositoryHost)
-		if (!refFor(store.read(), repositoryHost)) return
-		store.removeOwn()
+		if (!readPreviewRef(repositoryHost)) return
+		deletePreviewCookie()
 		// Reloading with a cookie the toolbar cannot delete would loop.
-		const removed = !refFor(store.read(), repositoryHost)
+		const removed = !readPreviewRef(repositoryHost)
 		if (dispatchPreviewEvent("prismicPreviewEnd") && removed) window.location.reload()
 		return
 	}

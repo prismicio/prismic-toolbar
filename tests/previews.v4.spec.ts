@@ -2,21 +2,37 @@
 // preview session through the shell, a page on the repository host that reads its cookies.
 import { expect, previewCookieName, test } from "./infra/test"
 
-test("stores the ref in the cookie format older SDKs read", async ({
-	repository,
-	website,
-	startPreview,
-}) => {
-	await startPreview()
+test("keeps the raw ref of the preview route", async ({ repository, website, startPreview }) => {
+	const draft = await startPreview()
 	await expect(website.bar).toBeVisible()
-
-	// The tracker comes first: older SDKs read the cookie with a regular expression.
-	await expect
-		.poll(async () => (await website.cookie(previewCookieName))?.value)
-		.toMatch(new RegExp(`^\\{"_tracker":"\\w+","${repository.host}":\\{"preview":"[^"]+"\\}\\}$`))
-	expect((await website.cookie(previewCookieName))?.sameSite).toBe("Lax")
+	const ref = (await website.cookie(previewCookieName))?.value
+	expect(ref).toMatch(/^https:\/\//)
 	// The preview route already rendered the session: no reload.
 	expect(website.loads).toHaveLength(1)
+
+	await repository.updateDraft(draft, { payload: "Draft 2" })
+
+	await expect(website.payload).toHaveText("Draft 2")
+	expect((await website.cookie(previewCookieName))?.value).toMatch(/^https:\/\//)
+	expect((await website.cookie(previewCookieName))?.value).not.toBe(ref)
+})
+
+test("stores the ref as JSON when the website has none", async ({
+	context,
+	repository,
+	doc,
+	website,
+	editor,
+}) => {
+	const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
+	await editor.startSession(context, repository, draft)
+
+	await website.goto(doc)
+
+	await expect(website.payload).toHaveText("Draft 1")
+	const cookie = await website.cookie(previewCookieName)
+	expect(cookie?.value).toMatch(new RegExp(`^\\{"${repository.host}":\\{"preview":"[^"]+"\\}\\}$`))
+	expect(cookie?.sameSite).toBe("Lax")
 })
 
 test("follows a preview another tab started, then exited", async ({
@@ -107,46 +123,40 @@ test("starts the preview over an earlier ref of the session", async ({
 	expect(await website.events()).toEqual([["prismicPreviewStart", await website.previewRef()]])
 })
 
-test("previews several repositories on one website", async ({
+test("follows a session another tab started during the first ping", async ({
+	context,
 	repository,
-	otherRepository,
 	doc,
 	website,
 	editor,
-	context,
 }) => {
-	const otherDoc = await otherRepository.createDocument({ title: "Autumn sale" })
-	const page = `${website.pageURL(doc)}?with=${otherRepository.domain}/${otherDoc.uid}`
 	const draft = await repository.updateDraft(doc, { payload: "Draft 1" })
-	await editor.preview(website.page, repository, draft)
-	// The preview route's raw ref would reach the other repository's API too: wait for the toolbar's
-	// cookie, which keeps refs by repository.
-	await expect
-		.poll(() => website.cookie(previewCookieName))
-		.toMatchObject({
-			value: expect.stringContaining(repository.host),
-		})
-	await website.page.goto(page)
-	await expect(website.payloadOf(repository)).toHaveText("Draft 1")
+	await editor.startSession(context, repository, draft)
+	let release!: () => void
+	const released = new Promise<void>((resolve) => (release = resolve))
+	const held = new Promise<void>((resolve) => {
+		void context.route(
+			(url) => url.pathname.endsWith("/ping"),
+			async (route) => {
+				resolve()
+				await released
+				await route.continue()
+			},
+			{ times: 1 },
+		)
+	})
+	await website.goto(doc)
+	await held
 
-	const otherDraft = await otherRepository.updateDraft(otherDoc, { payload: "Draft 2" })
-	await editor.preview(await context.newPage(), otherRepository, otherDraft)
+	// Another tab previews another page, which replaces the session.
+	const other = await repository.updateDraft(await repository.createDocument(), {
+		payload: "Other",
+	})
+	await editor.startSession(context, repository, other)
+	release()
 
-	// Each repository's toolbar follows its own session, in the same cookie.
-	await expect(website.payloadOf(otherRepository)).toHaveText("Draft 2")
-	await expect(website.payloadOf(repository)).toHaveText("Draft 1")
-	await expect(website.bar).toHaveCount(2)
-	expect(await website.previewRef(repository)).toBeDefined()
-	expect(await website.previewRef(otherRepository)).toBeDefined()
-
-	// Both bars sit in the same corner, so the other one covers this one: use the keyboard.
-	const otherBar = website.bar.filter({ hasText: "Autumn sale" })
-	await otherBar.getByRole("button", { name: "Exit preview" }).press("Enter")
-
-	await expect(website.payloadOf(otherRepository)).toHaveText("Published")
-	await expect(website.payloadOf(repository)).toHaveText("Draft 1")
-	expect(await website.previewRef(otherRepository)).toBeUndefined()
-	expect(await website.previewRef(repository)).toBeDefined()
+	await expect(website.bar).toBeVisible()
+	expect(await website.previewRef()).toBeDefined()
 })
 
 test("leaves the website's cookie alone when another session ended", async ({

@@ -17,7 +17,6 @@ export { expect }
 
 export const previewCookieName = "io.prismic.preview"
 export const sessionCookieName = "io.prismic.previewSession"
-export const ownerCookieName = "io.prismic.preview.updated"
 
 /** Where the setup project saves the repositories it created, next to the Prismic login. */
 const repositoriesCookieName = "e2e-repositories"
@@ -63,8 +62,6 @@ async function serveToolbar(context: BrowserContext) {
 
 type Fixtures = {
 	repository: Repository
-	/** A second repository, previewed on the same website. */
-	otherRepository: Repository
 	/** A published page with its own UID, so tests never share content. */
 	doc: Document
 	website: Website
@@ -96,9 +93,7 @@ export const test = base.extend<Fixtures, { prismic: Prismic }>({
 		await use(requests)
 	},
 	repository: async ({ prismic }, use, { parallelIndex }) =>
-		use(prismic.repository(readRepositories()[parallelIndex * 2]!)),
-	otherRepository: async ({ prismic }, use, { parallelIndex }) =>
-		use(prismic.repository(readRepositories()[parallelIndex * 2 + 1]!)),
+		use(prismic.repository(readRepositories()[parallelIndex]!)),
 	doc: async ({ repository }, use) => use(await repository.createDocument()),
 	website: async ({ page, baseURL, repository }, use) =>
 		use(new Website(page, baseURL!, repository)),
@@ -149,11 +144,6 @@ export class Website {
 		return this.page.getByTestId("payload").first()
 	}
 
-	/** The payload of the repository's page, when a page shows several repositories. */
-	payloadOf(repository: Repository) {
-		return this.page.locator(`[id="${repository.domain}"]`).getByTestId("payload")
-	}
-
 	get bar() {
 		return this.barOf(this.page)
 	}
@@ -162,8 +152,8 @@ export class Website {
 		return page.getByRole("region", { name: "Prismic preview" })
 	}
 
-	pageURL(doc: Document, repository = this.repository) {
-		return `${this.url}/${repository.domain}/${doc.uid}`
+	pageURL(doc: Document) {
+		return `${this.url}/${this.repository.domain}/${doc.uid}`
 	}
 
 	async goto(doc: Document) {
@@ -203,11 +193,11 @@ export class Website {
 	}
 
 	/** The repository's ref in the preview cookie, read like the Content API does. */
-	async previewRef(repository = this.repository) {
+	async previewRef() {
 		const value = (await this.cookie(previewCookieName))?.value
 		if (!value) return undefined
 		try {
-			return JSON.parse(value)[repository.host]?.preview as string | undefined
+			return JSON.parse(value)[this.repository.host]?.preview as string | undefined
 		} catch {
 			return value
 		}

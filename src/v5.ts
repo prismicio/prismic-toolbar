@@ -2,9 +2,8 @@ import { registerChunk } from "./lib/chunks"
 import { deleteCookie, getCookie, setCookie } from "./lib/cookie"
 import { repositoryOrigin, warn } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
-import { liveOwner, releaseOwnership } from "./lib/owner-marker"
 import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
-import { parseSiteCookie, previewCookieName, sessionCookieName } from "./lib/site-cookie"
+import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
 import { mountToolbar } from "./toolbar"
 
 /**
@@ -34,8 +33,6 @@ function createSession(repositoryHost: string): PreviewSession {
 		for (const listener of listeners) listener(snapshot)
 	}
 
-	const editorOwner = () => liveOwner(parseSiteCookie(getCookie(previewCookieName)))
-
 	function stop() {
 		clearInterval(timer)
 		document.removeEventListener("visibilitychange", tick)
@@ -43,7 +40,6 @@ function createSession(repositoryHost: string): PreviewSession {
 
 	function end() {
 		stop()
-		if (editorOwner()?.repository === repositoryHost) releaseOwnership()
 		deleteCookie(previewCookieName)
 		deleteCookie(sessionCookieName)
 		setSnapshot({ status: "idle", preview: undefined })
@@ -73,14 +69,12 @@ function createSession(repositoryHost: string): PreviewSession {
 		if (data.close) return end()
 
 		const previous = ref
-		// While the editor pushes refs, in a preview of this website, they come before the session's.
-		const pushed = editorOwner()?.ref
-		ref = pushed || data.ref || ref
+		ref = data.ref || ref
 		setSnapshot({ preview: { ref, title: data.title || "" } })
 		if (ref === previous) return
 
 		// Reloading with the old cookie would find the new ref again, and loop.
-		if (!pushed && !setCookie(previewCookieName, ref)) {
+		if (!setCookie(previewCookieName, ref)) {
 			return warn("The browser rejected the preview cookie. Check that cookies are allowed.")
 		}
 		// Without a previous ref, the page does not show the session yet.
