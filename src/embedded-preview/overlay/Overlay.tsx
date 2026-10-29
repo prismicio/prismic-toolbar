@@ -4,6 +4,7 @@ import { isOverlayScaleMessage } from "../message-protocol"
 import type { PostMessage, SubscribeToMessages } from "../message-protocol"
 import { CommentOverlay } from "./CommentOverlay"
 import { SliceOverlay } from "./SliceOverlay"
+import { useShortcuts } from "./useShortcuts"
 
 interface OverlayProps {
 	postMessage: PostMessage
@@ -14,6 +15,7 @@ export function Overlay(props: OverlayProps) {
 	const { postMessage, subscribeToMessages } = props
 
 	const uiScale = useUIScale(subscribeToMessages)
+	useShortcuts(postMessage)
 
 	return (
 		<div style={{ "--prismic-overlay-ui-scale": uiScale }}>

@@ -109,6 +109,32 @@ test.describe("push", () => {
 		await expect(pageBuilder.preview.locator("section")).toHaveText(["First slice"])
 	})
 
+	test("sends undo and redo pressed in the preview to the editor", async ({
+		page,
+		doc,
+		pageBuilder,
+	}) => {
+		await pageBuilder.open(doc, { mode: "push" })
+		await pageBuilder.preview.getByText("First slice").hover()
+		await expect(pageBuilder.slice(doc.content.slices[0]!)).toBeVisible()
+		const received = await page.evaluateHandle(() => {
+			const types: string[] = []
+			window.addEventListener("message", ({ data }) => {
+				if (/^prismic:embedded-preview:(undo|redo)$/.test(data?.type)) types.push(data.type)
+			})
+			return types
+		})
+
+		await pageBuilder.preview.getByText("First slice").click()
+		await expect.poll(() => pageBuilder.frame.evaluate(() => document.hasFocus())).toBe(true)
+		await page.keyboard.press("ControlOrMeta+z")
+		await page.keyboard.press("ControlOrMeta+Shift+z")
+
+		await expect
+			.poll(() => received.evaluate((types) => [...types]))
+			.toEqual(["prismic:embedded-preview:undo", "prismic:embedded-preview:redo"])
+	})
+
 	test("places comments and selects them from their pins", async ({ page, doc, pageBuilder }) => {
 		await pageBuilder.open(doc, { mode: "push" })
 		await page.getByRole("radio", { name: "Comments" }).click()
