@@ -29,7 +29,7 @@ Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<versio
 | `src/shell.ts`            | Hidden, from the repository host, to read its cookies | Inlined into `src/shell.html`                                    |
 
 - `prismic.js` only reads its script's parameters and the cookies, then loads the one bundle the page needs, or none. v4 websites always need theirs: only the repository's shell knows whether a preview is active.
-- Each file is a self-contained classic script. The CDN sends no CORS headers, so `prismic.js` loads the other bundles as classic scripts, and they register on `window.__prismicToolbar`.
+- Each file is a self-contained classic script. The CDN sends no CORS headers, so `prismic.js` loads the other bundles as classic scripts. It passes the repository and the mode as `data-` attributes on the script, which the bundle reads to start itself.
 - `src/lib` holds the code `prismic.js` and the bundles share. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `toolbar.ts` is the preview bar.
 
 #### Development builds

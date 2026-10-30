@@ -1,30 +1,28 @@
-import { loadScript } from "./dom"
-import type { ToolbarMode } from "./env"
+import { warn, type ToolbarMode } from "./env"
 
-/** The bundles `prismic.js` loads, named after their file. Each page loads one at most. */
-export type ChunkName = "v4" | "v5" | "embedded-preview"
-
-/** Runs a chunk's scenario. */
-export type StartChunk = (repositoryHost: string, mode: ToolbarMode) => void | Promise<void>
-
-declare global {
-	interface Window {
-		/** Private registry the toolbar's bundles use to reach `prismic.js`. */
-		__prismicToolbar?: Partial<Record<ChunkName, StartChunk>>
-	}
+interface ChunkParams {
+	repositoryHost: string
+	mode: ToolbarMode
 }
 
-/** Called by a lazily loaded bundle to expose its entry point. */
-export function registerChunk(name: ChunkName, start: StartChunk): void {
-	window.__prismicToolbar ??= {}
-	window.__prismicToolbar[name] = start
+/**
+ * Loads a chunk, which starts itself with `params`. A classic script: the CDN sends no CORS
+ * headers, which module scripts would need.
+ */
+export function loadChunk(url: string, { repositoryHost, mode }: ChunkParams): void {
+	const script = document.createElement("script")
+	script.src = url
+	script.dataset.repositoryHost = repositoryHost
+	script.dataset.mode = mode
+	script.onerror = () => warn(`Could not load the preview from ${url}.`)
+	document.head.appendChild(script)
 }
 
-/** Loads a bundle and returns the entry point it registers. */
-export async function loadChunk(url: string, name: ChunkName): Promise<StartChunk> {
-	await loadScript(url)
-	const start = window.__prismicToolbar?.[name]
-	if (!start) throw new Error(`${url} did not register ${name}.`)
-
-	return start
+/**
+ * Reads the parameters `prismic.js` loaded this chunk with. Call it while the chunk first runs:
+ * `document.currentScript` is only set then.
+ */
+export function readChunkParams(): ChunkParams {
+	const { repositoryHost, mode } = (document.currentScript as HTMLScriptElement).dataset
+	return { repositoryHost: repositoryHost!, mode: mode as ToolbarMode }
 }

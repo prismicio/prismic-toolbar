@@ -2,7 +2,7 @@ import { createEmbeddedPush } from "./embedded-preview/embedded-push"
 import { isAckMessage, isSetRefMessage, readyMessage } from "./embedded-preview/message-protocol"
 import type { MessageHandler, PostMessage } from "./embedded-preview/message-protocol"
 import { EmbeddedPreviewOverlay } from "./embedded-preview/overlay"
-import { registerChunk } from "./lib/chunks"
+import { readChunkParams } from "./lib/chunks"
 import { readyDOM } from "./lib/dom"
 import type { ToolbarMode } from "./lib/env"
 import { createPreviewSession } from "./lib/preview-session"
@@ -11,7 +11,7 @@ import { createPreviewSession } from "./lib/preview-session"
  * Runs the editor's preview iframe: the editor pushes refs, or the toolbar polls the preview
  * session, and both show comment and slice overlays.
  */
-export async function startEmbeddedPreview(repositoryHost: string, mode: ToolbarMode) {
+async function startEmbeddedPreview(repositoryHost: string, mode: ToolbarMode) {
 	await readyDOM()
 
 	const subscribers = new Set<MessageHandler>()
@@ -58,8 +58,6 @@ export async function startEmbeddedPreview(repositoryHost: string, mode: Toolbar
 	window.parent.postMessage(readyMessage, "*")
 }
 
-registerChunk("embedded-preview", startEmbeddedPreview)
-
 /** Whether an editor on `localhost` may drive the embedded preview. Replaced at build time. */
 declare const __TOOLBAR_LOCAL_EDITOR__: boolean
 
@@ -79,3 +77,6 @@ function isAllowedParentOrigin(origin: string) {
 	if (!origin) return false
 	return allowedParentOrigins.some((allowedOrigin) => allowedOrigin.test(origin))
 }
+
+const { repositoryHost, mode } = readChunkParams()
+void startEmbeddedPreview(repositoryHost, mode)

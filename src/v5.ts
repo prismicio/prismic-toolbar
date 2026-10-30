@@ -1,4 +1,4 @@
-import { registerChunk } from "./lib/chunks"
+import { readChunkParams } from "./lib/chunks"
 import { deleteCookie, getCookie, setCookie } from "./lib/cookie"
 import { repositoryOrigin, warn } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
@@ -10,7 +10,7 @@ import { mountToolbar } from "./lib/toolbar"
  * Follows the preview session the website's SDK stored in a first-party cookie, with Prismic's
  * public `ping` endpoint. No iframe and no third-party cookies.
  */
-export function startV5(repositoryHost: string): void {
+function startV5(repositoryHost: string): void {
 	// A preview without a session, like a v4 one from before the website's SDK sent `v=5`, has no
 	// bar to exit it.
 	if (!getCookie(sessionCookieName)) {
@@ -28,7 +28,7 @@ export function startV5(repositoryHost: string): void {
 	mountToolbar(session, repositoryHost)
 }
 
-registerChunk("v5", startV5)
+startV5(readChunkParams().repositoryHost)
 
 function createSession(repositoryHost: string): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()

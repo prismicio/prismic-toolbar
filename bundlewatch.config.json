@@ -8,7 +8,7 @@
 	"files": [
 		{
 			"path": "./dist/prismic-toolbar/*/prismic.js",
-			"maxSize": "2.5KB"
+			"maxSize": "2KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/v4.js",
