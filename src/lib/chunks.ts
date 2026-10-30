@@ -1,47 +1,28 @@
-import { loadScript } from "./dom"
-import type { PreviewSession } from "./preview-session"
+import { warn, type ToolbarMode } from "./env"
 
-export interface MountToolbarOptions {
-	session: PreviewSession
+interface ChunkParams {
 	repositoryHost: string
+	mode: ToolbarMode
 }
 
-export interface EmbeddedPreviewOptions {
-	/** Receives refs the editor pushes, with `reload: false` when it expects an in-place update. */
-	onRef?: (ref: string, reload?: boolean) => Promise<void>
+/**
+ * Loads a chunk, which starts itself with `params`. A classic script: the CDN sends no CORS
+ * headers, which module scripts would need.
+ */
+export function loadChunk(url: string, { repositoryHost, mode }: ChunkParams): void {
+	const script = document.createElement("script")
+	script.src = url
+	script.dataset.repositoryHost = repositoryHost
+	script.dataset.mode = mode
+	script.onerror = () => warn(`Could not load the preview from ${url}.`)
+	document.head.appendChild(script)
 }
 
-/** Entry points of the lazily loaded bundles. */
-export interface ToolbarChunks {
-	mountToolbar: (options: MountToolbarOptions) => void
-	startV5: (repositoryHost: string) => void
-	setupEmbeddedPreview: (options?: EmbeddedPreviewOptions) => Promise<void>
-}
-
-declare global {
-	interface Window {
-		/** Private registry the toolbar's bundles use to reach each other. */
-		__prismicToolbar?: Partial<ToolbarChunks>
-	}
-}
-
-/** Called by a lazily loaded bundle to expose its entry point. */
-export function registerChunk<Name extends keyof ToolbarChunks>(
-	name: Name,
-	entry: ToolbarChunks[Name],
-): void {
-	window.__prismicToolbar ??= {}
-	window.__prismicToolbar[name] = entry
-}
-
-/** Loads a bundle and returns the entry point it registers. */
-export async function loadChunk<Name extends keyof ToolbarChunks>(
-	url: string,
-	name: Name,
-): Promise<ToolbarChunks[Name]> {
-	await loadScript(url)
-	const entry = window.__prismicToolbar?.[name]
-	if (!entry) throw new Error(`${url} did not register ${name}.`)
-
-	return entry as ToolbarChunks[Name]
+/**
+ * Reads the parameters `prismic.js` loaded this chunk with. Call it while the chunk first runs:
+ * `document.currentScript` is only set then.
+ */
+export function readChunkParams(): ChunkParams {
+	const { repositoryHost, mode } = (document.currentScript as HTMLScriptElement).dataset
+	return { repositoryHost: repositoryHost!, mode: mode as ToolbarMode }
 }

@@ -8,7 +8,11 @@
 	"files": [
 		{
 			"path": "./dist/prismic-toolbar/*/prismic.js",
-			"maxSize": "10KB"
+			"maxSize": "2KB"
+		},
+		{
+			"path": "./dist/prismic-toolbar/*/v4.js",
+			"maxSize": "15KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/v5.js",
@@ -16,11 +20,7 @@
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/embedded-preview.js",
-			"maxSize": "55KB"
-		},
-		{
-			"path": "./dist/prismic-toolbar/*/toolbar.js",
-			"maxSize": "10KB"
+			"maxSize": "59KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/shell.html",

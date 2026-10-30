@@ -1,7 +1,7 @@
 import { watchCookie } from "./cookie-watcher"
 import { warn } from "./env"
 import { dispatchPreviewEvent } from "./events"
-import type { Shell } from "./shell-client"
+import { connectShell, type Shell } from "./shell-client"
 import {
 	deletePreviewCookie,
 	previewCookieName,
@@ -37,7 +37,6 @@ export interface PreviewSessionOptions {
 	 * editor, where the preview session sets the ref.
 	 */
 	watchCookie: boolean
-	connect(): Promise<Shell>
 }
 
 /**
@@ -50,7 +49,6 @@ export function createPreviewSession({
 	repositoryHost,
 	codec,
 	watchCookie: watch,
-	connect,
 }: PreviewSessionOptions): PreviewSession {
 	const listeners = new Set<(snapshot: PreviewSnapshot) => void>()
 	let snapshot: PreviewSnapshot = { status: "booting", authenticated: false }
@@ -147,7 +145,7 @@ export function createPreviewSession({
 	async function followOnce() {
 		if (serverRef !== undefined) return
 		try {
-			shell ??= await connect()
+			shell ??= await connectShell(repositoryHost)
 			const authenticated = await shell.isAuthenticated()
 			const { ref, title = "" } = await shell.ping(currentRef() ?? "")
 			// A cookie change meanwhile may already be reloading the page.

@@ -1,19 +1,7 @@
-import { loadChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
+import { loadChunk } from "./lib/chunks"
 import { getCookie } from "./lib/cookie"
-import { createEmbeddedPush } from "./lib/embedded-push"
-import {
-	detectMode,
-	findRepositoryHost,
-	findVersion,
-	repositoryOrigin,
-	warn,
-	type ToolbarMode,
-} from "./lib/env"
-import { dispatchPreviewEvent } from "./lib/events"
-import { createPreviewSession } from "./lib/preview-session"
-import { connectShell } from "./lib/shell-client"
-import { deletePreviewCookie, readPreviewRef, sessionCookieName } from "./lib/site-cookie"
-import { startV4 } from "./v4"
+import { detectMode, findRepositoryHost, findVersion, warn, type ToolbarMode } from "./lib/env"
+import { previewCookieName, sessionCookieName } from "./lib/site-cookie"
 
 // Replaced at build time, see `vite.config.ts`.
 /** Origin the toolbar's versioned assets are served from, such as `https://prismic.io`. */
@@ -36,53 +24,18 @@ if (mode) {
 }
 
 function start(mode: ToolbarMode, repositoryHost: string) {
-	const version = __TOOLBAR_VERSION__
-	const assets = `${CDN_HOST}/prismic-toolbar/${version}`
-	const connect = () =>
-		connectShell(`${repositoryOrigin(repositoryHost)}/prismic-toolbar/${version}/shell.html`)
-
+	let chunk: string
 	// The editor drives embedded modes, whatever the website's SDK opts into.
-	if (mode === "embedded-push") {
-		void setupEmbeddedPreview(assets, { onRef: createEmbeddedPush(repositoryHost) })
-		return
+	if (mode !== "regular") chunk = "embedded-preview"
+	else if (requestedVersion === "5") {
+		if (!getCookie(sessionCookieName) && !getCookie(previewCookieName)) return
+		chunk = "v5"
 	}
+	// v4 only knows whether a preview is active once the repository's shell answers.
+	else chunk = "v4"
 
-	if (mode === "embedded-poll") {
-		void setupEmbeddedPreview(assets)
-		void createPreviewSession({
-			repositoryHost,
-			codec: "plain",
-			watchCookie: false,
-			connect,
-		}).start()
-		return
-	}
-
-	if (requestedVersion === "5") {
-		if (getCookie(sessionCookieName)) {
-			loadChunk(`${assets}/v5.js`, "startV5")
-				.then((startV5) => startV5(repositoryHost))
-				.catch((error: unknown) => warn(`Could not load the preview.\n\n${String(error)}`))
-			return
-		}
-		// A preview without a session, like a v4 one from before the website's SDK sent `v=5`, has no
-		// bar to exit it.
-		if (!readPreviewRef(repositoryHost)) return
-		deletePreviewCookie()
-		// Reloading with a cookie the toolbar cannot delete would loop.
-		const removed = !readPreviewRef(repositoryHost)
-		if (dispatchPreviewEvent("prismicPreviewEnd") && removed) window.location.reload()
-		return
-	}
-
-	startV4({ repositoryHost, assets, connect })
-}
-
-async function setupEmbeddedPreview(assets: string, options?: EmbeddedPreviewOptions) {
-	try {
-		const setup = await loadChunk(`${assets}/embedded-preview.js`, "setupEmbeddedPreview")
-		await setup(options)
-	} catch (error) {
-		console.error("Failed to load embedded preview.", error)
-	}
+	loadChunk(`${CDN_HOST}/prismic-toolbar/${__TOOLBAR_VERSION__}/${chunk}.js`, {
+		repositoryHost,
+		mode,
+	})
 }

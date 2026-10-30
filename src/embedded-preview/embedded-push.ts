@@ -1,5 +1,5 @@
-import { dispatchPreviewEvent } from "./events"
-import { readPreviewRef, writePreviewRef } from "./site-cookie"
+import { dispatchPreviewEvent } from "../lib/events"
+import { readPreviewRef, writePreviewRef } from "../lib/site-cookie"
 
 /**
  * Handles refs the editor pushes into its preview iframe.
