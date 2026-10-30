@@ -27,10 +27,12 @@ function start(mode: ToolbarMode, repositoryHost: string) {
 	let chunk: string
 	// The editor drives embedded modes, whatever the website's SDK opts into.
 	if (mode !== "regular") chunk = "embedded-preview"
+	else if (requestedVersion === "5") {
+		if (!getCookie(sessionCookieName) && !getCookie(previewCookieName)) return
+		chunk = "v5"
+	}
 	// v4 only knows whether a preview is active once the repository's shell answers.
-	else if (requestedVersion !== "5") chunk = "v4"
-	else if (getCookie(sessionCookieName) || getCookie(previewCookieName)) chunk = "v5"
-	else return
+	else chunk = "v4"
 
 	loadChunk(`${CDN_HOST}/prismic-toolbar/${__TOOLBAR_VERSION__}/${chunk}.js`, {
 		repositoryHost,
