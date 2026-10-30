@@ -5,11 +5,11 @@ import { mountToolbar } from "./lib/toolbar"
 /** Runs website previews through the repository's shell and `ping`, with the JSON preview cookie. */
 export function startV4(repositoryHost: string): void {
 	const session = createPreviewSession({ repositoryHost, codec: "json", watchCookie: true })
-	// Bundled, so the bar needs no request, but only shown once a preview session is active.
+	// Most visitors never preview: only mount the bar once a preview session is active.
 	const unsubscribe = session.subscribe((snapshot) => {
 		if (snapshot.status !== "polling") return
 		unsubscribe()
-		mountToolbar({ session, repositoryHost })
+		mountToolbar(session, repositoryHost)
 	})
 	void session.start()
 }

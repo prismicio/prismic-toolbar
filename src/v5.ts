@@ -25,7 +25,7 @@ export function startV5(repositoryHost: string): void {
 	const session = createSession(repositoryHost)
 	void session.start()
 	// Bundled, so the bar needs no request after this chunk's.
-	mountToolbar({ session, repositoryHost })
+	mountToolbar(session, repositoryHost)
 }
 
 registerChunk("v5", startV5)

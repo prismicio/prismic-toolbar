@@ -20,10 +20,13 @@ test("loads no preview code without a preview", async ({ doc, website, requests 
 test("loads a single bundle per scenario", async ({ doc, website, startPreview, requests }, {
 	project,
 }) => {
-	const files = () =>
-		requests
-			.filter((url) => /\/prismic(\.js\?|-toolbar\/)/.test(url))
-			.map((url) => new URL(url).pathname.split("/").pop())
+	const files = () => [
+		...new Set(
+			requests
+				.filter((url) => /\/prismic(\.js\?|-toolbar\/)/.test(url))
+				.map((url) => new URL(url).pathname.split("/").pop()),
+		),
+	]
 	// v4 only knows whether a preview is active once the repository's shell answers.
 	const v4 = ["prismic.js", "v4.js", "shell.html"]
 
@@ -37,7 +40,7 @@ test("loads a single bundle per scenario", async ({ doc, website, startPreview, 
 	requests.length = 0
 	await startPreview()
 	await expect(website.bar).toBeVisible()
-	expect(new Set(files())).toEqual(new Set(project.name === "v4" ? v4 : ["prismic.js", "v5.js"]))
+	expect(files()).toEqual(project.name === "v4" ? v4 : ["prismic.js", "v5.js"])
 })
 
 test("reloads the page when the draft changes", async ({ repository, website, startPreview }) => {

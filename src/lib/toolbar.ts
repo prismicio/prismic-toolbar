@@ -5,13 +5,7 @@ import type { PreviewSession, PreviewSnapshot } from "./preview-session"
 import styles from "./toolbar.css?inline"
 
 /** Shows the preview bar while previewing, in a shadow root isolated from the website's styles. */
-export function mountToolbar({
-	session,
-	repositoryHost,
-}: {
-	session: PreviewSession
-	repositoryHost: string
-}): void {
+export function mountToolbar(session: PreviewSession, repositoryHost: string): void {
 	const root = shadow({
 		id: "prismic-toolbar",
 		style: { position: "fixed", zIndex: 2147483647, bottom: 0, left: 0 },
