@@ -1,12 +1,17 @@
+import { createEmbeddedPush } from "./embedded-preview/embedded-push"
 import { isAckMessage, isSetRefMessage, readyMessage } from "./embedded-preview/message-protocol"
 import type { MessageHandler, PostMessage } from "./embedded-preview/message-protocol"
 import { EmbeddedPreviewOverlay } from "./embedded-preview/overlay"
-import { registerChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
+import { registerChunk } from "./lib/chunks"
 import { readyDOM } from "./lib/dom"
+import type { ToolbarMode } from "./lib/env"
+import { createPreviewSession } from "./lib/preview-session"
 
-export type { EmbeddedPreviewOptions }
-
-export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {}) {
+/**
+ * Runs the editor's preview iframe: the editor pushes refs, or the toolbar polls the preview
+ * session, and both show comment and slice overlays.
+ */
+export async function startEmbeddedPreview(repositoryHost: string, mode: ToolbarMode) {
 	await readyDOM()
 
 	const subscribers = new Set<MessageHandler>()
@@ -18,7 +23,8 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 		}
 	}
 
-	if (onRef) {
+	if (mode === "embedded-push") {
+		const onRef = createEmbeddedPush(repositoryHost)
 		subscribeToMessages(({ data }) => {
 			if (!isSetRefMessage(data)) return
 
@@ -26,6 +32,8 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 				console.error("Failed to update embedded preview ref.", error)
 			})
 		})
+	} else {
+		void createPreviewSession({ repositoryHost, codec: "plain", watchCookie: false }).start()
 	}
 
 	let connected = false
@@ -50,7 +58,7 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 	window.parent.postMessage(readyMessage, "*")
 }
 
-registerChunk("setupEmbeddedPreview", setupEmbeddedPreview)
+registerChunk("embedded-preview", startEmbeddedPreview)
 
 /** Whether an editor on `localhost` may drive the embedded preview. Replaced at build time. */
 declare const __TOOLBAR_LOCAL_EDITOR__: boolean

@@ -17,6 +17,29 @@ test("loads no preview code without a preview", async ({ doc, website, requests 
 	expect(requests.filter((url) => /\/(toolbar|v5|embedded-preview)\.js$/.test(url))).toEqual([])
 })
 
+test("loads a single bundle per scenario", async ({ doc, website, startPreview, requests }, {
+	project,
+}) => {
+	const files = () =>
+		requests
+			.filter((url) => /\/prismic(\.js\?|-toolbar\/)/.test(url))
+			.map((url) => new URL(url).pathname.split("/").pop())
+	// v4 only knows whether a preview is active once the repository's shell answers.
+	const v4 = ["prismic.js", "v4.js", "shell.html"]
+
+	await website.goto(doc)
+	await expect(website.payload).toHaveText("Published")
+	await website.page.waitForTimeout(2000)
+	expect(files()).toEqual(project.name === "v4" ? v4 : ["prismic.js"])
+
+	// Leaving first: v4 would reload this page as the preview cookie arrives, aborting the preview.
+	await website.page.goto("about:blank")
+	requests.length = 0
+	await startPreview()
+	await expect(website.bar).toBeVisible()
+	expect(new Set(files())).toEqual(new Set(project.name === "v4" ? v4 : ["prismic.js", "v5.js"]))
+})
+
 test("reloads the page when the draft changes", async ({ repository, website, startPreview }) => {
 	const draft = await startPreview()
 	await expect(website.bar).toBeVisible()

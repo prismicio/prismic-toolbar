@@ -1,47 +1,30 @@
 import { loadScript } from "./dom"
-import type { PreviewSession } from "./preview-session"
+import type { ToolbarMode } from "./env"
 
-export interface MountToolbarOptions {
-	session: PreviewSession
-	repositoryHost: string
-}
+/** The bundles `prismic.js` loads, named after their file. Each page loads one at most. */
+export type ChunkName = "v4" | "v5" | "embedded-preview"
 
-export interface EmbeddedPreviewOptions {
-	/** Receives refs the editor pushes, with `reload: false` when it expects an in-place update. */
-	onRef?: (ref: string, reload?: boolean) => Promise<void>
-}
-
-/** Entry points of the lazily loaded bundles. */
-export interface ToolbarChunks {
-	mountToolbar: (options: MountToolbarOptions) => void
-	startV5: (repositoryHost: string) => void
-	setupEmbeddedPreview: (options?: EmbeddedPreviewOptions) => Promise<void>
-}
+/** Runs a chunk's scenario. */
+export type StartChunk = (repositoryHost: string, mode: ToolbarMode) => void | Promise<void>
 
 declare global {
 	interface Window {
-		/** Private registry the toolbar's bundles use to reach each other. */
-		__prismicToolbar?: Partial<ToolbarChunks>
+		/** Private registry the toolbar's bundles use to reach `prismic.js`. */
+		__prismicToolbar?: Partial<Record<ChunkName, StartChunk>>
 	}
 }
 
 /** Called by a lazily loaded bundle to expose its entry point. */
-export function registerChunk<Name extends keyof ToolbarChunks>(
-	name: Name,
-	entry: ToolbarChunks[Name],
-): void {
+export function registerChunk(name: ChunkName, start: StartChunk): void {
 	window.__prismicToolbar ??= {}
-	window.__prismicToolbar[name] = entry
+	window.__prismicToolbar[name] = start
 }
 
 /** Loads a bundle and returns the entry point it registers. */
-export async function loadChunk<Name extends keyof ToolbarChunks>(
-	url: string,
-	name: Name,
-): Promise<ToolbarChunks[Name]> {
+export async function loadChunk(url: string, name: ChunkName): Promise<StartChunk> {
 	await loadScript(url)
-	const entry = window.__prismicToolbar?.[name]
-	if (!entry) throw new Error(`${url} did not register ${name}.`)
+	const start = window.__prismicToolbar?.[name]
+	if (!start) throw new Error(`${url} did not register ${name}.`)
 
-	return entry as ToolbarChunks[Name]
+	return start
 }

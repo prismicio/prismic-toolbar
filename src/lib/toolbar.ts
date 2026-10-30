@@ -1,12 +1,17 @@
-import { registerChunk, type MountToolbarOptions } from "./lib/chunks"
-import { appendCSS, shadow } from "./lib/dom"
-import { repositoryOrigin } from "./lib/env"
-import type { PreviewSession, PreviewSnapshot } from "./lib/preview-session"
+import { appendCSS, shadow } from "./dom"
+import { repositoryOrigin } from "./env"
+import type { PreviewSession, PreviewSnapshot } from "./preview-session"
 
 import styles from "./toolbar.css?inline"
 
 /** Shows the preview bar while previewing, in a shadow root isolated from the website's styles. */
-export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): void {
+export function mountToolbar({
+	session,
+	repositoryHost,
+}: {
+	session: PreviewSession
+	repositoryHost: string
+}): void {
 	const root = shadow({
 		id: "prismic-toolbar",
 		style: { position: "fixed", zIndex: 2147483647, bottom: 0, left: 0 },
@@ -85,8 +90,6 @@ export function mountToolbar({ session, repositoryHost }: MountToolbarOptions): 
 	update(session.getSnapshot())
 	session.subscribe(update)
 }
-
-registerChunk("mountToolbar", mountToolbar)
 
 // Loading shows a spinner.
 const shareLabels = { idle: "Share", loading: "", copied: "Copied", failed: "Failed" }
