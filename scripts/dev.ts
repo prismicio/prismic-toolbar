@@ -20,7 +20,8 @@ if (!existsSync("playground/node_modules")) {
 
 // Ctrl+C reaches every process started from the terminal, so these stop with this script.
 run("npx tsx scripts/build.ts --watch", { TOOLBAR_VERSION: version })
-run("npx http-server dist -p 8081 -g -c-1")
+// `prismic.js` imports the other bundles as modules, which need CORS.
+run("npx http-server dist -p 8081 -g -c-1 --cors")
 run("npm run dev --prefix playground", {
 	TOOLBAR_SRC: `http://localhost:8081/prismic-toolbar/${version}/prismic.js`,
 })

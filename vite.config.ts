@@ -22,7 +22,8 @@ const oxc = { jsx: { runtime: "automatic", importSource: "preact" } } as const
 function defines(development: boolean) {
 	return {
 		CDN_HOST: JSON.stringify(
-			process.env.CDN_HOST || (development ? "http://localhost:8081" : "https://prismic.io"),
+			process.env.CDN_HOST ||
+				(development ? "http://localhost:8081" : "https://static.cdn.prismic.io"),
 		),
 		__TOOLBAR_VERSION__: JSON.stringify(version),
 		__TOOLBAR_LOCAL_EDITOR__: JSON.stringify(
@@ -52,7 +53,7 @@ const inlineShell: Plugin = {
 	},
 }
 
-/** Builds one entry as a self-contained classic script, used by `scripts/build.ts`. */
+/** Builds one entry as a self-contained script, used by `scripts/build.ts`. */
 export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 	return {
 		configFile: false,
@@ -61,14 +62,17 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 		build: {
 			outDir: `dist/prismic-toolbar/${version}`,
 			emptyOutDir: false,
-			// No module loader or shared chunks on customer pages: the CDN sends no CORS headers.
+			// The install snippet and `shell.html` run classic scripts. `prismic.js` imports the other
+			// entries as modules, each a separate build so a scenario makes a single request.
 			lib: {
 				entry: `src/${entry}.ts`,
-				formats: ["iife"],
+				formats: entry === "prismic" || entry === "shell" ? ["iife"] : ["es"],
 				name: `PrismicToolbar_${entry.replace(/\W/g, "_")}`,
 				fileName: () => `${entry}.js`,
 			},
 			minify: !development,
+			// Vite keeps the whitespace of `es` libraries: these bundles are never bundled again.
+			rolldownOptions: { output: { minify: !development } },
 			sourcemap: development ? "inline" : false,
 			watch: development ? {} : null,
 		},

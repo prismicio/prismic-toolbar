@@ -43,7 +43,7 @@ jobs:
           npm ci
           npm run build
         env:
-          CDN_HOST: https://prismic.io
+          CDN_HOST: https://static.cdn.prismic.io
 
       - name: Upload the preview
         # Rebuilt on every push under the same folder, so it must not be cached. No `--delete`: the

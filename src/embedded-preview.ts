@@ -2,7 +2,6 @@ import { createEmbeddedPush } from "./embedded-preview/embedded-push"
 import { isAckMessage, isSetRefMessage, readyMessage } from "./embedded-preview/message-protocol"
 import type { MessageHandler, PostMessage } from "./embedded-preview/message-protocol"
 import { EmbeddedPreviewOverlay } from "./embedded-preview/overlay"
-import { readChunkParams } from "./lib/chunks"
 import { readyDOM } from "./lib/dom"
 import type { ToolbarMode } from "./lib/env"
 import { createPreviewSession } from "./lib/preview-session"
@@ -11,7 +10,7 @@ import { createPreviewSession } from "./lib/preview-session"
  * Runs the editor's preview iframe: the editor pushes refs, or the toolbar polls the preview
  * session, and both show comment and slice overlays.
  */
-async function startEmbeddedPreview(repositoryHost: string, mode: ToolbarMode) {
+export async function start(repositoryHost: string, mode: ToolbarMode) {
 	await readyDOM()
 
 	const subscribers = new Set<MessageHandler>()
@@ -77,6 +76,3 @@ function isAllowedParentOrigin(origin: string) {
 	if (!origin) return false
 	return allowedParentOrigins.some((allowedOrigin) => allowedOrigin.test(origin))
 }
-
-const { repositoryHost, mode } = readChunkParams()
-void startEmbeddedPreview(repositoryHost, mode)
