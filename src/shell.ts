@@ -114,8 +114,8 @@ async function createShareLink(session: string, pageURL: string, title: string):
 }
 
 /**
- * Only pages on the live session's websites get a port. Without a live session, there is nothing to
- * read yet, so any page connects: each call checks again. Others get no answer.
+ * Without a live session, any page connects, since each call checks again. Otherwise, pages that
+ * are not on the session's websites get no answer.
  */
 async function acceptsConnection(origin: string) {
 	const session = getCookie(sessionCookieName)
