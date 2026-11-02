@@ -1,5 +1,8 @@
 // Websites without `v=5`: every production website today. The toolbar follows the repository's
 // preview session through the shell, a page on the repository host that reads its cookies.
+import type { Page } from "@playwright/test"
+
+import { version } from "../vite.config"
 import { expect, previewCookieName, test } from "./infra/test"
 
 test("keeps the raw ref of the preview route", async ({ repository, website, startPreview }) => {
@@ -186,3 +189,36 @@ test("leaves the website's cookie alone when another session ended", async ({
 	await expect(website.payload).toHaveText("Draft 1")
 	expect(await website.previewRef()).toBe(ref)
 })
+
+test("only answers pages on the session's websites", async ({
+	context,
+	repository,
+	doc,
+	website,
+	startPreview,
+}) => {
+	await startPreview()
+	await expect(website.bar).toBeVisible()
+	// The same website on another origin, which is not one of the repository's previews.
+	const other = await context.newPage()
+	await other.goto(website.pageURL(doc).replace("//localhost:", "//127.0.0.1:"))
+
+	const shell = `${repository.url}/prismic-toolbar/${version}/shell.html`
+	expect(await connectShell(website.page, shell)).toBe("ready")
+	expect(await connectShell(other, shell)).toBeUndefined()
+	await expect(website.barOf(other)).toHaveCount(0)
+})
+
+/** Frames the shell in `page`, and returns its first answer within 5 seconds. */
+function connectShell(page: Page, url: string) {
+	return page.evaluate(async (url) => {
+		const iframe = Object.assign(document.createElement("iframe"), { src: url })
+		const loaded = new Promise((resolve) => iframe.addEventListener("load", resolve))
+		document.body.append(iframe)
+		await loaded
+		const { port1, port2 } = new MessageChannel()
+		const answer = new Promise((resolve) => (port1.onmessage = ({ data }) => resolve(data)))
+		iframe.contentWindow!.postMessage({ type: "prismic:shell:connect" }, "*", [port2])
+		return Promise.race([answer, new Promise((resolve) => setTimeout(resolve, 5000))])
+	}, url)
+}
