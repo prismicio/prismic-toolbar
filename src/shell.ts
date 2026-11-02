@@ -17,7 +17,6 @@ function deleteSessionCookie() {
 	document.cookie = `${sessionCookieName}=; path=/; max-age=0; SameSite=None; Secure`
 }
 
-/** `{ ref, title, previewOrigins }`, or no ref once the session ended. */
 type Ping = { ref?: string; title?: string; previewOrigins?: unknown }
 
 async function pingSession(session: string, ref = ""): Promise<Ping> {
@@ -26,19 +25,11 @@ async function pingSession(session: string, ref = ""): Promise<Ping> {
 	return response.json()
 }
 
-/**
- * Whether a page on `origin` is on one of the live session's websites. Fails closed without
- * `previewOrigins`, which older Prismic versions do not send.
- */
 const isPreviewOrigin = (origin: string, { ref, previewOrigins }: Ping) =>
 	Boolean(ref) && Array.isArray(previewOrigins) && previewOrigins.includes(origin)
 
 const shares = new Map<string, Promise<string>>()
 
-/**
- * The shell's methods for a page on `origin`. Each call checks the session in the cookie at that
- * time, since another tab or a share link can start or replace it.
- */
 function createMethods(origin: string): ShellMethods {
 	/** The session in the cookie, when it is live and `origin` previews it. */
 	async function ownSession() {
