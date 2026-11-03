@@ -23,6 +23,8 @@ const deselectPinMessageType = "prismic:embedded-preview:deselect-pin"
 const showPinPreviewMessageType = "prismic:embedded-preview:show-pin-preview"
 const hidePinPreviewMessageType = "prismic:embedded-preview:hide-pin-preview"
 const reportSelectedPinPositionMessageType = "prismic:embedded-preview:report-selected-pin-position"
+const undoMessageType = "prismic:embedded-preview:undo"
+const redoMessageType = "prismic:embedded-preview:redo"
 
 const nonemptyStringSchema = z.string().check(z.minLength(1))
 const ratioSchema = z.number().check(z.gte(0), z.lte(1))
@@ -177,6 +179,8 @@ type ReportSelectedPinPositionMessage = {
 	rect: PinRect
 	visible: boolean
 }
+type UndoMessage = { type: typeof undoMessageType }
+type RedoMessage = { type: typeof redoMessageType }
 
 export type Message =
 	| ReadyMessage
@@ -199,6 +203,8 @@ export type Message =
 	| ShowPinPreviewMessage
 	| HidePinPreviewMessage
 	| ReportSelectedPinPositionMessage
+	| UndoMessage
+	| RedoMessage
 
 export type MessageHandler = (event: MessageEvent<unknown>) => void
 export type SubscribeToMessages = (handler: MessageHandler) => () => void
