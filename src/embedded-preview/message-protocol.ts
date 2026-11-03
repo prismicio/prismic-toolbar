@@ -243,11 +243,9 @@ const sessionReplayMessageSchema = z.object({
 			apiKey: nonemptyStringSchema,
 			deviceId: nonemptyStringSchema,
 			sessionId: z.number().check(z.gt(0)),
-			sampleRate: ratioSchema,
 			serverZone: z.enum(["US", "EU"]),
 			privacyConfig: z.object({
-				defaultMaskLevel: z.enum(["light", "medium", "conservative"]),
-				unmaskSelector: z.array(z.string()),
+				defaultMaskLevel: z.optional(z.enum(["light", "medium", "conservative"])),
 				maskSelector: z.optional(z.array(z.string())),
 			}),
 		}),

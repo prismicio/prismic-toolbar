@@ -18,7 +18,6 @@ function setSessionReplay(config: SessionReplayMessage["config"]): Promise<void>
 				await sessionReplay.init(config.apiKey, {
 					deviceId: config.deviceId,
 					sessionId: config.sessionId,
-					sampleRate: config.sampleRate,
 					serverZone: config.serverZone,
 					crossOriginIframes: { enabled: true },
 					privacyConfig: config.privacyConfig,
