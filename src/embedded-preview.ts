@@ -1,12 +1,22 @@
-import { isAckMessage, isSetRefMessage, readyMessage } from "./embedded-preview/message-protocol"
+import {
+	isAckMessage,
+	isSetRefMessage,
+	isSessionReplayMessage,
+	readyMessage,
+} from "./embedded-preview/message-protocol"
 import type { MessageHandler, PostMessage } from "./embedded-preview/message-protocol"
 import { EmbeddedPreviewOverlay } from "./embedded-preview/overlay"
-import { registerChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
+import {
+	loadChunk,
+	registerChunk,
+	type EmbeddedPreviewOptions,
+	type ToolbarChunks,
+} from "./lib/chunks"
 import { readyDOM } from "./lib/dom"
 
 export type { EmbeddedPreviewOptions }
 
-export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {}) {
+export async function setupEmbeddedPreview({ onRef, assets }: EmbeddedPreviewOptions = {}) {
 	await readyDOM()
 
 	const subscribers = new Set<MessageHandler>()
@@ -27,6 +37,27 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 			})
 		})
 	}
+
+	// Keep the recorder out of normal previews and load it only for a sampled editor session.
+	let replayChunk: Promise<ToolbarChunks["setSessionReplay"]> | undefined
+	let replayRevision = 0
+	subscribeToMessages(async ({ data, origin }) => {
+		if (!assets || !isSessionReplayMessage(data)) return
+		const revision = ++replayRevision
+		if (!data.config && !replayChunk) return
+		try {
+			replayChunk ??= loadChunk(`${assets}/session-replay.js`, "setSessionReplay")
+			const setSessionReplay = await replayChunk
+			if (revision !== replayRevision) return
+			await setSessionReplay(data.config)
+			if (data.config && revision === replayRevision) {
+				window.parent.postMessage({ type: "prismic:embedded-preview:session-replay-ready" }, origin)
+			}
+		} catch (error) {
+			replayChunk = undefined
+			console.error("Failed to configure embedded preview replay.", error)
+		}
+	})
 
 	let connected = false
 	subscribeToMessages((event) => {

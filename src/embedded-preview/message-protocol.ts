@@ -235,3 +235,25 @@ export function isSliceOverlayMessage(data: unknown): data is SetSliceOverlayMes
 export function isScrollToSliceMessage(data: unknown): data is ScrollToSliceMessage {
 	return z.validate(scrollToSliceMessageSchema, data)
 }
+
+const sessionReplayMessageSchema = z.object({
+	type: z.literal("prismic:embedded-preview:session-replay"),
+	config: z.optional(
+		z.object({
+			apiKey: nonemptyStringSchema,
+			deviceId: nonemptyStringSchema,
+			sessionId: z.number().check(z.gt(0)),
+			serverZone: z.enum(["US", "EU"]),
+			privacyConfig: z.object({
+				defaultMaskLevel: z.optional(z.enum(["light", "medium", "conservative"])),
+				maskSelector: z.optional(z.array(z.string())),
+			}),
+		}),
+	),
+})
+
+export type SessionReplayMessage = z.infer<typeof sessionReplayMessageSchema>
+
+export function isSessionReplayMessage(data: unknown): data is SessionReplayMessage {
+	return z.validate(sessionReplayMessageSchema, data)
+}

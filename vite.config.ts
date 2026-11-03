@@ -12,7 +12,14 @@ export const version = process.env.TOOLBAR_VERSION || packageJSON.version
  * Each entry builds `src/<entry>.ts` into `<entry>.js`, except the shell, inlined into
  * `shell.html`.
  */
-export const entries = ["prismic", "v5", "embedded-preview", "toolbar", "shell"] as const
+export const entries = [
+	"prismic",
+	"v5",
+	"embedded-preview",
+	"session-replay",
+	"toolbar",
+	"shell",
+] as const
 
 export type Entry = (typeof entries)[number]
 
