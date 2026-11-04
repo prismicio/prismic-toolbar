@@ -68,7 +68,15 @@ function createMethods(origin: string): ShellMethods {
 		},
 
 		async closeSession() {
-			if (await ownSession()) deleteSessionCookie()
+			const session = getCookie(sessionCookieName)
+			if (!session) return
+			// Exit holds when Prismic fails, but a page on another website cannot end the session.
+			const ends = await pingSession(session, origin).then(
+				({ ref, close }) => Boolean(ref || close),
+				() => true,
+			)
+			// Deleted only if unchanged, so a session another tab started meanwhile survives.
+			if (ends && getCookie(sessionCookieName) === session) deleteSessionCookie()
 		},
 
 		async share(pageURL, title) {
