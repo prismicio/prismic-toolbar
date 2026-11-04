@@ -1,10 +1,20 @@
 import { createEmbeddedPush } from "./embedded-preview/embedded-push"
-import { isAckMessage, isSetRefMessage, readyMessage } from "./embedded-preview/message-protocol"
+import {
+	isAckMessage,
+	isSetRefMessage,
+	isSessionReplayMessage,
+	readyMessage,
+} from "./embedded-preview/message-protocol"
 import type { MessageHandler, PostMessage } from "./embedded-preview/message-protocol"
 import { EmbeddedPreviewOverlay } from "./embedded-preview/overlay"
 import { readyDOM } from "./lib/dom"
 import type { ToolbarMode } from "./lib/env"
 import { createPreviewSession } from "./lib/preview-session"
+import type { setSessionReplay } from "./session-replay"
+
+// Replaced at build time, see `vite.config.ts`.
+declare const CDN_HOST: string
+declare const __TOOLBAR_VERSION__: string
 
 /**
  * Runs the editor's preview iframe: the editor pushes refs, or the toolbar polls the preview
@@ -34,6 +44,29 @@ export async function start(repositoryHost: string, mode: ToolbarMode) {
 	} else {
 		void createPreviewSession({ repositoryHost, codec: "plain", watchCookie: false }).start()
 	}
+
+	// Keep the recorder out of normal previews and load it only for a sampled editor session.
+	let replayChunk: Promise<typeof setSessionReplay> | undefined
+	let replayRevision = 0
+	subscribeToMessages(async ({ data, origin }) => {
+		if (!isSessionReplayMessage(data)) return
+		const revision = ++replayRevision
+		if (!data.config && !replayChunk) return
+		try {
+			replayChunk ??= import(
+				/* @vite-ignore */ `${CDN_HOST}/prismic-toolbar/${__TOOLBAR_VERSION__}/session-replay.js`
+			).then((chunk: { setSessionReplay: typeof setSessionReplay }) => chunk.setSessionReplay)
+			const configure = await replayChunk
+			if (revision !== replayRevision) return
+			await configure(data.config)
+			if (data.config && revision === replayRevision) {
+				window.parent.postMessage({ type: "prismic:embedded-preview:session-replay-ready" }, origin)
+			}
+		} catch (error) {
+			replayChunk = undefined
+			console.error("Failed to configure embedded preview replay.", error)
+		}
+	})
 
 	let connected = false
 	subscribeToMessages((event) => {

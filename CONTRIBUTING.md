@@ -20,15 +20,16 @@ The following setup is required to work on this project:
 
 Each entry at the root of `src` builds one file to `dist/prismic-toolbar/<version>/`. A folder of the same name holds its code:
 
-| Entry                     | Loaded                                                | Code                                                             |
-| ------------------------- | ----------------------------------------------------- | ---------------------------------------------------------------- |
-| `src/prismic.ts`          | On every page, by the install snippet                 | `src/lib`                                                        |
-| `src/v4.ts`               | On websites without `v=5`                             | `src/lib`: previews through the repository's shell, with the bar |
-| `src/v5.ts`               | On websites opting into `v=5`, with a preview cookie  | `src/lib`: previews through `ping`, with the bar                 |
-| `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe       | `src/embedded-preview`: editor refs, comment and slice overlays  |
-| `src/shell.ts`            | Hidden, from the repository host, to read its cookies | Inlined into `src/shell.html`                                    |
+| Entry                     | Loaded                                                                       | Code                                                             |
+| ------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `src/prismic.ts`          | On every page, by the install snippet                                        | `src/lib`                                                        |
+| `src/v4.ts`               | On websites without `v=5`                                                    | `src/lib`: previews through the repository's shell, with the bar |
+| `src/v5.ts`               | On websites opting into `v=5`, with a preview cookie                         | `src/lib`: previews through `ping`, with the bar                 |
+| `src/embedded-preview.ts` | Only inside the Prismic editor's preview iframe                              | `src/embedded-preview`: editor refs, comment and slice overlays  |
+| `src/session-replay.ts`   | Only while the editor records its preview, imported by `embedded-preview.js` | Amplitude Session Replay                                         |
+| `src/shell.ts`            | Hidden, from the repository host, to read its cookies                        | Inlined into `src/shell.html`                                    |
 
-- `prismic.js` only reads its script's parameters and the cookies, then loads the one bundle the page needs, or none. v4 websites always need theirs: only the repository's shell knows whether a preview is active.
+- `prismic.js` only reads its script's parameters and the cookies, then loads the one bundle the page needs, or none. v4 websites always need theirs: only the repository's shell knows whether a preview is active. The one exception: `embedded-preview.js` imports `session-replay.js` when the editor asks to record its preview. The recorder is about 140 KB gzip, too large for every editor preview, and the editor asks only after the preview loads.
 - Each file is self-contained. `prismic.js` is a classic script, which imports the other bundles as ES modules and calls their `start` export. Modules need CORS: `static.cdn.prismic.io` sends `Access-Control-Allow-Origin: *` on `/prismic-toolbar/*`.
 - `src/lib` holds the code `prismic.js` and the bundles share. `preview-session.ts` keeps the website's preview cookie in sync with the repository's preview session and dispatches preview events. `toolbar.ts` is the preview bar.
 

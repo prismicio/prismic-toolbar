@@ -12,7 +12,14 @@ export const version = process.env.TOOLBAR_VERSION || packageJSON.version
  * Each entry builds `src/<entry>.ts` into `<entry>.js`, except the shell, inlined into
  * `shell.html`.
  */
-export const entries = ["prismic", "v4", "v5", "embedded-preview", "shell"] as const
+export const entries = [
+	"prismic",
+	"v4",
+	"v5",
+	"embedded-preview",
+	"session-replay",
+	"shell",
+] as const
 
 export type Entry = (typeof entries)[number]
 
@@ -71,8 +78,14 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 				fileName: () => `${entry}.js`,
 			},
 			minify: !development,
-			// Vite keeps the whitespace of `es` libraries: these bundles are never bundled again.
-			rolldownOptions: { output: { minify: !development } },
+			rolldownOptions: {
+				output: {
+					// Vite keeps the whitespace of `es` libraries: these bundles are never bundled again.
+					minify: !development,
+					// One file per entry, even for dependencies that import their own code lazily.
+					codeSplitting: false,
+				},
+			},
 			sourcemap: development ? "inline" : false,
 			watch: development ? {} : null,
 		},
