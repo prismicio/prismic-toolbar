@@ -32,10 +32,13 @@ async function pingSession(session: string, origin: string, ref = ""): Promise<P
 const shares = new Map<string, Promise<string>>()
 
 function createMethods(origin: string): ShellMethods {
+	/** The last session Prismic said `origin` previews. */
+	let ownedSession: string | undefined
+
 	/** The session in the cookie, when it is live and `origin` previews it. */
 	async function ownSession() {
 		const session = getCookie(sessionCookieName)
-		if (session && (await pingSession(session, origin)).ref) return session
+		if (session && (await pingSession(session, origin)).ref) return (ownedSession = session)
 	}
 
 	const methods: ShellMethods = {
@@ -60,7 +63,10 @@ function createMethods(origin: string): ShellMethods {
 			const current = getCookie(sessionCookieName)
 			// Another tab or a share link replaced the session meanwhile: ping the new one.
 			if (current !== session) return current ? methods.ping(ref) : {}
-			if (ping.ref) return { ref: ping.ref, title: ping.title }
+			if (ping.ref) {
+				ownedSession = session
+				return { ref: ping.ref, title: ping.title }
+			}
 			// Checked and deleted in one step, so a session started meanwhile survives. Another
 			// website's session stays open: this page just has none.
 			if (ping.close) deleteSessionCookie()
@@ -70,10 +76,11 @@ function createMethods(origin: string): ShellMethods {
 		async closeSession() {
 			const session = getCookie(sessionCookieName)
 			if (!session) return
-			// Exit holds when Prismic fails, but a page on another website cannot end the session.
+			// Exit holds when Prismic fails, but only for the session this page was shown: a page on
+			// another website cannot end the session.
 			const ends = await pingSession(session, origin).then(
 				({ ref, close }) => Boolean(ref || close),
-				() => true,
+				() => session === ownedSession,
 			)
 			// Deleted only if unchanged, so a session another tab started meanwhile survives.
 			if (ends && getCookie(sessionCookieName) === session) deleteSessionCookie()
@@ -122,6 +129,8 @@ async function acceptsConnection(origin: string) {
 	if (!session) return true
 	try {
 		const ping = await pingSession(session, origin)
+		// Another tab or a share link replaced the session meanwhile: check the new one.
+		if (getCookie(sessionCookieName) !== session) return acceptsConnection(origin)
 		return Boolean(ping.ref || ping.close)
 	} catch {
 		return false
