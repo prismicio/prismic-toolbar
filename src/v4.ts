@@ -1,26 +1,14 @@
-import { loadChunk } from "./lib/chunks"
-import { warn } from "./lib/env"
-import { createPreviewSession, type PreviewSessionOptions } from "./lib/preview-session"
+import { createPreviewSession } from "./lib/preview-session"
+import { mountToolbar } from "./lib/toolbar"
 
 /** Runs website previews through the repository's shell and `ping`, with the JSON preview cookie. */
-export function startV4({
-	repositoryHost,
-	assets,
-	connect,
-}: Pick<PreviewSessionOptions, "repositoryHost" | "connect"> & { assets: string }): void {
-	const session = createPreviewSession({
-		repositoryHost,
-		codec: "json",
-		watchCookie: true,
-		connect,
-	})
-	// The preview bar only loads once a preview session is active.
+export function start(repositoryHost: string): void {
+	const session = createPreviewSession({ repositoryHost, codec: "json", watchCookie: true })
+	// Most visitors never preview: only mount the bar once a preview session is active.
 	const unsubscribe = session.subscribe((snapshot) => {
 		if (snapshot.status !== "polling") return
 		unsubscribe()
-		loadChunk(`${assets}/toolbar.js`, "mountToolbar")
-			.then((mountToolbar) => mountToolbar({ session, repositoryHost }))
-			.catch((error: unknown) => warn(`Could not load the preview toolbar.\n\n${String(error)}`))
+		mountToolbar(session, repositoryHost)
 	})
 	void session.start()
 }

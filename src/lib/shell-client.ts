@@ -1,4 +1,8 @@
 import { readyDOM } from "./dom"
+import { repositoryOrigin } from "./env"
+
+/** The asset folder, such as a commit's short SHA or `pr-<number>`. See `vite.config.ts`. */
+declare const __TOOLBAR_VERSION__: string
 
 /**
  * Protocol between v4 websites and the shell page on the repository host, which reads the
@@ -34,11 +38,13 @@ export interface Shell extends ShellMethods {
 }
 
 /**
- * Loads the repository's shell page and connects to it. Rejects when it does not answer within 15
- * seconds, and so does each call.
+ * Loads the repository's shell page, deployed with this toolbar version, and connects to it.
+ * Rejects when it does not answer within 15 seconds, and so does each call.
  */
-export async function connectShell(url: string): Promise<Shell> {
+export async function connectShell(repositoryHost: string): Promise<Shell> {
 	await readyDOM()
+
+	const url = `${repositoryOrigin(repositoryHost)}/prismic-toolbar/${__TOOLBAR_VERSION__}/shell.html`
 
 	const iframe = Object.assign(document.createElement("iframe"), {
 		src: url,

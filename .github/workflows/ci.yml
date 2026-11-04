@@ -89,7 +89,7 @@ jobs:
       - name: Build for production
         run: npm run build
         env:
-          CDN_HOST: https://prismic.io
+          CDN_HOST: https://static.cdn.prismic.io
       - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0, fixed commit for security reasons
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}

@@ -54,9 +54,13 @@ async function serveToolbar(context: BrowserContext) {
 	await context.route("https://static.cdn.prismic.io/prismic.js?*", (route) =>
 		route.fulfill({ path: `${dist}/prismic.js` }),
 	)
-	const assets = new RegExp(`^https://([\\w-]+\\.)?prismic\\.io/prismic-toolbar/${version}/`)
+	const assets = new RegExp(`^https://([\\w-]+\\.)*prismic\\.io/prismic-toolbar/${version}/`)
 	await context.route(assets, (route) =>
-		route.fulfill({ path: `${dist}/${new URL(route.request().url()).pathname.split("/").pop()}` }),
+		route.fulfill({
+			path: `${dist}/${new URL(route.request().url()).pathname.split("/").pop()}`,
+			// Like the CDN: `prismic.js` imports the other bundles as modules.
+			headers: { "access-control-allow-origin": "*" },
+		}),
 	)
 }
 

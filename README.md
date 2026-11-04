@@ -9,7 +9,7 @@ The official preview toolbar for [Prismic][prismic].
 - Keeps your website in sync with [preview sessions][prismic-previews], live.
 - Lets content writers copy a share link to a preview, and exit it.
 - Powers the Page Builder's live previews: in-place updates, comments, and slice selection.
-- Loads only a small script for visitors outside a preview session.
+- Loads a small script on every page, then at most one bundle for what the page needs.
 
 ## Install
 

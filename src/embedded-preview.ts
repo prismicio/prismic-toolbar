@@ -1,3 +1,4 @@
+import { createEmbeddedPush } from "./embedded-preview/embedded-push"
 import {
 	isAckMessage,
 	isSetRefMessage,
@@ -6,17 +7,20 @@ import {
 } from "./embedded-preview/message-protocol"
 import type { MessageHandler, PostMessage } from "./embedded-preview/message-protocol"
 import { EmbeddedPreviewOverlay } from "./embedded-preview/overlay"
-import {
-	loadChunk,
-	registerChunk,
-	type EmbeddedPreviewOptions,
-	type ToolbarChunks,
-} from "./lib/chunks"
 import { readyDOM } from "./lib/dom"
+import type { ToolbarMode } from "./lib/env"
+import { createPreviewSession } from "./lib/preview-session"
+import type { setSessionReplay } from "./session-replay"
 
-export type { EmbeddedPreviewOptions }
+// Replaced at build time, see `vite.config.ts`.
+declare const CDN_HOST: string
+declare const __TOOLBAR_VERSION__: string
 
-export async function setupEmbeddedPreview({ onRef, assets }: EmbeddedPreviewOptions = {}) {
+/**
+ * Runs the editor's preview iframe: the editor pushes refs, or the toolbar polls the preview
+ * session, and both show comment and slice overlays.
+ */
+export async function start(repositoryHost: string, mode: ToolbarMode) {
 	await readyDOM()
 
 	const subscribers = new Set<MessageHandler>()
@@ -28,7 +32,8 @@ export async function setupEmbeddedPreview({ onRef, assets }: EmbeddedPreviewOpt
 		}
 	}
 
-	if (onRef) {
+	if (mode === "embedded-push") {
+		const onRef = createEmbeddedPush(repositoryHost)
 		subscribeToMessages(({ data }) => {
 			if (!isSetRefMessage(data)) return
 
@@ -36,20 +41,24 @@ export async function setupEmbeddedPreview({ onRef, assets }: EmbeddedPreviewOpt
 				console.error("Failed to update embedded preview ref.", error)
 			})
 		})
+	} else {
+		void createPreviewSession({ repositoryHost, codec: "plain", watchCookie: false }).start()
 	}
 
 	// Keep the recorder out of normal previews and load it only for a sampled editor session.
-	let replayChunk: Promise<ToolbarChunks["setSessionReplay"]> | undefined
+	let replayChunk: Promise<typeof setSessionReplay> | undefined
 	let replayRevision = 0
 	subscribeToMessages(async ({ data, origin }) => {
-		if (!assets || !isSessionReplayMessage(data)) return
+		if (!isSessionReplayMessage(data)) return
 		const revision = ++replayRevision
 		if (!data.config && !replayChunk) return
 		try {
-			replayChunk ??= loadChunk(`${assets}/session-replay.js`, "setSessionReplay")
-			const setSessionReplay = await replayChunk
+			replayChunk ??= import(
+				/* @vite-ignore */ `${CDN_HOST}/prismic-toolbar/${__TOOLBAR_VERSION__}/session-replay.js`
+			).then((chunk: { setSessionReplay: typeof setSessionReplay }) => chunk.setSessionReplay)
+			const configure = await replayChunk
 			if (revision !== replayRevision) return
-			await setSessionReplay(data.config)
+			await configure(data.config)
 			if (data.config && revision === replayRevision) {
 				window.parent.postMessage({ type: "prismic:embedded-preview:session-replay-ready" }, origin)
 			}
@@ -80,8 +89,6 @@ export async function setupEmbeddedPreview({ onRef, assets }: EmbeddedPreviewOpt
 	// Safe to broadcast to '*': no data in this message
 	window.parent.postMessage(readyMessage, "*")
 }
-
-registerChunk("setupEmbeddedPreview", setupEmbeddedPreview)
 
 /** Whether an editor on `localhost` may drive the embedded preview. Replaced at build time. */
 declare const __TOOLBAR_LOCAL_EDITOR__: boolean

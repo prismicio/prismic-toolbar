@@ -1,12 +1,11 @@
 import * as sessionReplay from "@amplitude/session-replay-browser"
 
 import type { SessionReplayMessage } from "./embedded-preview/message-protocol"
-import { registerChunk } from "./lib/chunks"
 
 let revision = 0
 let pending = Promise.resolve()
 
-function setSessionReplay(config: SessionReplayMessage["config"]): Promise<void> {
+export function setSessionReplay(config: SessionReplayMessage["config"]): Promise<void> {
 	const currentRevision = ++revision
 	sessionReplay.shutdown()
 	// Serialize SDK initialization so a stop or a newer session wins while init is pending.
@@ -33,5 +32,3 @@ function setSessionReplay(config: SessionReplayMessage["config"]): Promise<void>
 		})
 	return pending
 }
-
-registerChunk("setSessionReplay", setSessionReplay)
