@@ -82,6 +82,8 @@ export function entryConfig(entry: Entry, development: boolean): InlineConfig {
 				output: {
 					// Vite keeps the whitespace of `es` libraries: these bundles are never bundled again.
 					minify: !development,
+					// Annotations only help bundlers, and rolldown keeps them in minified output.
+					comments: { annotation: false },
 					// One file per entry, even for dependencies that import their own code lazily.
 					codeSplitting: false,
 				},
