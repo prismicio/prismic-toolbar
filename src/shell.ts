@@ -17,16 +17,17 @@ function deleteSessionCookie() {
 	document.cookie = `${sessionCookieName}=; path=/; max-age=0; SameSite=None; Secure`
 }
 
-type Ping = { ref?: string; title?: string; previewOrigins?: unknown }
+/**
+ * Prismic checks `origin`, the page asking, against the session's website. It returns `ref` to that
+ * website, `close` once the session ended, and neither to another website.
+ */
+type Ping = { ref?: string; title?: string; close?: boolean }
 
-async function pingSession(session: string, ref = ""): Promise<Ping> {
-	const response = await fetch(`/previews/${session}/ping?ref=${encodeURIComponent(ref)}`)
+async function pingSession(session: string, origin: string, ref = ""): Promise<Ping> {
+	const response = await fetch(`/previews/${session}/ping?${new URLSearchParams({ ref, origin })}`)
 	if (!response.ok) throw new Error(`Prismic responded ${response.status} to ping.`)
 	return response.json()
 }
-
-const isPreviewOrigin = (origin: string, { ref, previewOrigins }: Ping) =>
-	Boolean(ref) && Array.isArray(previewOrigins) && previewOrigins.includes(origin)
 
 const shares = new Map<string, Promise<string>>()
 
@@ -34,7 +35,7 @@ function createMethods(origin: string): ShellMethods {
 	/** The session in the cookie, when it is live and `origin` previews it. */
 	async function ownSession() {
 		const session = getCookie(sessionCookieName)
-		if (session && isPreviewOrigin(origin, await pingSession(session))) return session
+		if (session && (await pingSession(session, origin)).ref) return session
 	}
 
 	const methods: ShellMethods = {
@@ -54,15 +55,15 @@ function createMethods(origin: string): ShellMethods {
 			const session = getCookie(sessionCookieName)
 			if (!session) return {}
 
-			const ping = await pingSession(session, ref)
+			const ping = await pingSession(session, origin, ref)
 
 			const current = getCookie(sessionCookieName)
 			// Another tab or a share link replaced the session meanwhile: ping the new one.
 			if (current !== session) return current ? methods.ping(ref) : {}
-			// Another website's session: this page has none.
-			if (ping.ref) return isPreviewOrigin(origin, ping) ? { ref: ping.ref, title: ping.title } : {}
-			// Checked and deleted in one step, so a session started meanwhile survives.
-			deleteSessionCookie()
+			if (ping.ref) return { ref: ping.ref, title: ping.title }
+			// Checked and deleted in one step, so a session started meanwhile survives. Another
+			// website's session stays open: this page just has none.
+			if (ping.close) deleteSessionCookie()
 			return {}
 		},
 
@@ -106,14 +107,14 @@ async function createShareLink(session: string, pageURL: string, title: string):
 
 /**
  * Without a live session, any page connects, since each call checks again. Otherwise, pages that
- * are not on the session's websites get no answer.
+ * are not on the session's website get no answer.
  */
 async function acceptsConnection(origin: string) {
 	const session = getCookie(sessionCookieName)
 	if (!session) return true
 	try {
-		const ping = await pingSession(session)
-		return !ping.ref || isPreviewOrigin(origin, ping)
+		const ping = await pingSession(session, origin)
+		return Boolean(ping.ref || ping.close)
 	} catch {
 		return false
 	}

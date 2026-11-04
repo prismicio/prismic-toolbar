@@ -190,7 +190,7 @@ test("leaves the website's cookie alone when another session ended", async ({
 	expect(await website.previewRef()).toBe(ref)
 })
 
-test("only answers pages on the session's websites", async ({
+test("only answers pages on the session's website", async ({
 	context,
 	repository,
 	doc,
@@ -199,7 +199,7 @@ test("only answers pages on the session's websites", async ({
 }) => {
 	await startPreview()
 	await expect(website.bar).toBeVisible()
-	// The same website on another origin, which is not one of the repository's previews.
+	// The same website on another origin, which is not the session's.
 	const other = await context.newPage()
 	await other.goto(website.pageURL(doc).replace("//localhost:", "//127.0.0.1:"))
 
