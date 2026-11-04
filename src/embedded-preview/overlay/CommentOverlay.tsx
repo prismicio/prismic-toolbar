@@ -148,7 +148,10 @@ function CursorPin(props: CursorPinProps) {
 	const { position, author } = props
 
 	return (
-		<div className="pin cursor-pin" style={{ left: position.left, top: position.top }}>
+		<div
+			className="pin cursor-pin"
+			style={{ left: `${position.left}px`, top: `${position.top}px` }}
+		>
 			<Avatar name={author.name || author.id} imageUrl={author.avatarUrl} />
 		</div>
 	)
@@ -278,7 +281,7 @@ function DraftPin(props: DraftPinProps) {
 }
 
 interface PinProps {
-	pinRef: RefObject<HTMLButtonElement>
+	pinRef: RefObject<HTMLButtonElement | null>
 	position: PinPosition
 	author: Author
 	documentSize: DocumentSize
@@ -307,7 +310,7 @@ function Pin(props: PinProps) {
 			ref={pinRef}
 			type="button"
 			className={`pin ${dimmed ? "pin-dimmed" : ""}`}
-			style={{ left, top }}
+			style={{ left: `${left}px`, top: `${top}px` }}
 		>
 			<Avatar name={author.name || author.id} imageUrl={author.avatarUrl} />
 		</button>
@@ -358,7 +361,7 @@ function useDismissOnClick(pin: PinIdentity | undefined, postMessage: PostMessag
 }
 
 function useScrollToThreadPin(
-	pinRef: RefObject<HTMLButtonElement>,
+	pinRef: RefObject<HTMLButtonElement | null>,
 	pin: ThreadPinData,
 	subscribeToMessages: SubscribeToMessages,
 ) {
@@ -381,7 +384,7 @@ function useScrollToThreadPin(
 }
 
 interface PinPositionReporterProps {
-	pinRef: RefObject<HTMLButtonElement>
+	pinRef: RefObject<HTMLButtonElement | null>
 	identity: PinIdentity
 	position: PinPosition
 	documentSize: DocumentSize
