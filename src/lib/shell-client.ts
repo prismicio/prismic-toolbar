@@ -10,7 +10,8 @@ declare const __TOOLBAR_VERSION__: string
  * together.
  *
  * - The website posts `connect` to the shell's window with a `MessagePort`, which carries every later
- *   message. The shell answers `"ready"`.
+ *   message. The shell answers `"ready"`, unless a preview session is active and Prismic says the
+ *   website is not the session's.
  * - The website calls a method with `{ id, method, params }`.
  * - The shell answers `{ id, result }`, or `{ id, error }`.
  */
