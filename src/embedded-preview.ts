@@ -1,6 +1,7 @@
 import { isAckMessage, isSetRefMessage, readyMessage } from "./embedded-preview/message-protocol"
 import type { MessageHandler, PostMessage } from "./embedded-preview/message-protocol"
 import { EmbeddedPreviewOverlay } from "./embedded-preview/overlay"
+import { observeReviewNavigation } from "./embedded-preview/review-navigation"
 import { registerChunk, type EmbeddedPreviewOptions } from "./lib/chunks"
 import { readyDOM } from "./lib/dom"
 
@@ -35,6 +36,9 @@ export async function setupEmbeddedPreview({ onRef }: EmbeddedPreviewOptions = {
 		connected = true
 		const postMessage: PostMessage = (message) => window.parent.postMessage(message, event.origin)
 		new EmbeddedPreviewOverlay({ postMessage, subscribeToMessages })
+		if (window.name === "prismic:embedded-preview:review") {
+			observeReviewNavigation((message) => window.parent.postMessage(message, event.origin))
+		}
 	})
 
 	const handleMessage = (event: MessageEvent<unknown>) => {

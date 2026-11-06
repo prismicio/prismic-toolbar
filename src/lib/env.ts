@@ -9,6 +9,7 @@ export type ToolbarMode = "regular" | "embedded-push" | "embedded-poll"
 export function detectMode(win: Window = window): ToolbarMode | undefined {
 	if (win.self === win.top) return "regular"
 	if (win.name === "prismic:embedded-preview") return "embedded-push"
+	if (win.name === "prismic:embedded-preview:review") return "embedded-push"
 	if (win.name === "prismic:embedded-preview:poll") return "embedded-poll"
 }
 
