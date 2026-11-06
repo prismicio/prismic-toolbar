@@ -53,7 +53,13 @@ export function useSlices(subscribeToMessages: SubscribeToMessages) {
 		const unsubscribe = subscribeToMessages(({ data }) => {
 			if (!isSetSlicesMessage(data)) return
 
-			metadata = new Map(data.slices.map((slice) => [slice.sliceId, slice]))
+			const nextMetadata = new Map(data.slices.map((slice) => [slice.sliceId, slice]))
+			// Keep deleted slices mounted until the website actually removes them.
+			for (const { sliceId } of findSliceMarkerRanges(document.body)) {
+				const previous = metadata.get(sliceId)
+				if (previous && !nextMetadata.has(sliceId)) nextMetadata.set(sliceId, previous)
+			}
+			metadata = nextMetadata
 			updateElements()
 		})
 

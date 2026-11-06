@@ -16,11 +16,23 @@ interface SliceOverlayProps {
 	uiScale: number
 }
 
+type PendingSliceAction = "up" | "down" | "delete"
+
 export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, subscribeToMessages, uiScale } = props
 
 	const { slices, layout } = useSlices(subscribeToMessages)
 	const { selectedSliceId, readOnly } = useSliceOverlayState(subscribeToMessages)
+	const [pendingActions, setPendingActions] = useState(() => new Map<string, PendingSliceAction>())
+	const setPendingAction = useStableCallback((sliceId: string, action?: PendingSliceAction) => {
+		setPendingActions((current) => {
+			if (current.get(sliceId) === action) return current
+			const next = new Map(current)
+			if (action) next.set(sliceId, action)
+			else next.delete(sliceId)
+			return next
+		})
+	})
 
 	const selectedSlice = useSelectedSlice(slices, selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
@@ -34,24 +46,24 @@ export function SliceOverlay(props: SliceOverlayProps) {
 
 	return (
 		<>
-			{selectedSlice && (
-				<SliceHighlight
-					slice={selectedSlice}
-					layout={layout}
-					readOnly={readOnly}
-					postMessage={postMessage}
-				/>
-			)}
-			{hoveredSlice && hoveredSlice !== selectedSlice && (
-				<SliceHighlight
-					slice={hoveredSlice}
-					layout={layout}
-					readOnly={readOnly}
-					postMessage={postMessage}
-					hideInsertBefore={hoveredSliceDistance === 1}
-					hideInsertAfter={hoveredSliceDistance === -1}
-				/>
-			)}
+			{slices
+				.filter(
+					(slice) =>
+						slice === selectedSlice || slice === hoveredSlice || pendingActions.has(slice.sliceId),
+				)
+				.map((slice) => (
+					<SliceHighlight
+						key={slice.sliceId}
+						slice={slice}
+						pendingAction={pendingActions.get(slice.sliceId)}
+						setPendingAction={setPendingAction}
+						layout={layout}
+						readOnly={readOnly}
+						postMessage={postMessage}
+						hideInsertBefore={slice !== selectedSlice && hoveredSliceDistance === 1}
+						hideInsertAfter={slice !== selectedSlice && hoveredSliceDistance === -1}
+					/>
+				))}
 		</>
 	)
 }
@@ -180,6 +192,8 @@ function useScrollToSlice(
 
 interface SliceHighlightProps {
 	slice: Slice
+	pendingAction?: PendingSliceAction
+	setPendingAction: (sliceId: string, action?: PendingSliceAction) => void
 	layout: EventTarget
 	readOnly: boolean
 	postMessage: PostMessage
@@ -188,14 +202,32 @@ interface SliceHighlightProps {
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout, readOnly, postMessage, hideInsertBefore, hideInsertAfter } = props
+	const {
+		slice,
+		pendingAction,
+		setPendingAction,
+		layout,
+		readOnly,
+		postMessage,
+		hideInsertBefore,
+		hideInsertAfter,
+	} = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
+	const firstElement = slice.elements[0]
+
+	// Editor metadata arrives before the website changes.
+	useLayoutEffect(
+		() => setPendingAction(sliceId),
+		[firstElement, rect?.top, rect?.left, readOnly, sliceId, setPendingAction],
+	)
+	useLayoutEffect(() => () => setPendingAction(sliceId), [sliceId, setPendingAction])
 
 	if (!rect) return null
 
 	function handleMove(event: TargetedMouseEvent<HTMLButtonElement>, direction: "up" | "down") {
 		event.stopPropagation()
+		setPendingAction(sliceId, direction)
 		postMessage({ type: "prismic:embedded-preview:move-slice", sliceId, direction })
 	}
 
@@ -206,7 +238,29 @@ function SliceHighlight(props: SliceHighlightProps) {
 
 	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
+		setPendingAction(sliceId, "delete")
 		postMessage({ type: "prismic:embedded-preview:delete-slice", sliceId })
+	}
+
+	if (pendingAction) {
+		return (
+			<div
+				className="slice-highlight slice-highlight-pending"
+				data-slice-id={sliceId}
+				style={{ top: rect.top, left: rect.left, width: rect.width, height: rect.height }}
+				role="status"
+				onPointerOver={(event) => event.stopPropagation()}
+				onPointerMove={(event) => event.stopPropagation()}
+			>
+				<div className="slice-control-group slice-title">
+					<span className="slice-label">
+						{pendingAction === "delete"
+							? `Deleting ${label}…`
+							: `Moving ${label} ${pendingAction}…`}
+					</span>
+				</div>
+			</div>
+		)
 	}
 
 	return (

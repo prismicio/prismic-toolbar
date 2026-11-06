@@ -113,3 +113,10 @@
 	opacity: 0.5;
 	cursor: default;
 }
+
+.slice-highlight-pending {
+	align-items: center;
+	justify-content: center;
+	background: rgba(244, 240, 255, 0.9);
+	pointer-events: auto;
+}
