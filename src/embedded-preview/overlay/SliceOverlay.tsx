@@ -20,7 +20,7 @@ export function SliceOverlay(props: SliceOverlayProps) {
 	const { postMessage, subscribeToMessages, uiScale } = props
 
 	const { slices, layout } = useSlices(subscribeToMessages)
-	const { selectedSliceId, readOnly } = useSliceOverlayState(subscribeToMessages)
+	const { selectedSliceId, readOnly, agentEnabled } = useSliceOverlayState(subscribeToMessages)
 
 	const selectedSlice = useSelectedSlice(slices, selectedSliceId)
 	const hoveredSlice = useHoveredSlice(slices)
@@ -37,6 +37,7 @@ export function SliceOverlay(props: SliceOverlayProps) {
 			{selectedSlice && (
 				<SliceHighlight
 					slice={selectedSlice}
+					askAgentEnabled={agentEnabled}
 					layout={layout}
 					readOnly={readOnly}
 					postMessage={postMessage}
@@ -153,7 +154,7 @@ function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMe
 }
 
 function useSliceOverlayState(subscribeToMessages: SubscribeToMessages) {
-	const [state, setState] = useState<{ selectedSliceId?: string; readOnly?: boolean }>({})
+	const [state, setState] = useState<{ selectedSliceId?: string; readOnly?: boolean; agentEnabled?: boolean }>({})
 
 	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
@@ -182,13 +183,14 @@ interface SliceHighlightProps {
 	slice: Slice
 	layout: EventTarget
 	readOnly: boolean
+	askAgentEnabled?: boolean
 	postMessage: PostMessage
 	hideInsertBefore?: boolean
 	hideInsertAfter?: boolean
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout, readOnly, postMessage, hideInsertBefore, hideInsertAfter } = props
+	const { slice, layout, readOnly, askAgentEnabled, postMessage, hideInsertBefore, hideInsertAfter } = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
 
@@ -202,6 +204,11 @@ function SliceHighlight(props: SliceHighlightProps) {
 	function handleChangeVariation(event: TargetedMouseEvent<HTMLButtonElement>) {
 		event.stopPropagation()
 		postMessage({ type: "prismic:embedded-preview:change-slice-variation", sliceId })
+	}
+
+	function handleAskAgent(event: TargetedMouseEvent<HTMLButtonElement>) {
+		event.stopPropagation()
+		postMessage({ type: "prismic:embedded-preview:ask-slice-agent", sliceId })
 	}
 
 	function handleDelete(event: TargetedMouseEvent<HTMLButtonElement>) {
@@ -260,9 +267,14 @@ function SliceHighlight(props: SliceHighlightProps) {
 					</button>
 				</div>
 			)}
-			{!readOnly && (
+			{(!readOnly || askAgentEnabled) && (
 				<div className="slice-control-group slice-control-group-right">
-					{variation !== undefined && (
+					{askAgentEnabled && (
+						<button type="button" className="slice-button" aria-label="Ask AI about this slice" title="Ask AI about this slice" onClick={handleAskAgent}>
+							<span aria-hidden="true">✦</span>
+						</button>
+					)}
+					{!readOnly && variation !== undefined && (
 						<button
 							type="button"
 							className="slice-button"
@@ -273,7 +285,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 							<DescriptionIcon className="slice-button-icon" />
 						</button>
 					)}
-					<button
+					{!readOnly && <button
 						type="button"
 						className="slice-button"
 						aria-label="Delete slice"
@@ -281,7 +293,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 						onClick={handleDelete}
 					>
 						<DeleteIcon className="slice-button-icon" />
-					</button>
+					</button>}
 				</div>
 			)}
 			{!readOnly && !hideInsertAfter && (
