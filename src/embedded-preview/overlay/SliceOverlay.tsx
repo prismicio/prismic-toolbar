@@ -1,4 +1,4 @@
-import type { TargetedMouseEvent } from "preact"
+import type { ComponentChildren, TargetedMouseEvent } from "preact"
 import type { SVGProps } from "preact/compat"
 import { useLayoutEffect, useMemo, useRef, useState } from "preact/hooks"
 
@@ -257,62 +257,38 @@ function SliceHighlight(props: SliceHighlightProps) {
 			</div>
 			{!readOnly && (
 				<div className="slice-control-group slice-move-group">
-					<button
-						type="button"
-						className="slice-button"
-						aria-label="Move slice up"
-						title="Move slice up"
+					<SliceButton
+						label="Move slice up"
 						disabled={!slice.canMoveUp}
 						onClick={(event) => handleMove(event, "up")}
 					>
 						<ArrowUpIcon className="slice-button-icon" />
-					</button>
-					<button
-						type="button"
-						className="slice-button"
-						aria-label="Move slice down"
-						title="Move slice down"
+					</SliceButton>
+					<SliceButton
+						label="Move slice down"
 						disabled={!slice.canMoveDown}
 						onClick={(event) => handleMove(event, "down")}
 					>
 						<ArrowDownIcon className="slice-button-icon" />
-					</button>
+					</SliceButton>
 				</div>
 			)}
 			{(!readOnly || askAgentEnabled) && (
 				<div className="slice-control-group slice-control-group-right">
 					{askAgentEnabled && (
-						<button
-							type="button"
-							className="slice-button"
-							aria-label="Ask AI about this slice"
-							title="Ask AI about this slice"
-							onClick={handleAskAgent}
-						>
+						<SliceButton label="Ask AI about this slice" onClick={handleAskAgent}>
 							<span aria-hidden="true">✦</span>
-						</button>
+						</SliceButton>
 					)}
 					{!readOnly && variation !== undefined && (
-						<button
-							type="button"
-							className="slice-button"
-							aria-label="Change variation"
-							title="Change variation"
-							onClick={handleChangeVariation}
-						>
+						<SliceButton label="Change variation" onClick={handleChangeVariation}>
 							<DescriptionIcon className="slice-button-icon" />
-						</button>
+						</SliceButton>
 					)}
 					{!readOnly && (
-						<button
-							type="button"
-							className="slice-button"
-							aria-label="Delete slice"
-							title="Delete slice"
-							onClick={handleDelete}
-						>
+						<SliceButton label="Delete slice" onClick={handleDelete}>
 							<DeleteIcon className="slice-button-icon" />
-						</button>
+						</SliceButton>
 					)}
 				</div>
 			)}
@@ -320,6 +296,28 @@ function SliceHighlight(props: SliceHighlightProps) {
 				<InsertSliceButton sliceId={sliceId} position="after" postMessage={postMessage} />
 			)}
 		</div>
+	)
+}
+
+/** Shared native controls keep labels, tooltips, and keyboard behavior consistent. */
+function SliceButton(props: {
+	label: string
+	disabled?: boolean
+	onClick: (event: TargetedMouseEvent<HTMLButtonElement>) => void
+	children: ComponentChildren
+}) {
+	const { label, disabled, onClick, children } = props
+	return (
+		<button
+			type="button"
+			className="slice-button"
+			aria-label={label}
+			title={label}
+			disabled={disabled}
+			onClick={onClick}
+		>
+			{children}
+		</button>
 	)
 }
 
@@ -353,39 +351,44 @@ function InsertSliceButton(props: InsertSliceButtonProps) {
 }
 
 function AddIcon(props: SVGProps<SVGSVGElement>) {
-	return (
-		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-			<path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-		</svg>
-	)
+	return <SliceIcon {...props} path="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
 }
 
 const DeleteIcon = (props: SVGProps<SVGSVGElement>) => (
-	<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-		<path d="M16 9V19H8V9H16ZM14.5 3H9.5L8.5 4H5V6H19V4H15.5L14.5 3ZM18 7H6V19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7Z" />
-	</svg>
+	<SliceIcon
+		{...props}
+		path="M16 9V19H8V9H16ZM14.5 3H9.5L8.5 4H5V6H19V4H15.5L14.5 3ZM18 7H6V19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7Z"
+	/>
 )
 
 function ArrowUpIcon(props: SVGProps<SVGSVGElement>) {
 	return (
-		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-			<path d="M4 12L5.41 13.41L11 7.83V20H13V7.83L18.58 13.42L20 12L12 4L4 12Z" />
-		</svg>
+		<SliceIcon {...props} path="M4 12L5.41 13.41L11 7.83V20H13V7.83L18.58 13.42L20 12L12 4L4 12Z" />
 	)
 }
 
 function ArrowDownIcon(props: SVGProps<SVGSVGElement>) {
 	return (
-		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-			<path d="M20 12L18.59 10.59L13 16.17V4H11V16.17L5.42 10.58L4 12L12 20L20 12Z" />
-		</svg>
+		<SliceIcon
+			{...props}
+			path="M20 12L18.59 10.59L13 16.17V4H11V16.17L5.42 10.58L4 12L12 20L20 12Z"
+		/>
 	)
 }
 
 function DescriptionIcon(props: SVGProps<SVGSVGElement>) {
 	return (
+		<SliceIcon
+			{...props}
+			path="M8 16H16V18H8V16ZM8 12H16V14H8V12ZM14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z"
+		/>
+	)
+}
+
+function SliceIcon({ path, ...props }: SVGProps<SVGSVGElement> & { path: string }) {
+	return (
 		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
-			<path d="M8 16H16V18H8V16ZM8 12H16V14H8V12ZM14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
+			<path d={path} />
 		</svg>
 	)
 }
