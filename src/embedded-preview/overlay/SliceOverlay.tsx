@@ -154,7 +154,11 @@ function useSliceSelection(slices: Slice[], uiScale: number, postMessage: PostMe
 }
 
 function useSliceOverlayState(subscribeToMessages: SubscribeToMessages) {
-	const [state, setState] = useState<{ selectedSliceId?: string; readOnly?: boolean; agentEnabled?: boolean }>({})
+	const [state, setState] = useState<{
+		selectedSliceId?: string
+		readOnly?: boolean
+		agentEnabled?: boolean
+	}>({})
 
 	useLayoutEffect(() => {
 		return subscribeToMessages(({ data }) => {
@@ -190,7 +194,15 @@ interface SliceHighlightProps {
 }
 
 function SliceHighlight(props: SliceHighlightProps) {
-	const { slice, layout, readOnly, askAgentEnabled, postMessage, hideInsertBefore, hideInsertAfter } = props
+	const {
+		slice,
+		layout,
+		readOnly,
+		askAgentEnabled,
+		postMessage,
+		hideInsertBefore,
+		hideInsertAfter,
+	} = props
 	const { sliceId, label, variation } = slice
 	const rect = useSliceRect(slice, layout)
 
@@ -270,7 +282,13 @@ function SliceHighlight(props: SliceHighlightProps) {
 			{(!readOnly || askAgentEnabled) && (
 				<div className="slice-control-group slice-control-group-right">
 					{askAgentEnabled && (
-						<button type="button" className="slice-button" aria-label="Ask AI about this slice" title="Ask AI about this slice" onClick={handleAskAgent}>
+						<button
+							type="button"
+							className="slice-button"
+							aria-label="Ask AI about this slice"
+							title="Ask AI about this slice"
+							onClick={handleAskAgent}
+						>
 							<span aria-hidden="true">✦</span>
 						</button>
 					)}
@@ -285,15 +303,17 @@ function SliceHighlight(props: SliceHighlightProps) {
 							<DescriptionIcon className="slice-button-icon" />
 						</button>
 					)}
-					{!readOnly && <button
-						type="button"
-						className="slice-button"
-						aria-label="Delete slice"
-						title="Delete slice"
-						onClick={handleDelete}
-					>
-						<DeleteIcon className="slice-button-icon" />
-					</button>}
+					{!readOnly && (
+						<button
+							type="button"
+							className="slice-button"
+							aria-label="Delete slice"
+							title="Delete slice"
+							onClick={handleDelete}
+						>
+							<DeleteIcon className="slice-button-icon" />
+						</button>
+					)}
 				</div>
 			)}
 			{!readOnly && !hideInsertAfter && (
