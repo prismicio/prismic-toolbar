@@ -262,14 +262,14 @@ function SliceHighlight(props: SliceHighlightProps) {
 						disabled={!slice.canMoveUp}
 						onClick={(event) => handleMove(event, "up")}
 					>
-						<ArrowUpIcon className="slice-button-icon" />
+						<ArrowUpIcon />
 					</SliceButton>
 					<SliceButton
 						label="Move slice down"
 						disabled={!slice.canMoveDown}
 						onClick={(event) => handleMove(event, "down")}
 					>
-						<ArrowDownIcon className="slice-button-icon" />
+						<ArrowDownIcon />
 					</SliceButton>
 				</div>
 			)}
@@ -277,17 +277,17 @@ function SliceHighlight(props: SliceHighlightProps) {
 				<div className="slice-control-group slice-control-group-right">
 					{askAgentEnabled && (
 						<SliceButton label="Ask AI about this slice" onClick={handleAskAgent}>
-							<span aria-hidden="true">✦</span>
+							<SparkleIcon aria-hidden="true" />
 						</SliceButton>
 					)}
 					{!readOnly && variation !== undefined && (
 						<SliceButton label="Change variation" onClick={handleChangeVariation}>
-							<DescriptionIcon className="slice-button-icon" />
+							<DescriptionIcon />
 						</SliceButton>
 					)}
 					{!readOnly && (
 						<SliceButton label="Delete slice" onClick={handleDelete}>
-							<DeleteIcon className="slice-button-icon" />
+							<DeleteIcon />
 						</SliceButton>
 					)}
 				</div>
@@ -345,8 +345,19 @@ function InsertSliceButton(props: InsertSliceButtonProps) {
 			title={label}
 			onClick={handleClick}
 		>
-			<AddIcon className="slice-button-icon" aria-hidden="true" />
+			<AddIcon aria-hidden="true" />
 		</button>
+	)
+}
+
+// Matches editor-ui's SparkleIcon with disableAnimation, without its Motion dependency.
+function SparkleIcon(props: SVGProps<SVGSVGElement>) {
+	return (
+		<SliceIcon
+			{...props}
+			viewBox="-2 -0.76855 20 20"
+			path="M8 2.23145C8.63942 2.23145 8.84135 2.83721 8.97596 3.44298C9.48077 6.13529 11.0962 7.75068 13.7885 8.25548C14.3942 8.3901 15 8.59202 15 9.23145C15 9.87087 14.3942 10.0728 13.7885 10.2074C11.0962 10.7122 9.48077 12.3276 8.97596 15.0199C8.84135 15.6257 8.63942 16.2314 8 16.2314C7.36058 16.2314 7.15865 15.6257 7.02404 15.0199C6.51923 12.3276 4.90385 10.7122 2.21154 10.2074C1.60577 10.0728 1 9.87087 1 9.23145C1 8.59202 1.60577 8.3901 2.21154 8.25548C4.90385 7.75068 6.51923 6.13529 7.02404 3.44298C7.15865 2.83721 7.36058 2.23145 8 2.23145Z"
+		/>
 	)
 }
 
@@ -387,7 +398,7 @@ function DescriptionIcon(props: SVGProps<SVGSVGElement>) {
 
 function SliceIcon({ path, ...props }: SVGProps<SVGSVGElement> & { path: string }) {
 	return (
-		<svg viewBox="0 0 24 24" fill="currentColor" {...props}>
+		<svg className="slice-button-icon" viewBox="0 0 24 24" fill="currentColor" {...props}>
 			<path d={path} />
 		</svg>
 	)
