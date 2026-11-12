@@ -20,6 +20,10 @@ test.describe("push", () => {
 			"First slice",
 		)
 
+		// Close the legacy field panel before interacting with another slice.
+		await page.getByRole("button", { name: "Close side panel" }).click()
+		await expect(page.getByRole("dialog", { name: "Document fields" })).toBeHidden()
+
 		// Advertise the new capability even when the deployed editor predates it.
 		async function advertise(agentEnabled?: boolean) {
 			await page.evaluate(
