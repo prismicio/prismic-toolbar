@@ -273,7 +273,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 					</button>
 				</div>
 			)}
-			{(!readOnly || agentEnabled) && (
+			{!readOnly && (
 				<div className="slice-control-group slice-control-group-right">
 					{agentEnabled && (
 						<button
@@ -290,7 +290,7 @@ function SliceHighlight(props: SliceHighlightProps) {
 							/>
 						</button>
 					)}
-					{!readOnly && variation !== undefined && (
+					{variation !== undefined && (
 						<button
 							type="button"
 							className="slice-button"
@@ -301,17 +301,15 @@ function SliceHighlight(props: SliceHighlightProps) {
 							<SliceIcon path="M8 16H16V18H8V16ZM8 12H16V14H8V12ZM14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.89 22 5.99 22H18C19.1 22 20 21.1 20 20V8L14 2ZM18 20H6V4H13V9H18V20Z" />
 						</button>
 					)}
-					{!readOnly && (
-						<button
-							type="button"
-							className="slice-button"
-							aria-label="Delete slice"
-							title="Delete slice"
-							onClick={handleDelete}
-						>
-							<SliceIcon path="M16 9V19H8V9H16ZM14.5 3H9.5L8.5 4H5V6H19V4H15.5L14.5 3ZM18 7H6V19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7Z" />
-						</button>
-					)}
+					<button
+						type="button"
+						className="slice-button"
+						aria-label="Delete slice"
+						title="Delete slice"
+						onClick={handleDelete}
+					>
+						<SliceIcon path="M16 9V19H8V9H16ZM14.5 3H9.5L8.5 4H5V6H19V4H15.5L14.5 3ZM18 7H6V19C6 20.1 6.9 21 8 21H16C17.1 21 18 20.1 18 19V7Z" />
+					</button>
 				</div>
 			)}
 			{!readOnly && !hideInsertAfter && (

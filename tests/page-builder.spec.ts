@@ -5,7 +5,7 @@ import { expect, PageBuilder, test, Website } from "./infra/test"
 test.use({ viewport: { width: 1920, height: 1080 } })
 
 test.describe("push", () => {
-	test("offers slice AI on hovered and selected slices only when the editor enables it", async ({
+	test("offers slice AI on hovered and selected slices only when enabled on editable documents", async ({
 		page,
 		doc,
 		pageBuilder,
@@ -68,12 +68,16 @@ test.describe("push", () => {
 		await advertise(true)
 		await expect(action).toBeVisible()
 		await advertise(true, true)
-		await expect(action).toBeVisible()
+		await expect(action).toHaveCount(0)
+		await pageBuilder.preview.getByText("Second slice").hover()
+		await expect(hoveredAction).toHaveCount(0)
 		await expect(
 			pageBuilder.preview.getByRole("button", {
 				name: /^(Move slice (up|down)|Delete slice|Add slice (before|after)|Change variation)$/,
 			}),
 		).toHaveCount(0)
+		await advertise(true)
+		await expect(action).toBeVisible()
 		await advertise()
 		await expect(action).toHaveCount(0)
 	})
