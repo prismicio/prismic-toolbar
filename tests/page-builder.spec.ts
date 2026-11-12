@@ -25,22 +25,22 @@ test.describe("push", () => {
 		await expect(page.getByRole("dialog", { name: "Document fields" })).toBeHidden()
 
 		// Advertise the new capability even when the deployed editor predates it.
-		async function advertise(agentEnabled?: boolean) {
+		async function advertise(agentEnabled?: boolean, readOnly = false) {
 			await page.evaluate(
-				({ sliceId, agentEnabled }) => {
+				({ sliceId, agentEnabled, readOnly }) => {
 					document
 						.querySelector<HTMLIFrameElement>('iframe[name^="prismic:embedded-preview"]')!
 						.contentWindow!.postMessage(
 							{
 								type: "prismic:embedded-preview:set-slice-overlay",
 								selectedSliceId: sliceId,
-								readOnly: false,
+								readOnly,
 								agentEnabled,
 							},
 							"*",
 						)
 				},
-				{ sliceId: `text_block$${first!.id}`, agentEnabled },
+				{ sliceId: `text_block$${first!.id}`, agentEnabled, readOnly },
 			)
 		}
 		await advertise(true)
@@ -67,6 +67,13 @@ test.describe("push", () => {
 		await expect(action).toHaveCount(0)
 		await advertise(true)
 		await expect(action).toBeVisible()
+		await advertise(true, true)
+		await expect(action).toBeVisible()
+		await expect(
+			pageBuilder.preview.getByRole("button", {
+				name: /^(Move slice (up|down)|Delete slice|Add slice (before|after)|Change variation)$/,
+			}),
+		).toHaveCount(0)
 		await advertise()
 		await expect(action).toHaveCount(0)
 	})
