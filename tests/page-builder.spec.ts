@@ -5,7 +5,7 @@ import { expect, PageBuilder, test, Website } from "./infra/test"
 test.use({ viewport: { width: 1920, height: 1080 } })
 
 test.describe("push", () => {
-	test("offers slice AI only when the editor enables it for the selected slice", async ({
+	test("offers slice AI on hovered and selected slices only when the editor enables it", async ({
 		page,
 		doc,
 		pageBuilder,
@@ -16,7 +16,9 @@ test.describe("push", () => {
 			.slice(first!)
 			.getByRole("button", { name: "Ask AI about this slice" })
 		await pageBuilder.preview.getByText("First slice").click()
-		await expect(action).toHaveCount(0)
+		await expect(page.locator('[contenteditable="true"][aria-label="Text"]')).toHaveText(
+			"First slice",
+		)
 
 		// Advertise the new capability even when the deployed editor predates it.
 		async function advertise(agentEnabled?: boolean) {
@@ -40,9 +42,10 @@ test.describe("push", () => {
 		await advertise(true)
 		await expect(action).toBeVisible()
 		await pageBuilder.preview.getByText("Second slice").hover()
-		await expect(
-			pageBuilder.slice(second!).getByRole("button", { name: "Ask AI about this slice" }),
-		).toHaveCount(0)
+		const hoveredAction = pageBuilder
+			.slice(second!)
+			.getByRole("button", { name: "Ask AI about this slice" })
+		await expect(hoveredAction).toBeVisible()
 		const received = await page.evaluateHandle(() => {
 			const ids: string[] = []
 			addEventListener("message", ({ data }) => {
@@ -50,10 +53,12 @@ test.describe("push", () => {
 			})
 			return ids
 		})
+		await hoveredAction.click()
+		await pageBuilder.preview.getByText("First slice").hover()
 		await action.press("Enter")
 		await expect
 			.poll(() => received.evaluate((ids) => [...ids]))
-			.toEqual([`text_block$${first!.id}`])
+			.toEqual([`text_block$${second!.id}`, `text_block$${first!.id}`])
 		await advertise(false)
 		await expect(action).toHaveCount(0)
 		await advertise(true)

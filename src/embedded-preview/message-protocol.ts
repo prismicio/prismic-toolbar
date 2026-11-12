@@ -13,6 +13,7 @@ const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
 const placeCommentMessageType = "prismic:embedded-preview:place-comment"
 const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
 const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
+const askSliceAgentMessageType = "prismic:embedded-preview:ask-slice-agent"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const moveSliceMessageType = "prismic:embedded-preview:move-slice"
 const insertSliceMessageType = "prismic:embedded-preview:insert-slice"
@@ -153,7 +154,7 @@ type ChangeSliceVariationMessage = {
 	sliceId: string
 }
 type AskSliceAgentMessage = {
-	type: "prismic:embedded-preview:ask-slice-agent"
+	type: typeof askSliceAgentMessageType
 	sliceId: string
 }
 type DeleteSliceMessage = {

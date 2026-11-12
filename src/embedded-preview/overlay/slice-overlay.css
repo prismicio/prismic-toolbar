@@ -15,7 +15,7 @@
 	z-index: 1;
 	flex-shrink: 0;
 	align-items: center;
-	border: calc(1 * var(--px)) solid #dcdbdd;
+	border: var(--px) solid #dcdbdd;
 	border-radius: calc(8 * var(--px));
 	background: white;
 	box-shadow:
