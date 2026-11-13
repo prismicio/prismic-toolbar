@@ -5,6 +5,83 @@ import { expect, PageBuilder, test, Website } from "./infra/test"
 test.use({ viewport: { width: 1920, height: 1080 } })
 
 test.describe("push", () => {
+	test("offers slice AI on hovered and selected slices only when enabled on editable documents", async ({
+		page,
+		doc,
+		pageBuilder,
+	}) => {
+		await pageBuilder.open(doc, { mode: "push" })
+		const [first, second] = doc.content.slices
+		const action = pageBuilder
+			.slice(first!)
+			.getByRole("button", { name: "Ask AI about this slice" })
+		await pageBuilder.preview.getByText("First slice").click()
+		await expect(page.locator('[contenteditable="true"][aria-label="Text"]')).toHaveText(
+			"First slice",
+		)
+
+		// Close the legacy field panel before interacting with another slice.
+		await page.getByRole("button", { name: "Close side panel" }).click()
+		await expect(page.getByRole("dialog", { name: "Document fields" })).toBeHidden()
+
+		// Advertise the new capability even when the deployed editor predates it.
+		async function advertise(agentEnabled?: boolean, readOnly = false) {
+			await page.evaluate(
+				({ sliceId, agentEnabled, readOnly }) => {
+					document
+						.querySelector<HTMLIFrameElement>('iframe[name^="prismic:embedded-preview"]')!
+						.contentWindow!.postMessage(
+							{
+								type: "prismic:embedded-preview:set-slice-overlay",
+								selectedSliceId: sliceId,
+								readOnly,
+								agentEnabled,
+							},
+							"*",
+						)
+				},
+				{ sliceId: `text_block$${first!.id}`, agentEnabled, readOnly },
+			)
+		}
+		await advertise(true)
+		await expect(action).toBeVisible()
+		await pageBuilder.preview.getByText("Second slice").hover()
+		const hoveredAction = pageBuilder
+			.slice(second!)
+			.getByRole("button", { name: "Ask AI about this slice" })
+		await expect(hoveredAction).toBeVisible()
+		const received = await page.evaluateHandle(() => {
+			const ids: string[] = []
+			addEventListener("message", ({ data }) => {
+				if (data?.type === "prismic:embedded-preview:ask-slice-agent") ids.push(data.sliceId)
+			})
+			return ids
+		})
+		await hoveredAction.click()
+		await pageBuilder.preview.getByText("First slice").hover()
+		await action.press("Enter")
+		await expect
+			.poll(() => received.evaluate((ids) => [...ids]))
+			.toEqual([`text_block$${second!.id}`, `text_block$${first!.id}`])
+		await advertise(false)
+		await expect(action).toHaveCount(0)
+		await advertise(true)
+		await expect(action).toBeVisible()
+		await advertise(true, true)
+		await expect(action).toHaveCount(0)
+		await pageBuilder.preview.getByText("Second slice").hover()
+		await expect(hoveredAction).toHaveCount(0)
+		await expect(
+			pageBuilder.preview.getByRole("button", {
+				name: /^(Move slice (up|down)|Delete slice|Add slice (before|after)|Change variation)$/,
+			}),
+		).toHaveCount(0)
+		await advertise(true)
+		await expect(action).toBeVisible()
+		await advertise()
+		await expect(action).toHaveCount(0)
+	})
+
 	test("shows slice highlights but no preview bar", async ({ doc, pageBuilder }) => {
 		await pageBuilder.open(doc, { mode: "push" })
 

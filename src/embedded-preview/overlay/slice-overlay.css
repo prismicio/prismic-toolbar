@@ -1,10 +1,13 @@
 .slice-highlight {
+	/* Share one scaled pixel across the controls without repeating the scale expression. */
+	--px: calc(1px * var(--prismic-overlay-ui-scale));
+
 	position: absolute;
-	border: calc(2px * var(--prismic-overlay-ui-scale)) solid #6e56cf;
-	border-radius: calc(12px * var(--prismic-overlay-ui-scale));
+	border: calc(2 * var(--px)) solid #6e56cf;
+	border-radius: calc(12 * var(--px));
 	display: flex;
-	gap: calc(8px * var(--prismic-overlay-ui-scale));
-	padding: calc(8px * var(--prismic-overlay-ui-scale));
+	gap: calc(8 * var(--px));
+	padding: calc(8 * var(--px));
 }
 
 .slice-control-group {
@@ -12,14 +15,14 @@
 	z-index: 1;
 	flex-shrink: 0;
 	align-items: center;
-	border: calc(1px * var(--prismic-overlay-ui-scale)) solid #dcdbdd;
-	border-radius: calc(8px * var(--prismic-overlay-ui-scale));
+	border: var(--px) solid #dcdbdd;
+	border-radius: calc(8 * var(--px));
 	background: white;
 	box-shadow:
 		0px 1px 2px 0px rgba(0, 0, 0, 0.02),
 		0px 4px 8px 0px rgba(0, 0, 0, 0.05);
-	height: calc(34px * var(--prismic-overlay-ui-scale));
-	padding: calc(2px * var(--prismic-overlay-ui-scale));
+	height: calc(34 * var(--px));
+	padding: calc(2 * var(--px));
 }
 
 .slice-title-group {
@@ -28,7 +31,7 @@
 }
 
 .slice-title {
-	padding: calc(2px * var(--prismic-overlay-ui-scale)) calc(6px * var(--prismic-overlay-ui-scale));
+	padding: calc(2 * var(--px)) calc(6 * var(--px));
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -36,25 +39,25 @@
 }
 
 .slice-label {
-	font-size: calc(14px * var(--prismic-overlay-ui-scale));
+	font-size: calc(14 * var(--px));
 	font-weight: 600;
-	line-height: calc(24px * var(--prismic-overlay-ui-scale));
+	line-height: calc(24 * var(--px));
 }
 
 .slice-variation {
-	font-size: calc(12px * var(--prismic-overlay-ui-scale));
-	line-height: calc(16px * var(--prismic-overlay-ui-scale));
+	font-size: calc(12 * var(--px));
+	line-height: calc(16 * var(--px));
 	color: #908e96;
 }
 
 .slice-button {
 	display: grid;
 	place-items: center;
-	width: calc(28px * var(--prismic-overlay-ui-scale));
-	height: calc(28px * var(--prismic-overlay-ui-scale));
+	width: calc(28 * var(--px));
+	height: calc(28 * var(--px));
 	padding: 0;
 	border: 0;
-	border-radius: calc(6px * var(--prismic-overlay-ui-scale));
+	border-radius: calc(6 * var(--px));
 	background: transparent;
 	color: #908e96;
 	cursor: pointer;
@@ -68,8 +71,8 @@
 }
 
 .slice-button-icon {
-	width: calc(16px * var(--prismic-overlay-ui-scale));
-	height: calc(16px * var(--prismic-overlay-ui-scale));
+	width: calc(16 * var(--px));
+	height: calc(16 * var(--px));
 }
 
 .slice-insert-button {
@@ -86,12 +89,12 @@
 }
 
 .slice-insert-button[data-position="before"] {
-	top: calc(-1px * var(--prismic-overlay-ui-scale));
+	top: calc(-1 * var(--px));
 	transform: translate(-50%, -50%);
 }
 
 .slice-insert-button[data-position="after"] {
-	bottom: calc(-1px * var(--prismic-overlay-ui-scale));
+	bottom: calc(-1 * var(--px));
 	transform: translate(-50%, 50%);
 }
 
@@ -102,7 +105,7 @@
 }
 
 .slice-insert-button:enabled:focus-visible {
-	box-shadow: 0 0 0 calc(2px * var(--prismic-overlay-ui-scale)) rgba(124, 102, 220, 0.3);
+	box-shadow: 0 0 0 calc(2 * var(--px)) rgba(124, 102, 220, 0.3);
 }
 
 .slice-control-group-right {

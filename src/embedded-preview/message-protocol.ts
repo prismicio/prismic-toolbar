@@ -13,6 +13,7 @@ const scrollToPinMessageType = "prismic:embedded-preview:scroll-to-pin"
 const placeCommentMessageType = "prismic:embedded-preview:place-comment"
 const setSliceOverlayMessageType = "prismic:embedded-preview:set-slice-overlay"
 const scrollToSliceMessageType = "prismic:embedded-preview:scroll-to-slice"
+const askSliceAgentMessageType = "prismic:embedded-preview:ask-slice-agent"
 const selectSliceMessageType = "prismic:embedded-preview:select-slice"
 const moveSliceMessageType = "prismic:embedded-preview:move-slice"
 const insertSliceMessageType = "prismic:embedded-preview:insert-slice"
@@ -98,6 +99,7 @@ const sliceOverlayMessageSchema = z.object({
 	type: z.literal(setSliceOverlayMessageType),
 	selectedSliceId: z.optional(nonemptyStringSchema),
 	readOnly: z.optional(z.boolean()),
+	agentEnabled: z.optional(z.boolean()),
 })
 
 const scrollToSliceMessageSchema = z.object({
@@ -151,6 +153,10 @@ type ChangeSliceVariationMessage = {
 	type: typeof changeSliceVariationMessageType
 	sliceId: string
 }
+type AskSliceAgentMessage = {
+	type: typeof askSliceAgentMessageType
+	sliceId: string
+}
 type DeleteSliceMessage = {
 	type: typeof deleteSliceMessageType
 	sliceId: string
@@ -195,6 +201,7 @@ export type Message =
 	| PlaceCommentMessage
 	| SelectPinMessage
 	| SelectSliceMessage
+	| AskSliceAgentMessage
 	| MoveSliceMessage
 	| InsertSliceMessage
 	| ChangeSliceVariationMessage
