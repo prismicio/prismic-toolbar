@@ -20,21 +20,21 @@
 		"test": "npm run lint && npm run types && npm run build && npm run e2e"
 	},
 	"dependencies": {
-		"@amplitude/session-replay-browser": "1.51.5",
-		"preact": "11.1.1",
+		"@amplitude/session-replay-browser": "1.51.8",
+		"preact": "11.2.0",
 		"zod": "4.6.7"
 	},
 	"devDependencies": {
-		"@playwright/test": "1.64.1",
-		"@prismicio/client": "7.23.0",
+		"@playwright/test": "1.65.0",
+		"@prismicio/client": "7.23.1",
 		"@types/node": "26.6.6",
-		"bundlewatch": "1.1.0",
+		"bundlewatch": "1.2.0",
 		"http-server": "14.1.1",
-		"oxfmt": "0.76.0",
-		"oxlint": "1.91.0",
+		"oxfmt": "0.78.0",
+		"oxlint": "1.93.0",
 		"tsx": "4.23.15",
 		"typescript": "7.0.2",
-		"vite": "8.3.5"
+		"vite": "8.3.8"
 	},
 	"engines": {
 		"node": "26"
