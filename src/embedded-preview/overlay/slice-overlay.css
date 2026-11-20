@@ -108,6 +108,178 @@
 	box-shadow: 0 0 0 calc(2 * var(--px)) rgba(124, 102, 220, 0.3);
 }
 
+.slice-sparkle {
+	overflow: visible;
+}
+
+.slice-sparkle-star path,
+.slice-sparkle-mini,
+.slice-sparkle-mini > g {
+	transform-box: fill-box;
+	transform-origin: center;
+}
+
+.slice-sparkle-mini > g {
+	opacity: 0;
+	scale: var(--rest-scale);
+	translate: 0 var(--y);
+}
+
+.slice-sparkle-top {
+	--y: 1.05px;
+	--rest-scale: 0.109;
+	--pressed-scale: 0.909;
+}
+
+.slice-sparkle-bottom {
+	--y: 1.575px;
+	--rest-scale: 0.167;
+	--pressed-scale: 1;
+}
+
+/* Timings and distances from the editor-ui SparkleIcon, in 16px icon units. */
+@media (prefers-reduced-motion: no-preference) {
+	.slice-sparkle-mini {
+		transition: transform 0.2s ease-out;
+	}
+
+	.slice-sparkle-mini > g {
+		transition: 0.24s ease-out;
+		transition-property: opacity, scale, translate;
+	}
+
+	.slice-button:is(:hover, :focus-visible) .slice-sparkle-star path {
+		animation: slice-sparkle-spin 1.42s;
+	}
+
+	.slice-button:is(:hover, :focus-visible) .slice-sparkle-star {
+		animation: slice-sparkle-float 3.2s linear 1.42s infinite;
+	}
+
+	.slice-button:is(:hover, :focus-visible) .slice-sparkle-top {
+		animation: slice-sparkle-float-top 3.2s linear 1.42s infinite;
+	}
+
+	.slice-button:is(:hover, :focus-visible) .slice-sparkle-bottom {
+		animation: slice-sparkle-float-bottom 3.2s linear 1.42s infinite;
+	}
+
+	.slice-button:is(:hover, :focus-visible) .slice-sparkle-mini > g {
+		opacity: 1;
+		scale: 1;
+		translate: 0;
+		transition-duration: 0.55s;
+		transition-delay: 0.87s;
+	}
+
+	.slice-button:is(:hover, :focus-visible):active :is(.slice-sparkle-star, .slice-sparkle-mini) {
+		animation-play-state: paused;
+	}
+
+	.slice-button:is(:hover, :focus-visible):active .slice-sparkle-mini {
+		transform: translateY(var(--y)) scale(var(--pressed-scale));
+	}
+}
+
+@keyframes slice-sparkle-spin {
+	from {
+		animation-timing-function: ease-in;
+	}
+	38.73% {
+		rotate: 120deg;
+		scale: 0.9375;
+		animation-timing-function: linear;
+	}
+	61.27% {
+		rotate: 240deg;
+		scale: 0.8438;
+		animation-timing-function: ease-out;
+	}
+	to {
+		rotate: 360deg;
+	}
+}
+
+@keyframes slice-sparkle-float {
+	12.5%,
+	87.5% {
+		translate: 0 -0.154px;
+	}
+	25%,
+	75% {
+		translate: 0 -0.525px;
+	}
+	37.5%,
+	62.5% {
+		translate: 0 -0.896px;
+	}
+	50% {
+		translate: 0 -1.05px;
+	}
+}
+
+@keyframes slice-sparkle-float-top {
+	12.5% {
+		translate: 0 -0.742px;
+		scale: 0.973;
+	}
+	25% {
+		translate: 0 -1.05px;
+		scale: 0.909;
+	}
+	37.5% {
+		translate: 0 -0.742px;
+		scale: 0.845;
+	}
+	50% {
+		translate: 0;
+		scale: 0.818;
+	}
+	62.5% {
+		translate: 0 0.742px;
+		scale: 0.845;
+	}
+	75% {
+		translate: 0 1.05px;
+		scale: 0.909;
+	}
+	87.5% {
+		translate: 0 0.742px;
+		scale: 0.973;
+	}
+}
+
+@keyframes slice-sparkle-float-bottom {
+	12.5% {
+		translate: 0 0.231px;
+		scale: 0.915;
+	}
+	25% {
+		translate: 0 0.787px;
+		scale: 0.88;
+	}
+	37.5% {
+		translate: 0 1.344px;
+		scale: 0.915;
+	}
+	50% {
+		translate: 0 1.574px;
+		scale: 1;
+	}
+	62.5% {
+		translate: 0 1.344px;
+		scale: 1.085;
+	}
+	75% {
+		translate: 0 0.787px;
+		scale: 1.12;
+	}
+	87.5% {
+		translate: 0 0.231px;
+		scale: 1.085;
+	}
+}
+
 .slice-control-group-right {
 	margin-left: auto;
 }
