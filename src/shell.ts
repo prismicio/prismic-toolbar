@@ -19,9 +19,10 @@ function deleteSessionCookie() {
 
 /**
  * Prismic checks `origin`, the page asking, against the session's website. It returns `ref` to that
- * website, `close` once the session ended, and neither to another website.
+ * website, `close` once the session ended, and neither to another website. A draft session also
+ * names its document.
  */
-type Ping = { ref?: string; title?: string; close?: boolean }
+type Ping = { ref?: string; title?: string; previewDocumentId?: string; close?: boolean }
 
 async function pingSession(session: string, origin: string, ref = ""): Promise<Ping> {
 	const response = await fetch(`/previews/${session}/ping?${new URLSearchParams({ ref, origin })}`)
@@ -65,7 +66,8 @@ function createMethods(origin: string): ShellMethods {
 			if (current !== session) return current ? methods.ping(ref) : {}
 			if (ping.ref) {
 				ownedSession = session
-				return { ref: ping.ref, title: ping.title }
+				const { ref, title, previewDocumentId } = ping
+				return { ref, title, ...(previewDocumentId && { previewDocumentId, session }) }
 			}
 			// Checked and deleted in one step, so a session started meanwhile survives. Another
 			// website's session stays open: this page just has none.

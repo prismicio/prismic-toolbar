@@ -1,3 +1,4 @@
+import { commentsURL } from "./lib/comments"
 import { deleteCookie, getCookie, setCookie } from "./lib/cookie"
 import { repositoryOrigin, warn } from "./lib/env"
 import { dispatchPreviewEvent } from "./lib/events"
@@ -60,7 +61,7 @@ function createSession(repositoryHost: string): PreviewSession {
 		const id = getCookie(sessionCookieName)
 		if (!id) return end()
 
-		let data: { ref?: string; title?: string; close?: boolean }
+		let data: { ref?: string; title?: string; previewDocumentId?: string; close?: boolean }
 		pinging = true
 		try {
 			const url = `${repositoryOrigin(repositoryHost)}/previews/${id}/ping?ref=${encodeURIComponent(ref)}`
@@ -78,7 +79,9 @@ function createSession(repositoryHost: string): PreviewSession {
 
 		const previous = ref
 		ref = data.ref || ref
-		setSnapshot({ preview: { ref, title: data.title || "" } })
+		setSnapshot({
+			preview: { ref, title: data.title || "", previewDocumentId: data.previewDocumentId },
+		})
 		if (ref === previous) return
 
 		// Reloading with the old cookie would find the new ref again, and loop.
@@ -109,6 +112,16 @@ function createSession(repositoryHost: string): PreviewSession {
 			const { pathname, search, hash } = window.location
 			const path = encodeURIComponent(pathname + search + hash)
 			return `${repositoryOrigin(repositoryHost)}/previews/share/${encodeURIComponent(session)}?path=${path}`
+		},
+		comments() {
+			const session = getCookie(sessionCookieName)
+			const documentId = snapshot.preview?.previewDocumentId
+			if (!session || !documentId) throw new Error("This preview has no comments.")
+			return commentsURL({
+				repositoryOrigin: repositoryOrigin(repositoryHost),
+				session,
+				documentId,
+			})
 		},
 		getSnapshot: () => snapshot,
 		subscribe(listener) {
