@@ -12,19 +12,19 @@
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/v4.js",
-			"maxSize": "15KB"
+			"maxSize": "17KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/v5.js",
-			"maxSize": "13KB"
+			"maxSize": "15KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/embedded-preview.js",
-			"maxSize": "61KB"
+			"maxSize": "62KB"
 		},
 		{
 			"path": "./dist/prismic-toolbar/*/shell.html",
-			"maxSize": "2KB"
+			"maxSize": "2.5KB"
 		}
 	]
 }

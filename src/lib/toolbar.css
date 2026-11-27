@@ -78,6 +78,7 @@
 }
 
 /* One outlined pill, like the editor's grey buttons, split by a divider. */
+.modes,
 .actions {
 	display: flex;
 	flex: none;
@@ -90,7 +91,8 @@
 }
 
 .share,
-.exit {
+.exit,
+.modes > button {
 	display: grid;
 	place-items: center;
 	margin: 0;
@@ -147,17 +149,31 @@
 	}
 }
 
-.exit {
+.exit,
+.modes > button {
 	width: var(--size-button);
 	color: var(--grey11);
 }
 
-.exit:not(:only-child) {
+.exit:not(:only-child),
+.modes > button + button {
 	border-left: 1px solid var(--grey7);
 }
 
+.modes[hidden] {
+	display: none;
+}
+
+/* The pressed mode is shaded. */
+.modes > [aria-pressed="true"] {
+	background: var(--grey3);
+	cursor: default;
+}
+
 .share:hover:not(:disabled),
-.exit:hover {
+.exit:hover,
+.modes > button:hover,
+.modes > [aria-pressed="true"] {
 	color: var(--grey12);
 	background: var(--grey3);
 }
@@ -175,7 +191,8 @@
 /* The pill clips outer shadows, so the focus ring is drawn inside. */
 .share:focus-visible,
 .share-url:focus-visible,
-.exit:focus-visible {
+.exit:focus-visible,
+.modes > button:focus-visible {
 	outline: none;
 	box-shadow: inset 0 0 0 2px var(--purple9);
 }

@@ -24,11 +24,19 @@ export interface ShellMethods {
 	 * Asks Prismic for the session's ref and title, reading the session cookie each time. Without a
 	 * ref, the session ended, and its cookie is deleted.
 	 */
-	ping(ref: string): Promise<{ ref?: string; title?: string }>
+	ping(ref: string): Promise<PingResult>
 	/** Deletes the repository's session cookie, so the session does not come back on the next page. */
 	closeSession(): Promise<void>
 	/** Returns a shareable link to the preview session on `pageURL`. */
 	share(pageURL: string, title: string): Promise<string>
+}
+
+/** A draft session also names its document, and its ID to open the draft's comments. */
+export type PingResult = {
+	ref?: string
+	title?: string
+	previewDocumentId?: string
+	session?: string
 }
 
 export type ShellRequest = { id: number; method: keyof ShellMethods; params: unknown[] }

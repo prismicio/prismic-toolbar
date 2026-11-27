@@ -1,7 +1,8 @@
+import { commentsURL } from "./comments"
 import { watchCookie } from "./cookie-watcher"
-import { warn } from "./env"
+import { repositoryOrigin, warn } from "./env"
 import { dispatchPreviewEvent } from "./events"
-import { connectShell, type Shell } from "./shell-client"
+import { connectShell, type PingResult, type Shell } from "./shell-client"
 import {
 	deletePreviewCookie,
 	previewCookieName,
@@ -15,7 +16,12 @@ export interface PreviewSnapshot {
 	/** Unset when unknown, as in v5. */
 	authenticated?: boolean
 	/** Set while this page follows an active preview session. */
-	preview?: { ref: string; title: string }
+	preview?: {
+		ref: string
+		title: string
+		/** The previewed draft's document, whose comments the bar opens. Unset for releases. */
+		previewDocumentId?: string
+	}
 }
 
 export interface PreviewSession {
@@ -23,6 +29,8 @@ export interface PreviewSession {
 	/** Ends the preview session for this browser. */
 	exit(): Promise<void>
 	share(): string | Promise<string>
+	/** Returns a link to the comments of the previewed draft, which comes back to this page. */
+	comments(): string | Promise<string>
 	getSnapshot(): PreviewSnapshot
 	subscribe(listener: (snapshot: PreviewSnapshot) => void): () => void
 	dispose(): void
@@ -56,6 +64,7 @@ export function createPreviewSession({
 	let serverRef: string | undefined
 	let pollTimer: ReturnType<typeof setInterval> | undefined
 	let following = Promise.resolve()
+	let commentsSession: PingResult = {}
 
 	const currentRef = () => readPreviewRef(repositoryHost)
 	// Read before anything can change the cookie: the closest guess of what the server rendered.
@@ -110,12 +119,13 @@ export function createPreviewSession({
 		if (!shell || serverRef === undefined || document.visibilityState !== "visible") return
 
 		const pingedRef = serverRef
-		let nextRef: string | undefined
+		let ping: PingResult
 		try {
-			nextRef = (await shell.ping(pingedRef)).ref
+			ping = await shell.ping(pingedRef)
 		} catch {
 			return // Transient failure: try again on the next tick.
 		}
+		const { ref: nextRef } = ping
 		// Polling may have stopped or followed another session during the ping, such as on exit,
 		// reload, or a session another tab started.
 		if (pollTimer === undefined || serverRef !== pingedRef || nextRef === serverRef) return
@@ -134,7 +144,11 @@ export function createPreviewSession({
 		}
 
 		serverRef = nextRef
-		if (snapshot.preview) setSnapshot({ preview: { ...snapshot.preview, ref: nextRef } })
+		if (snapshot.preview) {
+			const { previewDocumentId } = ping
+			setSnapshot({ preview: { ...snapshot.preview, ref: nextRef, previewDocumentId } })
+			commentsSession = ping
+		}
 		if (currentRef() !== nextRef && !writeRef(nextRef)) return
 		reconcile()
 	}
@@ -147,7 +161,8 @@ export function createPreviewSession({
 		try {
 			shell ??= await connectShell(repositoryHost)
 			const authenticated = await shell.isAuthenticated()
-			const { ref, title = "" } = await shell.ping(currentRef() ?? "")
+			const ping = await shell.ping(currentRef() ?? "")
+			const { ref, title = "", previewDocumentId } = ping
 			// A cookie change meanwhile may already be reloading the page.
 			if (isReloading()) return
 			setSnapshot({ authenticated })
@@ -162,7 +177,8 @@ export function createPreviewSession({
 				if (dispatchPreviewEvent("prismicPreviewStart", serverRef)) return reloadPage()
 			}
 
-			setSnapshot({ status: "polling", preview: { ref, title } })
+			commentsSession = ping
+			setSnapshot({ status: "polling", preview: { ref, title, previewDocumentId } })
 			pollTimer = setInterval(tick, 3000)
 			// A tab coming back into view catches up right away.
 			document.addEventListener("visibilitychange", tick)
@@ -188,6 +204,17 @@ export function createPreviewSession({
 		async share(pageURL = window.location.href) {
 			if (!shell) throw new Error("The preview session is not connected.")
 			return shell.share(pageURL, snapshot.preview?.title ?? "")
+		},
+
+		comments() {
+			const { session, previewDocumentId: documentId } = commentsSession
+			if (!session || !documentId) throw new Error("This preview has no comments.")
+			return commentsURL({
+				repositoryOrigin: repositoryOrigin(repositoryHost),
+				session,
+				documentId,
+				returnTo: window.location.href,
+			})
 		},
 
 		getSnapshot: () => snapshot,
