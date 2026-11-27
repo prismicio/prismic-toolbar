@@ -121,7 +121,6 @@ function createSession(repositoryHost: string): PreviewSession {
 				repositoryOrigin: repositoryOrigin(repositoryHost),
 				session,
 				documentId,
-				returnTo: window.location.href,
 			})
 		},
 		getSnapshot: () => snapshot,

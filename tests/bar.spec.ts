@@ -39,13 +39,12 @@ test("shows that the preview is updating while the page reloads", async ({
 	expect(await website.page.evaluate(() => sessionStorage.getItem("status"))).toBe("Updating…")
 })
 
-test("opens the draft's comments in the Page Builder, which comes back to the page", async ({
+test("opens the draft's comments in the Page Builder", async ({
 	repository,
 	website,
 	startPreview,
 }) => {
 	const draft = await startPreview()
-	const pageURL = website.page.url()
 	await website.page
 		.context()
 		.route(`${repository.url}/builder/preview/**`, (route) => route.fulfill({ body: "Comments" }))
@@ -56,5 +55,4 @@ test("opens the draft's comments in the Page Builder, which comes back to the pa
 	const url = new URL(website.page.url())
 	expect(url.pathname).toBe(`/builder/preview/${draft.id}`)
 	expect(url.searchParams.get("session")).toMatch(/^[\w-]{16}~[\w-]{16}$/)
-	expect(url.searchParams.get("returnTo")).toBe(pageURL)
 })

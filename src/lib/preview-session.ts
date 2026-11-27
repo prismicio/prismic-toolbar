@@ -213,7 +213,6 @@ export function createPreviewSession({
 				repositoryOrigin: repositoryOrigin(repositoryHost),
 				session,
 				documentId,
-				returnTo: window.location.href,
 			})
 		},
 
